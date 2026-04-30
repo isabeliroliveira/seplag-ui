@@ -1,0 +1,1 @@
+var e=`/seplag-ui/assets/LOGO%20SEPLAG%20-%20BRANCO%20VAZADO-DUHoFevx.svg`;export{e as t};

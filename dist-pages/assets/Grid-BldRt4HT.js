@@ -1,0 +1,1 @@
+function e(e){let t=e?String(e).trim().split(/\s+/):[],n=``;return t[0]&&(n+=` col-${t[0]}`),t[1]&&(n+=` md:col-${t[1]}`),t[2]&&(n+=` lg:col-${t[2]}`),n}export{e as t};

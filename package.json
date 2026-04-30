@@ -27,6 +27,7 @@
   ],
   "scripts": {
     "clean:dist": "rimraf dist",
+    "clean:pages": "rimraf dist-pages",
     "start": "vite",
     "dev": "vite",
     "copy:generator": "node -e \"const{cpSync}=require('fs');cpSync('src/_generator','dist/_generator',{recursive:true});cpSync('src/template','dist/template',{recursive:true});\"",
@@ -34,6 +35,8 @@
     "pack": "npm pack",
     "pack:local": "npm run build && npm pack",
     "package": "npm run build && npm publish",
+    "build:pages": "npm run clean:pages && vite build --mode pages",
+    "preview:pages": "vite preview --outDir dist-pages",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "preview": "vite preview"
