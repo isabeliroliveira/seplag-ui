@@ -1,0 +1,93 @@
+import { BotaoSalvarSeplag, BotaoVoltarSeplag, DateFieldSeplag, TextAreaFieldSeplag, TextFieldSeplag }  from "{{libPackageName}}";
+import { getErrorMessageInObject } from "@utils/getErrorMessageInObject"
+import { Divider } from "primereact/divider"
+import React, { useRef } from "react"
+import { Control, FieldErrors, UseFormWatch, useWatch } from "react-hook-form"
+
+export interface IForm{{pascalCase name}} {
+  id?: number;
+  descricao?: string;
+  observacao?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+interface {{pascalCase name}}FormProps {
+  readonly onSubmit?: React.FormEventHandler<HTMLFormElement>
+  readonly isView?: boolean
+  readonly isEdit?: boolean
+  readonly control: Control<IForm{{pascalCase name}}, any>
+  readonly isLoading: boolean
+  readonly errors: FieldErrors<IForm{{pascalCase name}}>
+  readonly onGoBack: () => void
+  readonly watch?: UseFormWatch<IForm{{pascalCase name}}>
+}
+
+export function {{pascalCase name}}Form({ errors, onSubmit, control, isView, isEdit, isLoading, onGoBack, watch }: {{pascalCase name}}FormProps) {
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const getFormErrorMessage = (name: string) => {
+    let errorOb = getErrorMessageInObject(errors, name)
+    return errorOb ? <small className="p-error">{errorOb.message}</small> : null
+  };
+
+  return (
+    <form className="grid p-fluid col-12" onSubmit={onSubmit} ref={formRef}>
+
+      <TextFieldSeplag
+        name="descricao"
+        control={control}
+        label="Descrição"
+        cols="12 8"
+        required={true}
+        getFormErrorMessage={getFormErrorMessage}
+        disabled={isView}
+      />
+
+      <DateFieldSeplag
+        name="dataInicio"
+        control={control}
+        label="Data Início"
+        cols="12 6 2"
+        required={true}
+        getFormErrorMessage={getFormErrorMessage}
+        disabled={isView}
+      />
+
+      <DateFieldSeplag
+        name="dataFim"
+        control={control}
+        label="Data Fim"
+        cols="12 6 2"
+        getFormErrorMessage={getFormErrorMessage}
+        disabled={isView}
+        validateAfterDate={useWatch({ control, name: "dataInicio" })}
+        validateAfterMessage="A Data Fim deve ser maior que a Data Início"
+      />
+
+      <TextAreaFieldSeplag
+        name="observacao"
+        control={control}
+        label="Observação"
+        cols="12"
+        getFormErrorMessage={getFormErrorMessage}
+        disabled={isView}
+      />
+
+      <Divider className="col-12" />
+      <div className="flex gap-2 justify-content-end col-12">
+        <BotaoVoltarSeplag onClick={onGoBack} />
+        {
+          onSubmit && !isView &&
+          <div>
+            <BotaoSalvarSeplag
+              type="submit"
+              loading={isLoading}
+            />
+          </div>
+        }
+      </div>
+    </form>
+  )
+}
