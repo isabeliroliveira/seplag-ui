@@ -171,7 +171,15 @@ const prototypeSystems = [
 ];
 
 const sistemas: AppSystemItemSeplag[] = [
-  { id: "sigep", label: "SIGEP", url: "#/prototipos/sigep", icon: "pi pi-users" },
+  { id: "gestao-pessoas", label: "GESTÃO DE PESSOAS", url: "#/prototipos/sigep", icon: "pi pi-users" },
+  { id: "folha", label: "FOLHA", url: "#/prototipos/folha", icon: "pi pi-money-bill" },
+  { id: "pericia", label: "PERÍCIA", url: "#/prototipos/pericia", icon: "pi pi-plus-circle" },
+  { id: "consignado", label: "CONSIGNADO", url: "#/prototipos/consignado", icon: "pi pi-wallet" },
+  { id: "contagem-tempo", label: "CONTAGEM DE TEMPO", url: "#/prototipos/contagem-tempo", icon: "pi pi-clock" },
+  { id: "e-social", label: "E-SOCIAL", url: "#/prototipos/e-social", icon: "pi pi-file" },
+  { id: "aposentadoria", label: "APOSENTADORIA", url: "#/prototipos/aposentadoria", icon: "pi pi-users" },
+  { id: "conformidade", label: "CONFORMIDADE", url: "#/prototipos/conformidade", icon: "pi pi-verified" },
+  { id: "auditoria", label: "AUDITORIA", url: "#/prototipos/auditoria", icon: "pi pi-check-square" },
 ];
 
 interface PrototypeSystemPageProps {
@@ -259,7 +267,7 @@ export function PrototiposPage() {
 export function PrototiposSigepPage() {
   return (
     <PrototypeSystemPage
-      nomeSistema="SIGEP"
+      nomeSistema="GESTÃO DE PESSOAS"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     />
