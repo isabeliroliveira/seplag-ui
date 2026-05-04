@@ -1,0 +1,36 @@
+.prototype-shell {
+  height: 100vh;
+}
+
+.prototype-shell .layout-sidebar,
+.prototype-shell .layout-menu-container {
+  overflow-y: hidden;
+}
+
+.prototype-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #d7d8dd;
+}
+
+.prototype-content img {
+  width: min(55vw, 620px);
+  opacity: 0.18;
+  filter: grayscale(100%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.prototype-message {
+  position: absolute;
+  padding: 0.9rem 1.2rem;
+  border-radius: 8px;
+  background: rgba(0, 84, 148, 0.9);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}

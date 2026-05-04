@@ -114,8 +114,17 @@ const AppSubmenuItemSeplag = ({
       .join(" ");
 
     if (!item.to) {
+      const href = item.url && item.url !== "#" ? item.url : "#";
       return (
-        <a href={item.url} onClick={(e) => onMenuItemClick(e, item)}>
+        <a
+          href={href}
+          onClick={(e) => {
+            if (item.items || !item.url || item.url === "#") {
+              e.preventDefault();
+            }
+            onMenuItemClick(e, item);
+          }}
+        >
           {content}
         </a>
       );

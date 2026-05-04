@@ -1,0 +1,1 @@
+import{k as e}from"./hooks.esm-CQ5c3DPY.js";var t=e();export{t};

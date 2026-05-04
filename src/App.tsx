@@ -2,6 +2,17 @@ import { Routes, Route, Link } from "react-router-dom";
 import "./App.css";
 import pkg from "../package.json";
 import { DocsLayout, DocsRenderer } from "./docs/layout/DocsLayout";
+import {
+  PrototiposAposentadoriaPage,
+  PrototiposAuditoriaPage,
+  PrototiposConformidadePage,
+  PrototiposConsignadoPage,
+  PrototiposContagemTempoPage,
+  PrototiposESocialPage,
+  PrototiposFolhaPage,
+  PrototiposPage,
+  PrototiposPericiaPage,
+} from "./prototipos/PrototiposPage";
 
 function HomePage() {
   return (
@@ -14,17 +25,12 @@ function HomePage() {
           <div className="logo-group">
             <span className="logo-seplag">SEPLAG</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <Link
-              to="/docs"
-              style={{
-                color: "#60a5fa",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-              }}
-            >
+          <div className="nav-actions">
+            <Link to="/docs" className="nav-link">
               Documentação →
+            </Link>
+            <Link to="/prototipos" className="nav-link">
+              Protótipos →
             </Link>
             <div className="version-tag">v{pkg.version}</div>
           </div>
@@ -81,6 +87,27 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/prototipos" element={<PrototiposPage />} />
+      <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
+      <Route path="/prototipos/pericia" element={<PrototiposPericiaPage />} />
+      <Route
+        path="/prototipos/consignado"
+        element={<PrototiposConsignadoPage />}
+      />
+      <Route
+        path="/prototipos/contagem-tempo"
+        element={<PrototiposContagemTempoPage />}
+      />
+      <Route path="/prototipos/e-social" element={<PrototiposESocialPage />} />
+      <Route
+        path="/prototipos/aposentadoria"
+        element={<PrototiposAposentadoriaPage />}
+      />
+      <Route
+        path="/prototipos/conformidade"
+        element={<PrototiposConformidadePage />}
+      />
+      <Route path="/prototipos/auditoria" element={<PrototiposAuditoriaPage />} />
       <Route path="/docs" element={<DocsLayout />}>
         <Route path=":id" element={<DocsRenderer />} />
         <Route index element={<DocsRenderer />} />
