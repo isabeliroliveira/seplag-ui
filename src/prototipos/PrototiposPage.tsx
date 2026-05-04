@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { CardSeplag } from "@componentes/Card";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
@@ -10,7 +12,7 @@ const menuGestaoPessoas: IMenuSeplag[] = [
   {
     label: "Página Inicial",
     icon: "pi pi-home",
-    to: "/prototipos",
+    to: "/prototipos/sigep",
     visibleOnMenu: true,
     visibleOnRouter: true,
   },
@@ -157,16 +159,19 @@ const vinculos: IVinculoSeplag[] = [
   { numrVinculo: 1, statVinculo: "ATIVO", unidade: { descUnidade: "STI" }, orgao: { descOrgao: "SEPLAG-MT" } },
 ];
 
+const prototypeSystems = [
+  {
+    id: "sigep",
+    title: "SIGEP",
+    description: "Sistema Integrado de Gestão de Pessoas",
+    path: "/prototipos/sigep",
+    icon: "pi pi-users",
+    status: "Protótipo disponível",
+  },
+];
+
 const sistemas: AppSystemItemSeplag[] = [
-  { id: "gestao-pessoas", label: "GESTÃO DE PESSOAS", url: "#/prototipos", icon: "pi pi-user" },
-  { id: "folha", label: "FOLHA", url: "#/prototipos/folha", icon: "pi pi-money-bill" },
-  { id: "pericia", label: "PERÍCIA", url: "#/prototipos/pericia", icon: "pi pi-plus-circle" },
-  { id: "consignado", label: "CONSIGNADO", url: "#/prototipos/consignado", icon: "pi pi-wallet" },
-  { id: "contagem-tempo", label: "CONTAGEM DE TEMPO", url: "#/prototipos/contagem-tempo", icon: "pi pi-clock" },
-  { id: "e-social", label: "E-SOCIAL", url: "#/prototipos/e-social", icon: "pi pi-file" },
-  { id: "aposentadoria", label: "APOSENTADORIA", url: "#/prototipos/aposentadoria", icon: "pi pi-users" },
-  { id: "conformidade", label: "CONFORMIDADE", url: "#/prototipos/conformidade", icon: "pi pi-verified" },
-  { id: "auditoria", label: "AUDITORIA", url: "#/prototipos/auditoria", icon: "pi pi-check-square" },
+  { id: "sigep", label: "SIGEP", url: "#/prototipos/sigep", icon: "pi pi-users" },
 ];
 
 interface PrototypeSystemPageProps {
@@ -210,8 +215,51 @@ function PrototypeSystemPage({
 
 export function PrototiposPage() {
   return (
+    <main className="prototype-selection-page">
+      <section className="prototype-selection-header">
+        <span>Protótipos</span>
+        <h1>Selecione um sistema</h1>
+        <p>
+          Escolha o sistema para visualizar os fluxos prototipados com a
+          biblioteca de componentes da SEPLAG.
+        </p>
+      </section>
+
+      <section className="prototype-system-grid" aria-label="Sistemas disponíveis">
+        {prototypeSystems.map((system) => (
+          <Link
+            className="prototype-system-link"
+            key={system.id}
+            to={system.path}
+            aria-label={`Abrir protótipo ${system.title}`}
+          >
+            <CardSeplag cols="12" cardHeaderClassNames="prototype-system-card">
+              <div className="prototype-system-card-content">
+                <div className="prototype-system-icon" aria-hidden="true">
+                  <i className={system.icon} />
+                </div>
+                <div className="prototype-system-info">
+                  <span>{system.status}</span>
+                  <h2>{system.title}</h2>
+                  <p>{system.description}</p>
+                </div>
+                <span className="prototype-system-action">
+                  Acessar
+                  <i className="pi pi-arrow-right" aria-hidden="true" />
+                </span>
+              </div>
+            </CardSeplag>
+          </Link>
+        ))}
+      </section>
+    </main>
+  );
+}
+
+export function PrototiposSigepPage() {
+  return (
     <PrototypeSystemPage
-      nomeSistema="GESTÃO DE PESSOAS"
+      nomeSistema="SIGEP"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     />

@@ -12,6 +12,7 @@ import {
   PrototiposFolhaPage,
   PrototiposPage,
   PrototiposPericiaPage,
+  PrototiposSigepPage,
 } from "./prototipos/PrototiposPage";
 
 function HomePage() {
@@ -88,6 +89,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/prototipos" element={<PrototiposPage />} />
+      <Route path="/prototipos/sigep" element={<PrototiposSigepPage />} />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
       <Route path="/prototipos/pericia" element={<PrototiposPericiaPage />} />
       <Route
