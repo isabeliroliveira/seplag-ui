@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import { CardSeplag } from "@componentes/Card";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
@@ -142,6 +143,31 @@ const menuFolha: IMenuSeplag[] = [
       { label: "Pensão por Morte", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
     ],
   },
+  {
+    label: "Lançamento Financeiro",
+    icon: "pi pi-money-bill",
+    url: "#",
+    visibleOnMenu: true,
+    visibleOnRouter: true,
+    items: [
+      {
+        label: "Retenções Judiciais",
+        icon: "pi pi-folder-open",
+        url: "#",
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+        items: [
+          {
+            label: "Penhora Judicial",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/folha/penhora-judicial",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 const menuSimples: IMenuSeplag[] = [
@@ -187,6 +213,7 @@ interface PrototypeSystemPageProps {
   ambienteSistema: string;
   menuItems: IMenuSeplag[];
   message?: string;
+  children?: ReactNode;
 }
 
 function PrototypeSystemPage({
@@ -194,6 +221,7 @@ function PrototypeSystemPage({
   ambienteSistema,
   menuItems,
   message,
+  children,
 }: Readonly<PrototypeSystemPageProps>) {
   return (
     <div className="prototype-shell">
@@ -212,10 +240,12 @@ function PrototypeSystemPage({
         onAlterarSenha={() => {}}
         onSelecionarVinculo={() => {}}
       >
-        <div className="prototype-content">
-          <img src={logoEstado} alt="Brasão do Estado de Mato Grosso" />
-          {message && <div className="prototype-message">{message}</div>}
-        </div>
+        {children ?? (
+          <div className="prototype-content">
+            <img src={logoEstado} alt="Brasão do Estado de Mato Grosso" />
+            {message && <div className="prototype-message">{message}</div>}
+          </div>
+        )}
       </LayoutSeplag>
     </div>
   );
@@ -281,6 +311,18 @@ export function PrototiposFolhaPage() {
       ambienteSistema="Teste"
       menuItems={menuFolha}
     />
+  );
+}
+
+export function PrototiposFolhaPenhoraJudicialPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-empty-content" aria-label="Penhora Judicial" />
+    </PrototypeSystemPage>
   );
 }
 

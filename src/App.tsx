@@ -9,6 +9,7 @@ import {
   PrototiposConsignadoPage,
   PrototiposContagemTempoPage,
   PrototiposESocialPage,
+  PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaPage,
   PrototiposPage,
   PrototiposPericiaPage,
@@ -91,6 +92,10 @@ function App() {
       <Route path="/prototipos" element={<PrototiposPage />} />
       <Route path="/prototipos/sigep" element={<PrototiposSigepPage />} />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
+      <Route
+        path="/prototipos/folha/penhora-judicial"
+        element={<PrototiposFolhaPenhoraJudicialPage />}
+      />
       <Route path="/prototipos/pericia" element={<PrototiposPericiaPage />} />
       <Route
         path="/prototipos/consignado"

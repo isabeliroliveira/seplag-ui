@@ -148,6 +148,12 @@
   pointer-events: none;
 }
 
+.prototype-empty-content {
+  width: 100%;
+  min-height: 100%;
+  background: #ffffff;
+}
+
 .prototype-message {
   position: absolute;
   padding: 0.9rem 1.2rem;

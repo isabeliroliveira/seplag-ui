@@ -164,6 +164,27 @@ Observação: a chamada visual "Acessar" dentro do card foi implementada como te
 
 Rotas antigas de outros protótipos ainda existem no código e continuam acessíveis pelo switcher do canto superior direito. A seleção principal em `/prototipos` mostra apenas SIGEP neste momento.
 
+## Mudança Implementada em Folha de Pagamento
+
+Em 07/05/2026 foi definido que Penhora Judicial deve ficar no módulo **Folha de Pagamento**, pois impacta cálculo de folha, rubrica de desconto, repasse a credor/terceiro e ficha financeira.
+
+Posicionamento definido:
+
+```text
+Módulo: Folha de Pagamento
+Menu principal: Lançamento Financeiro
+Submenu: Retenções Judiciais
+Funcionalidade: Penhora Judicial
+```
+
+Primeira implementação:
+
+- Adicionado o menu `Lançamento Financeiro` no protótipo de Folha.
+- Adicionado o submenu `Retenções Judiciais`.
+- Adicionada a funcionalidade `Penhora Judicial`.
+- Criada a rota vazia `/prototipos/folha/penhora-judicial`.
+- A tela inicial da funcionalidade foi criada sem conteúdo visível por enquanto, apenas para validar navegação e posicionamento no menu.
+
 ## Validações Após a Mudança
 
 Após a implementação, foram executados:
