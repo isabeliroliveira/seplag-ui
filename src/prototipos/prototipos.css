@@ -154,6 +154,54 @@
   background: #ffffff;
 }
 
+.prototype-page-content {
+  min-height: 100%;
+  padding: 24px;
+  background: #f4f6f8;
+}
+
+.prototype-card-description {
+  margin: 6px 0 0;
+  color: #52616b;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.prototype-component-options {
+  margin: 12px 0 18px;
+  color: #334e68;
+}
+
+.prototype-validation-panel {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 18px;
+  padding: 12px 14px;
+  border-left: 4px solid #005494;
+  border-radius: 4px;
+  background: #edf7ff;
+  color: #102a43;
+  font-weight: 600;
+}
+
+.prototype-component-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.prototype-state-preview {
+  min-height: 120px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 4px;
+  background: #102a43;
+  color: #f8fbff;
+  font-size: 0.85rem;
+  overflow: auto;
+}
+
 .prototype-message {
   position: absolute;
   padding: 0.9rem 1.2rem;

@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { useForm, type FieldErrors } from "react-hook-form";
+import { BotaoSalvarSeplag, BotaoSeplag } from "@componentes/Botao";
 import { CardSeplag } from "@componentes/Card";
+import {
+  SITUACAO_VIGENCIA,
+  SituacaoVigenciaSeplag,
+  validarSituacaoVigenciaSeplag,
+  type SituacaoVigenciaValueSeplag,
+} from "@componentes/SituacaoVigencia";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
@@ -110,6 +118,7 @@ const menuGestaoPessoas: IMenuSeplag[] = [
         items: [
           { label: "Listas de Referências", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Gestão de Documentos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+          { label: "Componentes", icon: "pi pi-circle-on", to: "/prototipos/sigep/componentes", visibleOnMenu: true, visibleOnRouter: true },
         ],
       },
     ],
@@ -298,6 +307,167 @@ export function PrototiposPage() {
         ))}
       </section>
     </main>
+  );
+}
+
+interface SituacaoVigenciaDemoForm extends SituacaoVigenciaValueSeplag {
+  possuiVinculosOuDependencias: boolean;
+}
+
+const situacaoVigenciaDemoDefaultValues: SituacaoVigenciaDemoForm = {
+  situacao: SITUACAO_VIGENCIA.ATIVO,
+  dataAtivacao: "08/05/2026",
+  possuiVinculosOuDependencias: false,
+};
+
+function getFormErrorMessage(errors: FieldErrors<SituacaoVigenciaDemoForm>) {
+  return (name: string) => {
+    const error = errors[name as keyof SituacaoVigenciaDemoForm];
+    if (!error?.message) return null;
+    return <small className="p-error">{String(error.message)}</small>;
+  };
+}
+
+export function PrototiposComponentesPage() {
+  const [businessMessages, setBusinessMessages] = useState<string[]>([]);
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+  } = useForm<SituacaoVigenciaDemoForm>({
+    defaultValues: situacaoVigenciaDemoDefaultValues,
+  });
+  const formValues = watch();
+  const possuiVinculosOuDependencias = watch("possuiVinculosOuDependencias");
+
+  const handleValidSubmit = (data: SituacaoVigenciaDemoForm) => {
+    const messages = validarSituacaoVigenciaSeplag(data, {
+      possuiVinculosOuDependencias: data.possuiVinculosOuDependencias,
+      permitirExtincaoDireta: false,
+    });
+    setBusinessMessages(
+      messages.length ? messages : ["Registro validado com sucesso!"],
+    );
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content">
+        <CardSeplag
+          title="Componente de Situação e Vigência"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Controle padronizado de disponibilidade, encerramento e extinção
+              de registros parametrizáveis.
+            </p>
+          )}
+        >
+          <form onSubmit={handleSubmit(handleValidSubmit)}>
+            <SituacaoVigenciaSeplag
+              control={control}
+              setValue={setValue}
+              possuiVinculosOuDependencias={possuiVinculosOuDependencias}
+              getFormErrorMessage={getFormErrorMessage(errors)}
+            />
+
+            <div className="prototype-component-options">
+              <label className="flex align-items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!possuiVinculosOuDependencias}
+                  onChange={(event) =>
+                    setValue(
+                      "possuiVinculosOuDependencias",
+                      event.target.checked,
+                    )
+                  }
+                />
+                Simular vínculos ou associações existentes
+              </label>
+            </div>
+
+            {businessMessages.length > 0 && (
+              <div className="prototype-validation-panel">
+                {businessMessages.map((message) => (
+                  <div key={message}>{message}</div>
+                ))}
+              </div>
+            )}
+
+            <div className="prototype-component-actions">
+              <BotaoSalvarSeplag type="submit" />
+              <BotaoSeplag
+                type="button"
+                label="Ativo"
+                icon="pi pi-check"
+                onClick={() => {
+                  reset(situacaoVigenciaDemoDefaultValues);
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Agendado"
+                icon="pi pi-clock"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.ATIVO,
+                    dataAtivacao: "31/12/2026",
+                    possuiVinculosOuDependencias: false,
+                  });
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Encerrado"
+                icon="pi pi-lock"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.ENCERRADO,
+                    dataAtivacao: "01/01/2026",
+                    dataEncerramento: "08/05/2026",
+                    motivoEncerramento: "Registro encerrado para demonstração.",
+                    possuiVinculosOuDependencias: true,
+                  });
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Extinto"
+                icon="pi pi-times"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.EXTINTO,
+                    dataAtivacao: "01/01/2026",
+                    dataEncerramento: "01/04/2026",
+                    dataExtincao: "08/05/2026",
+                    motivoExtincao: "Registro extinto para demonstração.",
+                    possuiVinculosOuDependencias: false,
+                  });
+                  setBusinessMessages([]);
+                }}
+              />
+            </div>
+          </form>
+        </CardSeplag>
+
+        <CardSeplag title="Resumo do Estado" cols="12">
+          <pre className="prototype-state-preview">
+            {JSON.stringify(formValues, null, 2)}
+          </pre>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
   );
 }
 
