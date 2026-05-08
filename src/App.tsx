@@ -5,6 +5,7 @@ import { DocsLayout, DocsRenderer } from "./docs/layout/DocsLayout";
 import {
   PrototiposAposentadoriaPage,
   PrototiposAuditoriaPage,
+  PrototiposComponentesPage,
   PrototiposConformidadePage,
   PrototiposConsignadoPage,
   PrototiposContagemTempoPage,
@@ -93,6 +94,10 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/prototipos" element={<PrototiposPage />} />
       <Route path="/prototipos/sigep" element={<PrototiposSigepPage />} />
+      <Route
+        path="/prototipos/sigep/componentes"
+        element={<PrototiposComponentesPage />}
+      />
       <Route
         path="/prototipos/sigep/regime-juridico"
         element={<PrototiposSigepRegimeJuridicoPage />}

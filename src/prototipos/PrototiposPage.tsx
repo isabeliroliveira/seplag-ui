@@ -1,22 +1,17 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useMemo, type ReactNode, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
+import { useState, type ReactNode } from "react";
+import { useForm, type FieldErrors } from "react-hook-form";
+import { BotaoSalvarSeplag, BotaoSeplag } from "@componentes/Botao";
 import { CardSeplag } from "@componentes/Card";
+import {
+  SITUACAO_VIGENCIA,
+  SituacaoVigenciaSeplag,
+  validarSituacaoVigenciaSeplag,
+  type SituacaoVigenciaValueSeplag,
+} from "@componentes/SituacaoVigencia";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
-import {
-  TextFieldSeplag,
-  DropdownFieldSeplag,
-  RadioButtonFieldSeplag,
-  DateFieldSeplag,
-  TextAreaFieldSeplag,
-  MultiSelectFieldSeplag,
-} from "@componentes/Fields";
-import { BotaoSeplag, BotaoSalvarSeplag, BotaoVoltarSeplag } from "@componentes/Botao";
-import { StatusByFilterChipSeplag } from "@componentes/StatusByFilterChip/StatusByFilterChip";
-import { TablePaginadoSeplag, type ColumnMetaSeplag } from "@componentes/TablePaginado";
-import type { ResultsSeplag } from "../interfaces/Results";
 import logoEstado from "../assets/img/Logo_Branco_Estado_MT.png";
 import logoSeplag from "../assets/img/logo-seplag.png";
 import "../componentes/layout/layout/Layout.css";
@@ -123,6 +118,7 @@ const menuGestaoPessoas: IMenuSeplag[] = [
         items: [
           { label: "Listas de Referências", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Gestão de Documentos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+          { label: "Componentes", icon: "pi pi-circle-on", to: "/prototipos/sigep/componentes", visibleOnMenu: true, visibleOnRouter: true },
         ],
       },
     ],
@@ -314,117 +310,48 @@ export function PrototiposPage() {
   );
 }
 
-interface RegimeJuridicoFilterFormValues {
-  nome: string;
-  situacao: string | null;
+interface SituacaoVigenciaDemoForm extends SituacaoVigenciaValueSeplag {
+  possuiVinculosOuDependencias: boolean;
 }
 
-interface RegimeJuridicoItem {
-  id: number;
-  nome: string;
-  situacao: string;
-}
+const situacaoVigenciaDemoDefaultValues: SituacaoVigenciaDemoForm = {
+  situacao: SITUACAO_VIGENCIA.ATIVO,
+  dataAtivacao: "08/05/2026",
+  possuiVinculosOuDependencias: false,
+};
 
-const regimeJuridicoSituacoes = [
-  { label: "Ativo", value: "Ativo" },
-  { label: "Encerrado", value: "Encerrado" },
-  { label: "Agendado", value: "Agendado" },
-  { label: "Extinto", value: "Extinto" },
-];
-
-const regimeJuridicoBaseLegalOptions = [
-  { label: "Lei de Pessoal", value: "lei_pessoal" },
-  { label: "Decreto Municipal", value: "decreto_municipal" },
-  { label: "Portaria Interna", value: "portaria_interna" },
-];
-
-const regimeJuridicoInstituicoesOptions = [
-  { label: "Instituição A", value: "instituicao_a" },
-  { label: "Instituição B", value: "instituicao_b" },
-  { label: "Instituição C", value: "instituicao_c" },
-];
-
-const regimeJuridicoOrgaosOptions = [
-  { label: "Órgão X", value: "orgao_x" },
-  { label: "Órgão Y", value: "orgao_y" },
-  { label: "Órgão Z", value: "orgao_z" },
-];
-
-const regimeJuridicoData: RegimeJuridicoItem[] = [
-  { id: 1, nome: "Regime Público Estatutário", situacao: "Ativo" },
-  { id: 2, nome: "Regime Celetista Especial", situacao: "Encerrado" },
-  { id: 3, nome: "Regime Jurídico Transitório", situacao: "Agendado" },
-  { id: 4, nome: "Regime de Contrato Temporário", situacao: "Extinto" },
-  { id: 5, nome: "Regime Administrativo Comum", situacao: "Ativo" },
-];
-
-export function PrototiposSigepRegimeJuridicoPage() {
-  const navigate = useNavigate();
-  const { control, watch, reset } = useForm<RegimeJuridicoFilterFormValues>({
-    defaultValues: {
-      nome: "",
-      situacao: null,
-    },
-  });
-
-  const watchedValues = watch();
-
-  const filteredData = useMemo(
-    () =>
-      regimeJuridicoData.filter((item) => {
-        const nomeMatch = item.nome
-          .toLowerCase()
-          .includes((watchedValues.nome ?? "").toLowerCase());
-        const situacaoMatch =
-          !watchedValues.situacao || item.situacao === watchedValues.situacao;
-        return nomeMatch && situacaoMatch;
-      }),
-    [watchedValues.nome, watchedValues.situacao],
-  );
-
-  const data: ResultsSeplag<RegimeJuridicoItem> = {
-    content: filteredData,
-    pageable: undefined as any,
-    last: true,
-    totalPages: 1,
-    pageActual: 0,
-    sizePage: filteredData.length,
-    totalRecords: filteredData.length,
-    size: filteredData.length,
-    number: 0,
-    sort: undefined as any,
-    first: true,
-    numberOfElements: filteredData.length,
-    empty: filteredData.length === 0,
+function getFormErrorMessage(errors: FieldErrors<SituacaoVigenciaDemoForm>) {
+  return (name: string) => {
+    const error = errors[name as keyof SituacaoVigenciaDemoForm];
+    if (!error?.message) return null;
+    return <small className="p-error">{String(error.message)}</small>;
   };
+}
 
-  const columns: ColumnMetaSeplag<RegimeJuridicoItem>[] = [
-    { header: "Nome", field: "nome" },
-    {
-      header: "Situação",
-      body: (row) => <StatusByFilterChipSeplag descStatus={row.situacao} />,
-    },
-  ];
+export function PrototiposComponentesPage() {
+  const [businessMessages, setBusinessMessages] = useState<string[]>([]);
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+  } = useForm<SituacaoVigenciaDemoForm>({
+    defaultValues: situacaoVigenciaDemoDefaultValues,
+  });
+  const formValues = watch();
+  const possuiVinculosOuDependencias = watch("possuiVinculosOuDependencias");
 
-  const handleClearFilter = useCallback(() => {
-    reset({ nome: "", situacao: null });
-  }, [reset]);
-
-  const handleAdd = useCallback(() => {
-    navigate("/prototipos/sigep/regime-juridico/novo");
-  }, [navigate]);
-
-  const handleView = useCallback((row: RegimeJuridicoItem) => {
-    alert(`Visualizar: ${row.nome}`);
-  }, []);
-
-  const handleEdit = useCallback((row: RegimeJuridicoItem) => {
-    alert(`Editar: ${row.nome}`);
-  }, []);
-
-  const handleDelete = useCallback((row: RegimeJuridicoItem) => {
-    alert(`Excluir: ${row.nome}`);
-  }, []);
+  const handleValidSubmit = (data: SituacaoVigenciaDemoForm) => {
+    const messages = validarSituacaoVigenciaSeplag(data, {
+      possuiVinculosOuDependencias: data.possuiVinculosOuDependencias,
+      permitirExtincaoDireta: false,
+    });
+    setBusinessMessages(
+      messages.length ? messages : ["Registro validado com sucesso!"],
+    );
+  };
 
   return (
     <PrototypeSystemPage
@@ -433,58 +360,112 @@ export function PrototiposSigepRegimeJuridicoPage() {
       menuItems={menuGestaoPessoas}
     >
       <div className="prototype-page-content">
-        <div className="regime-juridico-header">
-          <h2>Regime Jurídico</h2>
-        </div>
-        <div className="regime-juridico-filters">
-          <div className="regime-juridico-filter-input">
-            <TextFieldSeplag
-              name="nome"
+        <CardSeplag
+          title="Componente de Situação e Vigência"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Controle padronizado de disponibilidade, encerramento e extinção
+              de registros parametrizáveis.
+            </p>
+          )}
+        >
+          <form onSubmit={handleSubmit(handleValidSubmit)}>
+            <SituacaoVigenciaSeplag
               control={control}
-              label="Nome"
-              cols="12"
-              placeholder="Filtro"
-              getFormErrorMessage={() => null}
+              setValue={setValue}
+              possuiVinculosOuDependencias={possuiVinculosOuDependencias}
+              getFormErrorMessage={getFormErrorMessage(errors)}
             />
-          </div>
-          <div className="regime-juridico-filter-right">
-            <DropdownFieldSeplag
-              name="situacao"
-              control={control}
-              label="Situação"
-              cols="12"
-              options={regimeJuridicoSituacoes}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione situação"
-              showClear
-              getFormErrorMessage={() => null}
-            />
-            <div className="regime-juridico-actions">
+
+            <div className="prototype-component-options">
+              <label className="flex align-items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!possuiVinculosOuDependencias}
+                  onChange={(event) =>
+                    setValue(
+                      "possuiVinculosOuDependencias",
+                      event.target.checked,
+                    )
+                  }
+                />
+                Simular vínculos ou associações existentes
+              </label>
+            </div>
+
+            {businessMessages.length > 0 && (
+              <div className="prototype-validation-panel">
+                {businessMessages.map((message) => (
+                  <div key={message}>{message}</div>
+                ))}
+              </div>
+            )}
+
+            <div className="prototype-component-actions">
+              <BotaoSalvarSeplag type="submit" />
               <BotaoSeplag
-                label="Limpar filtro"
-                icon="pi pi-refresh"
-                iconPos="left"
-                onClick={handleClearFilter}
+                type="button"
+                label="Ativo"
+                icon="pi pi-check"
+                onClick={() => {
+                  reset(situacaoVigenciaDemoDefaultValues);
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Agendado"
+                icon="pi pi-clock"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.ATIVO,
+                    dataAtivacao: "31/12/2026",
+                    possuiVinculosOuDependencias: false,
+                  });
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Encerrado"
+                icon="pi pi-lock"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.ENCERRADO,
+                    dataAtivacao: "01/01/2026",
+                    dataEncerramento: "08/05/2026",
+                    motivoEncerramento: "Registro encerrado para demonstração.",
+                    possuiVinculosOuDependencias: true,
+                  });
+                  setBusinessMessages([]);
+                }}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Extinto"
+                icon="pi pi-times"
+                onClick={() => {
+                  reset({
+                    situacao: SITUACAO_VIGENCIA.EXTINTO,
+                    dataAtivacao: "01/01/2026",
+                    dataEncerramento: "01/04/2026",
+                    dataExtincao: "08/05/2026",
+                    motivoExtincao: "Registro extinto para demonstração.",
+                    possuiVinculosOuDependencias: false,
+                  });
+                  setBusinessMessages([]);
+                }}
               />
             </div>
-          </div>
-        </div>
-        <div className="regime-juridico-table">
-          <TablePaginadoSeplag
-            data={data}
-            rows={10}
-            columns={columns}
-            hasEventoAcao
-            handleAdicionar={handleAdd}
-            handleView={handleView}
-            handleEdit={handleEdit}
-            handleDelete={handleDelete}
-            handleOnPageChange={() => undefined}
-            paginator={false}
-            lazy={false}
-          />
-        </div>
+          </form>
+        </CardSeplag>
+
+        <CardSeplag title="Resumo do Estado" cols="12">
+          <pre className="prototype-state-preview">
+            {JSON.stringify(formValues, null, 2)}
+          </pre>
+        </CardSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -500,195 +481,14 @@ export function PrototiposSigepPage() {
   );
 }
 
-interface RegimeJuridicoFormValues {
-  nome: string;
-  baseLegal: string | null;
-  instituicoes: string[];
-  orgaos: string[];
-  situacao: string | null;
-  inicioVigencia: string | undefined;
-  dataExtincao: string | undefined;
-  dataEncerramento: string | undefined;
-  motivoExtincao: string;
-  motivoEncerramento: string;
-}
-
-export function PrototiposSigepRegimeJuridicoNovoPage() {
-  const navigate = useNavigate();
-  const { control, handleSubmit, watch } = useForm<RegimeJuridicoFormValues>({
-    defaultValues: {
-      nome: "",
-      baseLegal: null,
-      instituicoes: [],
-      orgaos: [],
-      situacao: null,
-      inicioVigencia: undefined,
-      dataExtincao: undefined,
-      dataEncerramento: undefined,
-      motivoExtincao: "",
-      motivoEncerramento: "",
-    },
-  });
-
-  const situacao = watch("situacao");
-  const isExtinto = situacao === "Extinto";
-  const isEncerrado = situacao === "Encerrado";
-
-  const handleCancel = useCallback(() => {
-    navigate("/prototipos/sigep/regime-juridico");
-  }, [navigate]);
-
-  const handleSave = useCallback(
-    (values: RegimeJuridicoFormValues) => {
-      alert(
-        `Regime Jurídico cadastrado:\nNome: ${values.nome}\nBase Legal: ${values.baseLegal}\nInstituições: ${values.instituicoes.join(", ")}\nÓrgãos: ${values.orgaos.join(", ")}\nSituação: ${values.situacao}\nInício de Vigência: ${values.inicioVigencia}\nData de Extinção: ${values.dataExtincao || "-"}\nData de Encerramento: ${values.dataEncerramento || "-"}\nMotivo da Extinção: ${values.motivoExtincao}\nMotivo do Encerramento: ${values.motivoEncerramento}`,
-      );
-      navigate("/prototipos/sigep/regime-juridico");
-    },
-    [navigate],
-  );
-
-  const getFormErrorMessage = () => null;
-
+export function PrototiposSigepRegimeJuridicoPage() {
   return (
     <PrototypeSystemPage
       nomeSistema="GESTÃO DE PESSOAS"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     >
-      <div className="prototype-page-content">
-        <div className="regime-juridico-form-header">
-          <h2>Novo Regime Jurídico</h2>
-          <p>Preencha os dados abaixo para cadastrar um novo regime jurídico.</p>
-        </div>
-        <div className="regime-juridico-form-card">
-          <form onSubmit={handleSubmit(handleSave)} className="regime-juridico-form">
-            <TextFieldSeplag
-              name="nome"
-              control={control}
-              label="Nome"
-              cols="12"
-              required
-              maxLength={150}
-              placeholder="Informe o nome do regime jurídico"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <DropdownFieldSeplag
-              name="baseLegal"
-              control={control}
-              label="Base Legal"
-              cols="12"
-              required
-              options={regimeJuridicoBaseLegalOptions}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione base legal"
-              showClear={false}
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <MultiSelectFieldSeplag
-              name="instituicoes"
-              control={control}
-              label="Instituições"
-              cols="12"
-              required
-              options={regimeJuridicoInstituicoesOptions}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione instituições"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <MultiSelectFieldSeplag
-              name="orgaos"
-              control={control}
-              label="Órgãos"
-              cols="12"
-              required
-              options={regimeJuridicoOrgaosOptions}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione órgãos"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <RadioButtonFieldSeplag
-              name="situacao"
-              control={control}
-              label="Situação"
-              cols="12"
-              required
-              options={regimeJuridicoSituacoes}
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <DateFieldSeplag
-              name="inicioVigencia"
-              control={control}
-              label="Início de Vigência"
-              cols="12"
-              required
-              placeholder="dd/mm/aaaa"
-              dateFormat="dd/mm/yy"
-              mask="99/99/9999"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <DateFieldSeplag
-              name="dataExtincao"
-              control={control}
-              label="Data de Extinção"
-              cols="12"
-              required={isExtinto}
-              visible={isExtinto}
-              shouldUnregister
-              placeholder="dd/mm/aaaa"
-              dateFormat="dd/mm/yy"
-              mask="99/99/9999"
-              validateAfterDate={watch("inicioVigencia")}
-              validateAfterMessage="Data de Extinção deve ser maior ou igual à Data de Início"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <DateFieldSeplag
-              name="dataEncerramento"
-              control={control}
-              label="Data de Encerramento"
-              cols="12"
-              required={isEncerrado}
-              visible={isEncerrado}
-              shouldUnregister
-              placeholder="dd/mm/aaaa"
-              dateFormat="dd/mm/yy"
-              mask="99/99/9999"
-              validateAfterDate={watch("inicioVigencia")}
-              validateAfterMessage="Data de Encerramento deve ser maior ou igual à Data de Início"
-              getFormErrorMessage={getFormErrorMessage}
-            />
-            <TextAreaFieldSeplag
-              name="motivoExtincao"
-              control={control}
-              label="Motivo da Extinção"
-              cols="12"
-              required={isExtinto}
-              visible={isExtinto}
-              getFormErrorMessage={getFormErrorMessage}
-              maxLength={500}
-              placeholder="Descreva o motivo da extinção"
-            />
-            <TextAreaFieldSeplag
-              name="motivoEncerramento"
-              control={control}
-              label="Motivo do Encerramento"
-              cols="12"
-              required={isEncerrado}
-              visible={isEncerrado}
-              getFormErrorMessage={getFormErrorMessage}
-              maxLength={500}
-              placeholder="Descreva o motivo do encerramento"
-            />
-            <div className="regime-juridico-form-actions">
-              <BotaoVoltarSeplag type="button" onClick={handleCancel} />
-              <BotaoSalvarSeplag type="submit" />
-            </div>
-          </form>
-        </div>
-      </div>
+      <div className="prototype-empty-content" aria-label="Regime Jurídico" />
     </PrototypeSystemPage>
   );
 }

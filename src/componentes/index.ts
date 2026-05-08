@@ -39,6 +39,22 @@ export type { CardSeplagProps } from "./Card";
 export { EntityInfoCardSeplag } from "./EntityInfoCard";
 export type { EntityInfoCardSeplagProps } from "./EntityInfoCard";
 
+export {
+  SituacaoVigenciaSeplag,
+  calcularStatusOperacionalVigenciaSeplag,
+  validarSituacaoVigenciaSeplag,
+  SITUACAO_VIGENCIA,
+  STATUS_OPERACIONAL_VIGENCIA,
+} from "./SituacaoVigencia";
+export type {
+  SituacaoVigenciaSeplagProps,
+  SituacaoVigenciaValueSeplag,
+  SituacaoVigenciaSeplag as SituacaoVigenciaSeplagValue,
+  StatusOperacionalVigenciaSeplag,
+  SituacaoVigenciaFieldNamesSeplag,
+  ValidacaoSituacaoVigenciaOptionsSeplag,
+} from "./SituacaoVigencia";
+
 export { PickListSeplag } from "./PickList";
 export type { PickListSeplagProps } from "./PickList";
 

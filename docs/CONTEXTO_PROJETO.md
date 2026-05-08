@@ -185,6 +185,58 @@ Primeira implementação:
 - Criada a rota vazia `/prototipos/folha/penhora-judicial`.
 - A tela inicial da funcionalidade foi criada sem conteúdo visível por enquanto, apenas para validar navegação e posicionamento no menu.
 
+## Componente de Situação e Vigência
+
+Em 08/05/2026 foi analisada a US `USXXX – Componente de Situação e Vigência.pdf`. A US define um componente reutilizável para padronizar, nos cadastros do sistema, o controle de situação, vigência e status operacional.
+
+Posicionamento no protótipo:
+
+```text
+Gestão de Pessoas
+ └── Cadastro
+      └── Parametrização
+           └── Componentes
+```
+
+Rota:
+
+```text
+/#/prototipos/sigep/componentes
+```
+
+Implementação inicial:
+
+- Criado o componente público `SituacaoVigenciaSeplag`.
+- Criados helpers públicos:
+  - `calcularStatusOperacionalVigenciaSeplag`
+  - `validarSituacaoVigenciaSeplag`
+  - `SITUACAO_VIGENCIA`
+  - `STATUS_OPERACIONAL_VIGENCIA`
+- Exportado em `src/componentes/index.ts`.
+- Criada demonstração editável na página **Componentes**.
+- A demonstração usa cenários rápidos: Ativo, Agendado, Encerrado e Extinto.
+- A demonstração permite simular vínculos ou associações existentes para bloquear extinção.
+
+Arquivos principais:
+
+```text
+src/componentes/SituacaoVigencia/index.tsx
+src/componentes/index.ts
+src/prototipos/PrototiposPage.tsx
+src/prototipos/prototipos.css
+src/App.tsx
+```
+
+Regras principais contempladas:
+
+- Novo registro usa situação `Ativo`.
+- `Agendado` é status calculado quando Data de Ativação é futura.
+- `Agendado` não é opção manual de situação.
+- `Encerrado` exibe Data de Encerramento e Motivo do Encerramento.
+- `Extinto` exibe Data de Extinção e Motivo da Extinção.
+- Datas respeitam a ordem: Ativação, Encerramento e Extinção.
+- Extinção pode ser bloqueada quando há vínculos ou associações existentes.
+
 ## Validações Após a Mudança
 
 Após a implementação, foram executados:

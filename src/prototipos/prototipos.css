@@ -155,82 +155,51 @@
 }
 
 .prototype-page-content {
-  width: 100%;
+  min-height: 100%;
   padding: 24px;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  background: #f4f6f8;
 }
 
-.regime-juridico-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #102a43;
-}
-
-.regime-juridico-filters {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.regime-juridico-filter-input {
-  display: flex;
-  flex-direction: column;
-}
-
-.regime-juridico-filter-right {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
-}
-
-.regime-juridico-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.regime-juridico-table {
-  background: #ffffff;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.regime-juridico-form-header h2 {
-  margin: 0 0 8px;
-  font-size: 1.8rem;
-  color: #102a43;
-}
-
-.regime-juridico-form-header p {
-  margin: 0;
+.prototype-card-description {
+  margin: 6px 0 0;
   color: #52616b;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
-.regime-juridico-form-card {
-  background: #ffffff;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+.prototype-component-options {
+  margin: 12px 0 18px;
+  color: #334e68;
 }
 
-.regime-juridico-form {
+.prototype-validation-panel {
   display: grid;
-  gap: 18px;
+  gap: 6px;
+  margin: 10px 0 18px;
+  padding: 12px 14px;
+  border-left: 4px solid #005494;
+  border-radius: 4px;
+  background: #edf7ff;
+  color: #102a43;
+  font-weight: 600;
 }
 
-.regime-juridico-form-actions {
+.prototype-component-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.prototype-state-preview {
+  min-height: 120px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 4px;
+  background: #102a43;
+  color: #f8fbff;
+  font-size: 0.85rem;
+  overflow: auto;
 }
 
 .prototype-message {
