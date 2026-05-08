@@ -14,6 +14,7 @@ import {
   PrototiposPage,
   PrototiposPericiaPage,
   PrototiposSigepPage,
+  PrototiposSigepRegimeJuridicoPage,
 } from "./prototipos/PrototiposPage";
 
 function HomePage() {
@@ -91,6 +92,10 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/prototipos" element={<PrototiposPage />} />
       <Route path="/prototipos/sigep" element={<PrototiposSigepPage />} />
+      <Route
+        path="/prototipos/sigep/regime-juridico"
+        element={<PrototiposSigepRegimeJuridicoPage />}
+      />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
       <Route
         path="/prototipos/folha/penhora-judicial"

@@ -57,6 +57,13 @@ const menuGestaoPessoas: IMenuSeplag[] = [
         visibleOnMenu: true,
         visibleOnRouter: true,
         items: [
+          {
+            label: "Regime Jurídico",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/regime-juridico",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
           { label: "Categoria", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Cargo", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Tabelas de Vencimentos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
@@ -301,6 +308,18 @@ export function PrototiposSigepPage() {
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     />
+  );
+}
+
+export function PrototiposSigepRegimeJuridicoPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-empty-content" aria-label="Regime Jurídico" />
+    </PrototypeSystemPage>
   );
 }
 
