@@ -154,6 +154,85 @@
   background: #ffffff;
 }
 
+.prototype-page-content {
+  width: 100%;
+  padding: 24px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.regime-juridico-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #102a43;
+}
+
+.regime-juridico-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.regime-juridico-filter-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.regime-juridico-filter-right {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.regime-juridico-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.regime-juridico-table {
+  background: #ffffff;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.regime-juridico-form-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  color: #102a43;
+}
+
+.regime-juridico-form-header p {
+  margin: 0;
+  color: #52616b;
+  line-height: 1.5;
+}
+
+.regime-juridico-form-card {
+  background: #ffffff;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.regime-juridico-form {
+  display: grid;
+  gap: 18px;
+}
+
+.regime-juridico-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
 .prototype-message {
   position: absolute;
   padding: 0.9rem 1.2rem;
