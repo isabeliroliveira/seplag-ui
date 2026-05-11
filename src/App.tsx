@@ -5,7 +5,10 @@ import { DocsLayout, DocsRenderer } from "./docs/layout/DocsLayout";
 import {
   PrototiposAposentadoriaPage,
   PrototiposAuditoriaPage,
+  PrototiposCategoriaPage,
+  PrototiposCategoriaFormPage,
   PrototiposComponentesPage,
+  PrototiposSituacaoVigenciaPage,
   PrototiposConformidadePage,
   PrototiposConsignadoPage,
   PrototiposContagemTempoPage,
@@ -98,8 +101,24 @@ function App() {
         element={<PrototiposComponentesPage />}
       />
       <Route
+        path="/prototipos/sigep/componentes/situacao-vigencia"
+        element={<PrototiposSituacaoVigenciaPage />}
+      />
+      <Route
         path="/prototipos/sigep/regime-juridico"
         element={<PrototiposSigepRegimeJuridicoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/categoria"
+        element={<PrototiposCategoriaPage />}
+      />
+      <Route
+        path="/prototipos/sigep/categoria/novo"
+        element={<PrototiposCategoriaFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/categoria/:id/editar"
+        element={<PrototiposCategoriaFormPage />}
       />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
       <Route

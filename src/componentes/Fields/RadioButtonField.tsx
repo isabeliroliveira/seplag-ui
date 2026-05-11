@@ -42,7 +42,7 @@ export function RadioButtonFieldSeplag<T extends FieldValues = any>(
                       inputRef={field.ref}
                       value={option.value}
                       checked={field.value === option.value}
-                      disabled={disabled}
+                      disabled={disabled || option.disabled}
                     />
                     <label
                       htmlFor={`${field.name}_${index}`}

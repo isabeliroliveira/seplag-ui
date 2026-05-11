@@ -1,17 +1,34 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, type ReactNode } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
-import { BotaoSalvarSeplag, BotaoSeplag } from "@componentes/Botao";
+import {
+  BotaoLimparFiltroSeplag,
+  BotaoSalvarSeplag,
+  BotaoSeplag,
+  BotaoVoltarSeplag,
+} from "@componentes/Botao";
+import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
+import {
+  DropdownFieldSeplag,
+  TextAreaFieldSeplag,
+  TextFieldSeplag,
+} from "@componentes/Fields";
 import {
   SITUACAO_VIGENCIA,
   SituacaoVigenciaSeplag,
   validarSituacaoVigenciaSeplag,
   type SituacaoVigenciaValueSeplag,
 } from "@componentes/SituacaoVigencia";
+import {
+  TablePaginadoSeplag,
+  type ColumnMetaSeplag,
+} from "@componentes/TablePaginado";
+import { TabsSeplag, type TabItemSeplag } from "@componentes/Tabs";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
+import type { ResultsSeplag } from "../interfaces/Results";
 import logoEstado from "../assets/img/Logo_Branco_Estado_MT.png";
 import logoSeplag from "../assets/img/logo-seplag.png";
 import "../componentes/layout/layout/Layout.css";
@@ -72,7 +89,7 @@ const menuGestaoPessoas: IMenuSeplag[] = [
             visibleOnMenu: true,
             visibleOnRouter: true,
           },
-          { label: "Categoria", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+          { label: "Categoria", icon: "pi pi-circle-on", to: "/prototipos/sigep/categoria", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Cargo", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
           { label: "Tabelas de Vencimentos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
         ],
@@ -224,6 +241,18 @@ const sistemas: AppSystemItemSeplag[] = [
   { id: "auditoria", label: "AUDITORIA", url: "#/prototipos/auditoria", icon: "pi pi-check-square" },
 ];
 
+const componentPrototypeItems = [
+  {
+    id: "situacao-vigencia",
+    title: "Situação e Vigência",
+    description:
+      "Controle padronizado de situação, vigência e status operacional.",
+    path: "/prototipos/sigep/componentes/situacao-vigencia",
+    icon: "pi pi-calendar-clock",
+    status: "Componente disponível",
+  },
+];
+
 interface PrototypeSystemPageProps {
   nomeSistema: string;
   ambienteSistema: string;
@@ -314,6 +343,128 @@ interface SituacaoVigenciaDemoForm extends SituacaoVigenciaValueSeplag {
   possuiVinculosOuDependencias: boolean;
 }
 
+interface CategoriaFiltroForm {
+  categoria?: string;
+  instituicao?: string;
+  situacao?: string;
+}
+
+interface CategoriaForm {
+  sigla?: string;
+  descricao?: string;
+  observacao?: string;
+  subcategoriaNome?: string;
+  subcategoriaDescricao?: string;
+}
+
+interface CategoriaRow {
+  id: number;
+  sigla: string;
+  descricao: string;
+  instituicao: string;
+  instituicoesVinculadas: number;
+  situacao: "ATIVO" | "ENCERRADO";
+}
+
+interface SubcategoriaRow {
+  id: number;
+  nome: string;
+  descricao: string;
+  orgaosVinculados: number;
+  situacao: "ATIVO" | "ENCERRADO";
+}
+
+const categoriasMock: CategoriaRow[] = [
+  {
+    id: 1,
+    sigla: "n/a abc",
+    descricao: "n/a abc",
+    instituicao: "seplag",
+    instituicoesVinculadas: 1,
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    sigla: "N/A/D",
+    descricao: "N/A/D",
+    instituicao: "seplag",
+    instituicoesVinculadas: 2,
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    sigla: "N/A",
+    descricao: "N/A",
+    instituicao: "casa-civil",
+    instituicoesVinculadas: 2,
+    situacao: "ENCERRADO",
+  },
+  {
+    id: 4,
+    sigla: "N/A N/A B/A",
+    descricao: "B/A BA/",
+    instituicao: "mti",
+    instituicoesVinculadas: 3,
+    situacao: "ENCERRADO",
+  },
+  {
+    id: 5,
+    sigla: "fffffffffffffff",
+    descricao: "Agentes Governamentais da Cultura sss",
+    instituicao: "seplag",
+    instituicoesVinculadas: 3,
+    situacao: "ATIVO",
+  },
+  {
+    id: 6,
+    sigla: "fffffffffffffff",
+    descricao: "Agentes Governamentais da Cultura sss",
+    instituicao: "casa-civil",
+    instituicoesVinculadas: 3,
+    situacao: "ATIVO",
+  },
+  {
+    id: 7,
+    sigla: "rgrgrgrgrg",
+    descricao: "rgrg",
+    instituicao: "mti",
+    instituicoesVinculadas: 1,
+    situacao: "ATIVO",
+  },
+];
+
+const instituicaoOptions = [
+  { label: "SEPLAG", value: "seplag" },
+  { label: "Casa Civil", value: "casa-civil" },
+  { label: "MTI", value: "mti" },
+];
+
+const situacaoOptions = [
+  { label: "Ativo", value: "ATIVO" },
+  { label: "Encerrado", value: "ENCERRADO" },
+];
+
+const categoriaTabs: TabItemSeplag<string>[] = [
+  { label: "Dados Gerais", value: "dados-gerais", col: "lg:col-6" },
+  { label: "Subcategoria", value: "subcategoria", col: "lg:col-6" },
+];
+
+function createResults<T>(content: T[]): ResultsSeplag<T> {
+  return {
+    content,
+    last: true,
+    totalPages: 1,
+    pageActual: 0,
+    sizePage: content.length,
+    totalRecords: content.length,
+    size: content.length,
+    number: 0,
+    first: true,
+    numberOfElements: content.length,
+    empty: content.length === 0,
+  };
+}
+
 const situacaoVigenciaDemoDefaultValues: SituacaoVigenciaDemoForm = {
   situacao: SITUACAO_VIGENCIA.ATIVO,
   dataAtivacao: "08/05/2026",
@@ -329,6 +480,53 @@ function getFormErrorMessage(errors: FieldErrors<SituacaoVigenciaDemoForm>) {
 }
 
 export function PrototiposComponentesPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content">
+        <CardSeplag
+          title="Componentes"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Selecione um componente reutilizável para visualizar seu
+              comportamento no protótipo.
+            </p>
+          )}
+        >
+          <section
+            className="prototype-component-dashboard"
+            aria-label="Componentes disponíveis"
+          >
+            {componentPrototypeItems.map((component) => (
+              <Link
+                className="prototype-component-tile"
+                key={component.id}
+                to={component.path}
+                aria-label={`Abrir componente ${component.title}`}
+              >
+                <div className="prototype-component-tile-icon" aria-hidden="true">
+                  <i className={component.icon} />
+                </div>
+                <div className="prototype-component-tile-info">
+                  <span>{component.status}</span>
+                  <h2>{component.title}</h2>
+                  <p>{component.description}</p>
+                </div>
+                <i className="pi pi-arrow-right" aria-hidden="true" />
+              </Link>
+            ))}
+          </section>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposSituacaoVigenciaPage() {
   const [businessMessages, setBusinessMessages] = useState<string[]>([]);
   const {
     control,
@@ -359,25 +557,43 @@ export function PrototiposComponentesPage() {
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     >
-      <div className="prototype-page-content">
-        <CardSeplag
-          title="Componente de Situação e Vigência"
-          cols="12"
-          legenda={() => (
-            <p className="prototype-card-description">
-              Controle padronizado de disponibilidade, encerramento e extinção
-              de registros parametrizáveis.
-            </p>
-          )}
-        >
-          <form onSubmit={handleSubmit(handleValidSubmit)}>
+      <form onSubmit={handleSubmit(handleValidSubmit)}>
+        <div className="prototype-page-content prototype-situacao-page">
+          <CardSeplag
+            title="Vigência"
+            cols="12"
+          >
             <SituacaoVigenciaSeplag
               control={control}
               setValue={setValue}
               possuiVinculosOuDependencias={possuiVinculosOuDependencias}
+              rotuloDataAtivacao="Data de Início"
+              cols={{
+                situacao: "12 12 4",
+                dataAtivacao: "12 12 3",
+                statusOperacional: "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                dataEncerramento: "12 12 4",
+                motivoEncerramento: "12 12 8",
+                dataExtincao: "12 12 4",
+                motivoExtincao: "12 12 8",
+              }}
               getFormErrorMessage={getFormErrorMessage(errors)}
             />
+            <div className="prototype-vigencia-actions">
+              <BotaoSalvarSeplag type="submit" />
+            </div>
+          </CardSeplag>
 
+          <CardSeplag
+            title="Simulação"
+            cols="12"
+            legenda={() => (
+              <p className="prototype-card-description">
+                Ajuste cenários e regras auxiliares para testar o comportamento
+                do componente.
+              </p>
+            )}
+          >
             <div className="prototype-component-options">
               <label className="flex align-items-center gap-2">
                 <input
@@ -403,7 +619,6 @@ export function PrototiposComponentesPage() {
             )}
 
             <div className="prototype-component-actions">
-              <BotaoSalvarSeplag type="submit" />
               <BotaoSeplag
                 type="button"
                 label="Ativo"
@@ -458,15 +673,15 @@ export function PrototiposComponentesPage() {
                 }}
               />
             </div>
-          </form>
-        </CardSeplag>
+          </CardSeplag>
 
-        <CardSeplag title="Resumo do Estado" cols="12">
-          <pre className="prototype-state-preview">
-            {JSON.stringify(formValues, null, 2)}
-          </pre>
-        </CardSeplag>
-      </div>
+          <CardSeplag title="Resumo do Estado" cols="12">
+            <pre className="prototype-state-preview">
+              {JSON.stringify(formValues, null, 2)}
+            </pre>
+          </CardSeplag>
+        </div>
+      </form>
     </PrototypeSystemPage>
   );
 }
@@ -478,6 +693,279 @@ export function PrototiposSigepPage() {
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     />
+  );
+}
+
+export function PrototiposCategoriaPage() {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<CategoriaFiltroForm>({
+    defaultValues: {
+      categoria: "",
+      instituicao: undefined,
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const categoriaBusca = filtros.categoria?.trim().toLowerCase();
+  const categoriasFiltradas = categoriasMock.filter((categoria) => {
+    const atendeCategoria =
+      !categoriaBusca ||
+      categoria.sigla.toLowerCase().includes(categoriaBusca) ||
+      categoria.descricao.toLowerCase().includes(categoriaBusca);
+    const atendeSituacao =
+      !filtros.situacao || categoria.situacao === filtros.situacao;
+    const atendeInstituicao =
+      !filtros.instituicao || categoria.instituicao === filtros.instituicao;
+
+    return atendeCategoria && atendeSituacao && atendeInstituicao;
+  });
+  const categoriaResults = createResults(categoriasFiltradas);
+  const categoriaColumns: ColumnMetaSeplag<CategoriaRow>[] = [
+    { field: "sigla", header: "Sigla" },
+    { field: "descricao", header: "Descrição" },
+    {
+      header: "Instituições Vinculadas",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoesVinculadas}{" "}
+          {row.instituicoesVinculadas === 1 ? "Instituição" : "Instituições"}
+        </button>
+      ),
+    },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Categorias" cols="12">
+          <div className="prototype-category-filters grid">
+            <TextFieldSeplag
+              name="categoria"
+              control={control}
+              label="Categoria (Sigla, Descrição)"
+              cols="12 6 3"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              cols="12 6 3"
+              options={instituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 3"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-3">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    categoria: "",
+                    instituicao: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <TablePaginadoSeplag
+            dataKey="id"
+            data={categoriaResults}
+            rows={10}
+            paginator={false}
+            lazy={false}
+            selectionMode={null}
+            columns={categoriaColumns}
+            hasEventoAcao
+            handleAdicionar={() => navigate("/prototipos/sigep/categoria/novo")}
+            handleView={() => {}}
+            handleEdit={(row) =>
+              navigate(`/prototipos/sigep/categoria/${row.id}/editar`)
+            }
+            handleDelete={() => {}}
+            handleOnPageChange={() => {}}
+          />
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCategoriaFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const categoria = categoriasMock.find((item) => String(item.id) === id);
+  const isEditing = Boolean(id);
+  const [activeTab, setActiveTab] = useState("dados-gerais");
+  const [isAddingSubcategory, setIsAddingSubcategory] = useState(false);
+  const { control } = useForm<CategoriaForm>({
+    defaultValues: {
+      sigla: categoria?.sigla ?? "",
+      descricao: categoria?.descricao ?? "",
+      observacao: isEditing ? "a" : "",
+      subcategoriaNome: "",
+      subcategoriaDescricao: "",
+    },
+  });
+  const categoriaResumo = {
+    sigla: categoria?.sigla || "CATEGORIA DE TESTES11A",
+    descricao: categoria?.descricao || "TESTE DO TESTE",
+  };
+  const subcategoriaColumns: ColumnMetaSeplag<SubcategoriaRow>[] = [
+    { field: "nome", header: "Nome" },
+    { field: "descricao", header: "Descrição" },
+    { field: "orgaosVinculados", header: "Órgãos Vinculados" },
+    { field: "situacao", header: "Situação" },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={`${isEditing ? "Alterar" : "Cadastrar"} - Categoria`}
+          cols="12"
+        >
+          <div className="prototype-category-form">
+            <TabsSeplag
+              items={categoriaTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              maxWidth="512px"
+            />
+
+            {activeTab === "dados-gerais" ? (
+              <div className="grid prototype-category-form-fields">
+                <TextFieldSeplag
+                  name="sigla"
+                  control={control}
+                  label="Sigla"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="descricao"
+                  control={control}
+                  label="Descrição"
+                  cols="12 12 9"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={control}
+                  label="Observação"
+                  cols="12"
+                  rows={4}
+                  maxLength={500}
+                  getFormErrorMessage={() => null}
+                />
+              </div>
+            ) : (
+              <div className="prototype-category-subcategory">
+                <div className="prototype-category-summary">
+                  <strong>Categoria</strong>
+                  <p>
+                    <span>Nome da Categoria:</span> {categoriaResumo.sigla}
+                  </p>
+                  <p>
+                    <span>Descrição da Categoria:</span>{" "}
+                    {categoriaResumo.descricao}
+                  </p>
+                </div>
+
+                {isAddingSubcategory ? (
+                  <div className="grid prototype-subcategory-form-fields">
+                    <TextFieldSeplag
+                      name="subcategoriaNome"
+                      control={control}
+                      label="Nome"
+                      placeholder="Nome da subcategoria"
+                      cols="12"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextAreaFieldSeplag
+                      name="subcategoriaDescricao"
+                      control={control}
+                      label="Descrição"
+                      placeholder="Descreva a subcategoria"
+                      cols="12"
+                      rows={4}
+                      maxLength={500}
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                  </div>
+                ) : (
+                  <TablePaginadoSeplag
+                    dataKey="id"
+                    data={createResults<SubcategoriaRow>([])}
+                    rows={5}
+                    rowsPerPage={[5, 10, 20]}
+                    paginator
+                    lazy={false}
+                    selectionMode={null}
+                    columns={subcategoriaColumns}
+                    hasEventoAcao
+                    handleAdicionar={() => setIsAddingSubcategory(true)}
+                    handleView={() => {}}
+                    handleEdit={() => {}}
+                    handleDelete={() => {}}
+                    handleOnPageChange={() => {}}
+                  />
+                )}
+
+                <div className="prototype-category-form-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    onClick={() => navigate("/prototipos/sigep/categoria")}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
   );
 }
 
