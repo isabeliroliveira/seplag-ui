@@ -981,6 +981,18 @@ export function PrototiposSigepRegimeJuridicoPage() {
   );
 }
 
+export function PrototiposSigepRegimeJuridicoNovoPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-empty-content" aria-label="Novo Regime Jurídico" />
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposFolhaPage() {
   return (
     <PrototypeSystemPage
