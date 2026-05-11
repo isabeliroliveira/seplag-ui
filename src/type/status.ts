@@ -1,7 +1,9 @@
 export const StatusKeySeplag = {
   ATIVO: "ATIVO",
-  INATIVO: "INATIVO",
+  ENCERRADO: "ENCERRADO",
+  AGENDADO: "AGENDADO",
   EXTINTO: "EXTINTO",
+  INATIVO: "INATIVO",
   PENDENTE: "PENDENTE",
 } as const;
 
@@ -10,7 +12,9 @@ export type StatusKeySeplag =
 
 export const StatusLabels: Record<StatusKeySeplag, string> = {
   [StatusKeySeplag.ATIVO]: "Ativo",
-  [StatusKeySeplag.INATIVO]: "Inativo",
+  [StatusKeySeplag.ENCERRADO]: "Encerrado",
+  [StatusKeySeplag.AGENDADO]: "Agendado",
   [StatusKeySeplag.EXTINTO]: "Extinto",
+  [StatusKeySeplag.INATIVO]: "Inativo",
   [StatusKeySeplag.PENDENTE]: "Pendente",
 };

@@ -18,6 +18,7 @@ import {
   PrototiposPage,
   PrototiposPericiaPage,
   PrototiposSigepPage,
+  PrototiposSigepRegimeJuridicoNovoPage,
   PrototiposSigepRegimeJuridicoPage,
 } from "./prototipos/PrototiposPage";
 
@@ -119,6 +120,10 @@ function App() {
       <Route
         path="/prototipos/sigep/categoria/:id/editar"
         element={<PrototiposCategoriaFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/regime-juridico/novo"
+        element={<PrototiposSigepRegimeJuridicoNovoPage />}
       />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
       <Route
