@@ -8,6 +8,8 @@ import {
   PrototiposCategoriaPage,
   PrototiposCategoriaFormPage,
   PrototiposComponentesPage,
+  PrototiposDocumentosVinculadosPage,
+  PrototiposEstruturaOrganizacionalPage,
   PrototiposSituacaoVigenciaPage,
   PrototiposConformidadePage,
   PrototiposConsignadoPage,
@@ -104,6 +106,14 @@ function App() {
       <Route
         path="/prototipos/sigep/componentes/situacao-vigencia"
         element={<PrototiposSituacaoVigenciaPage />}
+      />
+      <Route
+        path="/prototipos/sigep/componentes/documentos-vinculados"
+        element={<PrototiposDocumentosVinculadosPage />}
+      />
+      <Route
+        path="/prototipos/sigep/componentes/estrutura-organizacional"
+        element={<PrototiposEstruturaOrganizacionalPage />}
       />
       <Route
         path="/prototipos/sigep/regime-juridico"

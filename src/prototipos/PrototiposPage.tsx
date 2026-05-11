@@ -10,6 +10,10 @@ import {
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
 import {
+  DocumentosLegaisAssociadosSeplag,
+  type DocumentoLegalAssociadoSeplag,
+} from "@componentes/DocumentosLegaisAssociados";
+import {
   DropdownFieldSeplag,
   TextAreaFieldSeplag,
   TextFieldSeplag,
@@ -20,6 +24,11 @@ import {
   validarSituacaoVigenciaSeplag,
   type SituacaoVigenciaValueSeplag,
 } from "@componentes/SituacaoVigencia";
+import {
+  SeletorEstruturaOrganizacionalSeplag,
+  type EstruturaOrganizacionalNivelSeplag,
+  type SeletorEstruturaOrganizacionalValueSeplag,
+} from "@componentes/SeletorEstruturaOrganizacional";
 import {
   TablePaginadoSeplag,
   type ColumnMetaSeplag,
@@ -251,6 +260,139 @@ const componentPrototypeItems = [
     icon: "pi pi-calendar-clock",
     status: "Componente disponível",
   },
+  {
+    id: "documentos-vinculados",
+    title: "Documentos Vinculados",
+    description:
+      "Seleção e vínculo de documentos previamente cadastrados no sistema.",
+    path: "/prototipos/sigep/componentes/documentos-vinculados",
+    icon: "pi pi-file-check",
+    status: "Componente em definição",
+  },
+  {
+    id: "estrutura-organizacional",
+    title: "Estrutura Organizacional",
+    description:
+      "Seleção hierárquica de instituições, órgãos e unidades vinculadas.",
+    path: "/prototipos/sigep/componentes/estrutura-organizacional",
+    icon: "pi pi-sitemap",
+    status: "Componente em definição",
+  },
+];
+
+const documentosLegaisMock: DocumentoLegalAssociadoSeplag[] = [
+  {
+    id: "lei-12345-2023",
+    titulo: "Lei 12.345/2023",
+    categoria: "Lei",
+    descricao: "Organização administrativa municipal.",
+  },
+  {
+    id: "decreto-456-2024",
+    titulo: "Decreto 456/2024",
+    categoria: "Decreto",
+    descricao: "Regulamentação de eventos públicos.",
+  },
+  {
+    id: "norma-001a-2022",
+    titulo: "Norma 001-A/2022",
+    categoria: "Norma",
+    descricao: "Diretrizes de segurança da informação.",
+  },
+  {
+    id: "portaria-123-2024",
+    titulo: "Portaria 123/2024",
+    categoria: "Portaria",
+    descricao: "Regras de conduta para servidores.",
+  },
+  {
+    id: "lei-complementar-88-2023",
+    titulo: "Lei Complementar 88/2023",
+    categoria: "Lei",
+    descricao: "Estatuto dos servidores públicos municipais.",
+  },
+  {
+    id: "decreto-789-2024",
+    titulo: "Decreto 789/2024",
+    categoria: "Decreto",
+    descricao: "Procedimentos para tramitação digital.",
+  },
+];
+
+const estruturaOrganizacionalNiveis: EstruturaOrganizacionalNivelSeplag[] = [
+  {
+    id: "instituicoes",
+    titulo: "Instituições",
+    disponiveisTitulo: "Instituições disponíveis",
+    selecionadosTitulo: "Instituições selecionadas",
+    filtroPlaceholder: "Procurar por instituição",
+    itens: [
+      { id: "govmt", nome: "Governo do Estado de Mato Grosso" },
+      {
+        id: "empaer",
+        nome: "Empresa Mato-grossense de Pesquisa Assistência e Extensão Rural",
+      },
+      {
+        id: "mtitec",
+        nome: "Empresa Mato-grossense de Tecnologia da Informação",
+      },
+      { id: "mtgas", nome: "Companhia Mato-grossense de Gás" },
+      {
+        id: "sanemat",
+        nome: "Companhia de Saneamento do Estado de Mato Grosso",
+      },
+      { id: "mtpar", nome: "MT Participações e Projetos S.A." },
+      { id: "metamat", nome: "Companhia Mato-grossense de Mineração" },
+    ],
+  },
+  {
+    id: "orgaos",
+    titulo: "Órgãos do GOVMT",
+    disponiveisTitulo: "Órgãos disponíveis",
+    selecionadosTitulo: "Órgãos selecionados",
+    filtroPlaceholder: "Procurar por órgão",
+    parentLevelId: "instituicoes",
+    itens: [
+      { id: "casa-civil", parentId: "govmt", nome: "Casa Civil do Estado de Mato Grosso" },
+      { id: "cge", parentId: "govmt", nome: "Controladoria Geral do Estado (CGE-MT)" },
+      { id: "pge", parentId: "govmt", nome: "Procuradoria Geral do Estado (PGE-MT)" },
+      { id: "sefaz", parentId: "govmt", nome: "Secretaria de Estado de Fazenda (SEFAZ-MT)" },
+      { id: "setasc", parentId: "govmt", nome: "Secretaria de Estado de Assistência Social e Cidadania (SETASC-MT)" },
+      { id: "detran", parentId: "govmt", nome: "Departamento Estadual de Trânsito (DETRAN-MT)" },
+      { id: "sesp", parentId: "govmt", nome: "Secretaria de Estado de Segurança Pública (SESP-MT)" },
+      { id: "pmmt", parentId: "govmt", nome: "Polícia Militar do Estado de Mato Grosso" },
+      { id: "pjc", parentId: "govmt", nome: "Polícia Judiciária Civil (PJC-MT)" },
+      { id: "cbm", parentId: "govmt", nome: "Corpo de Bombeiros Militar (CBM-MT)" },
+      { id: "seaf", parentId: "govmt", nome: "Secretaria de Estado de Agricultura Familiar (SEAF-MT)" },
+      { id: "intermat", parentId: "govmt", nome: "Instituto de Terras de Mato Grosso (INTERMAT)" },
+      { id: "indea", parentId: "govmt", nome: "Instituto de Defesa Agropecuária do Estado de MT (INDEA-MT)" },
+      { id: "seduc", parentId: "govmt", nome: "Secretaria de Estado de Educação (SEDUC-MT)" },
+      { id: "seciteci", parentId: "govmt", nome: "Secretaria de Estado de Ciência, Tecnologia e Inovação (SECITECI-MT)" },
+      { id: "ses", parentId: "govmt", nome: "Secretaria de Estado de Saúde (SES-MT)" },
+      { id: "seplag", parentId: "govmt", nome: "Secretaria de Estado de Planejamento e Gestão (SEPLAG-MT)" },
+      { id: "sema", parentId: "govmt", nome: "Secretaria de Estado de Meio Ambiente (SEMA-MT)" },
+      { id: "secom", parentId: "govmt", nome: "Secretaria de Estado de Comunicação (SECOM-MT)" },
+      { id: "politec", parentId: "govmt", nome: "Perícia Oficial e Identificação Técnica (POLITEC-MT)" },
+    ],
+  },
+  {
+    id: "unidades",
+    titulo: "Unidades da SEPLAG",
+    disponiveisTitulo: "Unidades disponíveis",
+    selecionadosTitulo: "Unidades selecionadas",
+    filtroPlaceholder: "Procurar por unidade",
+    parentLevelId: "orgaos",
+    itens: [{ id: "sapgd", parentId: "seplag", nome: "SAPGD" }],
+  },
+  {
+    id: "setores",
+    titulo: "Setores da SAPGD",
+    disponiveisTitulo: "Setores disponíveis",
+    selecionadosTitulo: "Setores selecionados",
+    filtroPlaceholder: "Procurar por setor",
+    parentLevelId: "unidades",
+    itens: [{ id: "cppti", parentId: "sapgd", nome: "CPPTI" }],
+  },
 ];
 
 interface PrototypeSystemPageProps {
@@ -355,6 +497,12 @@ interface CategoriaForm {
   observacao?: string;
   subcategoriaNome?: string;
   subcategoriaDescricao?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  motivoEncerramento?: string;
+  dataExtincao?: string;
+  motivoExtincao?: string;
 }
 
 interface CategoriaRow {
@@ -686,6 +834,74 @@ export function PrototiposSituacaoVigenciaPage() {
   );
 }
 
+export function PrototiposDocumentosVinculadosPage() {
+  const [documentosSelecionados, setDocumentosSelecionados] = useState<string[]>(
+    ["lei-12345-2023", "decreto-456-2024"],
+  );
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content">
+        <CardSeplag
+          title="Documentos Vinculados"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Componente para selecionar e vincular documentos previamente
+              cadastrados no sistema.
+            </p>
+          )}
+        >
+          <DocumentosLegaisAssociadosSeplag
+            required
+            options={documentosLegaisMock}
+            value={documentosSelecionados}
+            onChange={setDocumentosSelecionados}
+            onNovoCadastro={() => {}}
+            onVisualizar={() => {}}
+          />
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposEstruturaOrganizacionalPage() {
+  const [estruturaSelecionada, setEstruturaSelecionada] =
+    useState<SeletorEstruturaOrganizacionalValueSeplag>({});
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content">
+        <CardSeplag
+          title="Estrutura Organizacional"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Componente para selecionar instituições e abrir níveis
+              vinculados conforme a hierarquia organizacional.
+            </p>
+          )}
+        >
+          <SeletorEstruturaOrganizacionalSeplag
+            niveis={estruturaOrganizacionalNiveis}
+            value={estruturaSelecionada}
+            onChange={setEstruturaSelecionada}
+          />
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposSigepPage() {
   return (
     <PrototypeSystemPage
@@ -832,13 +1048,21 @@ export function PrototiposCategoriaFormPage() {
   const isEditing = Boolean(id);
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isAddingSubcategory, setIsAddingSubcategory] = useState(false);
-  const { control } = useForm<CategoriaForm>({
+  const [documentosCategoria, setDocumentosCategoria] = useState<string[]>([
+    "lei-12345-2023",
+    "decreto-456-2024",
+  ]);
+  const [estruturaCategoria, setEstruturaCategoria] =
+    useState<SeletorEstruturaOrganizacionalValueSeplag>({});
+  const { control, setValue } = useForm<CategoriaForm>({
     defaultValues: {
       sigla: categoria?.sigla ?? "",
       descricao: categoria?.descricao ?? "",
       observacao: isEditing ? "a" : "",
       subcategoriaNome: "",
       subcategoriaDescricao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "08/05/2026",
     },
   });
   const categoriaResumo = {
@@ -862,6 +1086,7 @@ export function PrototiposCategoriaFormPage() {
         <CardSeplag
           title={`${isEditing ? "Alterar" : "Cadastrar"} - Categoria`}
           cols="12"
+          cardHeaderClassNames="prototype-category-card"
         >
           <div className="prototype-category-form">
             <TabsSeplag
@@ -898,6 +1123,42 @@ export function PrototiposCategoriaFormPage() {
                   maxLength={500}
                   getFormErrorMessage={() => null}
                 />
+                <div className="col-12 prototype-category-documents">
+                  <DocumentosLegaisAssociadosSeplag
+                    required
+                    options={documentosLegaisMock}
+                    value={documentosCategoria}
+                    onChange={setDocumentosCategoria}
+                    onNovoCadastro={() => {}}
+                    onVisualizar={() => {}}
+                  />
+                </div>
+                <div className="col-12 prototype-category-vigencia">
+                  <h6>Vigência</h6>
+                  <SituacaoVigenciaSeplag
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Data de Início"
+                    cols={{
+                      situacao: "12 12 4",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 4",
+                      motivoEncerramento: "12 12 8",
+                      dataExtincao: "12 12 4",
+                      motivoExtincao: "12 12 8",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+                <div className="col-12 prototype-category-structure">
+                  <SeletorEstruturaOrganizacionalSeplag
+                    niveis={estruturaOrganizacionalNiveis}
+                    value={estruturaCategoria}
+                    onChange={setEstruturaCategoria}
+                  />
+                </div>
               </div>
             ) : (
               <div className="prototype-category-subcategory">

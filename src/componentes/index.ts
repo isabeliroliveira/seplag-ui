@@ -67,6 +67,20 @@ export type { GroupActionsSeplagProps } from "./GroupActions";
 export { AnexarDocumentoSeplag } from "./AnexarDocumento";
 export type { AnexarDocumentoSeplagProps } from "./AnexarDocumento";
 
+export { DocumentosLegaisAssociadosSeplag } from "./DocumentosLegaisAssociados";
+export type {
+  DocumentoLegalAssociadoSeplag,
+  DocumentosLegaisAssociadosSeplagProps,
+} from "./DocumentosLegaisAssociados";
+
+export { SeletorEstruturaOrganizacionalSeplag } from "./SeletorEstruturaOrganizacional";
+export type {
+  EstruturaOrganizacionalItemSeplag,
+  EstruturaOrganizacionalNivelSeplag,
+  SeletorEstruturaOrganizacionalSeplagProps,
+  SeletorEstruturaOrganizacionalValueSeplag,
+} from "./SeletorEstruturaOrganizacional";
+
 export { ImageCropperSeplag } from "./ReactCrop";
 
 export * from "./Fields";

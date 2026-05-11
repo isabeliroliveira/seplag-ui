@@ -214,8 +214,20 @@
   font-size: 1.25rem;
 }
 
+.prototype-page-content--white .prototype-category-card .p-card-body {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.prototype-page-content--white .prototype-category-card .p-card-content {
+  padding: 0;
+}
+
+.prototype-page-content--white .prototype-category-card h5 {
+  min-height: 28px !important;
+}
+
 .prototype-category-form {
-  padding-top: 8px;
+  padding-top: 0;
 }
 
 .prototype-category-form .p-button {
@@ -234,9 +246,79 @@
   height: 40px;
 }
 
+.prototype-category-form-fields [class*="content-rotulo"] {
+  gap: 6px;
+}
+
 .prototype-category-form-fields textarea {
   min-height: 104px;
   resize: none;
+}
+
+.prototype-category-documents {
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid #d6dde5;
+}
+
+.prototype-category-structure {
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid #d6dde5;
+}
+
+.prototype-category-vigencia {
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid #d6dde5;
+}
+
+.prototype-category-vigencia h6 {
+  margin: 0 0 12px;
+  color: #334e68;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.prototype-category-vigencia [class*="content-rotulo"] {
+  gap: 0;
+}
+
+.prototype-category-vigencia [class*="elemento"] > .flex.flex-column,
+.prototype-category-vigencia [class*="elemento"] .p-calendar,
+.prototype-category-vigencia [class*="elemento"] .p-inputtext {
+  width: 100%;
+}
+
+.prototype-category-vigencia [class*="elemento"] .justify-content-start {
+  min-height: 40px !important;
+  align-items: center;
+}
+
+.prototype-category-vigencia .situacao-vigencia-row-principal {
+  align-items: center;
+}
+
+.prototype-category-vigencia .prototype-status-operacional-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 8px;
+}
+
+.prototype-category-vigencia .prototype-status-operacional-col > div {
+  justify-content: flex-end;
+}
+
+.prototype-category-vigencia .situacao-vigencia-divider {
+  height: 1px;
+  margin: 18px 0 0;
+  background: #d6dde5;
+}
+
+.prototype-category-vigencia .situacao-vigencia-divider + .situacao-vigencia-row {
+  margin-top: 20px;
 }
 
 .prototype-subcategory-form-fields .p-inputtext {
@@ -253,8 +335,11 @@
 .prototype-category-form-fields .font-bold,
 .prototype-subcategory-form-fields label,
 .prototype-subcategory-form-fields .font-bold {
-  margin-bottom: 8px;
+  margin-bottom: 2px;
+  color: #334e68;
   font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .prototype-category-form-fields small.text-right,
