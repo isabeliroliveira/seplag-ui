@@ -491,6 +491,23 @@ interface CategoriaFiltroForm {
   situacao?: string;
 }
 
+interface RegimeJuridicoFiltroForm {
+  nome?: string;
+  instituicao?: string;
+  situacao?: string;
+}
+
+interface RegimeJuridicoForm {
+  nome?: string;
+  sigla?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  motivoEncerramento?: string;
+  dataExtincao?: string;
+  motivoExtincao?: string;
+}
+
 interface CategoriaForm {
   sigla?: string;
   descricao?: string;
@@ -512,6 +529,15 @@ interface CategoriaRow {
   instituicao: string;
   instituicoesVinculadas: number;
   situacao: "ATIVO" | "ENCERRADO";
+}
+
+interface RegimeJuridicoRow {
+  id: number;
+  nome: string;
+  descricao: string;
+  instituicao: string;
+  instituicoesVinculadas: number;
+  situacao: "ATIVO" | "ENCERRADO" | "EXTINTO";
 }
 
 interface SubcategoriaRow {
@@ -581,15 +607,74 @@ const categoriasMock: CategoriaRow[] = [
   },
 ];
 
+const regimesJuridicosMock: RegimeJuridicoRow[] = [
+  {
+    id: 1,
+    nome: "ESTATUTARIO CIVIL",
+    descricao: "Estatutário Civil",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    nome: "ESTATUTARIO MILITAR",
+    descricao: "Estatutário Militar",
+    instituicao: "govmt",
+    instituicoesVinculadas: 3,
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    nome: "MILITAR TEMPORARIO",
+    descricao: "Militar Temporário",
+    instituicao: "govmt",
+    instituicoesVinculadas: 2,
+    situacao: "ENCERRADO",
+  },
+  {
+    id: 4,
+    nome: "REGIME CELETISTA",
+    descricao: "Regime Celetista",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    situacao: "EXTINTO",
+  },
+  {
+    id: 5,
+    nome: "REGIME ESPECIAL",
+    descricao: "Regime Especial(Contrato Temporário)",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    situacao: "ATIVO",
+  },
+  {
+    id: 6,
+    nome: "REGIME MISTO",
+    descricao: "Regime Misto(Comissionados)",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    situacao: "ATIVO",
+  },
+];
+
 const instituicaoOptions = [
   { label: "SEPLAG", value: "seplag" },
   { label: "Casa Civil", value: "casa-civil" },
   { label: "MTI", value: "mti" },
 ];
 
+const regimeInstituicaoOptions = [{ label: "GOVMT", value: "govmt" }];
+
 const situacaoOptions = [
   { label: "Ativo", value: "ATIVO" },
   { label: "Encerrado", value: "ENCERRADO" },
+];
+
+const regimeSituacaoOptions = [
+  { label: "ATIVO", value: "ATIVO" },
+  { label: "ENCERRADO", value: "ENCERRADO" },
+  { label: "EXTINTO", value: "EXTINTO" },
 ];
 
 const categoriaTabs: TabItemSeplag<string>[] = [
@@ -1231,25 +1316,245 @@ export function PrototiposCategoriaFormPage() {
 }
 
 export function PrototiposSigepRegimeJuridicoPage() {
+  const navigate = useNavigate();
+  const { control, reset } = useForm<RegimeJuridicoFiltroForm>({
+    defaultValues: {
+      nome: "REGIME ESPECIAL",
+      instituicao: "govmt",
+      situacao: "ATIVO",
+    },
+  });
+  const regimeResults = {
+    ...createResults(regimesJuridicosMock),
+    totalPages: 5,
+    totalRecords: 45,
+    size: 10,
+    sizePage: 10,
+  };
+  const regimeColumns: ColumnMetaSeplag<RegimeJuridicoRow>[] = [
+    { field: "nome", header: "Nome" },
+    { field: "descricao", header: "Descrição" },
+    {
+      header: "Instituições Vinculadas",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoesVinculadas}{" "}
+          {row.instituicoesVinculadas === 1 ? "Instituição" : "Instituições"}
+        </button>
+      ),
+    },
+    {
+      header: "Situação",
+      body: (row) => {
+        const statusConfig = {
+          ATIVO: { label: "Ativo", color: "#00843d", bg: "#e2f3e8" },
+          ENCERRADO: {
+            label: "Encerrado",
+            color: "#d86b00",
+            bg: "#ffe6d3",
+          },
+          EXTINTO: { label: "Extinto", color: "#8b8f95", bg: "#ededed" },
+        }[row.situacao];
+
+        return (
+          <BadgeSeplag
+            label={statusConfig.label}
+            color={statusConfig.color}
+            bg={statusConfig.bg}
+            border="transparent"
+            size="md"
+          />
+        );
+      },
+    },
+  ];
+
   return (
     <PrototypeSystemPage
       nomeSistema="GESTÃO DE PESSOAS"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     >
-      <div className="prototype-empty-content" aria-label="Regime Jurídico" />
+      <div className="prototype-page-content prototype-page-content--white prototype-regime-page">
+        <CardSeplag
+          title="Regime Jurídico"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-category-filters prototype-regime-filters grid">
+            <TextFieldSeplag
+              name="nome"
+              control={control}
+              label="Nome"
+              cols="12 6 3"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              cols="12 6 2"
+              options={regimeInstituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 2"
+              options={regimeSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtros"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    nome: "",
+                    instituicao: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-regime-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={regimeResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy
+              selectionMode={null}
+              columns={regimeColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate("/prototipos/sigep/regime-juridico/novo")
+              }
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
     </PrototypeSystemPage>
   );
 }
 
 export function PrototiposSigepRegimeJuridicoNovoPage() {
+  const navigate = useNavigate();
+  const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
+    [],
+  );
+  const [estruturaSelecionada, setEstruturaSelecionada] =
+    useState<SeletorEstruturaOrganizacionalValueSeplag>({});
+  const { control, setValue } = useForm<RegimeJuridicoForm>({
+    defaultValues: {
+      nome: "",
+      sigla: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "13/05/2026",
+    },
+  });
+
   return (
     <PrototypeSystemPage
       nomeSistema="GESTÃO DE PESSOAS"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     >
-      <div className="prototype-empty-content" aria-label="Novo Regime Jurídico" />
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white prototype-regime-page">
+          <CardSeplag
+            title="Cadastrar - Regime Jurídico"
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="grid prototype-category-form-fields prototype-regime-form-fields">
+              <TextFieldSeplag
+                name="nome"
+                control={control}
+                label="Nome"
+                cols="12 12 8"
+                required
+                maxLength={150}
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="sigla"
+                control={control}
+                label="Sigla"
+                cols="12 12 4"
+                required
+                maxLength={30}
+                getFormErrorMessage={() => null}
+              />
+
+              <div className="col-12 prototype-regime-section">
+                <DocumentosLegaisAssociadosSeplag
+                  label="Base Legal"
+                  required
+                  options={documentosLegaisMock}
+                  value={baseLegalSelecionada}
+                  onChange={setBaseLegalSelecionada}
+                  onNovoCadastro={() => {}}
+                  onVisualizar={() => {}}
+                />
+              </div>
+
+              <div className="col-12 prototype-regime-section">
+                <SeletorEstruturaOrganizacionalSeplag
+                  niveis={estruturaOrganizacionalNiveis}
+                  value={estruturaSelecionada}
+                  onChange={setEstruturaSelecionada}
+                />
+              </div>
+
+              <div className="col-12 prototype-category-vigencia">
+                <h6>Vigência</h6>
+                <SituacaoVigenciaSeplag
+                  control={control}
+                  setValue={setValue}
+                  rotuloDataAtivacao="Início de Vigência"
+                  cols={{
+                    situacao: "12 12 4",
+                    dataAtivacao: "12 12 3",
+                    statusOperacional:
+                      "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                    dataEncerramento: "12 12 4",
+                    motivoEncerramento: "12 12 8",
+                    dataExtincao: "12 12 4",
+                    motivoExtincao: "12 12 8",
+                  }}
+                  getFormErrorMessage={() => null}
+                />
+              </div>
+            </div>
+
+            <div className="prototype-category-form-footer">
+              <BotaoVoltarSeplag
+                type="button"
+                onClick={() => navigate("/prototipos/sigep/regime-juridico")}
+              />
+              <BotaoSalvarSeplag type="submit" />
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
     </PrototypeSystemPage>
   );
 }
