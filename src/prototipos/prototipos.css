@@ -200,6 +200,36 @@
   cursor: pointer;
 }
 
+.prototype-regime-status-badge {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.prototype-regime-status-badge [class*="badge"] {
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.prototype-regime-status-badge i {
+  font-size: 0.8rem;
+}
+
+.prototype-regime-table .p-datatable-thead > tr > th:nth-child(4),
+.prototype-regime-table .p-datatable-tbody > tr > td:nth-child(4) {
+  width: 240px;
+  min-width: 240px;
+  white-space: nowrap;
+}
+
+.prototype-regime-table .p-datatable-thead > tr > th:nth-child(5),
+.prototype-regime-table .p-datatable-tbody > tr > td:nth-child(5) {
+  width: 130px;
+  min-width: 130px;
+}
+
 .prototype-page-content--white .p-card {
   border: 1px solid #dfe5ec;
   border-radius: 4px;

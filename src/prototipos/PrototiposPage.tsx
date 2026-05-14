@@ -7,6 +7,8 @@ import {
   BotaoSeplag,
   BotaoVoltarSeplag,
 } from "@componentes/Botao";
+import { AnexarDocumentoSeplag } from "@componentes/AnexarDocumento";
+import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
 import {
@@ -20,8 +22,10 @@ import {
 } from "@componentes/Fields";
 import {
   SITUACAO_VIGENCIA,
+  STATUS_OPERACIONAL_VIGENCIA,
   SituacaoVigenciaSeplag,
   validarSituacaoVigenciaSeplag,
+  type StatusOperacionalVigenciaSeplag,
   type SituacaoVigenciaValueSeplag,
 } from "@componentes/SituacaoVigencia";
 import {
@@ -268,6 +272,15 @@ const componentPrototypeItems = [
     path: "/prototipos/sigep/componentes/documentos-vinculados",
     icon: "pi pi-file-check",
     status: "Componente em definição",
+  },
+  {
+    id: "anexar-documento",
+    title: "Anexar Documento",
+    description:
+      "Upload de arquivo PDF com visualização e remoção do documento anexado.",
+    path: "/prototipos/sigep/componentes/anexar-documento",
+    icon: "pi pi-paperclip",
+    status: "Componente disponível",
   },
   {
     id: "estrutura-organizacional",
@@ -537,7 +550,7 @@ interface RegimeJuridicoRow {
   descricao: string;
   instituicao: string;
   instituicoesVinculadas: number;
-  situacao: "ATIVO" | "ENCERRADO" | "EXTINTO";
+  situacao: StatusOperacionalVigenciaSeplag;
 }
 
 interface SubcategoriaRow {
@@ -614,7 +627,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Estatutário Civil",
     instituicao: "govmt",
     instituicoesVinculadas: 1,
-    situacao: "ATIVO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
   },
   {
     id: 2,
@@ -622,7 +635,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Estatutário Militar",
     instituicao: "govmt",
     instituicoesVinculadas: 3,
-    situacao: "ATIVO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
   },
   {
     id: 3,
@@ -630,7 +643,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Militar Temporário",
     instituicao: "govmt",
     instituicoesVinculadas: 2,
-    situacao: "ENCERRADO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
   },
   {
     id: 4,
@@ -638,7 +651,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Regime Celetista",
     instituicao: "govmt",
     instituicoesVinculadas: 1,
-    situacao: "EXTINTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
   },
   {
     id: 5,
@@ -646,7 +659,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Regime Especial(Contrato Temporário)",
     instituicao: "govmt",
     instituicoesVinculadas: 1,
-    situacao: "ATIVO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO,
   },
   {
     id: 6,
@@ -654,7 +667,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Regime Misto(Comissionados)",
     instituicao: "govmt",
     instituicoesVinculadas: 1,
-    situacao: "ATIVO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.EXTINTO,
   },
 ];
 
@@ -672,10 +685,61 @@ const situacaoOptions = [
 ];
 
 const regimeSituacaoOptions = [
-  { label: "ATIVO", value: "ATIVO" },
-  { label: "ENCERRADO", value: "ENCERRADO" },
-  { label: "EXTINTO", value: "EXTINTO" },
+  { label: "AGENDADO", value: STATUS_OPERACIONAL_VIGENCIA.AGENDADO },
+  { label: "ATIVO", value: STATUS_OPERACIONAL_VIGENCIA.ATIVO },
+  {
+    label: "AGENDADO PARA ENCERRAMENTO",
+    value: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
+  },
+  { label: "ENCERRADO", value: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO },
+  {
+    label: "AGENDADO PARA EXTINÇÃO",
+    value: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO,
+  },
+  { label: "EXTINTO", value: STATUS_OPERACIONAL_VIGENCIA.EXTINTO },
 ];
+
+const regimeStatusMeta: Record<
+  StatusOperacionalVigenciaSeplag,
+  { label: string; color: string; bg: string; icon: string }
+> = {
+  AGENDADO: {
+    label: "Agendado",
+    color: "#8a5a00",
+    bg: "#fff4d6",
+    icon: "pi pi-clock",
+  },
+  ATIVO: {
+    label: "Ativo",
+    color: "#00843d",
+    bg: "#e2f3e8",
+    icon: "pi pi-check-circle",
+  },
+  AGENDADO_ENCERRAMENTO: {
+    label: "Agendado para Encerramento",
+    color: "#6b7280",
+    bg: "#f1f5f9",
+    icon: "pi pi-clock",
+  },
+  ENCERRADO: {
+    label: "Encerrado",
+    color: "#6b7280",
+    bg: "#f1f5f9",
+    icon: "pi pi-lock",
+  },
+  AGENDADO_EXTINCAO: {
+    label: "Agendado para Extinção",
+    color: "#b42318",
+    bg: "#fee4e2",
+    icon: "pi pi-clock",
+  },
+  EXTINTO: {
+    label: "Extinto",
+    color: "#b42318",
+    bg: "#fee4e2",
+    icon: "pi pi-times-circle",
+  },
+};
 
 const categoriaTabs: TabItemSeplag<string>[] = [
   { label: "Dados Gerais", value: "dados-gerais", col: "lg:col-6" },
@@ -949,6 +1013,86 @@ export function PrototiposDocumentosVinculadosPage() {
             onNovoCadastro={() => {}}
             onVisualizar={() => {}}
           />
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposAnexarDocumentoPage() {
+  const [arquivos, setArquivos] = useState<ArquivoAnexadoSeplag[]>([
+    {
+      nome: "USXXX - Manter Regime Jurídico.pdf",
+      extensao: "pdf",
+      contentType: "application/pdf",
+      conteudoEmBase64: "",
+      tamanho: "455.3 KB",
+    },
+    {
+      nome: "Parecer técnico - Regime Jurídico.pdf",
+      extensao: "pdf",
+      contentType: "application/pdf",
+      conteudoEmBase64: "",
+      tamanho: "497.2 KB",
+    },
+    {
+      nome: "Evidência de homologação.pdf",
+      extensao: "pdf",
+      contentType: "application/pdf",
+      conteudoEmBase64: "",
+      tamanho: "258.6 KB",
+    },
+  ]);
+
+  const handleUploadDocumento = (event: { files?: File[] }) => {
+    const files = Array.from(event.files ?? []);
+    if (!files.length) return;
+
+    setArquivos((current) => [
+      ...current,
+      ...files.map((file) => ({
+        nome: file.name,
+        extensao: file.name.split(".").pop()?.toLowerCase() ?? "pdf",
+        contentType: file.type || "application/octet-stream",
+        conteudoEmBase64: "",
+        tamanho: file.size,
+      })),
+    ]);
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content">
+        <CardSeplag
+          title="Documentos"
+          cols="12"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Anexe um ou mais documentos. Você pode visualizar, baixar ou
+              remover cada arquivo.
+            </p>
+          )}
+        >
+          <div className="grid prototype-anexar-documento-demo">
+            <AnexarDocumentoSeplag
+              label="Documento"
+              cols="12 12 6"
+              multiple
+              arquivosBase64={arquivos}
+              onUploadDocument={handleUploadDocumento}
+              onRemoveArquivo={(_, index) =>
+                setArquivos((current) =>
+                  current.filter((__, itemIndex) => itemIndex !== index),
+                )
+              }
+              onDownloadArquivo={() => {}}
+              handleViewArquivo={() => {}}
+            />
+          </div>
         </CardSeplag>
       </div>
     </PrototypeSystemPage>
@@ -1321,7 +1465,7 @@ export function PrototiposSigepRegimeJuridicoPage() {
     defaultValues: {
       nome: "REGIME ESPECIAL",
       instituicao: "govmt",
-      situacao: "ATIVO",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
     },
   });
   const regimeResults = {
@@ -1350,24 +1494,19 @@ export function PrototiposSigepRegimeJuridicoPage() {
     {
       header: "Situação",
       body: (row) => {
-        const statusConfig = {
-          ATIVO: { label: "Ativo", color: "#00843d", bg: "#e2f3e8" },
-          ENCERRADO: {
-            label: "Encerrado",
-            color: "#d86b00",
-            bg: "#ffe6d3",
-          },
-          EXTINTO: { label: "Extinto", color: "#8b8f95", bg: "#ededed" },
-        }[row.situacao];
+        const statusConfig = regimeStatusMeta[row.situacao];
 
         return (
-          <BadgeSeplag
-            label={statusConfig.label}
-            color={statusConfig.color}
-            bg={statusConfig.bg}
-            border="transparent"
-            size="md"
-          />
+          <span className="prototype-regime-status-badge">
+            <BadgeSeplag
+              label={statusConfig.label}
+              color={statusConfig.color}
+              bg={statusConfig.bg}
+              border="transparent"
+              icon={statusConfig.icon}
+              size="sm"
+            />
+          </span>
         );
       },
     },

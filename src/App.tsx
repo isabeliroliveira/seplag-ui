@@ -3,6 +3,7 @@ import "./App.css";
 import pkg from "../package.json";
 import { DocsLayout, DocsRenderer } from "./docs/layout/DocsLayout";
 import {
+  PrototiposAnexarDocumentoPage,
   PrototiposAposentadoriaPage,
   PrototiposAuditoriaPage,
   PrototiposCategoriaPage,
@@ -110,6 +111,10 @@ function App() {
       <Route
         path="/prototipos/sigep/componentes/documentos-vinculados"
         element={<PrototiposDocumentosVinculadosPage />}
+      />
+      <Route
+        path="/prototipos/sigep/componentes/anexar-documento"
+        element={<PrototiposAnexarDocumentoPage />}
       />
       <Route
         path="/prototipos/sigep/componentes/estrutura-organizacional"

@@ -369,13 +369,14 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: margin-left 0.5s ease-in-out;
 }
 
 .layout-content {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 0 auto;
+  overflow: visible;
   padding: 1.5rem;
   background: #f4f6f9;
 }
