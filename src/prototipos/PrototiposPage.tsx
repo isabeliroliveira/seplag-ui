@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, type ReactNode } from "react";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
   BotaoSalvarSeplag,
@@ -11,12 +11,15 @@ import { AnexarDocumentoSeplag } from "@componentes/AnexarDocumento";
 import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
+import { ModalSeplag } from "@componentes/Modal";
 import {
   DocumentosLegaisAssociadosSeplag,
   type DocumentoLegalAssociadoSeplag,
 } from "@componentes/DocumentosLegaisAssociados";
 import {
+  DateFieldSeplag,
   DropdownFieldSeplag,
+  MultiSelectFieldSeplag,
   TextAreaFieldSeplag,
   TextFieldSeplag,
 } from "@componentes/Fields";
@@ -182,7 +185,13 @@ const menuFolha: IMenuSeplag[] = [
       { label: "Folha de Pagamento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Tipo Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
-      { label: "Grupo Eleitos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+      {
+        label: "Grupo Eleitos",
+        icon: "pi pi-circle-on",
+        to: "/prototipos/folha/grupo-eleitos",
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
       { label: "Parâmetros de Folha", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão Alimentícia", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão Especial", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
@@ -510,6 +519,27 @@ interface RegimeJuridicoFiltroForm {
   situacao?: string;
 }
 
+interface GrupoEleitosFiltroForm {
+  termo?: string;
+  finalidade?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+interface GrupoEleitoForm {
+  descricao?: string;
+  finalidade?: string;
+  observacoes?: string;
+  participanteBusca?: string;
+  consultar?: "todos" | "disponiveis" | "eleitos";
+  filtroInstituicao?: string[];
+  filtroOrgao?: string[];
+  filtroTipoVinculo?: string[];
+  filtroSetor?: string[];
+  filtroCategoria?: string[];
+  filtroCargo?: string[];
+}
+
 interface RegimeJuridicoForm {
   nome?: string;
   sigla?: string;
@@ -551,6 +581,24 @@ interface RegimeJuridicoRow {
   instituicao: string;
   instituicoesVinculadas: number;
   situacao: StatusOperacionalVigenciaSeplag;
+}
+
+interface GrupoEleitosRow {
+  id: number;
+  codigo: number;
+  descricao: string;
+  finalidade: string;
+  quantidadeEleitos: number;
+  dataCadastro: string;
+}
+
+interface GrupoEleitoParticipanteRow {
+  id: number;
+  matricula: string;
+  vinculo: string;
+  servidor: string;
+  orgaoEntidade: string;
+  dataExercicioAposentadoria: string;
 }
 
 interface SubcategoriaRow {
@@ -671,6 +719,117 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
   },
 ];
 
+const gruposEleitosMock: GrupoEleitosRow[] = [
+  {
+    id: 81,
+    codigo: 81,
+    descricao: "PESSOA FÍSICA",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "15/05/2026",
+  },
+  {
+    id: 79,
+    codigo: 79,
+    descricao: "abc123",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "14/05/2026",
+  },
+  {
+    id: 80,
+    codigo: 80,
+    descricao:
+      "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas minima reprehenderit cupiditate tempore. Commodi dignissimos ad impedit repellendus consequatur aliquam cumque magnam saepe vero dolor acc",
+    finalidade: "CONTAGEM DE TEMPO",
+    quantidadeEleitos: 0,
+    dataCadastro: "14/05/2026",
+  },
+  {
+    id: 77,
+    codigo: 77,
+    descricao: "Grupo Teste",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "11/05/2026",
+  },
+  {
+    id: 75,
+    codigo: 75,
+    descricao: "TESTE",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "29/04/2026",
+  },
+  {
+    id: 76,
+    codigo: 76,
+    descricao: "TESTE",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "29/04/2026",
+  },
+  {
+    id: 74,
+    codigo: 74,
+    descricao: "Teste 24/04/2026",
+    finalidade: "FOLHA DE PAGAMENTO",
+    quantidadeEleitos: 0,
+    dataCadastro: "27/04/2026",
+  },
+];
+
+const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
+  {
+    id: 1,
+    matricula: "139151",
+    vinculo: "15",
+    servidor: "ADRIANA MAMEDES MENDONÇA",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "21/04/2026",
+  },
+  {
+    id: 2,
+    matricula: "309263",
+    vinculo: "1",
+    servidor: "MARIA 322373",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "01/01/2001",
+  },
+  {
+    id: 3,
+    matricula: "309263",
+    vinculo: "2",
+    servidor: "MARIA 322373",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "",
+  },
+  {
+    id: 4,
+    matricula: "322603",
+    vinculo: "3",
+    servidor: "ABELARDO PINTO TELES",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "11/09/2025",
+  },
+  {
+    id: 5,
+    matricula: "322607",
+    vinculo: "9",
+    servidor: "ABELVAL LUIZ GOMES DA SILVA",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "10/12/2025",
+  },
+  {
+    id: 6,
+    matricula: "139151",
+    vinculo: "9",
+    servidor: "ADRIANA MAMEDES MENDONÇA",
+    orgaoEntidade: "",
+    dataExercicioAposentadoria: "20/04/2026",
+  },
+];
+
 const instituicaoOptions = [
   { label: "SEPLAG", value: "seplag" },
   { label: "Casa Civil", value: "casa-civil" },
@@ -678,6 +837,44 @@ const instituicaoOptions = [
 ];
 
 const regimeInstituicaoOptions = [{ label: "GOVMT", value: "govmt" }];
+
+const grupoEleitosFinalidadeOptions = [
+  { label: "Folha de Pagamento", value: "FOLHA DE PAGAMENTO" },
+  { label: "Contagem de Tempo", value: "CONTAGEM DE TEMPO" },
+];
+
+const grupoEleitoFiltroAvancadoOptions = {
+  instituicoes: [
+    { label: "Governo do Estado de Mato Grosso", value: "govmt" },
+    { label: "SEPLAG-MT", value: "seplag" },
+    { label: "MTI", value: "mti" },
+  ],
+  orgaos: [
+    { label: "SEPLAG-MT", value: "seplag" },
+    { label: "SEFAZ-MT", value: "sefaz" },
+    { label: "SEDUC-MT", value: "seduc" },
+  ],
+  tiposVinculo: [
+    { label: "Efetivo", value: "efetivo" },
+    { label: "Comissionado", value: "comissionado" },
+    { label: "Temporário", value: "temporario" },
+  ],
+  setores: [
+    { label: "SAPGD", value: "sapgd" },
+    { label: "CPPTI", value: "cppti" },
+    { label: "Gabinete", value: "gabinete" },
+  ],
+  categorias: [
+    { label: "Estatutário Civil", value: "estatutario-civil" },
+    { label: "Militar", value: "militar" },
+    { label: "Celetista", value: "celetista" },
+  ],
+  cargos: [
+    { label: "Analista Administrativo", value: "analista-administrativo" },
+    { label: "Técnico Administrativo", value: "tecnico-administrativo" },
+    { label: "Gestor Governamental", value: "gestor-governamental" },
+  ],
+};
 
 const situacaoOptions = [
   { label: "Ativo", value: "ATIVO" },
@@ -744,6 +941,11 @@ const regimeStatusMeta: Record<
 const categoriaTabs: TabItemSeplag<string>[] = [
   { label: "Dados Gerais", value: "dados-gerais", col: "lg:col-6" },
   { label: "Subcategoria", value: "subcategoria", col: "lg:col-6" },
+];
+
+const grupoEleitoTabs: TabItemSeplag<string>[] = [
+  { label: "Informações", value: "grupo-eleito", col: "lg:col-6" },
+  { label: "Participantes", value: "participantes", col: "lg:col-6" },
 ];
 
 function createResults<T>(content: T[]): ResultsSeplag<T> {
@@ -1716,6 +1918,440 @@ export function PrototiposFolhaPenhoraJudicialPage() {
       menuItems={menuFolha}
     >
       <div className="prototype-empty-content" aria-label="Penhora Judicial" />
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaGrupoEleitosPage() {
+  const navigate = useNavigate();
+  const { control, reset } = useForm<GrupoEleitosFiltroForm>({
+    defaultValues: {
+      termo: "",
+      finalidade: undefined,
+      dataInicio: "",
+      dataFim: "",
+    },
+  });
+  const grupoEleitosResults = {
+    ...createResults(gruposEleitosMock),
+    totalPages: 5,
+    totalRecords: 42,
+    size: 10,
+    sizePage: 10,
+  };
+  const grupoEleitosColumns: ColumnMetaSeplag<GrupoEleitosRow>[] = [
+    {
+      field: "codigo",
+      header: "Código",
+    },
+    {
+      field: "descricao",
+      header: "Descrição",
+    },
+    {
+      header: "Finalidade",
+      body: (row) => <span>{row.finalidade}</span>,
+    },
+    {
+      field: "quantidadeEleitos",
+      header: "Quantidade Eleitos",
+    },
+    {
+      field: "dataCadastro",
+      header: "Data Cadastro",
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-grupo-page">
+        <CardSeplag
+          title="Grupo Eleitos"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-category-filters prototype-folha-grupo-filters grid">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Código, Descrição"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="finalidade"
+              control={control}
+              label="Finalidade"
+              cols="12 6 2"
+              options={grupoEleitosFinalidadeOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DateFieldSeplag
+              name="dataInicio"
+              control={control}
+              label="Data Início"
+              cols="12 6 2"
+              getFormErrorMessage={() => null}
+            />
+            <DateFieldSeplag
+              name="dataFim"
+              control={control}
+              label="Data Fim"
+              cols="12 6 2"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termo: "",
+                    finalidade: undefined,
+                    dataInicio: "",
+                    dataFim: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-folha-grupo-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={grupoEleitosResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy
+              selectionMode={null}
+              columns={grupoEleitosColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate("/prototipos/folha/grupo-eleitos/novo")
+              }
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaGrupoEleitoFormPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("grupo-eleito");
+  const [advancedFiltersVisible, setAdvancedFiltersVisible] = useState(false);
+  const { control } = useForm<GrupoEleitoForm>({
+    defaultValues: {
+      descricao: "",
+      finalidade: undefined,
+      observacoes: "",
+      participanteBusca: "",
+      consultar: "todos",
+      filtroInstituicao: [],
+      filtroOrgao: [],
+      filtroTipoVinculo: [],
+      filtroSetor: [],
+      filtroCategoria: [],
+      filtroCargo: [],
+    },
+  });
+  const participanteColumns = ["Matrícula", "Servidor"];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white">
+          <CardSeplag
+            title="Cadastrar - Grupo Eleito"
+            cols="12"
+            cardHeaderClassNames="prototype-category-card"
+          >
+            <div className="prototype-category-form">
+              <TabsSeplag
+                items={grupoEleitoTabs}
+                activeValue={activeTab}
+                onChange={setActiveTab}
+                maxWidth="420px"
+              />
+
+              {activeTab === "grupo-eleito" ? (
+                <div className="grid prototype-category-form-fields prototype-grupo-eleito-form-fields">
+                  <TextFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12 12 6"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="finalidade"
+                    control={control}
+                    label="Finalidade"
+                    cols="12 12 6"
+                    required
+                    options={grupoEleitosFinalidadeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextAreaFieldSeplag
+                    name="observacoes"
+                    control={control}
+                    label="Observações"
+                    cols="12 12 12"
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              ) : (
+                <div className="prototype-grupo-participantes">
+                  <div className="prototype-category-summary prototype-grupo-participantes-summary">
+                    <p>
+                      <span>Descrição:</span> PESSOA FÍSICA
+                    </p>
+                    <p>
+                      <span>Código:</span> 81
+                    </p>
+                  </div>
+
+                  <div className="prototype-grupo-participantes-filters">
+                    <div className="prototype-grupo-search-label">
+                      <label htmlFor="participanteBusca">
+                        Nome,CPF ou Matrícula<span>*</span>
+                      </label>
+                    </div>
+                    <div className="prototype-grupo-filter-row">
+                      <div className="prototype-grupo-search-field">
+                      <div className="prototype-grupo-search-input">
+                        <Controller
+                          name="participanteBusca"
+                          control={control}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                id="participanteBusca"
+                                className="p-inputtext p-component"
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div className="prototype-grupo-filter-actions">
+                        <BotaoSeplag
+                          type="button"
+                          label="Filtro"
+                          icon="pi pi-filter"
+                          style={{ height: 36, marginBottom: 0 }}
+                          onClick={() => setAdvancedFiltersVisible(true)}
+                        />
+                        <BotaoLimparFiltroSeplag
+                          type="button"
+                          label="Limpar Filtros"
+                          icon="pi pi-refresh"
+                          style={{ height: 36, marginBottom: 0 }}
+                          onClick={() => {}}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="prototype-grupo-dual-list">
+                    <section className="prototype-grupo-list-panel">
+                      <header>Disponíveis</header>
+                      <div className="prototype-grupo-table-wrapper">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>
+                                <input type="checkbox" aria-label="Selecionar todos disponíveis" />
+                              </th>
+                              {participanteColumns.map((column) => (
+                                <th key={column}>{column}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {grupoEleitoParticipantesMock.map((participante) => (
+                              <tr key={participante.id}>
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`Selecionar ${participante.servidor}`}
+                                  />
+                                </td>
+                                <td>{participante.matricula}</td>
+                                <td>{participante.servidor}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="prototype-grupo-pagination">
+                        <i className="pi pi-angle-double-left" />
+                        <i className="pi pi-angle-left" />
+                        <span>1</span>
+                        <i className="pi pi-angle-right" />
+                        <i className="pi pi-angle-double-right" />
+                      </div>
+                    </section>
+
+                    <div className="prototype-grupo-transfer-actions">
+                      <button type="button" aria-label="Mover para disponíveis">
+                        <i className="pi pi-arrow-left" />
+                      </button>
+                      <button type="button" aria-label="Mover para eleitos">
+                        <i className="pi pi-arrow-right" />
+                      </button>
+                    </div>
+
+                    <section className="prototype-grupo-list-panel">
+                      <header>
+                        <span>Eleitos</span>
+                        <BotaoSeplag
+                          type="button"
+                          label=""
+                          icon="pi pi-upload"
+                          onClick={() => {}}
+                        />
+                      </header>
+                      <div className="prototype-grupo-table-wrapper prototype-grupo-table-empty">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>
+                                <input type="checkbox" aria-label="Selecionar todos eleitos" />
+                              </th>
+                              {participanteColumns.map((column) => (
+                                <th key={column}>{column}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                        </table>
+                        <div className="prototype-grupo-empty-message">
+                          Não possui dados cadastrados
+                        </div>
+                        <div className="prototype-grupo-pagination">
+                          <i className="pi pi-angle-double-left" />
+                          <i className="pi pi-angle-left" />
+                          <i className="pi pi-angle-right" />
+                          <i className="pi pi-angle-double-right" />
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              )}
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate("/prototipos/folha/grupo-eleitos")}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+        <ModalSeplag
+          visible={advancedFiltersVisible}
+          titulo="Filtros Avançados"
+          tamanho="72vw"
+          fechar={() => setAdvancedFiltersVisible(false)}
+          labelFechar="Cancelar"
+          labelAcao="Aplicar Filtros"
+          iconFechar=""
+          iconAcao=""
+          funcAcao={() => setAdvancedFiltersVisible(false)}
+          ariaLabel="Filtros Avançados de Participantes"
+        >
+          <div className="prototype-grupo-advanced-filter-grid">
+            <MultiSelectFieldSeplag
+              name="filtroInstituicao"
+              control={control}
+              label="Instituição"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.instituicoes}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione instituições"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="filtroOrgao"
+              control={control}
+              label="Órgão"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.orgaos}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione órgãos"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="filtroTipoVinculo"
+              control={control}
+              label="Tipo de Vínculo"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione tipos"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="filtroSetor"
+              control={control}
+              label="Setor"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.setores}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione setores"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="filtroCategoria"
+              control={control}
+              label="Categoria"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.categorias}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione categorias"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="filtroCargo"
+              control={control}
+              label="Cargo"
+              cols="12 12 4"
+              options={grupoEleitoFiltroAvancadoOptions.cargos}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione cargos"
+              getFormErrorMessage={() => null}
+            />
+          </div>
+        </ModalSeplag>
+      </form>
     </PrototypeSystemPage>
   );
 }
