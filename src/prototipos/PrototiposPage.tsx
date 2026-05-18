@@ -39,6 +39,7 @@ import {
   TablePaginadoSeplag,
   type ColumnMetaSeplag,
 } from "@componentes/TablePaginado";
+import { PickListSeplag } from "@componentes/PickList";
 import { TabsSeplag, type TabItemSeplag } from "@componentes/Tabs";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
@@ -2051,6 +2052,12 @@ export function PrototiposFolhaGrupoEleitosPage() {
 export function PrototiposFolhaGrupoEleitoFormPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("grupo-eleito");
+  const [participantesDisponiveis, setParticipantesDisponiveis] = useState(
+    grupoEleitoParticipantesMock.slice(4),
+  );
+  const [participantesEleitos, setParticipantesEleitos] = useState(
+    grupoEleitoParticipantesMock.slice(0, 4),
+  );
   const { control, setValue } = useForm<GrupoEleitoForm>({
     defaultValues: {
       descricao: "",
@@ -2066,7 +2073,12 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
       filtroCargo: [],
     },
   });
-  const participanteColumns = ["Matrícula", "Servidor"];
+  const renderParticipantePickListItem = (participante: GrupoEleitoParticipanteRow) => (
+    <div className="prototype-grupo-picklist-item">
+      <span className="prototype-grupo-matricula">{participante.matricula}</span>
+      <strong>{participante.servidor}</strong>
+    </div>
+  );
   const handleClearParticipanteFilters = () => {
     setValue("participanteBusca", "");
     setValue("filtroInstituicao", []);
@@ -2086,7 +2098,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title="Cadastrar - Grupo Eleito"
+            title="Cadastrar - Grupo de Eleito"
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
@@ -2130,201 +2142,128 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                 </div>
               ) : (
                 <div className="prototype-grupo-participantes">
-                  <div className="prototype-category-summary prototype-grupo-participantes-summary">
-                    <p>
-                      <span>Descrição:</span> PESSOA FÍSICA
-                    </p>
-                    <p>
-                      <span>Código:</span> 81
-                    </p>
-                  </div>
-
-                  <div className="prototype-grupo-participantes-filters">
-                    <div className="prototype-grupo-search-label">
-                      <label htmlFor="participanteBusca">
+                  <div className="prototype-grupo-picklist-shell">
+                    <div className="prototype-grupo-card-search">
+                      <div className="prototype-grupo-card-search-label">
                         Nome,CPF ou Matrícula<span>*</span>
-                      </label>
-                    </div>
-                    <div className="prototype-grupo-filter-row">
-                      <div className="prototype-grupo-search-field">
-                        <div className="prototype-grupo-search-input">
+                      </div>
+                        <div className="prototype-grupo-card-search-row">
                           <Controller
                             name="participanteBusca"
                             control={control}
                             render={({ field }) => (
                               <input
                                 {...field}
-                                id="participanteBusca"
                                 className="p-inputtext p-component"
+                                placeholder="Buscar por nome ou matrícula..."
                               />
                             )}
                           />
                         </div>
                       </div>
-                      <div className="prototype-grupo-filter-actions">
-                        <BotaoLimparFiltroSeplag
-                          type="button"
-                          label="Limpar Filtros"
-                          icon="pi pi-refresh"
-                          style={{ height: 36, marginBottom: 0 }}
-                          onClick={handleClearParticipanteFilters}
-                        />
-                      </div>
-                    </div>
 
-                    <div className="grid prototype-grupo-advanced-filter-grid">
-                      <MultiSelectFieldSeplag
-                        name="filtroInstituicao"
-                        control={control}
-                        label="Instituição"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.instituicoes}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione instituições"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
-                        name="filtroOrgao"
-                        control={control}
-                        label="Órgão"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.orgaos}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione órgãos"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
-                        name="filtroTipoVinculo"
-                        control={control}
-                        label="Tipo de Vínculo"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione tipos"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
-                        name="filtroSetor"
-                        control={control}
-                        label="Setor"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.setores}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione setores"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
-                        name="filtroCategoria"
-                        control={control}
-                        label="Categoria"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.categorias}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione categorias"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
-                        name="filtroCargo"
-                        control={control}
-                        label="Cargo"
-                        cols="12 6 2"
-                        options={grupoEleitoFiltroAvancadoOptions.cargos}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecione cargos"
-                        getFormErrorMessage={() => null}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="prototype-grupo-dual-list">
-                    <section className="prototype-grupo-list-panel">
-                      <header>Disponíveis</header>
-                      <div className="prototype-grupo-table-wrapper">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>
-                                <input type="checkbox" aria-label="Selecionar todos disponíveis" />
-                              </th>
-                              {participanteColumns.map((column) => (
-                                <th key={column}>{column}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {grupoEleitoParticipantesMock.map((participante) => (
-                              <tr key={participante.id}>
-                                <td>
-                                  <input
-                                    type="checkbox"
-                                    aria-label={`Selecionar ${participante.servidor}`}
-                                  />
-                                </td>
-                                <td>{participante.matricula}</td>
-                                <td>{participante.servidor}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="prototype-grupo-pagination">
-                        <i className="pi pi-angle-double-left" />
-                        <i className="pi pi-angle-left" />
-                        <span>1</span>
-                        <i className="pi pi-angle-right" />
-                        <i className="pi pi-angle-double-right" />
-                      </div>
-                    </section>
-
-                    <div className="prototype-grupo-transfer-actions">
-                      <button type="button" aria-label="Mover para disponíveis">
-                        <i className="pi pi-arrow-left" />
-                      </button>
-                      <button type="button" aria-label="Mover para eleitos">
-                        <i className="pi pi-arrow-right" />
-                      </button>
-                    </div>
-
-                    <section className="prototype-grupo-list-panel">
-                      <header>
-                        <span>Eleitos</span>
-                        <BotaoSeplag
-                          type="button"
-                          label=""
-                          icon="pi pi-upload"
-                          onClick={() => {}}
-                        />
-                      </header>
-                      <div className="prototype-grupo-table-wrapper prototype-grupo-table-empty">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>
-                                <input type="checkbox" aria-label="Selecionar todos eleitos" />
-                              </th>
-                              {participanteColumns.map((column) => (
-                                <th key={column}>{column}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                        </table>
-                        <div className="prototype-grupo-empty-message">
-                          Não possui dados cadastrados
+                      <details className="prototype-grupo-inline-filters" open>
+                        <summary className="prototype-grupo-inline-filters-title">
+                          <span>
+                            <i className="pi pi-filter" aria-hidden="true" />
+                            Filtros avançados
+                          </span>
+                          <i className="pi pi-chevron-down prototype-grupo-accordion-chevron" aria-hidden="true" />
+                        </summary>
+                        <div className="grid prototype-grupo-advanced-filter-grid">
+                          <MultiSelectFieldSeplag
+                            name="filtroInstituicao"
+                            control={control}
+                            label="Instituição"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.instituicoes}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar instituições"
+                            getFormErrorMessage={() => null}
+                          />
+                          <MultiSelectFieldSeplag
+                            name="filtroOrgao"
+                            control={control}
+                            label="Órgão"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.orgaos}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar órgãos"
+                            getFormErrorMessage={() => null}
+                          />
+                          <MultiSelectFieldSeplag
+                            name="filtroTipoVinculo"
+                            control={control}
+                            label="Tipo de Vínculo"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar tipos"
+                            getFormErrorMessage={() => null}
+                          />
+                          <MultiSelectFieldSeplag
+                            name="filtroSetor"
+                            control={control}
+                            label="Setor"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.setores}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar setores"
+                            getFormErrorMessage={() => null}
+                          />
+                          <MultiSelectFieldSeplag
+                            name="filtroCategoria"
+                            control={control}
+                            label="Categoria"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.categorias}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar categorias"
+                            getFormErrorMessage={() => null}
+                          />
+                          <MultiSelectFieldSeplag
+                            name="filtroCargo"
+                            control={control}
+                            label="Cargo"
+                            cols="12 6 4"
+                            options={grupoEleitoFiltroAvancadoOptions.cargos}
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Selecionar cargos"
+                            getFormErrorMessage={() => null}
+                          />
                         </div>
-                        <div className="prototype-grupo-pagination">
-                          <i className="pi pi-angle-double-left" />
-                          <i className="pi pi-angle-left" />
-                          <i className="pi pi-angle-right" />
-                          <i className="pi pi-angle-double-right" />
+                        <div className="prototype-grupo-inline-filter-actions">
+                          <BotaoLimparFiltroSeplag
+                            type="button"
+                            label="Limpar Filtros"
+                            icon="pi pi-refresh"
+                            style={{ height: 30, marginBottom: 0 }}
+                            onClick={handleClearParticipanteFilters}
+                          />
                         </div>
-                      </div>
-                    </section>
+                      </details>
+
+                    <PickListSeplag<GrupoEleitoParticipanteRow>
+                      title=""
+                      titleNaoSelecionados="Disponíveis"
+                      titleSelecionados="Eleitos"
+                      dataKey="id"
+                      dataLabel="servidor"
+                      filterBy="matricula,servidor"
+                      filterPlaceholder="Filtrar participantes..."
+                      naoSelecionados={participantesDisponiveis}
+                      selecionados={participantesEleitos}
+                      setNaoSelecionados={setParticipantesDisponiveis}
+                      setSelecionados={setParticipantesEleitos}
+                      naoSelecionadosItemTemplate={renderParticipantePickListItem}
+                      selecionadosItemTemplate={renderParticipantePickListItem}
+                    />
                   </div>
                 </div>
               )}
