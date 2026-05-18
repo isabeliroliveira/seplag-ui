@@ -172,7 +172,10 @@ const menuFolha: IMenuSeplag[] = [
     url: "#",
     visibleOnMenu: true,
     visibleOnRouter: true,
-    items: [{ label: "Solicitação de Rubrica", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true }],
+    items: [
+      { label: "Catálogo de Rubricas", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+      { label: "Solicitação de Rubrica", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+    ],
   },
   {
     label: "Cadastro",
