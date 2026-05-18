@@ -11,7 +11,6 @@ import { AnexarDocumentoSeplag } from "@componentes/AnexarDocumento";
 import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
-import { ModalSeplag } from "@componentes/Modal";
 import {
   DocumentosLegaisAssociadosSeplag,
   type DocumentoLegalAssociadoSeplag,
@@ -186,7 +185,7 @@ const menuFolha: IMenuSeplag[] = [
       { label: "Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Tipo Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       {
-        label: "Grupo Eleitos",
+        label: "Grupo de Eleitos",
         icon: "pi pi-circle-on",
         to: "/prototipos/folha/grupo-eleitos",
         visibleOnMenu: true,
@@ -1970,7 +1969,7 @@ export function PrototiposFolhaGrupoEleitosPage() {
     >
       <div className="prototype-page-content prototype-page-content--white prototype-folha-grupo-page">
         <CardSeplag
-          title="Grupo Eleitos"
+          title="Grupo de Eleitos"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
         >
@@ -2052,8 +2051,7 @@ export function PrototiposFolhaGrupoEleitosPage() {
 export function PrototiposFolhaGrupoEleitoFormPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("grupo-eleito");
-  const [advancedFiltersVisible, setAdvancedFiltersVisible] = useState(false);
-  const { control } = useForm<GrupoEleitoForm>({
+  const { control, setValue } = useForm<GrupoEleitoForm>({
     defaultValues: {
       descricao: "",
       finalidade: undefined,
@@ -2069,6 +2067,15 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
     },
   });
   const participanteColumns = ["Matrícula", "Servidor"];
+  const handleClearParticipanteFilters = () => {
+    setValue("participanteBusca", "");
+    setValue("filtroInstituicao", []);
+    setValue("filtroOrgao", []);
+    setValue("filtroTipoVinculo", []);
+    setValue("filtroSetor", []);
+    setValue("filtroCategoria", []);
+    setValue("filtroCargo", []);
+  };
 
   return (
     <PrototypeSystemPage
@@ -2140,36 +2147,98 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                     </div>
                     <div className="prototype-grupo-filter-row">
                       <div className="prototype-grupo-search-field">
-                      <div className="prototype-grupo-search-input">
-                        <Controller
-                          name="participanteBusca"
-                          control={control}
+                        <div className="prototype-grupo-search-input">
+                          <Controller
+                            name="participanteBusca"
+                            control={control}
                             render={({ field }) => (
                               <input
                                 {...field}
                                 id="participanteBusca"
                                 className="p-inputtext p-component"
-                            />
-                          )}
-                        />
+                              />
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="prototype-grupo-filter-actions">
-                        <BotaoSeplag
-                          type="button"
-                          label="Filtro"
-                          icon="pi pi-filter"
-                          style={{ height: 36, marginBottom: 0 }}
-                          onClick={() => setAdvancedFiltersVisible(true)}
-                        />
+                      <div className="prototype-grupo-filter-actions">
                         <BotaoLimparFiltroSeplag
                           type="button"
                           label="Limpar Filtros"
                           icon="pi pi-refresh"
                           style={{ height: 36, marginBottom: 0 }}
-                          onClick={() => {}}
+                          onClick={handleClearParticipanteFilters}
                         />
                       </div>
+                    </div>
+
+                    <div className="grid prototype-grupo-advanced-filter-grid">
+                      <MultiSelectFieldSeplag
+                        name="filtroInstituicao"
+                        control={control}
+                        label="Instituição"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.instituicoes}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione instituições"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroOrgao"
+                        control={control}
+                        label="Órgão"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.orgaos}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione órgãos"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroTipoVinculo"
+                        control={control}
+                        label="Tipo de Vínculo"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione tipos"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroSetor"
+                        control={control}
+                        label="Setor"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.setores}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione setores"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroCategoria"
+                        control={control}
+                        label="Categoria"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.categorias}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione categorias"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroCargo"
+                        control={control}
+                        label="Cargo"
+                        cols="12 6 2"
+                        options={grupoEleitoFiltroAvancadoOptions.cargos}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione cargos"
+                        getFormErrorMessage={() => null}
+                      />
                     </div>
                   </div>
 
@@ -2270,87 +2339,6 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
             </div>
           </CardSeplag>
         </div>
-        <ModalSeplag
-          visible={advancedFiltersVisible}
-          titulo="Filtros Avançados"
-          tamanho="72vw"
-          fechar={() => setAdvancedFiltersVisible(false)}
-          labelFechar="Cancelar"
-          labelAcao="Aplicar Filtros"
-          iconFechar=""
-          iconAcao=""
-          funcAcao={() => setAdvancedFiltersVisible(false)}
-          ariaLabel="Filtros Avançados de Participantes"
-        >
-          <div className="prototype-grupo-advanced-filter-grid">
-            <MultiSelectFieldSeplag
-              name="filtroInstituicao"
-              control={control}
-              label="Instituição"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.instituicoes}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione instituições"
-              getFormErrorMessage={() => null}
-            />
-            <MultiSelectFieldSeplag
-              name="filtroOrgao"
-              control={control}
-              label="Órgão"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.orgaos}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione órgãos"
-              getFormErrorMessage={() => null}
-            />
-            <MultiSelectFieldSeplag
-              name="filtroTipoVinculo"
-              control={control}
-              label="Tipo de Vínculo"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione tipos"
-              getFormErrorMessage={() => null}
-            />
-            <MultiSelectFieldSeplag
-              name="filtroSetor"
-              control={control}
-              label="Setor"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.setores}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione setores"
-              getFormErrorMessage={() => null}
-            />
-            <MultiSelectFieldSeplag
-              name="filtroCategoria"
-              control={control}
-              label="Categoria"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.categorias}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione categorias"
-              getFormErrorMessage={() => null}
-            />
-            <MultiSelectFieldSeplag
-              name="filtroCargo"
-              control={control}
-              label="Cargo"
-              cols="12 12 4"
-              options={grupoEleitoFiltroAvancadoOptions.cargos}
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Selecione cargos"
-              getFormErrorMessage={() => null}
-            />
-          </div>
-        </ModalSeplag>
       </form>
     </PrototypeSystemPage>
   );

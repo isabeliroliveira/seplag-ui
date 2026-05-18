@@ -736,29 +736,38 @@
 }
 
 .prototype-grupo-advanced-filter-grid {
-  display: contents;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px -6px 10px;
 }
 
 .prototype-grupo-advanced-filter-grid [class*="content-rotulo"] {
-  gap: 8px;
+  gap: 3px;
 }
 
 .prototype-grupo-advanced-filter-grid label,
 .prototype-grupo-advanced-filter-grid .label-destaque {
-  color: #6b6b6b;
-  font-size: 1.1rem;
+  color: #334e68;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .prototype-grupo-advanced-filter-grid .p-multiselect {
-  min-height: 48px;
+  width: 100%;
+  min-height: 32px;
+  height: 32px;
 }
 
 .prototype-grupo-advanced-filter-grid .p-multiselect-label {
   display: flex;
   align-items: center;
   color: #7a7a7a;
-  font-size: 1rem;
+  font-size: 0.85rem;
+  padding-block: 0;
+}
+
+.prototype-grupo-advanced-filter-grid .p-multiselect-trigger {
+  width: 2rem;
 }
 
 @media (max-width: 1100px) {
