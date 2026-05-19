@@ -11,6 +11,7 @@ import { AnexarDocumentoSeplag } from "@componentes/AnexarDocumento";
 import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
+import { ModalSeplag } from "@componentes/Modal";
 import {
   DocumentosLegaisAssociadosSeplag,
   type DocumentoLegalAssociadoSeplag,
@@ -598,6 +599,11 @@ interface GrupoEleitosRow {
 interface CatalogoRubricaFiltroForm {
   termo?: string;
   status?: "Ativa" | "Inativa" | "Extintas" | "";
+}
+
+interface InativarRubricaForm {
+  motivoInativacao: string;
+  dataFim: string;
 }
 
 interface RubricaRow {
@@ -1992,11 +1998,24 @@ export function PrototiposFolhaCatalogoRubricasPage() {
     },
   });
 
+  // Estados para o modal de inativação
+  const [visibleModalInativar, setVisibleModalInativar] = useState(false);
+  const [rubricaSelecionada, setRubricaSelecionada] = useState<RubricaRow | null>(null);
+  const [catalogoRubricasMockState, setCatalogoRubricasMockState] = useState(catalogoRubricasMock);
+
+  // Formulário para inativação
+  const { control: controlInativar, reset: resetInativar, handleSubmit } = useForm<InativarRubricaForm>({
+    defaultValues: {
+      motivoInativacao: "",
+      dataFim: "",
+    },
+  });
+
   const termo = (watch("termo") ?? "").toLowerCase().trim();
   const statusFiltro = watch("status");
 
   const catalogoResults = createResults(
-    catalogoRubricasMock.filter((item) => {
+    catalogoRubricasMockState.filter((item) => {
       const matchesStatus = !statusFiltro || item.status === statusFiltro;
       const matchesTermo =
         !termo ||
@@ -2038,6 +2057,30 @@ export function PrototiposFolhaCatalogoRubricasPage() {
       },
     },
   ];
+
+  // Funções para lidar com inativação
+  const handleInativar = (rubrica: RubricaRow) => {
+    setRubricaSelecionada(rubrica);
+    resetInativar({ motivoInativacao: "", dataFim: "" });
+    setVisibleModalInativar(true);
+  };
+
+  const confirmarInativacao = handleSubmit((formData) => {
+    if (rubricaSelecionada) {
+      // Atualizar o mock data
+      const rubricaAtualizada = catalogoRubricasMockState.map((rubrica) =>
+        rubrica.id === rubricaSelecionada.id
+          ? { ...rubrica, status: "Inativa" as const }
+          : rubrica
+      );
+      setCatalogoRubricasMockState(rubricaAtualizada);
+      
+      // Fechar modal e resetar
+      setVisibleModalInativar(false);
+      resetInativar();
+      setRubricaSelecionada(null);
+    }
+  });
 
   return (
     <PrototypeSystemPage
@@ -2087,10 +2130,48 @@ export function PrototiposFolhaCatalogoRubricasPage() {
               columns={catalogoColumns}
               hasEventoAcao
               handleView={(row) => navigate(`/prototipos/folha/catalogo-rubricas/${row.id}`)}
+              handleInativar={(row) => row.status === "Ativa" ? handleInativar(row) : null}
               handleOnPageChange={() => {}}
             />
           </div>
         </CardSeplag>
+
+        {/* Modal de Inativação */}
+        <ModalSeplag
+          visible={visibleModalInativar}
+          titulo={`Inativar Rubrica - ${rubricaSelecionada?.codigo} (${rubricaSelecionada?.nomeRubrica})`}
+          fechar={() => {
+            setVisibleModalInativar(false);
+            setRubricaSelecionada(null);
+          }}
+          labelAcao="Inativar"
+          funcAcao={confirmarInativacao}
+          tamanho="500px"
+        >
+          <div className="grid" style={{ paddingTop: "20px" }}>
+            <TextAreaFieldSeplag
+              name="motivoInativacao"
+              control={controlInativar}
+              label="Motivo da Inativação"
+              cols="12"
+              required={true}
+              rows={4}
+              placeholder="Informe o motivo da inativação desta rubrica"
+              getFormErrorMessage={(error) => error?.message}
+            />
+            <DateFieldSeplag
+              name="dataFim"
+              control={controlInativar}
+              label="Data de Fim"
+              cols="12"
+              required={true}
+              placeholder="dd/mm/aaaa"
+              dateFormat="dd/mm/yy"
+              mask="99/99/9999"
+              getFormErrorMessage={(error) => error?.message}
+            />
+          </div>
+        </ModalSeplag>
       </div>
     </PrototypeSystemPage>
   );
