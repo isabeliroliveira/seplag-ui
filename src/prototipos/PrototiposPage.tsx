@@ -173,7 +173,7 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnMenu: true,
     visibleOnRouter: true,
     items: [
-      { label: "Catálogo de Rubricas", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+      { label: "Catálogo de Rubricas", icon: "pi pi-circle-on", to: "/prototipos/folha/catalogo-rubricas", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Solicitação de Rubrica", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
     ],
   },
@@ -595,6 +595,20 @@ interface GrupoEleitosRow {
   dataCadastro: string;
 }
 
+interface CatalogoRubricaFiltroForm {
+  termo?: string;
+  status?: "Ativa" | "Inativa" | "Extintas" | "";
+}
+
+interface RubricaRow {
+  id: number;
+  codigo: string;
+  nomeRubrica: string;
+  naturezaVerba: string;
+  dataAprovacao: string;
+  status: "Ativa" | "Inativa" | "Extintas";
+}
+
 interface GrupoEleitoParticipanteRow {
   id: number;
   matricula: string;
@@ -779,6 +793,62 @@ const gruposEleitosMock: GrupoEleitosRow[] = [
     finalidade: "FOLHA DE PAGAMENTO",
     quantidadeEleitos: 0,
     dataCadastro: "27/04/2026",
+  },
+];
+
+const catalogoRubricaStatusOptions = [
+  { label: "Todos", value: "" },
+  { label: "Ativa", value: "Ativa" },
+  { label: "Inativa", value: "Inativa" },
+  { label: "Extintas", value: "Extintas" },
+];
+
+const rubricaStatusBadge: Record<RubricaRow["status"], { label: string; color: string; bg: string; icon: string }> = {
+  Ativa: { label: "Ativa", color: "#168821", bg: "#d4edda", icon: "pi pi-check" },
+  Inativa: { label: "Inativa", color: "#c0392b", bg: "#fde8e6", icon: "pi pi-ban" },
+  Extintas: { label: "Extintas", color: "#b42318", bg: "#fee4e2", icon: "pi pi-times-circle" },
+};
+
+const catalogoRubricasMock: RubricaRow[] = [
+  {
+    id: 1,
+    codigo: "1001",
+    nomeRubrica: "SALÁRIO BÁSICO",
+    naturezaVerba: "Provento",
+    dataAprovacao: "10/05/2026",
+    status: "Ativa",
+  },
+  {
+    id: 2,
+    codigo: "1002",
+    nomeRubrica: "ADICIONAL NOTURNO",
+    naturezaVerba: "Provento",
+    dataAprovacao: "02/05/2026",
+    status: "Inativa",
+  },
+  {
+    id: 3,
+    codigo: "1003",
+    nomeRubrica: "DÉCIMO TERCEIRO",
+    naturezaVerba: "Provento",
+    dataAprovacao: "15/04/2026",
+    status: "Extintas",
+  },
+  {
+    id: 4,
+    codigo: "1004",
+    nomeRubrica: "VALE ALIMENTAÇÃO",
+    naturezaVerba: "Provento",
+    dataAprovacao: "18/05/2026",
+    status: "Ativa",
+  },
+  {
+    id: 5,
+    codigo: "1005",
+    nomeRubrica: "CONTRIBUIÇÃO SINDICAL",
+    naturezaVerba: "Desconto",
+    dataAprovacao: "22/05/2026",
+    status: "Inativa",
   },
 ];
 
@@ -1910,6 +1980,154 @@ export function PrototiposFolhaPage() {
       ambienteSistema="Teste"
       menuItems={menuFolha}
     />
+  );
+}
+
+export function PrototiposFolhaCatalogoRubricasPage() {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<CatalogoRubricaFiltroForm>({
+    defaultValues: {
+      termo: "",
+      status: "",
+    },
+  });
+
+  const termo = (watch("termo") ?? "").toLowerCase().trim();
+  const statusFiltro = watch("status");
+
+  const catalogoResults = createResults(
+    catalogoRubricasMock.filter((item) => {
+      const matchesStatus = !statusFiltro || item.status === statusFiltro;
+      const matchesTermo =
+        !termo ||
+        item.codigo.toLowerCase().includes(termo) ||
+        item.nomeRubrica.toLowerCase().includes(termo);
+      return matchesStatus && matchesTermo;
+    }),
+  );
+
+  const catalogoColumns: ColumnMetaSeplag<RubricaRow>[] = [
+    {
+      field: "codigo",
+      header: "Código",
+    },
+    {
+      field: "nomeRubrica",
+      header: "Nome da Rubrica",
+    },
+    {
+      field: "naturezaVerba",
+      header: "Natureza da Verba",
+    },
+    {
+      field: "dataAprovacao",
+      header: "Data de Aprovação",
+    },
+    {
+      header: "Status",
+      body: (row) => {
+        const badge = rubricaStatusBadge[row.status];
+        return (
+          <BadgeSeplag
+            label={badge.label}
+            color={badge.color}
+            bg={badge.bg}
+            icon={badge.icon}
+          />
+        );
+      },
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-catalogo-page">
+        <CardSeplag title="Catálogo de Rubricas" cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="prototype-category-filters prototype-folha-catalogo-filters grid">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Buscar por código ou nome"
+              cols="12 12 6"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="status"
+              control={control}
+              label="Status"
+              cols="12 12 4"
+              options={catalogoRubricaStatusOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() => reset({ termo: "", status: "" })}
+              />
+            </div>
+          </div>
+
+          <div className="prototype-folha-catalogo-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={catalogoResults}
+              rows={10}
+              rowsPerPage={[10, 20, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={catalogoColumns}
+              hasEventoAcao
+              handleView={(row) => navigate(`/prototipos/folha/catalogo-rubricas/${row.id}`)}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaCatalogoRubricaViewPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const rubrica = catalogoRubricasMock.find((item) => String(item.id) === id);
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-catalogo-view-page">
+        <CardSeplag title="Detalhes da Rubrica" cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="prototype-catalogo-view-actions">
+            <BotaoVoltarSeplag onClick={() => navigate(-1)}>
+              Voltar
+            </BotaoVoltarSeplag>
+          </div>
+          {rubrica ? (
+            <div className="prototype-catalogo-view-content">
+              <p><strong>Código:</strong> {rubrica.codigo}</p>
+              <p><strong>Nome da Rubrica:</strong> {rubrica.nomeRubrica}</p>
+              <p><strong>Natureza da Verba:</strong> {rubrica.naturezaVerba}</p>
+              <p><strong>Data de Aprovação:</strong> {rubrica.dataAprovacao}</p>
+              <p><strong>Status:</strong> <BadgeSeplag {...rubricaStatusBadge[rubrica.status]} label={rubrica.status} /></p>
+            </div>
+          ) : (
+            <div className="prototype-empty-content">Rubrica não encontrada.</div>
+          )}
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
   );
 }
 
