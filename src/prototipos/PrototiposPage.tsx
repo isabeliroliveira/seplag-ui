@@ -2854,7 +2854,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="orgao"
               control={control}
               label="Empresa/Órgão"
-              cols="12 6 2"
+              cols="12 6"
               options={grupoCalculoOrgaoOptions}
               optionLabel="label"
               optionValue="value"
@@ -2864,14 +2864,14 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="nomeGrupo"
               control={control}
               label="Nome do Grupo"
-              cols="12 6 3"
+              cols="12 6"
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
               name="situacao"
               control={control}
               label="Situação"
-              cols="12 6 2"
+              cols="12 6"
               options={regimeSituacaoOptions}
               optionLabel="label"
               optionValue="value"
@@ -2881,7 +2881,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="tipoFolha"
               control={control}
               label="Tipo de Folha"
-              cols="12 6 2"
+              cols="12 6"
               options={grupoCalculoTipoFolhaOptions}
               optionLabel="label"
               optionValue="value"
@@ -2891,7 +2891,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="tipoVinculo"
               control={control}
               label="Tipo de Vínculo"
-              cols="12 6 2"
+              cols="12 6"
               options={grupoCalculoTipoVinculoOptions}
               optionLabel="label"
               optionValue="value"
@@ -2901,7 +2901,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="competencia"
               control={control}
               label="Competência"
-              cols="12 6 2"
+              cols="12 6"
               placeholder="mm/aaaa"
               getFormErrorMessage={() => null}
             />
@@ -2909,10 +2909,10 @@ export function PrototiposFolhaGruposCalculoPage() {
               name="vigenteEm"
               control={control}
               label="Vigente em"
-              cols="12 6 2"
+              cols="12 6"
               getFormErrorMessage={() => null}
             />
-            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+            <div className="prototype-category-clear col-12 md:col-6">
               <BotaoLimparFiltroSeplag
                 type="button"
                 label="Limpar Filtro"
