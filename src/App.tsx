@@ -18,6 +18,8 @@ import {
   PrototiposESocialPage,
   PrototiposFolhaGrupoEleitoFormPage,
   PrototiposFolhaGrupoEleitosPage,
+  PrototiposFolhaGrupoCalculoFormPage,
+  PrototiposFolhaGruposCalculoPage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
   PrototiposFolhaCatalogoRubricaViewPage,
@@ -160,6 +162,18 @@ function App() {
       <Route
         path="/prototipos/folha/grupo-eleitos/novo"
         element={<PrototiposFolhaGrupoEleitoFormPage />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-calculo"
+        element={<PrototiposFolhaGruposCalculoPage />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-calculo/novo"
+        element={<PrototiposFolhaGrupoCalculoFormPage />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-calculo/:id/editar"
+        element={<PrototiposFolhaGrupoCalculoFormPage />}
       />
       <Route
         path="/prototipos/folha/penhora-judicial"

@@ -154,7 +154,6 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
               mode="basic"
               chooseLabel="Anexar documento"
               invalidFileSizeMessageDetail="Tamanho Máximo do Arquivo Não Permitido. Tamanho Máximo de {1}."
-              invalidFileTypeMessageDetail="Tipo de arquivo inválido. Selecione um arquivo PDF."
               accept="application/pdf"
               onSelect={onUploadDocument}
               maxFileSize={10000000}
