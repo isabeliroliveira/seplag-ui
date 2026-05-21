@@ -42,6 +42,27 @@ function AnexarDocumentoWithFileExample() {
   );
 }
 
+function AnexarDocumentoDragDropExample() {
+  const fileUploadRef = useRef<FileUpload | null>(null);
+  return (
+    <AnexarDocumentoSeplag
+      fileUploadRef={fileUploadRef}
+      arquivoBase64={null}
+      handleViewArquivo={() => {}}
+      onUploadDocument={(e) => console.log("upload", e)}
+      onRemoveArquivo={() => {}}
+      label="arquivo"
+      cols="12"
+      dragDrop
+      accept=".pdf"
+      maxFileSize={10485760}
+      chooseLabel="Selecionar arquivo"
+      helperText="Formato aceito: .pdf | Tamanho maximo: 2MB"
+      emptyTemplateText="Arraste e solte o arquivo aqui"
+    />
+  );
+}
+
 const sections: DocSection[] = [
   {
     title: "Sem arquivo anexado",
@@ -79,6 +100,26 @@ const fileUploadRef = useRef<FileUpload | null>(null);
   handleViewArquivo={() => openDocument()}
   onRemoveArquivo={() => clearDocument()}
   label="Comprovante"
+/>`,
+  },
+  {
+    title: "Area com drag-drop",
+    description:
+      "Quando dragDrop esta ativo, exibe uma área para arrastar e soltar o arquivo, mantendo tambem o botão de seleção.",
+    example: <AnexarDocumentoDragDropExample />,
+    code: `<AnexarDocumentoSeplag
+  fileUploadRef={fileUploadRef}
+  arquivoBase64={null}
+  handleViewArquivo={() => {}}
+  onUploadDocument={(e) => handleUpload(e)}
+  label="Arquivo"
+  cols="12"
+  dragDrop
+  accept=".pdf"
+  maxFileSize={10485760}
+  chooseLabel="Selecionar arquivo"
+  helperText="Formato aceito: .pdf | Tamanho maximo: 2MB"
+  emptyTemplateText="Arraste e solte o arquivo aqui"
 />`,
   },
 ];
@@ -127,6 +168,55 @@ const props: DocProp[] = [
     defaultValue: '"12"',
     required: false,
     description: "Largura via grid SEPLAG.",
+  },
+  {
+    name: "dragDrop",
+    type: "boolean",
+    defaultValue: "false",
+    required: false,
+    description:
+      "Quando true, troca o upload básico por uma área de drag-drop com botão de seleção.",
+  },
+  {
+    name: "accept",
+    type: "string",
+    defaultValue: '"application/pdf"',
+    required: false,
+    description: "Tipos/extensões aceitos pelo FileUpload.",
+  },
+  {
+    name: "maxFileSize",
+    type: "number",
+    defaultValue: "2000000",
+    required: false,
+    description: "Tamanho máximo do arquivo em bytes.",
+  },
+  {
+    name: "chooseLabel",
+    type: "string",
+    defaultValue: '"Anexar documento"',
+    required: false,
+    description: "Texto do botao de selecao de arquivo.",
+  },
+  {
+    name: "helperText",
+    type: "ReactNode",
+    defaultValue: '"Formato aceito: .pdf | Tamanho maximo: 2MB"',
+    required: false,
+    description: "Texto auxiliar exibido abaixo do upload.",
+  },
+  {
+    name: "emptyTemplateText",
+    type: "string",
+    defaultValue: '"Arraste e solte o arquivo aqui"',
+    required: false,
+    description: "Texto principal da área vazia no modo drag-drop.",
+  },
+  {
+    name: "invalidFileSizeMessageDetail",
+    type: "string",
+    required: false,
+    description: "Mensagem de erro exibida quando o arquivo excede o limite.",
   },
   {
     name: "hideLabel",

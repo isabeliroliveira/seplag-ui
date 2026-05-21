@@ -11,6 +11,7 @@ export * from "./lib/OAuth2Seplag";
 export * from "./provider/printToast";
 
 export * from "./hooks/toast";
+export * from "./hooks/mensagemErro";
 
 // Export interfaces/types used by consumers
 export * from "./interfaces";

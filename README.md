@@ -541,6 +541,9 @@ const estiloCustom = {
 # Iniciar ambiente de desenvolvimento
 npm run dev
 
+# Para executar o build é necessário ter instalado o rimraf para isso instalar com o seguinte comando
+npm install -g rimraf
+
 # Build da biblioteca
 npm run build
 

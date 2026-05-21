@@ -1,6 +1,5 @@
-import { BotaoSalvarSeplag, BotaoVoltarSeplag, DateFieldSeplag, TextAreaFieldSeplag, TextFieldSeplag }  from "{{libPackageName}}";
+import { BotaoSalvarSeplag, BotaoVoltarSeplag, DateFieldSeplag, TextAreaFieldSeplag, TextFieldSeplag, DividerSeplag }  from "{{libPackageName}}";
 import { getErrorMessageInObject } from "@utils/getErrorMessageInObject"
-import { Divider } from "primereact/divider"
 import React, { useRef } from "react"
 import { Control, FieldErrors, UseFormWatch, useWatch } from "react-hook-form"
 
@@ -75,7 +74,8 @@ export function {{pascalCase name}}Form({ errors, onSubmit, control, isView, isE
         disabled={isView}
       />
 
-      <Divider className="col-12" />
+      <DividerSeplag />
+      
       <div className="flex gap-2 justify-content-end col-12">
         <BotaoVoltarSeplag onClick={onGoBack} />
         {

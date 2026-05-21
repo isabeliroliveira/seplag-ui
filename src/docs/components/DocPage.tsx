@@ -10,6 +10,10 @@ export interface DocProp {
   type: string;
   defaultValue?: string;
   required?: boolean;
+  /** Quando true, indica que a prop está depreciada. */
+  deprecated?: boolean;
+  /** Mensagem curta explicando a depreciação ou migração. */
+  deprecationMessage?: string;
   description: string;
 }
 
@@ -109,6 +113,7 @@ function PropsTable({ props }: Readonly<{ props: DocProp[] }>) {
             <th>Tipo</th>
             <th>Padrão</th>
             <th>Obrig.</th>
+            <th>Deprecated</th>
             <th>Descrição</th>
           </tr>
         </thead>
@@ -133,7 +138,21 @@ function PropsTable({ props }: Readonly<{ props: DocProp[] }>) {
                   <span className="doc-prop-optional">Não</span>
                 )}
               </td>
-              <td>{p.description}</td>
+              <td>
+                {p.deprecated ? (
+                  <span className="doc-prop-deprecated">Sim</span>
+                ) : (
+                  <span className="doc-prop-optional">Não</span>
+                )}
+              </td>
+              <td>
+                <div>{p.description}</div>
+                {p.deprecationMessage && (
+                  <div className="doc-prop-deprecation-message">
+                    {p.deprecationMessage}
+                  </div>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

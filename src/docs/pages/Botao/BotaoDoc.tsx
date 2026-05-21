@@ -6,11 +6,12 @@ import {
   type DocProp,
 } from "../../components/DocPage";
 import {
-  ButtonSeplag,
+  BotaoSeplag,
   BotaoChipSeplag,
   BotaoAdicionarSeplag,
   BotaoSalvarSeplag,
   BotaoVoltarSeplag,
+  BotaoFecharSeplag,
   BotaoConsultarSeplag,
   BotaoLimparFiltroSeplag,
   BotaoIconSeplag,
@@ -67,13 +68,13 @@ function BotaoPlayground() {
     .filter(Boolean)
     .join("\n  ");
 
-  const generatedCode = `import { ButtonSeplag } from "@seplag/ui-lib-react-18";\n\n<ButtonSeplag\n  ${propsCode}\n/>`;
+  const generatedCode = `import { BotaoSeplag } from "@seplag/ui-lib-react-18";\n\n<BotaoSeplag\n  ${propsCode}\n/>`;
 
   return (
     <div className="botao-playground">
       {/* Preview */}
       <div className="botao-playground-preview">
-        <ButtonSeplag
+        <BotaoSeplag
           variant={variant}
           label={variant === "icon" ? undefined : label || undefined}
           icon={icon || undefined}
@@ -242,6 +243,7 @@ const sections: DocSection[] = [
         <BotaoAdicionarSeplag />
         <BotaoSalvarSeplag />
         <BotaoVoltarSeplag />
+        <BotaoFecharSeplag />
         <BotaoConsultarSeplag />
         <BotaoLimparFiltroSeplag />
         <BotaoIconSeplag icon="pi pi-trash" tooltip="Excluir" />
@@ -251,6 +253,7 @@ const sections: DocSection[] = [
   BotaoAdicionarSeplag,
   BotaoSalvarSeplag,
   BotaoVoltarSeplag,
+  BotaoFecharSeplag,
   BotaoConsultarSeplag,
   BotaoLimparFiltroSeplag,
   BotaoIconSeplag,
@@ -259,6 +262,7 @@ const sections: DocSection[] = [
 <BotaoAdicionarSeplag />
 <BotaoSalvarSeplag />
 <BotaoVoltarSeplag />
+<BotaoFecharSeplag />
 <BotaoConsultarSeplag />
 <BotaoLimparFiltroSeplag />
 <BotaoIconSeplag icon="pi pi-trash" tooltip="Excluir" />`,
@@ -331,7 +335,7 @@ const props: DocProp[] = [
     defaultValue: '"base"',
     required: false,
     description:
-      "Estilo visual do botão (usado internamente pelo ButtonSeplag base).",
+      "Estilo visual do botão (usado internamente pelo BotaoSeplag base).",
   },
   {
     name: "hasPermission",
@@ -360,6 +364,12 @@ const props: DocProp[] = [
     required: false,
     description:
       "Estilos CSS inline. Mesclados sobre o estilo base da variante escolhida.",
+  },
+  {
+    name: "tooltip",
+    type: "string",
+    required: false,
+    description: "Texto exibido ao passar o mouse sobre o botão.",
   },
   {
     name: "tooltipOptions",
@@ -416,6 +426,19 @@ const chipProps: DocProp[] = [
     required: false,
     description: "Tipo HTML do botão.",
   },
+  {
+    name: "tooltip",
+    type: "string",
+    required: false,
+    description: "Texto exibido ao passar o mouse sobre o chip.",
+  },
+  {
+    name: "tooltipOptions",
+    type: "TooltipOptions",
+    defaultValue: '{ position: "top" }',
+    required: false,
+    description: "Opções do tooltip do PrimeReact.",
+  },
 ];
 
 export default function BotaoDoc() {
@@ -426,14 +449,14 @@ export default function BotaoDoc() {
         description="Biblioteca de botões de ação padrão SEPLAG, construída sobre o Button do PrimeReact. Cada variante encapsula estilos, ícones e comportamentos específicos, garantindo consistência visual em toda a aplicação."
         badge="Estável"
         since="v0.0.1"
-        importStatement={`import { ButtonSeplag, BotaoChipSeplag } from "@seplag/ui-lib-react-18";`}
+        importStatement={`import { BotaoSeplag, BotaoChipSeplag } from "@seplag/ui-lib-react-18";`}
         sections={sections}
         props={props}
       />
 
       <DocPage
         title="BotaoChipSeplag"
-        description="Botão sem estilos pré-definidos (unstyled), construído sobre o ButtonSeplag com unstyled=true. Utilize quando precisar de controle total sobre a aparência, como em chips, tags ou elementos clicáveis customizados. Preserva o suporte a hasPermission e demais funcionalidades do ButtonSeplag."
+        description="Botão sem estilos pré-definidos (unstyled), construído sobre o BotaoSeplag com unstyled=true. Utilize quando precisar de controle total sobre a aparência, como em chips, tags ou elementos clicáveis customizados. Preserva o suporte a hasPermission e demais funcionalidades do BotaoSeplag."
         badge="Estável"
         since="v0.0.1"
         importStatement={`import { BotaoChipSeplag } from "@seplag/ui-lib-react-18";`}

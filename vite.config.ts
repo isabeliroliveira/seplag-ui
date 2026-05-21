@@ -57,6 +57,7 @@ export default defineConfig(({ mode }) => {
             exclude: ["src/App.tsx", "src/main.tsx"],
             rollupTypes: false,
             tsconfigPath: "./tsconfig.app.json",
+            entryRoot: "src",
           }),
           cssInjectedByJs(),
         ],
@@ -66,6 +67,7 @@ export default defineConfig(({ mode }) => {
           copyPublicDir: false,
         }
       : {
+          outDir: "dist",
           copyPublicDir: false,
           lib: {
             entry: resolve(__dirname, "src/index.ts"),
@@ -76,16 +78,25 @@ export default defineConfig(({ mode }) => {
           rollupOptions: {
             external: isExternal,
             output: {
+              preserveModules: true,
+              preserveModulesRoot: path.resolve(__dirname, "src"),
+              exports: "named",
+              dir: "dist",
+              entryFileNames: (chunkInfo) => {
+                const name = chunkInfo.name.startsWith("src/")
+                  ? chunkInfo.name.slice(4)
+                  : chunkInfo.name;
+                return `${name}.js`;
+              },
+              assetFileNames: "assets/[name][ext]",
               globals: {
                 react: "React",
                 "react-dom": "ReactDOM",
-                "react/jsx-runtime": "jsxRuntime",
               },
-              preserveModules: true,
-              preserveModulesRoot: "src",
-              entryFileNames: "[name].js",
             },
           },
+          emptyOutDir: true,
+          chunkSizeWarningLimit: 1000,
         },
   };
 });

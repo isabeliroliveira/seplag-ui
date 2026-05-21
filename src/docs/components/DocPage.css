@@ -204,6 +204,27 @@
   border: 1px solid #ced4da;
 }
 
+/* Deprecated badge styling */
+.doc-prop-deprecated {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fff3cd; /* light warning */
+  color: #664d03; /* dark amber */
+  border: 1px solid #ffecb5;
+  font-weight: 700;
+}
+
+.doc-prop-deprecation-message {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #664d03;
+  background: #fff8e1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #fff3cd;
+}
+
 /* ── Playground ──────────────────────────────────────────── */
 .botao-playground {
   display: flex;

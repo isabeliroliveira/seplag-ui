@@ -38,22 +38,47 @@ const PRESET_COLORS = [
 function BadgePlayground() {
   const [label, setLabel] = useState("Em andamento");
   const [icon, setIcon] = useState("pi pi-clock");
+  const [customIcon, setCustomIcon] = useState("");
   const [size, setSize] = useState<(typeof SIZE_OPTIONS)[number]>("sm");
   const [presetIdx, setPresetIdx] = useState(0);
   const [active, setActive] = useState(false);
   const [clickable, setClickable] = useState(false);
+  const [tooltip, setTooltip] = useState("");
+  const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom" | "left" | "right">("top");
+  const [minWidth, setMinWidth] = useState("");
+  const [maxWidth, setMaxWidth] = useState("");
+  const [bold, setBold] = useState(false);
+  const [textAlign, setTextAlign] = useState<"left" | "center" | "right" | "">("");
+  const [customStyleInput, setCustomStyleInput] = useState("");
+
+  const TOOLTIP_POSITIONS = ["top", "bottom", "left", "right"] as const;
 
   const preset = PRESET_COLORS[presetIdx];
+  const resolvedIcon = customIcon || icon || "";
+
+  let customStyle: React.CSSProperties | undefined;
+  try {
+    customStyle = customStyleInput ? JSON.parse(customStyleInput) : undefined;
+  } catch {
+    customStyle = undefined;
+  }
 
   const propsCode = [
     `label="${label}"`,
-    icon ? `icon="${icon}"` : "",
+    resolvedIcon ? `icon="${resolvedIcon}"` : "",
     `color="${preset.color}"`,
     `bg="${preset.bg}"`,
     size !== "sm" ? `size="${size}"` : "",
     active ? "active" : "",
     active ? `activeBg="${preset.color}"` : "",
     clickable ? `onClick={() => alert("clicado!")}` : "",
+    tooltip ? `tooltip="${tooltip}"` : "",
+    tooltip && tooltipPosition !== "top" ? `tooltipPosition="${tooltipPosition}"` : "",
+    minWidth ? `minWidth="${minWidth}"` : "",
+    maxWidth ? `maxWidth="${maxWidth}"` : "",
+    bold ? "fontWeight" : "",
+    textAlign ? `textAlign="${textAlign}"` : "",
+    customStyleInput ? `customStyle={${customStyleInput}}` : "",
   ]
     .filter(Boolean)
     .join("\n  ");
@@ -66,13 +91,20 @@ function BadgePlayground() {
       <div className="botao-playground-preview">
         <BadgeSeplag
           label={label}
-          icon={icon || undefined}
+          icon={resolvedIcon || undefined}
           color={preset.color}
           bg={preset.bg}
           size={size}
           active={active}
           activeBg={active ? preset.color : undefined}
           onClick={clickable ? () => undefined : undefined}
+          tooltip={tooltip || undefined}
+          tooltipPosition={tooltipPosition}
+          minWidth={minWidth || undefined}
+          maxWidth={maxWidth || undefined}
+          fontWeight={bold}
+          textAlign={textAlign || undefined}
+          customStyle={customStyle}
         />
       </div>
 
@@ -110,6 +142,21 @@ function BadgePlayground() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Custom Icon */}
+        <div className="pg-field">
+          <label className="pg-label" htmlFor="pg-badge-custom-icon">
+            icon customizado
+          </label>
+          <input
+            id="pg-badge-custom-icon"
+            className="pg-input"
+            type="text"
+            value={customIcon}
+            onChange={(e) => setCustomIcon(e.target.value)}
+            placeholder="ex: fa-solid fa-check"
+          />
         </div>
 
         {/* Cor */}
@@ -163,6 +210,7 @@ function BadgePlayground() {
               [
                 ["active", active, setActive],
                 ["clickable (onClick)", clickable, setClickable],
+                ["bold (fontWeight)", bold, setBold],
               ] as [string, boolean, (v: boolean) => void][]
             ).map(([name, val, setter]) => (
               <label
@@ -178,6 +226,108 @@ function BadgePlayground() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Dimensões */}
+        <div className="pg-field">
+          <label className="pg-label" htmlFor="pg-badge-minwidth">
+            minWidth
+          </label>
+          <input
+            id="pg-badge-minwidth"
+            className="pg-input"
+            type="text"
+            value={minWidth}
+            onChange={(e) => setMinWidth(e.target.value)}
+            placeholder="ex: 100px ou 10rem"
+          />
+        </div>
+
+        <div className="pg-field">
+          <label className="pg-label" htmlFor="pg-badge-maxwidth">
+            maxWidth
+          </label>
+          <input
+            id="pg-badge-maxwidth"
+            className="pg-input"
+            type="text"
+            value={maxWidth}
+            onChange={(e) => setMaxWidth(e.target.value)}
+            placeholder="ex: 200px ou 20rem"
+          />
+        </div>
+
+        {/* Text Align */}
+        <div className="pg-field">
+          <span className="pg-label">textAlign</span>
+          <div className="pg-radio-group">
+            {(["left", "center", "right", ""] as const).map((align) => (
+              <label
+                key={align || "none"}
+                className={`pg-radio-btn${textAlign === align ? " selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="badge-align"
+                  checked={textAlign === align}
+                  onChange={() => setTextAlign(align)}
+                />
+                {align || "padrão"}
+              </label>
+            ))}
+          </div>
+        </div>
+        {/* Tooltip */}
+        <div className="pg-field">
+          <label className="pg-label" htmlFor="pg-badge-tooltip">
+            tooltip
+          </label>
+          <input
+            id="pg-badge-tooltip"
+            className="pg-input"
+            type="text"
+            value={tooltip}
+            onChange={(e) => setTooltip(e.target.value)}
+            placeholder="Texto do tooltip"
+          />
+        </div>
+
+        {tooltip && (
+          <div className="pg-field">
+            <span className="pg-label">tooltipPosition</span>
+            <div className="pg-radio-group">
+              {TOOLTIP_POSITIONS.map((p) => (
+                <label
+                  key={p}
+                  className={`pg-radio-btn${tooltipPosition === p ? " selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="badge-tooltip-pos"
+                    value={p}
+                    checked={tooltipPosition === p}
+                    onChange={() => setTooltipPosition(p)}
+                  />
+                  {p}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Style */}
+        <div className="pg-field">
+          <label className="pg-label" htmlFor="pg-badge-customstyle">
+            customStyle (JSON)
+          </label>
+          <textarea
+            id="pg-badge-customstyle"
+            className="pg-input"
+            style={{ minHeight: "80px", fontFamily: "monospace", fontSize: "12px" }}
+            value={customStyleInput}
+            onChange={(e) => setCustomStyleInput(e.target.value)}
+            placeholder={`{"borderRadius": "8px", "padding": "10px 20px"}`}
+          />
         </div>
       </div>
 
@@ -280,6 +430,43 @@ const sections: DocSection[] = [
   onClick={() => handleFiltro()}
 />`,
   },
+  {
+    title: "Tooltip",
+    description:
+      "Use tooltip para exibir um texto ao passar o mouse. tooltipPosition controla a direção (padrão: top). Funciona tanto em badges estáticos quanto clicáveis.",
+    example: (
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <BadgeSeplag label="Padrão (top)" color="#1351b4" bg="#dce9f5" tooltip="Tooltip acima" />
+        <BadgeSeplag label="Abaixo" color="#168821" bg="#d4edda" tooltip="Tooltip abaixo" tooltipPosition="bottom" />
+        <BadgeSeplag label="Esquerda" color="#b07d00" bg="#fff3cd" tooltip="Tooltip à esquerda" tooltipPosition="left" />
+        <BadgeSeplag label="Direita" color="#7b2d8b" bg="#f3e5f5" tooltip="Tooltip à direita" tooltipPosition="right" />
+        <BadgeSeplag label="Clicável" color="#c0392b" bg="#fde8e6" tooltip="Badge clicável com tooltip" onClick={() => undefined} />
+      </div>
+    ),
+    code: `{/* Estático */}
+<BadgeSeplag label="Padrão" color="#1351b4" bg="#dce9f5" tooltip="Tooltip acima" />
+<BadgeSeplag label="Abaixo" color="#168821" bg="#d4edda" tooltip="Tooltip abaixo" tooltipPosition="bottom" />
+
+{/* Clicável */}
+<BadgeSeplag label="Clicável" color="#c0392b" bg="#fde8e6" tooltip="Tooltip" onClick={() => handleClick()} />`,
+  },
+  {
+    title: "Dimensões e alinhamento",
+    description:
+      "Use minWidth/maxWidth para controlar o tamanho, fontWeight para texto negrito, e textAlign para alinhar o conteúdo.",
+    example: (
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
+        <BadgeSeplag label="Mínimo 120px" color="#1351b4" bg="#dce9f5" minWidth="120px" />
+        <BadgeSeplag label="Máximo 100px" color="#168821" bg="#d4edda" maxWidth="100px" />
+        <BadgeSeplag label="Negrito" color="#c0392b" bg="#fde8e6" fontWeight />
+        <BadgeSeplag label="Alinhado à direita" color="#b07d00" bg="#fff3cd" textAlign="right" minWidth="150px" />
+      </div>
+    ),
+    code: `<BadgeSeplag label="Mínimo 120px" color="#1351b4" bg="#dce9f5" minWidth="120px" />
+<BadgeSeplag label="Máximo 100px" color="#168821" bg="#d4edda" maxWidth="100px" />
+<BadgeSeplag label="Negrito" color="#c0392b" bg="#fde8e6" fontWeight />
+<BadgeSeplag label="Alinhado à direita" color="#b07d00" bg="#fff3cd" textAlign="right" minWidth="150px" />`,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -350,6 +537,49 @@ const props: DocProp[] = [
     required: false,
     description:
       "Quando fornecido, o badge é renderizado como <button> (BotaoChipSeplag). Caso contrário, renderiza como <span>.",
+  },
+  {
+    name: "tooltip",
+    type: "string",
+    required: false,
+    description: "Texto exibido ao passar o mouse sobre o badge.",
+  },
+  {
+    name: "tooltipPosition",
+    type: '"top" | "bottom" | "left" | "right"',
+    defaultValue: '"top"',
+    required: false,
+    description: "Direção do tooltip.",
+  },
+  {
+    name: "minWidth",
+    type: "string | number",
+    required: false,
+    description: "Largura mínima do badge (ex: \"100px\" ou 100).",
+  },
+  {
+    name: "maxWidth",
+    type: "string | number",
+    required: false,
+    description: "Largura máxima do badge (ex: \"200px\" ou 200).",
+  },
+  {
+    name: "fontWeight",
+    type: "boolean",
+    required: false,
+    description: "Quando true, aplica fontWeight 700 (negrito). Padrão é 500.",
+  },
+  {
+    name: "textAlign",
+    type: '"left" | "center" | "right"',
+    required: false,
+    description: "Alinhamento do texto dentro do badge.",
+  },
+  {
+    name: "customStyle",
+    type: "React.CSSProperties",
+    required: false,
+    description: "Objeto com propriedades CSS customizadas que serão aplicadas e podem sobrescrever outras propriedades.",
   },
 ];
 

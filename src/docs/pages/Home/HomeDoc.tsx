@@ -75,7 +75,7 @@ export default function HomeDoc() {
         </div>
         <div className="home-code-block" style={{ marginTop: "0.75rem" }}>
           <span className="home-code-label">Uso básico</span>
-          <pre>{`import { ButtonSeplag, ModalSeplag } from "@seplag/ui-lib-react-18";
+          <pre>{`import { BotaoSeplag, ModalSeplag } from "@seplag/ui-lib-react-18";
 import { ToastProviderSeplag } from "@seplag/ui-lib-react-18";
 import { useToastSeplag } from "@seplag/ui-lib-react-18";
 

@@ -23,10 +23,9 @@ const backBotaoStyle = {
 
 const clearFilterBotaoStyle = {
   height: 40,
-  minWidth: 146,
+  width: 146,
   borderRadius: 4,
   border: "0px",
-  marginBottom: 8,
 };
 
 const iconBotaoStyle = {
@@ -38,9 +37,11 @@ export type BotaoSeplagProps = ButtonProps & {
   label?: string;
   hasPermission?: boolean;
   variant?: "base" | "save" | "back" | "clear" | "icon";
+  tooltip?: string;
+  tooltipOptions?: any;
 };
 
-type BotaoChipSeplagProps = {
+type BotaoChipSeplagProps = BotaoSeplagProps & {
   children: React.ReactNode;
   style?: React.CSSProperties;
   className?: string;
@@ -50,7 +51,7 @@ type BotaoChipSeplagProps = {
 
 const defaultTooltipOptions = { position: "top" } as any;
 
-export function ButtonSeplag(props: BotaoSeplagProps) {
+function ButtonSeplag(props: BotaoSeplagProps) {
   const {
     variant = "base",
     hasPermission = true,
@@ -58,6 +59,7 @@ export function ButtonSeplag(props: BotaoSeplagProps) {
     label,
     icon,
     unstyled = false,
+    tooltip,
     tooltipOptions = defaultTooltipOptions,
     ...rest
   } = props as any;
@@ -94,9 +96,12 @@ export function ButtonSeplag(props: BotaoSeplagProps) {
       label={label}
       icon={icon}
       unstyled={unstyled}
+      tooltip={tooltip}
       tooltipOptions={tooltipOptions}
       {...(rest as ButtonProps)}
-    />
+    >
+      {(props as any).children}
+    </Button>
   );
 }
 
@@ -110,7 +115,9 @@ export function BotaoChipSeplag({
   className,
   onClick,
   type = "button",
-}: BotaoChipSeplagProps) {
+  tooltip,
+  tooltipOptions = defaultTooltipOptions,
+}: Readonly<BotaoChipSeplagProps>) {
   return (
     <ButtonSeplag
       unstyled
@@ -118,6 +125,8 @@ export function BotaoChipSeplag({
       style={style}
       className={className}
       onClick={onClick}
+      tooltip={tooltip}
+      tooltipOptions={tooltipOptions}
     >
       {children}
     </ButtonSeplag>
@@ -163,6 +172,19 @@ export function BotaoVoltarSeplag(props: BotaoSeplagProps) {
   );
 }
 
+export function BotaoFecharSeplag(props: BotaoSeplagProps) {
+  return (
+    <ButtonSeplag
+      variant="back"
+      label={props.label ?? "Fechar"}
+      text
+      raised
+      type={props.type ?? "button"}
+      {...props}
+    />
+  );
+}
+
 export function BotaoConsultarSeplag(props: BotaoSeplagProps) {
   return (
     <ButtonSeplag
@@ -186,5 +208,11 @@ export function BotaoSeplag(props: BotaoSeplagProps) {
 }
 
 export function BotaoLimparFiltroSeplag(props: BotaoSeplagProps) {
-  return <ButtonSeplag variant="clear" {...props} />;
+  return (
+    <ButtonSeplag
+      variant="clear"
+      label={props.label ?? "Limpar Filtro"}
+      {...props}
+    />
+  );
 }

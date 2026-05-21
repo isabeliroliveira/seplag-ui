@@ -94,8 +94,8 @@ function mapTargetPath(templatePath, outCtx) {
   if (rel === "Create.tsx.hbs") return join(ROOT, "src", "pages", "Cadastro", name, `Create${name}.tsx`).replace(/\\/g, "/");
   if (rel === "Edit.tsx.hbs") return join(ROOT, "src", "pages", "Cadastro", name, `Edit${name}.tsx`).replace(/\\/g, "/");
   if (rel === "View.tsx.hbs") return join(ROOT, "src", "pages", "Cadastro", name, `View${name}.tsx`).replace(/\\/g, "/");
-  if (rel === "Request.ts.hbs") return join(ROOT, "src", "type", outCtx.camel, `${name}Request.ts`).replace(/\\/g, "/");
-  if (rel === "Response.ts.hbs") return join(ROOT, "src", "type", outCtx.camel, `${name}Response.ts`).replace(/\\/g, "/");
+  if (rel === "Request.ts.hbs") return join(ROOT, "src", "pages", "Cadastro", name, `${name}Request.ts`).replace(/\\/g, "/");
+  if (rel === "Response.ts.hbs") return join(ROOT, "src", "pages", "Cadastro", name, `${name}Response.ts`).replace(/\\/g, "/");
   if (rel === "PageRoutes.ts.hbs") return join(ROOT, "src", "config", "pageRoutes", `pageRoutes${name}.ts`).replace(/\\/g, "/");
 
   // fallback: place in root of package (unlikely)

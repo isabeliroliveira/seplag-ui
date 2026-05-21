@@ -52,3 +52,15 @@ export const SEPLAG_GRAY_800 = "#424242";
 
 // ── Bordas ───────────────────────────────────────────────────────────────────
 export const SEPLAG_BORDER_LIGHT = "#E6E6E6";
+
+// ── Complementares ───────────────────────────────────────────────────────────
+export const SEPLAG_PURPLE = "#9C27B0";
+export const SEPLAG_TEAL = "#009688";
+
+// ── Cores para esteira (workflow) ─────────────────────────────────────────
+export const ESTEIRA_SOLICITACAO = "#3b82f6";
+export const ESTEIRA_ANALISE_DOCUMENTAL = "#8b5cf6";
+export const ESTEIRA_PARECER_JURIDICO = "#ec4899";
+export const ESTEIRA_CRIACAO = "#f59e0b";
+export const ESTEIRA_TESTES = "#6366f1";
+export const ESTEIRA_APROVACAO_FINAL = "#059669";

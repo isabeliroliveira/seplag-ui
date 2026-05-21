@@ -32,22 +32,72 @@ import {
 } from "./prototipos/PrototiposPage";
 
 function HomePage() {
+  const sistemas = [
+    {
+      sigla: "SIGEP",
+      titulo: "Gestao de Pessoas",
+      descricao: "Protótipos de cadastro, cargos, regime jurídico, categorias e componentes reutilizáveis.",
+      status: "Em prototipação",
+      to: "/prototipos/sigep",
+      links: [
+        { label: "Categoria", to: "/prototipos/sigep/categoria" },
+        { label: "Regime Jurídico", to: "/prototipos/sigep/regime-juridico" },
+        { label: "Componentes", to: "/prototipos/sigep/componentes" },
+      ],
+    },
+    {
+      sigla: "FOLHA",
+      titulo: "Folha de Pagamento",
+      descricao: "Protótipos para grupos de eleitos, catálogo de rubricas e grupos de cálculo da folha.",
+      status: "Em evolução",
+      to: "/prototipos/folha",
+      links: [
+        { label: "Grupo de Eleitos", to: "/prototipos/folha/grupo-eleitos" },
+        { label: "Grupos de Cálculo", to: "/prototipos/folha/grupos-calculo" },
+        { label: "Catálogo de Rubricas", to: "/prototipos/folha/catalogo-rubricas" },
+      ],
+    },
+    {
+      sigla: "GERAL",
+      titulo: "Demais Protótipos",
+      descricao: "Atalhos para estudos de perícia, consignado, eSocial, auditoria e conformidade.",
+      status: "Mapa geral",
+      to: "/prototipos",
+      links: [
+        { label: "Todos os protótipos", to: "/prototipos" },
+        { label: "Documentação", to: "/docs" },
+      ],
+    },
+  ];
+
+  const versoes = [
+    {
+      versao: "0.0.7",
+      titulo: "Biblioteca ativa",
+      descricao: "Versão usada hoje pelo projeto em src/componentes.",
+    },
+    {
+      versao: "0.0.18",
+      titulo: "Referência de desenvolvimento",
+      descricao: "Versão externa armazenada em bibliotecas-seplag para consulta e migração.",
+    },
+  ];
+
   return (
     <div className="app-container">
-      <div className="glow-1"></div>
-      <div className="glow-2"></div>
-
       <nav className="main-nav">
         <div className="nav-content">
           <div className="logo-group">
             <span className="logo-seplag">SEPLAG</span>
+            <span className="logo-divider">/</span>
+            <span className="logo-ds">Portal UI</span>
           </div>
           <div className="nav-actions">
             <Link to="/docs" className="nav-link">
-              Documentação →
+              Documentação
             </Link>
             <Link to="/prototipos" className="nav-link">
-              Protótipos →
+              Protótipos
             </Link>
             <div className="version-tag">v{pkg.version}</div>
           </div>
@@ -55,35 +105,97 @@ function HomePage() {
       </nav>
 
       <main className="main-content">
-        <section className="welcome-hero">
-          <div className="visual-element">
-            <div className="cube"></div>
-          </div>
-          <div className="text-element">
-            <h1>A Linguagem Visual de Mato Grosso.</h1>
+        <section className="portal-hero">
+          <div className="portal-hero-copy">
+            <span className="kicker">Ambiente de protótipos e componentes</span>
+            <h1>Portal SEPLAG UI</h1>
             <p>
-              Importe, valide e experimente componentes padrão da{" "}
-              <strong>SEPLAG</strong>. Garanta consistência e qualidade antes da
-              publicação em produção.
+              Centralize protótipos por sistema, acompanhe versões da biblioteca
+              visual e acesse rapidamente as telas em construção.
             </p>
+            <div className="action-buttons">
+              <Link to="/prototipos" className="btn-primary">
+                Abrir protótipos
+              </Link>
+              <Link to="/docs" className="btn-secondary">
+                Ver documentação
+              </Link>
+            </div>
+          </div>
+          <div className="portal-summary" aria-label="Resumo do portal">
+            <div>
+              <strong>2</strong>
+              <span>Sistemas ativos</span>
+            </div>
+            <div>
+              <strong>2</strong>
+              <span>Versões mapeadas</span>
+            </div>
+            <div>
+              <strong>+10</strong>
+              <span>Protótipos</span>
+            </div>
           </div>
         </section>
 
-        <section className="status-grid">
-          <div className="status-card current-pkg">
-            <span className="card-label">Pacote Atual</span>
-            <h3>{pkg.name}</h3>
-            <span className="pkg-version">v{pkg.version}</span>
+        <section className="home-section" aria-labelledby="sistemas-title">
+          <div className="section-heading">
+            <span className="card-label">Sistemas</span>
+            <h2 id="sistemas-title">Protótipos por sistema</h2>
           </div>
-          <div className="status-card registry-status">
-            <span className="card-label">Registry</span>
-            <div className="registry-info">
-              <span className="status-dot online"></span>
-              <h3>GIT LAB SEPLAG</h3>
+          <div className="systems-grid">
+            {sistemas.map((sistema) => (
+              <article className="system-card" key={sistema.sigla}>
+                <div className="system-card-header">
+                  <span className="system-code">{sistema.sigla}</span>
+                  <span className="system-status">{sistema.status}</span>
+                </div>
+                <h3>{sistema.titulo}</h3>
+                <p>{sistema.descricao}</p>
+                <div className="system-links">
+                  {sistema.links.map((link) => (
+                    <Link key={link.to} to={link.to}>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+                <Link to={sistema.to} className="card-action">
+                  Abrir área
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-section home-two-columns">
+          <div className="library-panel">
+            <div className="section-heading">
+              <span className="card-label">Bibliotecas</span>
+              <h2>Versões disponíveis</h2>
+            </div>
+            <div className="version-list">
+              {versoes.map((item) => (
+                <div className="version-card" key={item.versao}>
+                  <span className="version-number">v{item.versao}</span>
+                  <div>
+                    <strong>{item.titulo}</strong>
+                    <p>{item.descricao}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="status-card quick-code">
-            <span className="card-label">Uso Rápido</span>
+
+          <div className="library-panel package-panel">
+            <div className="section-heading">
+              <span className="card-label">Pacote atual</span>
+              <h2>{pkg.name}</h2>
+            </div>
+            <p>
+              A versão ativa continua em <strong>src/componentes</strong>. As
+              pastas em <strong>bibliotecas-seplag</strong> servem como acervo
+              para comparação e migração futura.
+            </p>
             <code>npm install @seplag/ui-lib-react-18</code>
           </div>
         </section>

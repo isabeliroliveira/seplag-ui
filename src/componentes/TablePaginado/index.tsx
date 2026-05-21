@@ -48,7 +48,6 @@ export interface TablePaginadoSeplagProps<T extends DataTableValue> {
   readonly handleDelete?: ((arg: T) => void) | null;
   readonly handleEdit?: ((arg: T) => void) | null;
   readonly handleDuplicar?: ((arg: T) => void) | null;
-  readonly handleInativar?: ((arg: T) => void) | null;
   readonly handleView?: ((arg: T) => void) | null;
   readonly handleAdicionar?: (() => void) | null;
   readonly disableAdicionar?: boolean;
@@ -86,7 +85,6 @@ export function TablePaginadoSeplag<T extends DataTableValue>({
   handleDelete,
   handleEdit,
   handleDuplicar,
-  handleInativar,
   handleView,
   handleAdicionar,
   disableAdicionar,
@@ -145,7 +143,6 @@ export function TablePaginadoSeplag<T extends DataTableValue>({
       handleEdit,
       handleDelete,
       handleDuplicar,
-      handleInativar,
     ].filter(Boolean).length;
 
     if (individualCount >= 3) {
@@ -161,12 +158,6 @@ export function TablePaginadoSeplag<T extends DataTableValue>({
           label: "Duplicar",
           icon: "pi pi-copy",
           command: () => handleDuplicar(rowData),
-        });
-      if (handleInativar)
-        splitModel.push({
-          label: "Inativar",
-          icon: "pi pi-ban",
-          command: () => handleInativar(rowData),
         });
       if (handleDelete)
         splitModel.push({
@@ -209,15 +200,6 @@ export function TablePaginadoSeplag<T extends DataTableValue>({
             tooltip="Duplicar"
             icon="pi pi-copy"
             onClick={() => handleDuplicar(rowData)}
-          />
-        )}
-        {handleInativar && (
-          <BotaoIconSeplag
-            severity="warning"
-            type="button"
-            tooltip="Inativar"
-            icon="pi pi-ban"
-            onClick={() => handleInativar(rowData)}
           />
         )}
         {handleDelete && (

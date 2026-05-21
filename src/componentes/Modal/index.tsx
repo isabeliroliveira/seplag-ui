@@ -116,7 +116,7 @@ export const ModalSeplag = (props: Readonly<ModalSeplagProps>) => {
       style={dialogStyle}
       modal
       onHide={handleClose}
-      contentStyle={{ flex: 1 }}
+      contentStyle={{ flex: 1, paddingTop: "0.3rem" }}
       draggable={draggable}
       aria-label={resolvedAriaLabel}
       closeOnEscape={closeOnEscape}

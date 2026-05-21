@@ -169,6 +169,12 @@ const docEntries: DocEntry[] = [
     component: lazy(() => import("./pages/Fields/SearchFieldDoc")),
   },
   {
+    id: "seplag-autocomplete",
+    label: "SeplagAutoComplete",
+    category: "Formulários",
+    component: lazy(() => import("./pages/Fields/SeplagAutoCompleteDoc")),
+  },
+  {
     id: "field-image-upload",
     label: "ImageUploadField",
     category: "Formulários",
@@ -185,6 +191,12 @@ const docEntries: DocEntry[] = [
     label: "Anexar Documento",
     category: "Formulários",
     component: lazy(() => import("./pages/AnexarDocumento/AnexarDocumentoDoc")),
+  },
+  {
+    id: "lista-busca-acao",
+    label: "ListaBuscaAcao",
+    category: "Formulários",
+    component: lazy(() => import("./pages/ListaBuscaAcao/ListaBuscaAcaoDoc")),
   },
   // ── Utilitários ────────────────────────────────────────────
   {
@@ -215,9 +227,9 @@ const docEntries: DocEntry[] = [
   },
   {
     id: "oauth2lib",
-    label: "OAuth2LibSeplag",
+    label: "OAuth2Lib",
     category: "Utilitários",
-    component: lazy(() => import("./pages/OAuth2Seplag/OAuth2SeplagDoc")),
+    component: lazy(() => import("./pages/OAuth2/OAuth2SeplagDoc")),
   },
   {
     id: "interfaces",
@@ -227,7 +239,7 @@ const docEntries: DocEntry[] = [
   },
   {
     id: "generator",
-    label: "seplag-generate (CLI)",
+    label: "generate (CLI)",
     category: "Utilitários",
     component: lazy(() => import("./pages/Generator/GeneratorDoc")),
   },
@@ -237,6 +249,12 @@ const docEntries: DocEntry[] = [
     label: "Loader",
     category: "Feedback",
     component: lazy(() => import("./pages/Loader/LoaderDoc")),
+  },
+  {
+    id: "skeleton-seplag",
+    label: "Skeleton",
+    category: "Feedback",
+    component: lazy(() => import("./pages/Skeleton/SkeletonSeplagDoc")),
   },
   {
     id: "mensagem",
@@ -341,10 +359,22 @@ const docEntries: DocEntry[] = [
     component: lazy(() => import("./pages/Card/CardDoc")),
   },
   {
-    id: "panel-seplag",
-    label: "PanelSeplag",
+    id: "accordion-card",
+    label: "AccordionCard",
     category: "Layout",
-    component: lazy(() => import("./pages/PanelSeplag/PanelSeplagDoc")),
+    component: lazy(() => import("./pages/AccordionCard/AccordionCardDoc")),
+  },
+  {
+    id: "panel-seplag",
+    label: "Panel",
+    category: "Layout",
+    component: lazy(() => import("./pages/Panel/PanelSeplagDoc")),
+  },
+  {
+    id: "divider",
+    label: "Divider",
+    category: "Layout",
+    component: lazy(() => import("./pages/Divider/DividerDoc")),
   },
   {
     id: "entity-info-card",
@@ -357,6 +387,12 @@ const docEntries: DocEntry[] = [
     label: "Tabs",
     category: "Layout",
     component: lazy(() => import("./pages/Tabs/TabsDoc")),
+  },
+  {
+    id: "accordion",
+    label: "Accordion",
+    category: "Layout",
+    component: lazy(() => import("./pages/Accordion/AccordionDoc")),
   },
   {
     id: "table-paginado",
@@ -377,10 +413,11 @@ export function getDocsByCategory(): DocCategory[] {
     const bucket = map.get(entry.category);
     if (bucket) bucket.push(entry);
   }
-  return Array.from(map.entries()).map(([label, entries]) => ({
+  const categories = Array.from(map.entries()).map(([label, entries]) => ({
     label,
-    entries,
+    entries: entries.toSorted((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" })),
   }));
+  return categories.sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
 }
 
 export function getDocEntry(id: string): DocEntry | undefined {
