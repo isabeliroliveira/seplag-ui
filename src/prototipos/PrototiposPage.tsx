@@ -552,17 +552,11 @@ interface GrupoCalculoForm {
   motivoEncerramento?: string;
   dataExtincao?: string;
   motivoExtincao?: string;
-  criterioOrgao?: string;
-  criterioTipoVinculo?: string;
-  criterioRegimeJuridico?: string;
-  criterioCategoria?: string;
-  criterioCargo?: string;
-  criterioSituacaoFuncional?: string;
-  simulacaoCompetencia?: string;
-  simulacaoOrgao?: string;
-  simulacaoTipoVinculo?: string;
-  simulacaoSituacaoFuncional?: string;
-  simulacaoAmostra?: string;
+  abrangenciaRegimeJuridico?: string;
+  abrangenciaTipoVinculo?: string;
+  abrangenciaInstituicao?: string;
+  abrangenciaHerdarDe?: string;
+  abrangenciaOrgao?: string;
 }
 
 interface GrupoEleitoForm {
@@ -644,37 +638,6 @@ interface GrupoCalculoRow {
   fimVigencia: string;
   rubricas: number;
   pendencias: number;
-}
-
-interface GrupoCalculoHerancaRubricaRow {
-  id: number;
-  rubrica: string;
-  origem: string;
-  ativaNesteGrupo: boolean;
-  ordemHerdada: string;
-  ordemLocal: string;
-  acao: "Manter" | "Sobrescrever" | "Excluir localmente" | "Restaurar padrão";
-}
-
-interface GrupoCalculoSimulacaoRow {
-  id: number;
-  vinculo: string;
-  servidor: string;
-  orgao: string;
-  tipoVinculo: string;
-  cargo: string;
-  situacao: string;
-  grupoAplicado: string;
-  observacao: string;
-}
-
-interface GrupoCalculoValidacaoRow {
-  id: number;
-  tipo: string;
-  descricao: string;
-  severidade: "Bloqueante" | "Alerta" | "Informativo";
-  acaoSugerida: string;
-  abaRelacionada: string;
 }
 
 interface CatalogoRubricaFiltroForm {
@@ -1222,239 +1185,6 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
   10: [gruposCalculoMock[9]],
 };
 
-const gruposCalculoHerancaRubricasMock: GrupoCalculoHerancaRubricaRow[] = [
-  {
-    id: 1,
-    rubrica: "Subsídio",
-    origem: "Efetivos",
-    ativaNesteGrupo: true,
-    ordemHerdada: "001",
-    ordemLocal: "001",
-    acao: "Manter",
-  },
-  {
-    id: 2,
-    rubrica: "Previdência RPPS",
-    origem: "Efetivos",
-    ativaNesteGrupo: true,
-    ordemHerdada: "002",
-    ordemLocal: "003",
-    acao: "Sobrescrever",
-  },
-  {
-    id: 3,
-    rubrica: "IRRF",
-    origem: "Geral",
-    ativaNesteGrupo: true,
-    ordemHerdada: "003",
-    ordemLocal: "004",
-    acao: "Manter",
-  },
-  {
-    id: 4,
-    rubrica: "Auxílio Alimentação SEDUC",
-    origem: "Efetivos SEDUC",
-    ativaNesteGrupo: true,
-    ordemHerdada: "-",
-    ordemLocal: "002",
-    acao: "Sobrescrever",
-  },
-  {
-    id: 5,
-    rubrica: "Gratificação X",
-    origem: "Geral",
-    ativaNesteGrupo: false,
-    ordemHerdada: "005",
-    ordemLocal: "-",
-    acao: "Excluir localmente",
-  },
-  {
-    id: 6,
-    rubrica: "Base Previdenciária",
-    origem: "Geral",
-    ativaNesteGrupo: true,
-    ordemHerdada: "006",
-    ordemLocal: "006",
-    acao: "Manter",
-  },
-  {
-    id: 7,
-    rubrica: "Auxílio Transporte",
-    origem: "Efetivos SEDUC",
-    ativaNesteGrupo: true,
-    ordemHerdada: "007",
-    ordemLocal: "005",
-    acao: "Sobrescrever",
-  },
-  {
-    id: 8,
-    rubrica: "Adicional de Insalubridade",
-    origem: "Professores SEDUC",
-    ativaNesteGrupo: true,
-    ordemHerdada: "008",
-    ordemLocal: "008",
-    acao: "Restaurar padrão",
-  },
-];
-
-const gruposCalculoSimulacaoMock: GrupoCalculoSimulacaoRow[] = [
-  {
-    id: 1,
-    vinculo: "12345",
-    servidor: "MARIA SILVA",
-    orgao: "SEDUC",
-    tipoVinculo: "Efetivo",
-    cargo: "Professor",
-    situacao: "Ativo",
-    grupoAplicado: "Professores SEDUC 40h",
-    observacao: "OK",
-  },
-  {
-    id: 2,
-    vinculo: "45678",
-    servidor: "JOÃO COSTA",
-    orgao: "PGE",
-    tipoVinculo: "Efetivo",
-    cargo: "Analista",
-    situacao: "Ativo",
-    grupoAplicado: "Efetivos PGE",
-    observacao: "OK",
-  },
-  {
-    id: 3,
-    vinculo: "98765",
-    servidor: "ANA LIMA",
-    orgao: "CPLAG",
-    tipoVinculo: "Comissionado",
-    cargo: "Assessor",
-    situacao: "Ativo",
-    grupoAplicado: "Sem grupo",
-    observacao: "Gerar pendência de configuração",
-  },
-  {
-    id: 4,
-    vinculo: "11223",
-    servidor: "CARLOS NUNES",
-    orgao: "SEPLAG",
-    tipoVinculo: "Contratado",
-    cargo: "Técnico Administrativo",
-    situacao: "Ativo",
-    grupoAplicado: "Contratados",
-    observacao: "OK",
-  },
-  {
-    id: 5,
-    vinculo: "33445",
-    servidor: "FERNANDA ALMEIDA",
-    orgao: "SEDUC",
-    tipoVinculo: "Efetivo",
-    cargo: "Professor",
-    situacao: "Ativo",
-    grupoAplicado: "Professores SEDUC 40h",
-    observacao: "OK",
-  },
-  {
-    id: 6,
-    vinculo: "55667",
-    servidor: "PAULO HENRIQUE",
-    orgao: "SEFAZ",
-    tipoVinculo: "Efetivo",
-    cargo: "Analista Administrativo",
-    situacao: "Ativo",
-    grupoAplicado: "Efetivos",
-    observacao: "Grupo geral aplicado por ausência de regra específica.",
-  },
-  {
-    id: 7,
-    vinculo: "77889",
-    servidor: "LUCIANA ROCHA",
-    orgao: "SEPLAG",
-    tipoVinculo: "Contratado",
-    cargo: "Técnico Administrativo",
-    situacao: "Ativo",
-    grupoAplicado: "Contratados SEPLAG",
-    observacao: "OK",
-  },
-  {
-    id: 8,
-    vinculo: "99110",
-    servidor: "ROBERTO MENEZES",
-    orgao: "SES",
-    tipoVinculo: "Aposentado",
-    cargo: "Médico",
-    situacao: "Inativo",
-    grupoAplicado: "Sem grupo",
-    observacao: "Servidor sem regra para órgão SES.",
-  },
-];
-
-const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
-  {
-    id: 1,
-    tipo: "Servidores sem grupo",
-    descricao: "38 vínculos sem enquadramento para a competência simulada.",
-    severidade: "Bloqueante",
-    acaoSugerida: "Revisar regras de enquadramento ou criar grupo específico.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 2,
-    tipo: "Rubrica sem fórmula",
-    descricao: "Rubrica 2002 não possui fórmula vigente.",
-    severidade: "Bloqueante",
-    acaoSugerida: "Configurar fórmula ou remover rubrica do grupo.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 3,
-    tipo: "Ordem inválida",
-    descricao: "IRRF está antes de rubricas-base usadas no cálculo.",
-    severidade: "Bloqueante",
-    acaoSugerida: "Reordenar rubricas respeitando dependências.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 4,
-    tipo: "Conta contábil ausente",
-    descricao: "Rubrica 1005 sem conta registro vinculada.",
-    severidade: "Alerta",
-    acaoSugerida: "Informar conta antes da publicação.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 5,
-    tipo: "Herança sobrescrita",
-    descricao: "Previdência RPPS possui ordem local diferente da ordem herdada.",
-    severidade: "Informativo",
-    acaoSugerida: "Revisar sobrescrita ou restaurar padrão.",
-    abaRelacionada: "heranca",
-  },
-  {
-    id: 6,
-    tipo: "Rubrica extinta selecionada",
-    descricao: "Rubrica 1014 está extinta e permanece vinculada ao grupo.",
-    severidade: "Bloqueante",
-    acaoSugerida: "Remover rubrica ou criar nova versão vigente.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 7,
-    tipo: "Vigência futura",
-    descricao: "Grupo G030 inicia em competência futura e ficará agendado.",
-    severidade: "Informativo",
-    acaoSugerida: "Confirmar publicação agendada.",
-    abaRelacionada: "dados-gerais",
-  },
-  {
-    id: 8,
-    tipo: "Dependência circular",
-    descricao: "Rubricas 1006 e 1007 possuem dependência cruzada simulada.",
-    severidade: "Alerta",
-    acaoSugerida: "Visualizar dependências e revisar ordem.",
-    abaRelacionada: "dados-gerais",
-  },
-];
-
 const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   {
     id: 1,
@@ -1535,32 +1265,29 @@ const grupoCalculoTipoFolhaOptions = [
 ];
 
 const grupoCalculoTipoVinculoOptions = [
-  { label: "Todos", value: "todos" },
   { label: "Efetivo", value: "efetivo" },
   { label: "Contratado", value: "contratado" },
   { label: "Comissionado", value: "comissionado" },
   { label: "Aposentado", value: "aposentado" },
 ];
 
-const grupoCalculoSituacaoFuncionalOptions = [
+const grupoCalculoFiltroTipoVinculoOptions = [
   { label: "Todos", value: "todos" },
-  { label: "Ativo", value: "ativo" },
-  { label: "Inativo", value: "inativo" },
-  { label: "Pensionista", value: "pensionista" },
-];
-
-const grupoCalculoAmostraOptions = [
-  { label: "10 vínculos", value: "10" },
-  { label: "100 vínculos", value: "100" },
-  { label: "Todos", value: "todos" },
+  ...grupoCalculoTipoVinculoOptions,
 ];
 
 const grupoCalculoSuperiorOptions = [
+  { label: "Nenhum", value: "nenhum" },
   { label: "Geral", value: "Geral" },
   { label: "Efetivos", value: "Efetivos" },
   { label: "Contratados", value: "Contratados" },
   { label: "Comissionados", value: "Comissionados" },
 ];
+
+const grupoCalculoRegimeJuridicoOptions = regimesJuridicosMock.map((regime) => ({
+  label: regime.nome,
+  value: regime.nome,
+}));
 
 const grupoCalculoNivelOptions = [
   { label: "Geral", value: "geral" },
@@ -1668,32 +1395,6 @@ function getGrupoCalculoRubricaTipoBadge(tipo: string) {
   };
 }
 
-function getGrupoCalculoSeveridadeMeta(
-  severidade: GrupoCalculoValidacaoRow["severidade"],
-) {
-  if (severidade === "Bloqueante") {
-    return {
-      color: "#b42318",
-      bg: "#fee4e2",
-      icon: "pi pi-ban",
-    };
-  }
-
-  if (severidade === "Alerta") {
-    return {
-      color: "#8a5a00",
-      bg: "#fff4d6",
-      icon: "pi pi-exclamation-triangle",
-    };
-  }
-
-  return {
-    color: "#005a9c",
-    bg: "#e0f2fe",
-    icon: "pi pi-info-circle",
-  };
-}
-
 const grupoEleitoFiltroAvancadoOptions = {
   instituicoes: [
     { label: "Governo do Estado de Mato Grosso", value: "govmt" },
@@ -1797,13 +1498,6 @@ const categoriaTabs: TabItemSeplag<string>[] = [
 const grupoEleitoTabs: TabItemSeplag<string>[] = [
   { label: "Informações", value: "grupo-eleito", col: "lg:col-6" },
   { label: "Participantes", value: "participantes", col: "lg:col-6" },
-];
-
-const grupoCalculoTabs: TabItemSeplag<string>[] = [
-  { label: "Dados Gerais", value: "dados-gerais", col: "" },
-  { label: "Herança", value: "heranca", col: "" },
-  { label: "Simulação", value: "simulacao", col: "" },
-  { label: "Validações", value: "validacoes", col: "" },
 ];
 
 function createResults<T>(content: T[]): ResultsSeplag<T> {
@@ -2841,7 +2535,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               control={control}
               label="Tipo de Vínculo"
               cols="12 6"
-              options={grupoCalculoTipoVinculoOptions}
+              options={grupoCalculoFiltroTipoVinculoOptions}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
@@ -2981,7 +2675,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
-  const [activeTab, setActiveTab] = useState("dados-gerais");
   const [rubricasGerenciadas, setRubricasGerenciadas] = useState<GrupoCalculoRubricaGerenciada[]>(
     catalogoRubricasMock.slice(0, 12).map((rubrica, index) => ({
       ...rubrica,
@@ -2989,9 +2682,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     })),
   );
   const [rubricaDragIndex, setRubricaDragIndex] = useState<number | null>(null);
-  const [herancaRubricas, setHerancaRubricas] = useState<GrupoCalculoHerancaRubricaRow[]>(
-    gruposCalculoHerancaRubricasMock,
-  );
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
@@ -3028,17 +2718,11 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
           ? "Extinção administrativa da configuração."
           : "",
-      criterioOrgao: "todos",
-      criterioTipoVinculo: "todos",
-      criterioRegimeJuridico: "",
-      criterioCategoria: "",
-      criterioCargo: "",
-      criterioSituacaoFuncional: "",
-      simulacaoCompetencia: "",
-      simulacaoOrgao: "",
-      simulacaoTipoVinculo: "todos",
-      simulacaoSituacaoFuncional: "todos",
-      simulacaoAmostra: "10",
+      abrangenciaRegimeJuridico: "",
+      abrangenciaTipoVinculo: "",
+      abrangenciaInstituicao: "",
+      abrangenciaHerdarDe: "nenhum",
+      abrangenciaOrgao: "",
     },
   });
 
@@ -3084,31 +2768,17 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     });
   };
 
-  const handleAlterarAcaoHeranca = (
-    idRubrica: number,
-    acao: GrupoCalculoHerancaRubricaRow["acao"],
-  ) => {
-    setHerancaRubricas((current) =>
-      current.map((rubrica) =>
-        rubrica.id === idRubrica
-          ? {
-              ...rubrica,
-              acao,
-              ativaNesteGrupo: acao !== "Excluir localmente",
-            }
-          : rubrica,
-      ),
-    );
-  };
-
   const rubricasAtivasNoGrupo = rubricasGerenciadas.filter(
     (rubrica) => rubrica.ativaNoGrupo,
   ).length;
+  const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
+  const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
+  const podeGerenciarRubricas = Boolean(
+    abrangenciaRegimeJuridico && abrangenciaTipoVinculo,
+  );
 
-  const renderTabContent = () => {
-    if (activeTab === "dados-gerais") {
-      return (
-        <div className="grid prototype-category-form-fields prototype-grupo-calculo-form-fields">
+  const renderGrupoCalculoContent = () => (
+    <div className="grid prototype-category-form-fields prototype-grupo-calculo-form-fields">
           <TextFieldSeplag
             name="nome"
             control={control}
@@ -3144,25 +2814,92 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           </div>
 
           <div className="col-12 prototype-grupo-calculo-rubricas-section">
+            <div className="prototype-grupo-calculo-abrangencia">
+              <div className="prototype-grupo-calculo-section-heading">
+                <strong>Abrangência</strong>
+                {!podeGerenciarRubricas && (
+                  <span>Preencha os filtros para carregar as rubricas</span>
+                )}
+              </div>
+              <div className="grid prototype-category-form-fields">
+                <DropdownFieldSeplag
+                  name="abrangenciaRegimeJuridico"
+                  control={control}
+                  label="Regime Jurídico"
+                  cols="12 12 3"
+                  required
+                  options={grupoCalculoRegimeJuridicoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="abrangenciaTipoVinculo"
+                  control={control}
+                  label="Tipo de Vínculo"
+                  cols="12 12 3"
+                  required
+                  options={grupoCalculoTipoVinculoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="abrangenciaInstituicao"
+                  control={control}
+                  label="Instituição"
+                  cols="12 12 3"
+                  options={regimeInstituicaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="abrangenciaHerdarDe"
+                  control={control}
+                  label="Herdar De"
+                  cols="12 12 3"
+                  options={grupoCalculoSuperiorOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="abrangenciaOrgao"
+                  control={control}
+                  label="Órgão"
+                  cols="12 12 6"
+                  options={grupoCalculoOrgaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+              </div>
+            </div>
+
             <div className="prototype-grupo-calculo-rubricas-manager">
               <div className="prototype-grupo-calculo-rubricas-header">
                 <div>
                   <strong>Gerenciar Rubricas</strong>
                   <span>
-                    {rubricasAtivasNoGrupo} rubricas ativas de{" "}
-                    {rubricasGerenciadas.length} - arraste para reordenar
+                    {podeGerenciarRubricas
+                      ? `${rubricasAtivasNoGrupo} rubricas ativas de ${rubricasGerenciadas.length} - arraste para reordenar`
+                      : "Preencha os filtros acima para carregar as rubricas"}
                   </span>
                 </div>
-                <BotaoSeplag
-                  type="button"
-                  label="Adicionar Rubrica"
-                  icon="pi pi-plus"
-                  severity="secondary"
-                  onClick={handleAdicionarRubricaGerenciada}
-                />
+                {podeGerenciarRubricas && (
+                  <BotaoSeplag
+                    type="button"
+                    label="Adicionar Rubrica"
+                    icon="pi pi-plus"
+                    severity="secondary"
+                    onClick={handleAdicionarRubricaGerenciada}
+                  />
+                )}
               </div>
 
-              <div className="prototype-grupo-calculo-rubricas-list">
+              {podeGerenciarRubricas ? (
+                <div className="prototype-grupo-calculo-rubricas-list">
                 <div className="prototype-grupo-calculo-rubricas-list-head">
                   <span aria-label="Ordenar" />
                   <span>Ativo</span>
@@ -3219,320 +2956,18 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              ) : (
+                <div className="prototype-grupo-calculo-rubricas-empty">
+                  <i className="pi pi-exclamation-circle" aria-hidden="true" />
+                  <span>
+                    Selecione o Regime Jurídico e Tipo de Vínculo para carregar
+                    as rubricas
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      );
-    }
-
-    if (activeTab === "heranca") {
-      return (
-        <div className="prototype-grupo-calculo-tab-panel">
-          <div className="prototype-grupo-calculo-heritage">
-            <span>Geral</span>
-            <i className="pi pi-arrow-right" aria-hidden="true" />
-            <span>Efetivos</span>
-            <i className="pi pi-arrow-right" aria-hidden="true" />
-            <span>Efetivos SEDUC</span>
-            <i className="pi pi-arrow-right" aria-hidden="true" />
-            <span>Professores SEDUC 40h</span>
-          </div>
-
-          <div className="prototype-grupo-calculo-simple-table prototype-grupo-calculo-heranca-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Rubrica</th>
-                  <th>Origem</th>
-                  <th>Está ativa neste grupo?</th>
-                  <th>Ordem herdada</th>
-                  <th>Ordem local</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {herancaRubricas.map((rubrica) => (
-                  <tr
-                    key={rubrica.id}
-                    className={!rubrica.ativaNesteGrupo ? "is-local-disabled" : undefined}
-                  >
-                    <td>{rubrica.rubrica}</td>
-                    <td>{rubrica.origem}</td>
-                    <td>
-                      <BadgeSeplag
-                        label={rubrica.ativaNesteGrupo ? "Sim" : "Não"}
-                        color={rubrica.ativaNesteGrupo ? "#00843d" : "#b42318"}
-                        bg={rubrica.ativaNesteGrupo ? "#e2f3e8" : "#fee4e2"}
-                        icon={
-                          rubrica.ativaNesteGrupo
-                            ? "pi pi-check-circle"
-                            : "pi pi-times-circle"
-                        }
-                      />
-                    </td>
-                    <td>{rubrica.ordemHerdada}</td>
-                    <td>{rubrica.ordemLocal}</td>
-                    <td>
-                      <div className="prototype-grupo-calculo-heranca-actions">
-                        {[
-                          "Manter",
-                          "Sobrescrever",
-                          "Excluir localmente",
-                          "Restaurar padrão",
-                        ].map((acao) => (
-                          <button
-                            key={acao}
-                            type="button"
-                            className={
-                              rubrica.acao === acao
-                                ? "is-active"
-                                : undefined
-                            }
-                            onClick={() =>
-                              handleAlterarAcaoHeranca(
-                                rubrica.id,
-                                acao as GrupoCalculoHerancaRubricaRow["acao"],
-                              )
-                            }
-                          >
-                            {acao}
-                          </button>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTab === "simulacao") {
-      return (
-        <div className="prototype-grupo-calculo-tab-panel">
-          <div className="grid prototype-category-form-fields">
-            <TextFieldSeplag
-              name="simulacaoCompetencia"
-              control={control}
-              label="Competência"
-              cols="12 12 2"
-              placeholder="mm/aaaa"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
-              name="simulacaoOrgao"
-              control={control}
-              label="Órgão"
-              cols="12 12 2"
-              options={grupoCalculoOrgaoOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
-              name="simulacaoTipoVinculo"
-              control={control}
-              label="Tipo de vínculo"
-              cols="12 12 3"
-              options={grupoCalculoTipoVinculoOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
-              name="simulacaoSituacaoFuncional"
-              control={control}
-              label="Situação funcional"
-              cols="12 12 3"
-              options={grupoCalculoSituacaoFuncionalOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
-              name="simulacaoAmostra"
-              control={control}
-              label="Amostra"
-              cols="12 12 2"
-              options={grupoCalculoAmostraOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-          </div>
-
-          <div className="prototype-grupo-calculo-simulacao-actions">
-            <BotaoSeplag
-              type="button"
-              label="Simular"
-              icon="pi pi-play"
-              onClick={() => {}}
-            />
-            <BotaoSeplag
-              type="button"
-              label="Exportar resultado"
-              icon="pi pi-download"
-              onClick={() => {}}
-            />
-            <BotaoSeplag
-              type="button"
-              label="Ver servidores sem grupo"
-              icon="pi pi-users"
-              onClick={() => {}}
-            />
-            <BotaoSeplag
-              type="button"
-              label="Gerar pendência"
-              icon="pi pi-exclamation-triangle"
-              onClick={() => {}}
-            />
-          </div>
-
-          <div className="prototype-grupo-calculo-simple-table prototype-grupo-calculo-simulacao-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Vínculo</th>
-                  <th>Servidor</th>
-                  <th>Órgão</th>
-                  <th>Tipo vínculo</th>
-                  <th>Cargo</th>
-                  <th>Situação</th>
-                  <th>Grupo aplicado</th>
-                  <th>Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gruposCalculoSimulacaoMock.map((resultado) => {
-                  const semGrupo = resultado.grupoAplicado === "Sem grupo";
-
-                  return (
-                    <tr key={resultado.id} className={semGrupo ? "is-sem-grupo" : undefined}>
-                      <td>{resultado.vinculo}</td>
-                      <td>{resultado.servidor}</td>
-                      <td>{resultado.orgao}</td>
-                      <td>{resultado.tipoVinculo}</td>
-                      <td>{resultado.cargo}</td>
-                      <td>{resultado.situacao}</td>
-                      <td>
-                        <BadgeSeplag
-                          label={resultado.grupoAplicado}
-                          color={semGrupo ? "#b42318" : "#00843d"}
-                          bg={semGrupo ? "#fee4e2" : "#e2f3e8"}
-                          icon={
-                            semGrupo
-                              ? "pi pi-exclamation-triangle"
-                              : "pi pi-check-circle"
-                          }
-                        />
-                      </td>
-                      <td>{resultado.observacao}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="prototype-grupo-calculo-tab-panel">
-        <div className="prototype-grupo-calculo-validacao-actions">
-          <BotaoSeplag
-            type="button"
-            label="Validar grupo"
-            icon="pi pi-check-circle"
-            onClick={() => {}}
-          />
-        </div>
-
-        <div className="prototype-grupo-calculo-simple-table prototype-grupo-calculo-validacoes-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>Descrição</th>
-                <th>Severidade</th>
-                <th>Ação sugerida</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gruposCalculoValidacoesMock.map((pendencia) => {
-                const meta = getGrupoCalculoSeveridadeMeta(pendencia.severidade);
-
-                return (
-                  <tr key={pendencia.id}>
-                    <td>{pendencia.tipo}</td>
-                    <td>{pendencia.descricao}</td>
-                    <td>
-                      <BadgeSeplag
-                        label={pendencia.severidade}
-                        color={meta.color}
-                        bg={meta.bg}
-                        icon={meta.icon}
-                      />
-                    </td>
-                    <td>{pendencia.acaoSugerida}</td>
-                    <td>
-                      <div className="prototype-grupo-calculo-validacao-row-actions">
-                        <button
-                          type="button"
-                          className="prototype-grupo-calculo-icon-action"
-                          title="Resolver pendência"
-                          onClick={() => {}}
-                        >
-                          <i className="pi pi-wrench" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          className="prototype-grupo-calculo-icon-action"
-                          title="Ir para aba relacionada"
-                          onClick={() => setActiveTab(pendencia.abaRelacionada)}
-                        >
-                          <i className="pi pi-arrow-right" aria-hidden="true" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  const renderGrupoCalculoTabs = () => (
-    <div
-      className="prototype-grupo-calculo-tabs"
-      role="tablist"
-      aria-label="Abas do grupo de calculo"
-    >
-      {grupoCalculoTabs.map((tab) => {
-        const isActive = activeTab === tab.value;
-
-        return (
-          <button
-            key={String(tab.value)}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            className={`prototype-grupo-calculo-tab${
-              isActive ? " prototype-grupo-calculo-tab--active" : ""
-            }`}
-            onClick={() => tab.value && setActiveTab(tab.value)}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
     </div>
   );
 
@@ -3545,14 +2980,12 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupo de Cálculo`}
+            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupos de Cálculo de Folha`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
             <div className="col-12 prototype-category-form prototype-grupo-calculo-form">
-              {renderGrupoCalculoTabs()}
-
-              {renderTabContent()}
+              {renderGrupoCalculoContent()}
 
               <div className="prototype-category-form-footer">
                 <BotaoVoltarSeplag
@@ -3562,12 +2995,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 <BotaoSalvarSeplag
                   type="submit"
                   label="Salvar Rascunho"
-                />
-                <BotaoSeplag
-                  type="button"
-                  label="Validar"
-                  icon="pi pi-check-circle"
-                  onClick={() => setActiveTab("validacoes")}
                 />
                 <BotaoSalvarSeplag
                   type="button"
