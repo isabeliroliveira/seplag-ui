@@ -373,9 +373,16 @@
   transition: margin-left 0.5s ease-in-out;
 }
 
-.layout-content {
+.layout-scroll {
   flex: 1;
   overflow-y: auto;
+  background: #f4f6f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content {
+  flex: 1;
   padding: 1.5rem;
   background: #f4f6f9;
 }

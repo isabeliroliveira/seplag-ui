@@ -3928,6 +3928,33 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     );
   };
 
+  const renderGrupoCalculoTabs = () => (
+    <div
+      className="prototype-grupo-calculo-tabs"
+      role="tablist"
+      aria-label="Abas do grupo de calculo"
+    >
+      {grupoCalculoTabs.map((tab) => {
+        const isActive = activeTab === tab.value;
+
+        return (
+          <button
+            key={String(tab.value)}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            className={`prototype-grupo-calculo-tab${
+              isActive ? " prototype-grupo-calculo-tab--active" : ""
+            }`}
+            onClick={() => tab.value && setActiveTab(tab.value)}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <PrototypeSystemPage
       nomeSistema="FOLHA"
@@ -3941,14 +3968,8 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
-            <div className="prototype-category-form prototype-grupo-calculo-form">
-              <TabsSeplag
-                items={grupoCalculoTabs}
-                activeValue={activeTab}
-                onChange={setActiveTab}
-                className="prototype-grupo-calculo-tabs"
-                maxWidth="100%"
-              />
+            <div className="col-12 prototype-category-form prototype-grupo-calculo-form">
+              {renderGrupoCalculoTabs()}
 
               {renderTabContent()}
 
