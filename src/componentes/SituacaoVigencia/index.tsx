@@ -346,7 +346,11 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
             getFormErrorMessage={getFormErrorMessage}
           />
 
-          <div className={cols?.statusOperacional ?? "col-12 md:col-4 lg:col-3"}>
+          <div
+            className={`${
+              cols?.statusOperacional ?? "col-12 md:col-4 lg:col-3"
+            } situacao-vigencia-status-col`}
+          >
             <label className="font-bold block mb-2">Status Operacional</label>
             <div style={{ minHeight: 40, display: "flex", alignItems: "center" }}>
               <BadgeSeplag

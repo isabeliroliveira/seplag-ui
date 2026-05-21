@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
@@ -538,42 +538,26 @@ interface GrupoEleitosFiltroForm {
 }
 
 interface GrupoCalculoFiltroForm {
-  orgao?: string;
   nomeGrupo?: string;
   situacao?: StatusOperacionalVigenciaSeplag | "";
-  tipoFolha?: string;
   tipoVinculo?: string;
-  competencia?: string;
-  vigenteEm?: string;
 }
 
 interface GrupoCalculoForm {
-  codigo?: string;
   nome?: string;
   descricao?: string;
-  grupoSuperior?: string;
-  nivelEspecificidade?: string;
   situacao?: SituacaoVigenciaValueSeplag["situacao"];
   dataAtivacao?: string;
   dataEncerramento?: string;
   motivoEncerramento?: string;
   dataExtincao?: string;
   motivoExtincao?: string;
-  tipoFolha?: string;
-  permiteHeranca?: string;
-  permiteSobrescreverOrdem?: string;
-  observacao?: string;
   criterioOrgao?: string;
   criterioTipoVinculo?: string;
   criterioRegimeJuridico?: string;
   criterioCategoria?: string;
   criterioCargo?: string;
   criterioSituacaoFuncional?: string;
-  rubricaFiltroTermo?: string;
-  rubricaFiltroTipo?: string;
-  rubricaFiltroNatureza?: string;
-  rubricaFiltroSituacao?: string;
-  rubricaFiltroPossuiFormula?: string;
   simulacaoCompetencia?: string;
   simulacaoOrgao?: string;
   simulacaoTipoVinculo?: string;
@@ -662,13 +646,6 @@ interface GrupoCalculoRow {
   pendencias: number;
 }
 
-interface GrupoCalculoCriterioRow {
-  id: number;
-  criterio: string;
-  operador: string;
-  valor: string;
-}
-
 interface GrupoCalculoHerancaRubricaRow {
   id: number;
   rubrica: string;
@@ -717,6 +694,10 @@ interface RubricaRow {
   naturezaVerba: string;
   dataAprovacao: string;
   status: "Ativa" | "Inativa" | "Extintas";
+}
+
+interface GrupoCalculoRubricaGerenciada extends RubricaRow {
+  ativaNoGrupo: boolean;
 }
 
 interface GrupoEleitoParticipanteRow {
@@ -1177,17 +1158,69 @@ const gruposCalculoMock: GrupoCalculoRow[] = [
   },
 ];
 
-const gruposCalculoCriteriosMock: GrupoCalculoCriterioRow[] = [
-  { id: 1, criterio: "Órgão", operador: "igual a", valor: "SEDUC" },
-  { id: 2, criterio: "Tipo de vínculo", operador: "igual a", valor: "Efetivo" },
-  { id: 3, criterio: "Regime jurídico", operador: "igual a", valor: "Estatutário" },
-  { id: 4, criterio: "Regime previdenciário", operador: "igual a", valor: "RPPS" },
-  { id: 5, criterio: "Categoria", operador: "igual a", valor: "Professor" },
-  { id: 6, criterio: "Subcategoria", operador: "em lista", valor: "Professor 30h, Professor 40h" },
-  { id: 7, criterio: "Cargo", operador: "em lista", valor: "Professor, Técnico" },
-  { id: 8, criterio: "Situação funcional", operador: "em lista", valor: "Ativo" },
-  { id: 9, criterio: "Grupo de eleitos", operador: "igual a", valor: "PESSOA FÍSICA" },
-];
+const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
+  1: [
+    gruposCalculoMock[0],
+    {
+      ...gruposCalculoMock[0],
+      codigo: "G001-V1",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      inicioVigencia: "01/2025",
+      fimVigencia: "12/2025",
+      rubricas: 39,
+    },
+  ],
+  2: [
+    gruposCalculoMock[1],
+    {
+      ...gruposCalculoMock[1],
+      codigo: "G010-V1",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      inicioVigencia: "01/2025",
+      fimVigencia: "12/2025",
+      rubricas: 31,
+    },
+  ],
+  3: [
+    gruposCalculoMock[2],
+    {
+      ...gruposCalculoMock[2],
+      codigo: "G011-V2",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+      inicioVigencia: "01/2026",
+      fimVigencia: "05/2026",
+      rubricas: 36,
+      pendencias: 0,
+    },
+    {
+      ...gruposCalculoMock[2],
+      codigo: "G011-V1",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      inicioVigencia: "03/2025",
+      fimVigencia: "12/2025",
+      rubricas: 34,
+      pendencias: 0,
+    },
+  ],
+  4: [gruposCalculoMock[3]],
+  5: [
+    gruposCalculoMock[4],
+    {
+      ...gruposCalculoMock[4],
+      codigo: "G030-V1",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      inicioVigencia: "01/2025",
+      fimVigencia: "12/2025",
+      rubricas: 15,
+      pendencias: 0,
+    },
+  ],
+  6: [gruposCalculoMock[5]],
+  7: [gruposCalculoMock[6]],
+  8: [gruposCalculoMock[7]],
+  9: [gruposCalculoMock[8]],
+  10: [gruposCalculoMock[9]],
+};
 
 const gruposCalculoHerancaRubricasMock: GrupoCalculoHerancaRubricaRow[] = [
   {
@@ -1361,8 +1394,8 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     tipo: "Servidores sem grupo",
     descricao: "38 vínculos sem enquadramento para a competência simulada.",
     severidade: "Bloqueante",
-    acaoSugerida: "Ajustar critérios ou criar grupo específico.",
-    abaRelacionada: "criterios",
+    acaoSugerida: "Revisar regras de enquadramento ou criar grupo específico.",
+    abaRelacionada: "dados-gerais",
   },
   {
     id: 2,
@@ -1370,7 +1403,7 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     descricao: "Rubrica 2002 não possui fórmula vigente.",
     severidade: "Bloqueante",
     acaoSugerida: "Configurar fórmula ou remover rubrica do grupo.",
-    abaRelacionada: "rubricas",
+    abaRelacionada: "dados-gerais",
   },
   {
     id: 3,
@@ -1378,7 +1411,7 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     descricao: "IRRF está antes de rubricas-base usadas no cálculo.",
     severidade: "Bloqueante",
     acaoSugerida: "Reordenar rubricas respeitando dependências.",
-    abaRelacionada: "ordenacao",
+    abaRelacionada: "dados-gerais",
   },
   {
     id: 4,
@@ -1386,7 +1419,7 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     descricao: "Rubrica 1005 sem conta registro vinculada.",
     severidade: "Alerta",
     acaoSugerida: "Informar conta antes da publicação.",
-    abaRelacionada: "rubricas",
+    abaRelacionada: "dados-gerais",
   },
   {
     id: 5,
@@ -1402,7 +1435,7 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     descricao: "Rubrica 1014 está extinta e permanece vinculada ao grupo.",
     severidade: "Bloqueante",
     acaoSugerida: "Remover rubrica ou criar nova versão vigente.",
-    abaRelacionada: "rubricas",
+    abaRelacionada: "dados-gerais",
   },
   {
     id: 7,
@@ -1418,7 +1451,7 @@ const gruposCalculoValidacoesMock: GrupoCalculoValidacaoRow[] = [
     descricao: "Rubricas 1006 e 1007 possuem dependência cruzada simulada.",
     severidade: "Alerta",
     acaoSugerida: "Visualizar dependências e revisar ordem.",
-    abaRelacionada: "ordenacao",
+    abaRelacionada: "dados-gerais",
   },
 ];
 
@@ -1543,49 +1576,6 @@ const grupoCalculoSimNaoOptions = [
   { label: "Não", value: "nao" },
 ];
 
-const grupoCalculoRubricaTipoOptions = [
-  { label: "Todos", value: "" },
-  { label: "Vantagem", value: "Vantagem" },
-  { label: "Desconto", value: "Desconto" },
-  { label: "Informativa", value: "Informativa" },
-];
-
-const grupoCalculoRubricaNaturezaOptions = [
-  { label: "Todas", value: "" },
-  { label: "Provento", value: "Provento" },
-  { label: "Desconto", value: "Desconto" },
-];
-
-const grupoCalculoRubricaFormulaOptions = [
-  { label: "Todas", value: "" },
-  { label: "Sim", value: "sim" },
-  { label: "Não", value: "nao" },
-];
-
-const grupoCalculoCriterioOptions = [
-  "Órgão",
-  "Tipo de vínculo",
-  "Regime jurídico",
-  "Regime previdenciário",
-  "Categoria",
-  "Subcategoria",
-  "Cargo",
-  "Situação funcional",
-  "Grupo de eleitos",
-];
-
-const grupoCalculoOperadorOptions = [
-  "igual a",
-  "contém",
-  "em lista",
-  "diferente de",
-  "maior que",
-  "menor que",
-  "entre",
-  "existe",
-  "não existe",
-];
-
 function mapGrupoCalculoSituacao(
   situacao?: StatusOperacionalVigenciaSeplag,
 ): SituacaoVigenciaValueSeplag["situacao"] {
@@ -1654,8 +1644,28 @@ function getGrupoCalculoRubricaTipo(rubrica: RubricaRow) {
   return "Vantagem";
 }
 
-function getGrupoCalculoRubricaPossuiFormula(rubrica: RubricaRow) {
-  return !["1005", "1012", "1014"].includes(rubrica.codigo);
+function getGrupoCalculoRubricaTipoBadge(tipo: string) {
+  if (tipo === "Desconto") {
+    return {
+      color: "#b42318",
+      bg: "#fee4e2",
+      border: "#fca5a5",
+    };
+  }
+
+  if (tipo === "Informativa") {
+    return {
+      color: "#005a9c",
+      bg: "#dbeafe",
+      border: "#93c5fd",
+    };
+  }
+
+  return {
+    color: "#00843d",
+    bg: "#d1fae5",
+    border: "#bbf7d0",
+  };
 }
 
 function getGrupoCalculoSeveridadeMeta(
@@ -1791,9 +1801,6 @@ const grupoEleitoTabs: TabItemSeplag<string>[] = [
 
 const grupoCalculoTabs: TabItemSeplag<string>[] = [
   { label: "Dados Gerais", value: "dados-gerais", col: "" },
-  { label: "Critérios", value: "criterios", col: "" },
-  { label: "Rubricas", value: "rubricas", col: "" },
-  { label: "Ordenação", value: "ordenacao", col: "" },
   { label: "Herança", value: "heranca", col: "" },
   { label: "Simulação", value: "simulacao", col: "" },
   { label: "Validações", value: "validacoes", col: "" },
@@ -1848,7 +1855,7 @@ export function PrototiposComponentesPage() {
           )}
         >
           <section
-            className="prototype-component-dashboard"
+            className="col-12 prototype-component-dashboard"
             aria-label="Componentes disponíveis"
           >
             {componentPrototypeItems.map((component) => (
@@ -2763,79 +2770,41 @@ export function PrototiposFolhaPage() {
 
 export function PrototiposFolhaGruposCalculoPage() {
   const navigate = useNavigate();
+  const [expandedGrupoCalculoIds, setExpandedGrupoCalculoIds] = useState<number[]>([3]);
   const { control, reset } = useForm<GrupoCalculoFiltroForm>({
     defaultValues: {
-      orgao: "",
       nomeGrupo: "",
       situacao: "",
-      tipoFolha: "",
       tipoVinculo: "",
-      competencia: "",
-      vigenteEm: "",
     },
   });
 
-  const gruposCalculoResults = {
-    ...createResults(gruposCalculoMock),
-    totalPages: 3,
-    totalRecords: 24,
-    size: 10,
-    sizePage: 10,
+  const toggleGrupoCalculo = (grupoId: number) => {
+    setExpandedGrupoCalculoIds((current) =>
+      current.includes(grupoId)
+        ? current.filter((id) => id !== grupoId)
+        : [...current, grupoId],
+    );
   };
 
-  const gruposCalculoColumns: ColumnMetaSeplag<GrupoCalculoRow>[] = [
-    {
-      field: "codigo",
-      header: "Código",
-    },
-    {
-      field: "grupo",
-      header: "Grupo",
-    },
-    {
-      field: "nivel",
-      header: "Nível",
-    },
-    {
-      field: "herdaDe",
-      header: "Herda de",
-    },
-    {
-      field: "orgaoSetor",
-      header: "Órgão/Setor",
-    },
-    {
-      field: "tipoVinculo",
-      header: "Tipo vínculo",
-    },
-    {
-      header: "Situação",
-      body: (row) => renderGrupoCalculoStatusBadge(row.situacao),
-    },
-    {
-      field: "inicioVigencia",
-      header: "Início vigência",
-    },
-    {
-      field: "fimVigencia",
-      header: "Fim vigência",
-    },
-    {
-      field: "rubricas",
-      header: "Rubricas",
-    },
-    {
-      header: "Pendências",
-      body: (row) => (
-        <BadgeSeplag
-          label={String(row.pendencias)}
-          color={row.pendencias > 0 ? "#b42318" : "#00843d"}
-          bg={row.pendencias > 0 ? "#fee4e2" : "#e2f3e8"}
-          icon={row.pendencias > 0 ? "pi pi-exclamation-triangle" : "pi pi-check-circle"}
-        />
-      ),
-    },
-  ];
+  const renderGrupoCalculoAction = (row: GrupoCalculoRow) => (
+    <div className="prototype-accordion-action-button">
+      <button
+        type="button"
+        aria-label={`Visualizar ${row.grupo}`}
+        onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
+      >
+        <i className="pi pi-eye" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label={`Abrir ações de ${row.grupo}`}
+        onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
+      >
+        <i className="pi pi-chevron-down" aria-hidden="true" />
+      </button>
+    </div>
+  );
 
   return (
     <PrototypeSystemPage
@@ -2849,17 +2818,7 @@ export function PrototiposFolhaGruposCalculoPage() {
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
         >
-          <div className="prototype-category-filters prototype-grupos-calculo-filters grid">
-            <DropdownFieldSeplag
-              name="orgao"
-              control={control}
-              label="Empresa/Órgão"
-              cols="12 6"
-              options={grupoCalculoOrgaoOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
+          <div className="col-12 prototype-category-filters prototype-grupos-calculo-filters">
             <TextFieldSeplag
               name="nomeGrupo"
               control={control}
@@ -2878,16 +2837,6 @@ export function PrototiposFolhaGruposCalculoPage() {
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
-              name="tipoFolha"
-              control={control}
-              label="Tipo de Folha"
-              cols="12 6"
-              options={grupoCalculoTipoFolhaOptions}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
               name="tipoVinculo"
               control={control}
               label="Tipo de Vínculo"
@@ -2897,21 +2846,6 @@ export function PrototiposFolhaGruposCalculoPage() {
               optionValue="value"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="competencia"
-              control={control}
-              label="Competência"
-              cols="12 6"
-              placeholder="mm/aaaa"
-              getFormErrorMessage={() => null}
-            />
-            <DateFieldSeplag
-              name="vigenteEm"
-              control={control}
-              label="Vigente em"
-              cols="12 6"
-              getFormErrorMessage={() => null}
-            />
             <div className="prototype-category-clear col-12 md:col-6">
               <BotaoLimparFiltroSeplag
                 type="button"
@@ -2919,40 +2853,122 @@ export function PrototiposFolhaGruposCalculoPage() {
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
-                    orgao: "",
                     nomeGrupo: "",
                     situacao: "",
-                    tipoFolha: "",
                     tipoVinculo: "",
-                    competencia: "",
-                    vigenteEm: "",
                   })
                 }
               />
             </div>
           </div>
 
-          <div className="prototype-folha-grupos-calculo-table">
-            <TablePaginadoSeplag
-              dataKey="id"
-              data={gruposCalculoResults}
-              rows={10}
-              rowsPerPage={[10]}
-              paginator
-              lazy
-              selectionMode={null}
-              columns={gruposCalculoColumns}
-              hasEventoAcao
-              handleAdicionar={() =>
-                navigate("/prototipos/folha/grupos-calculo/novo")
-              }
-              handleView={() => {}}
-              handleEdit={(row) =>
-                navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)
-              }
-              handleDuplicar={() => {}}
-              handleOnPageChange={() => {}}
-            />
+          <div className="col-12 prototype-folha-grupos-calculo-table">
+            <div className="prototype-grupos-calculo-accordion-table">
+              <div className="prototype-grupos-calculo-table-toolbar">
+                <BotaoSeplag
+                  type="button"
+                  label="Adicionar"
+                  icon="pi pi-plus"
+                  onClick={() => navigate("/prototipos/folha/grupos-calculo/novo")}
+                />
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th aria-label="Expandir versões" />
+                    <th>Grupo</th>
+                    <th>Tipo vínculo</th>
+                    <th>Situação atual</th>
+                    <th>Início vigência</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gruposCalculoMock.map((grupo) => {
+                    const isExpanded = expandedGrupoCalculoIds.includes(grupo.id);
+                    const versoes = gruposCalculoVersoesMock[grupo.id] ?? [grupo];
+
+                    return (
+                      <Fragment key={grupo.id}>
+                        <tr className="prototype-grupos-calculo-group-row" key={grupo.id}>
+                          <td>
+                            <button
+                              type="button"
+                              className="prototype-grupos-calculo-expand"
+                              aria-label={`${isExpanded ? "Recolher" : "Expandir"} versões de ${grupo.grupo}`}
+                              aria-expanded={isExpanded}
+                              onClick={() => toggleGrupoCalculo(grupo.id)}
+                            >
+                              <i
+                                className={`pi ${isExpanded ? "pi-chevron-down" : "pi-chevron-right"}`}
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </td>
+                          <td>
+                            <strong>{grupo.grupo}</strong>
+                            <small>{versoes.length} versão{versoes.length > 1 ? "es" : ""}</small>
+                          </td>
+                          <td>{grupo.tipoVinculo}</td>
+                          <td>{renderGrupoCalculoStatusBadge(grupo.situacao)}</td>
+                          <td>{grupo.inicioVigencia}</td>
+                          <td>{renderGrupoCalculoAction(grupo)}</td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="prototype-grupos-calculo-versions-row" key={`${grupo.id}-versions`}>
+                            <td colSpan={6}>
+                              <div className="prototype-grupos-calculo-versions">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Versão</th>
+                                      <th>Situação</th>
+                                      <th>Início vigência</th>
+                                      <th>Fim vigência</th>
+                                      <th>Rubricas</th>
+                                      <th>Pendências</th>
+                                      <th>Ações</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {versoes.map((versao, index) => (
+                                      <tr key={`${grupo.id}-${versao.codigo}-${index}`}>
+                                        <td>
+                                          <strong>{index === 0 ? "Atual" : `V${versoes.length - index}`}</strong>
+                                          <small>{versao.codigo}</small>
+                                        </td>
+                                        <td>{renderGrupoCalculoStatusBadge(versao.situacao)}</td>
+                                        <td>{versao.inicioVigencia}</td>
+                                        <td>{versao.fimVigencia}</td>
+                                        <td>{versao.rubricas}</td>
+                                        <td>
+                                          <BadgeSeplag
+                                            label={String(versao.pendencias)}
+                                            color={versao.pendencias > 0 ? "#dc2626" : "#008c3a"}
+                                            bg={versao.pendencias > 0 ? "#fde2e2" : "#dff3e8"}
+                                            border={versao.pendencias > 0 ? "#fca5a5" : "#86d0a8"}
+                                            icon={versao.pendencias > 0 ? "pi pi-exclamation-triangle" : "pi pi-check"}
+                                            minWidth={56}
+                                            textAlign="center"
+                                          />
+                                        </td>
+                                        <td>{renderGrupoCalculoAction(versao)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardSeplag>
       </div>
@@ -2966,30 +2982,23 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const isEdit = Boolean(id);
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
   const [activeTab, setActiveTab] = useState("dados-gerais");
-  const [rubricasDisponiveis, setRubricasDisponiveis] = useState(
-    catalogoRubricasMock.slice(2),
+  const [rubricasGerenciadas, setRubricasGerenciadas] = useState<GrupoCalculoRubricaGerenciada[]>(
+    catalogoRubricasMock.slice(0, 12).map((rubrica, index) => ({
+      ...rubrica,
+      ativaNoGrupo: index < 5 || index >= 8,
+    })),
   );
-  const [rubricasSelecionadas, setRubricasSelecionadas] = useState(
-    catalogoRubricasMock.slice(0, 2),
-  );
-  const [operadorCriterios, setOperadorCriterios] = useState<"todos" | "qualquer">("todos");
-  const [criterios, setCriterios] = useState<GrupoCalculoCriterioRow[]>(
-    gruposCalculoCriteriosMock,
-  );
-  const [criterioEditandoId, setCriterioEditandoId] = useState<number | null>(null);
+  const [rubricaDragIndex, setRubricaDragIndex] = useState<number | null>(null);
   const [herancaRubricas, setHerancaRubricas] = useState<GrupoCalculoHerancaRubricaRow[]>(
     gruposCalculoHerancaRubricasMock,
   );
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
-      codigo: grupo?.codigo ?? "",
       nome: grupo?.grupo ?? "",
       descricao: grupo
         ? `Configuração de cálculo para ${grupo.grupo.toLowerCase()}.`
         : "",
-      grupoSuperior: grupo?.herdaDe !== "-" ? grupo?.herdaDe : "",
-      nivelEspecificidade: grupo?.nivel === 1 ? "geral" : "vinculo",
       situacao: mapGrupoCalculoSituacao(grupo?.situacao),
       dataAtivacao:
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO
@@ -3019,21 +3028,12 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
           ? "Extinção administrativa da configuração."
           : "",
-      tipoFolha: "normal",
-      permiteHeranca: "sim",
-      permiteSobrescreverOrdem: "sim",
-      observacao: "",
       criterioOrgao: "todos",
       criterioTipoVinculo: "todos",
       criterioRegimeJuridico: "",
       criterioCategoria: "",
       criterioCargo: "",
       criterioSituacaoFuncional: "",
-      rubricaFiltroTermo: "",
-      rubricaFiltroTipo: "",
-      rubricaFiltroNatureza: "",
-      rubricaFiltroSituacao: "",
-      rubricaFiltroPossuiFormula: "",
       simulacaoCompetencia: "",
       simulacaoOrgao: "",
       simulacaoTipoVinculo: "todos",
@@ -3042,57 +3042,8 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     },
   });
 
-  const renderRubricaPickListItem = (rubrica: RubricaRow) => (
-    <div className="prototype-grupo-picklist-item prototype-grupo-calculo-rubrica-item">
-      <div>
-        <span className="prototype-grupo-matricula">{rubrica.codigo}</span>
-        <strong>{rubrica.nomeRubrica}</strong>
-      </div>
-      <small>
-        {getGrupoCalculoRubricaTipo(rubrica)} • {rubrica.naturezaVerba} •{" "}
-        {rubrica.status} • Fórmula:{" "}
-        {getGrupoCalculoRubricaPossuiFormula(rubrica) ? "Sim" : "Não"}
-      </small>
-    </div>
-  );
-
-  const handleAdicionarCriterio = () => {
-    const novoId = Math.max(0, ...criterios.map((criterio) => criterio.id)) + 1;
-    setCriterios((current) => [
-      ...current,
-      {
-        id: novoId,
-        criterio: "Órgão",
-        operador: "igual a",
-        valor: "",
-      },
-    ]);
-    setCriterioEditandoId(novoId);
-  };
-
-  const handleAtualizarCriterio = (
-    idCriterio: number,
-    field: keyof Omit<GrupoCalculoCriterioRow, "id">,
-    value: string,
-  ) => {
-    setCriterios((current) =>
-      current.map((criterio) =>
-        criterio.id === idCriterio ? { ...criterio, [field]: value } : criterio,
-      ),
-    );
-  };
-
-  const handleRemoverCriterio = (idCriterio: number) => {
-    setCriterios((current) =>
-      current.filter((criterio) => criterio.id !== idCriterio),
-    );
-    setCriterioEditandoId((current) =>
-      current === idCriterio ? null : current,
-    );
-  };
-
-  const handleMoverRubricaOrdenacao = (fromIndex: number, toIndex: number) => {
-    setRubricasSelecionadas((current) => {
+  const handleMoverRubricaGerenciada = (fromIndex: number, toIndex: number) => {
+    setRubricasGerenciadas((current) => {
       if (
         fromIndex < 0 ||
         fromIndex >= current.length ||
@@ -3110,13 +3061,27 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     });
   };
 
-  const handleMoverRubricaParaPosicao = (
-    fromIndex: number,
-    positionValue: string,
-  ) => {
-    const parsedPosition = Number(positionValue);
-    if (!Number.isInteger(parsedPosition)) return;
-    handleMoverRubricaOrdenacao(fromIndex, parsedPosition - 1);
+  const handleToggleRubricaGerenciada = (idRubrica: number) => {
+    setRubricasGerenciadas((current) =>
+      current.map((rubrica) =>
+        rubrica.id === idRubrica
+          ? { ...rubrica, ativaNoGrupo: !rubrica.ativaNoGrupo }
+          : rubrica,
+      ),
+    );
+  };
+
+  const handleAdicionarRubricaGerenciada = () => {
+    setRubricasGerenciadas((current) => {
+      const primeiraInativa = current.find((rubrica) => !rubrica.ativaNoGrupo);
+      if (!primeiraInativa) return current;
+
+      return current.map((rubrica) =>
+        rubrica.id === primeiraInativa.id
+          ? { ...rubrica, ativaNoGrupo: true }
+          : rubrica,
+      );
+    });
   };
 
   const handleAlterarAcaoHeranca = (
@@ -3136,67 +3101,19 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     );
   };
 
-  const rubricaFiltroTermo = (watch("rubricaFiltroTermo") ?? "").toLowerCase().trim();
-  const rubricaFiltroTipo = watch("rubricaFiltroTipo") ?? "";
-  const rubricaFiltroNatureza = watch("rubricaFiltroNatureza") ?? "";
-  const rubricaFiltroSituacao = watch("rubricaFiltroSituacao") ?? "";
-  const rubricaFiltroPossuiFormula = watch("rubricaFiltroPossuiFormula") ?? "";
-  const rubricaMatchesFilters = (rubrica: RubricaRow) => {
-    const matchesTermo =
-      !rubricaFiltroTermo ||
-      rubrica.codigo.toLowerCase().includes(rubricaFiltroTermo) ||
-      rubrica.nomeRubrica.toLowerCase().includes(rubricaFiltroTermo);
-    const matchesTipo =
-      !rubricaFiltroTipo ||
-      getGrupoCalculoRubricaTipo(rubrica) === rubricaFiltroTipo;
-    const matchesNatureza =
-      !rubricaFiltroNatureza ||
-      rubrica.naturezaVerba === rubricaFiltroNatureza;
-    const matchesSituacao =
-      !rubricaFiltroSituacao ||
-      rubrica.status === rubricaFiltroSituacao;
-    const matchesFormula =
-      !rubricaFiltroPossuiFormula ||
-      (rubricaFiltroPossuiFormula === "sim") ===
-        getGrupoCalculoRubricaPossuiFormula(rubrica);
-
-    return (
-      matchesTermo &&
-      matchesTipo &&
-      matchesNatureza &&
-      matchesSituacao &&
-      matchesFormula
-    );
-  };
-  const rubricasDisponiveisFiltradas = rubricasDisponiveis.filter(
-    rubricaMatchesFilters,
-  );
-  const handleSetRubricasDisponiveisFiltradas = (nextFiltradas: RubricaRow[]) => {
-    setRubricasDisponiveis((current) => {
-      const filteredIds = new Set(
-        rubricasDisponiveisFiltradas.map((rubrica) => rubrica.id),
-      );
-      const hidden = current.filter((rubrica) => !filteredIds.has(rubrica.id));
-      return [...hidden, ...nextFiltradas];
-    });
-  };
+  const rubricasAtivasNoGrupo = rubricasGerenciadas.filter(
+    (rubrica) => rubrica.ativaNoGrupo,
+  ).length;
 
   const renderTabContent = () => {
     if (activeTab === "dados-gerais") {
       return (
         <div className="grid prototype-category-form-fields prototype-grupo-calculo-form-fields">
           <TextFieldSeplag
-            name="codigo"
-            control={control}
-            label="Código do Grupo"
-            cols="12 12 3"
-            getFormErrorMessage={() => null}
-          />
-          <TextFieldSeplag
             name="nome"
             control={control}
             label="Nome do Grupo"
-            cols="12 12 9"
+            cols="12 12 12"
             required
             getFormErrorMessage={() => null}
           />
@@ -3206,56 +3123,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
             label="Descrição"
             cols="12 12 12"
             maxLength={500}
-            getFormErrorMessage={() => null}
-          />
-          <DropdownFieldSeplag
-            name="grupoSuperior"
-            control={control}
-            label="Grupo Superior"
-            cols="12 12 4"
-            options={grupoCalculoSuperiorOptions}
-            optionLabel="label"
-            optionValue="value"
-            getFormErrorMessage={() => null}
-          />
-          <DropdownFieldSeplag
-            name="nivelEspecificidade"
-            control={control}
-            label="Nível de Especificidade"
-            cols="12 12 3"
-            options={grupoCalculoNivelOptions}
-            optionLabel="label"
-            optionValue="value"
-            getFormErrorMessage={() => null}
-          />
-          <DropdownFieldSeplag
-            name="tipoFolha"
-            control={control}
-            label="Tipo de Folha Aplicável"
-            cols="12 12 4"
-            options={grupoCalculoTipoFolhaOptions}
-            optionLabel="label"
-            optionValue="value"
-            getFormErrorMessage={() => null}
-          />
-          <DropdownFieldSeplag
-            name="permiteHeranca"
-            control={control}
-            label="Permite Herança de Rubricas"
-            cols="12 12 4"
-            options={grupoCalculoSimNaoOptions}
-            optionLabel="label"
-            optionValue="value"
-            getFormErrorMessage={() => null}
-          />
-          <DropdownFieldSeplag
-            name="permiteSobrescreverOrdem"
-            control={control}
-            label="Permite Sobrescrever Ordem Herdada"
-            cols="12 12 4"
-            options={grupoCalculoSimNaoOptions}
-            optionLabel="label"
-            optionValue="value"
             getFormErrorMessage={() => null}
           />
           <div className="col-12 prototype-grupo-calculo-vigencia">
@@ -3275,371 +3142,85 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               getFormErrorMessage={() => null}
             />
           </div>
-          <TextAreaFieldSeplag
-            name="observacao"
-            control={control}
-            label="Observação"
-            cols="12 12 12"
-            maxLength={500}
-            getFormErrorMessage={() => null}
-          />
-        </div>
-      );
-    }
 
-    if (activeTab === "criterios") {
-      return (
-        <div className="prototype-grupo-calculo-tab-panel prototype-grupo-calculo-criterios">
-          <div className="prototype-grupo-calculo-criterios-toolbar">
-            <div className="prototype-grupo-calculo-operador">
-              <span>Operador entre critérios</span>
-              <label>
-                <input
-                  type="radio"
-                  name="operadorCriterios"
-                  checked={operadorCriterios === "todos"}
-                  onChange={() => setOperadorCriterios("todos")}
+          <div className="col-12 prototype-grupo-calculo-rubricas-section">
+            <div className="prototype-grupo-calculo-rubricas-manager">
+              <div className="prototype-grupo-calculo-rubricas-header">
+                <div>
+                  <strong>Gerenciar Rubricas</strong>
+                  <span>
+                    {rubricasAtivasNoGrupo} rubricas ativas de{" "}
+                    {rubricasGerenciadas.length} - arraste para reordenar
+                  </span>
+                </div>
+                <BotaoSeplag
+                  type="button"
+                  label="Adicionar Rubrica"
+                  icon="pi pi-plus"
+                  severity="secondary"
+                  onClick={handleAdicionarRubricaGerenciada}
                 />
-                Todos os critérios
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="operadorCriterios"
-                  checked={operadorCriterios === "qualquer"}
-                  onChange={() => setOperadorCriterios("qualquer")}
-                />
-                Qualquer critério
-              </label>
-            </div>
+              </div>
 
-            <BotaoSeplag
-              type="button"
-              label="Adicionar critério"
-              icon="pi pi-plus"
-              onClick={handleAdicionarCriterio}
-            />
-          </div>
+              <div className="prototype-grupo-calculo-rubricas-list">
+                <div className="prototype-grupo-calculo-rubricas-list-head">
+                  <span aria-label="Ordenar" />
+                  <span>Ativo</span>
+                  <span>#</span>
+                  <span>Código</span>
+                  <span>Nome da Rubrica</span>
+                  <span>Tipo</span>
+                </div>
 
-          <div className="prototype-grupo-calculo-simple-table prototype-grupo-calculo-criterios-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Critério</th>
-                  <th>Operador</th>
-                  <th>Valor</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {criterios.map((criterio) => {
-                  const isEditing = criterioEditandoId === criterio.id;
+                {rubricasGerenciadas.map((rubrica, index) => {
+                  const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
+                  const tipoRubricaBadge = getGrupoCalculoRubricaTipoBadge(tipoRubrica);
 
                   return (
-                    <tr key={criterio.id}>
-                      <td>
-                        {isEditing ? (
-                          <select
-                            value={criterio.criterio}
-                            onChange={(event) =>
-                              handleAtualizarCriterio(
-                                criterio.id,
-                                "criterio",
-                                event.target.value,
-                              )
-                            }
-                          >
-                            {grupoCalculoCriterioOptions.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          criterio.criterio
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <select
-                            value={criterio.operador}
-                            onChange={(event) =>
-                              handleAtualizarCriterio(
-                                criterio.id,
-                                "operador",
-                                event.target.value,
-                              )
-                            }
-                          >
-                            {grupoCalculoOperadorOptions.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          criterio.operador
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            value={criterio.valor}
-                            onChange={(event) =>
-                              handleAtualizarCriterio(
-                                criterio.id,
-                                "valor",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Informe o valor"
-                          />
-                        ) : (
-                          criterio.valor
-                        )}
-                      </td>
-                      <td>
-                        <div className="prototype-grupo-calculo-row-actions">
-                          <button
-                            type="button"
-                            className="prototype-grupo-calculo-icon-action"
-                            title={isEditing ? "Concluir edição" : "Editar"}
-                            onClick={() =>
-                              setCriterioEditandoId(isEditing ? null : criterio.id)
-                            }
-                          >
-                            <i
-                              className={isEditing ? "pi pi-check" : "pi pi-pencil"}
-                              aria-hidden="true"
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            className="prototype-grupo-calculo-icon-action prototype-grupo-calculo-icon-action--danger"
-                            title="Remover"
-                            onClick={() => handleRemoverCriterio(criterio.id)}
-                          >
-                            <i className="pi pi-trash" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTab === "rubricas") {
-      return (
-        <div className="prototype-grupo-calculo-tab-panel">
-          <div className="prototype-grupo-calculo-rubrica-filters">
-            <strong>Filtros das rubricas disponíveis</strong>
-            <div className="grid prototype-category-form-fields">
-              <TextFieldSeplag
-                name="rubricaFiltroTermo"
-                control={control}
-                label="Código/Nome"
-                cols="12 12 4"
-                getFormErrorMessage={() => null}
-              />
-              <DropdownFieldSeplag
-                name="rubricaFiltroTipo"
-                control={control}
-                label="Tipo"
-                cols="12 12 2"
-                options={grupoCalculoRubricaTipoOptions}
-                optionLabel="label"
-                optionValue="value"
-                getFormErrorMessage={() => null}
-              />
-              <DropdownFieldSeplag
-                name="rubricaFiltroNatureza"
-                control={control}
-                label="Natureza"
-                cols="12 12 2"
-                options={grupoCalculoRubricaNaturezaOptions}
-                optionLabel="label"
-                optionValue="value"
-                getFormErrorMessage={() => null}
-              />
-              <DropdownFieldSeplag
-                name="rubricaFiltroSituacao"
-                control={control}
-                label="Situação"
-                cols="12 12 2"
-                options={catalogoRubricaStatusOptions}
-                optionLabel="label"
-                optionValue="value"
-                getFormErrorMessage={() => null}
-              />
-              <DropdownFieldSeplag
-                name="rubricaFiltroPossuiFormula"
-                control={control}
-                label="Possui fórmula"
-                cols="12 12 2"
-                options={grupoCalculoRubricaFormulaOptions}
-                optionLabel="label"
-                optionValue="value"
-                getFormErrorMessage={() => null}
-              />
-            </div>
-          </div>
-
-          <div className="prototype-grupo-picklist-shell prototype-grupo-calculo-picklist">
-            <PickListSeplag
-              title="Rubricas do Grupo"
-              titleNaoSelecionados="Rubricas disponíveis"
-              titleSelecionados="Rubricas do grupo"
-              dataKey="id"
-              dataLabel="nomeRubrica"
-              filterBy="codigo,nomeRubrica,naturezaVerba,status"
-              filterPlaceholder="Buscar rubrica..."
-              naoSelecionados={rubricasDisponiveisFiltradas}
-              selecionados={rubricasSelecionadas}
-              setNaoSelecionados={handleSetRubricasDisponiveisFiltradas}
-              setSelecionados={setRubricasSelecionadas}
-              naoSelecionadosItemTemplate={renderRubricaPickListItem}
-              selecionadosItemTemplate={renderRubricaPickListItem}
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTab === "ordenacao") {
-      return (
-        <div className="prototype-grupo-calculo-tab-panel">
-          <div className="prototype-grupo-calculo-order-actions">
-            <BotaoSeplag
-              type="button"
-              label="Validar ordem"
-              icon="pi pi-check-circle"
-              onClick={() => {}}
-            />
-            <BotaoSeplag
-              type="button"
-              label="Visualizar dependências"
-              icon="pi pi-sitemap"
-              onClick={() => {}}
-            />
-          </div>
-
-          <div className="prototype-grupo-calculo-simple-table prototype-grupo-calculo-ordenacao-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ordem</th>
-                  <th>Código</th>
-                  <th>Rubrica</th>
-                  <th>Tipo</th>
-                  <th>Origem</th>
-                  <th>Fórmula</th>
-                  <th>Depende de</th>
-                  <th>Bloqueio</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rubricasSelecionadas.map((rubrica, index) => {
-                  const dependeDe = index === 0 ? "-" : rubricasSelecionadas[0]?.codigo;
-                  const possuiBloqueio = index > 0;
-
-                  return (
-                    <tr
+                    <div
                       key={rubrica.id}
-                      className={possuiBloqueio ? "is-dependency-blocked" : undefined}
+                      className={`prototype-grupo-calculo-rubrica-row${
+                        rubrica.ativaNoGrupo ? "" : " is-inactive"
+                      }`}
+                      draggable
+                      onDragStart={() => setRubricaDragIndex(index)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => {
+                        if (rubricaDragIndex === null) return;
+                        handleMoverRubricaGerenciada(rubricaDragIndex, index);
+                        setRubricaDragIndex(null);
+                      }}
+                      onDragEnd={() => setRubricaDragIndex(null)}
                     >
-                      <td>{String(index + 1).padStart(3, "0")}</td>
-                      <td>{rubrica.codigo}</td>
-                      <td>{rubrica.nomeRubrica}</td>
-                      <td>{getGrupoCalculoRubricaTipo(rubrica)}</td>
-                      <td>{index === 0 ? "Herdada" : "Própria"}</td>
-                      <td>
-                        {getGrupoCalculoRubricaPossuiFormula(rubrica)
-                          ? "Sim"
-                          : "Não"}
-                      </td>
-                      <td>{dependeDe}</td>
-                      <td>
-                        <BadgeSeplag
-                          label={possuiBloqueio ? "Sim" : "Não"}
-                          color={possuiBloqueio ? "#b42318" : "#00843d"}
-                          bg={possuiBloqueio ? "#fee4e2" : "#e2f3e8"}
-                          icon={
-                            possuiBloqueio
-                              ? "pi pi-lock"
-                              : "pi pi-check-circle"
-                          }
-                        />
-                      </td>
-                      <td>
-                        <div className="prototype-grupo-calculo-row-actions prototype-grupo-calculo-order-row-actions">
-                          <button
-                            type="button"
-                            className="prototype-grupo-calculo-icon-action"
-                            title="Subir"
-                            disabled={index === 0}
-                            onClick={() =>
-                              handleMoverRubricaOrdenacao(index, index - 1)
-                            }
-                          >
-                            <i className="pi pi-arrow-up" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className="prototype-grupo-calculo-icon-action"
-                            title="Descer"
-                            disabled={index === rubricasSelecionadas.length - 1}
-                            onClick={() =>
-                              handleMoverRubricaOrdenacao(index, index + 1)
-                            }
-                          >
-                            <i className="pi pi-arrow-down" aria-hidden="true" />
-                          </button>
-                          <input
-                            className="prototype-grupo-calculo-position-input"
-                            type="number"
-                            min={1}
-                            max={rubricasSelecionadas.length}
-                            aria-label="Mover para posição"
-                            title="Mover para posição"
-                            placeholder="Pos."
-                            onKeyDown={(event) => {
-                              if (event.key !== "Enter") return;
-                              handleMoverRubricaParaPosicao(
-                                index,
-                                event.currentTarget.value,
-                              );
-                              event.currentTarget.value = "";
-                            }}
-                            onBlur={(event) => {
-                              if (!event.currentTarget.value) return;
-                              handleMoverRubricaParaPosicao(
-                                index,
-                                event.currentTarget.value,
-                              );
-                              event.currentTarget.value = "";
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="prototype-grupo-calculo-icon-action"
-                            title="Visualizar dependências"
-                            onClick={() => {}}
-                          >
-                            <i className="pi pi-sitemap" aria-hidden="true" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                      <button
+                        type="button"
+                        className="prototype-grupo-calculo-drag-handle"
+                        title="Arraste para reordenar"
+                        aria-label={`Reordenar ${rubrica.nomeRubrica}`}
+                      >
+                        <i className="pi pi-bars" aria-hidden="true" />
+                      </button>
+                      <input
+                        type="checkbox"
+                        checked={rubrica.ativaNoGrupo}
+                        aria-label={`Ativar ${rubrica.nomeRubrica}`}
+                        onChange={() => handleToggleRubricaGerenciada(rubrica.id)}
+                      />
+                      <span>{index + 1}</span>
+                      <code>{rubrica.codigo}</code>
+                      <strong>{rubrica.nomeRubrica}</strong>
+                      <BadgeSeplag
+                        label={tipoRubrica}
+                        color={tipoRubricaBadge.color}
+                        bg={tipoRubricaBadge.bg}
+                        border={tipoRubricaBadge.border}
+                        size="xs"
+                      />
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
       );

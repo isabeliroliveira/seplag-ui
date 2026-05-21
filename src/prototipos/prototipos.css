@@ -181,22 +181,22 @@
 }
 
 .prototype-grupos-calculo-filters [class*="content-rotulo"] {
-  gap: 0;
+  gap: 4px;
 }
 
 .prototype-grupos-calculo-filters {
   display: grid;
   grid-template-columns:
-    minmax(170px, 1.25fr)
-    minmax(185px, 1.35fr)
-    minmax(132px, 0.9fr)
-    minmax(142px, 0.95fr)
-    minmax(148px, 1fr)
-    minmax(116px, 0.72fr)
-    minmax(140px, 0.82fr)
-    minmax(126px, 0.7fr);
+    minmax(260px, 1.5fr)
+    minmax(180px, 1fr)
+    minmax(220px, 1.1fr)
+    minmax(160px, 0.75fr);
   align-items: end;
   gap: 10px 14px;
+  margin: 8px 0 14px;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .prototype-grupos-calculo-filters::before,
@@ -209,6 +209,7 @@
   max-width: none !important;
   flex: initial !important;
   padding: 0 !important;
+  min-width: 0;
 }
 
 .prototype-grupos-calculo-filters [class*="label-rotulo"] {
@@ -241,6 +242,8 @@
 }
 
 .prototype-grupos-calculo-filters .prototype-category-clear {
+  display: flex;
+  align-items: flex-end;
   min-height: 58px;
 }
 
@@ -277,6 +280,157 @@
 
 .prototype-grupos-calculo-filters + .prototype-folha-grupos-calculo-table {
   margin-top: 6px;
+}
+
+.prototype-folha-grupos-calculo-table {
+  width: 100%;
+  max-width: 100%;
+}
+
+.prototype-grupos-calculo-accordion-table {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.prototype-grupos-calculo-table-toolbar {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.prototype-grupos-calculo-accordion-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prototype-grupos-calculo-accordion-table th,
+.prototype-grupos-calculo-accordion-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1f2933;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.prototype-grupos-calculo-accordion-table th {
+  background: #f8fafc;
+  color: #0f2742;
+  font-weight: 700;
+}
+
+.prototype-grupos-calculo-accordion-table > table > thead > tr > th:first-child,
+.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:first-child {
+  width: 54px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-accordion-table > table > thead > tr > th:nth-child(4),
+.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:nth-child(4) {
+  width: 260px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-accordion-table > table > thead > tr > th:nth-child(5),
+.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:nth-child(5) {
+  width: 180px;
+}
+
+.prototype-grupos-calculo-accordion-table > table > thead > tr > th:last-child,
+.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:last-child {
+  width: 150px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-group-row:nth-of-type(4n + 3) td {
+  background: #f7f7f9;
+}
+
+.prototype-grupos-calculo-group-row td strong,
+.prototype-grupos-calculo-versions td strong {
+  display: block;
+  color: #1f2933;
+  font-weight: 500;
+}
+
+.prototype-grupos-calculo-group-row td small,
+.prototype-grupos-calculo-versions td small {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.prototype-grupos-calculo-expand {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #005494;
+  cursor: pointer;
+}
+
+.prototype-grupos-calculo-expand:hover {
+  background: #eef6ff;
+}
+
+.prototype-grupos-calculo-versions-row > td {
+  padding: 0 16px 16px !important;
+  background: #f8fbff;
+}
+
+.prototype-grupos-calculo-versions {
+  overflow: hidden;
+  border: 1px solid #d6e3f0;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.prototype-grupos-calculo-versions table {
+  min-width: 860px;
+}
+
+.prototype-grupos-calculo-versions th,
+.prototype-grupos-calculo-versions td {
+  padding: 12px 14px;
+}
+
+.prototype-grupos-calculo-versions th {
+  background: #f2f6fa;
+  font-size: 0.92rem;
+}
+
+.prototype-accordion-action-button {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #2f80ed;
+}
+
+.prototype-accordion-action-button button {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 46px;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.prototype-accordion-action-button button:last-child {
+  border-right: 0;
+}
+
+.prototype-accordion-action-button button:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .prototype-category-clear {
@@ -652,9 +806,86 @@
 }
 
 .prototype-grupo-calculo-vigencia {
-  margin-top: 8px;
-  padding-top: 18px;
+  margin-top: 10px;
+  padding-top: 16px;
   border-top: 1px solid #d6dde5;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-seplag {
+  width: 100%;
+  margin: 0;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-seplag > .col-12 {
+  padding: 0;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-row {
+  align-items: flex-start;
+  margin: 0;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-row > [class*="col-"],
+.prototype-grupo-calculo-vigencia .situacao-vigencia-row > [class*="md:col"],
+.prototype-grupo-calculo-vigencia .situacao-vigencia-row > [class*="lg:col"] {
+  min-width: 0;
+}
+
+.prototype-grupo-calculo-vigencia [class*="content-rotulo"] {
+  gap: 4px;
+}
+
+.prototype-grupo-calculo-vigencia [class*="label-rotulo"],
+.prototype-grupo-calculo-vigencia label.font-bold {
+  min-height: 22px;
+  margin: 0 0 6px;
+  color: #334e68;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.prototype-grupo-calculo-vigencia [class*="elemento"] > .flex.flex-column,
+.prototype-grupo-calculo-vigencia [class*="elemento"] .p-calendar,
+.prototype-grupo-calculo-vigencia [class*="elemento"] .p-inputtext,
+.prototype-grupo-calculo-vigencia [class*="elemento"] textarea {
+  width: 100%;
+}
+
+.prototype-grupo-calculo-vigencia [class*="elemento"] .justify-content-start {
+  min-height: 40px !important;
+  align-items: center;
+}
+
+.prototype-grupo-calculo-vigencia .p-calendar .p-inputtext,
+.prototype-grupo-calculo-vigencia .p-calendar .p-button {
+  height: 40px;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-status-col > div {
+  justify-content: flex-end;
+  min-height: 40px !important;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-status-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-status-col .border-round-3xl {
+  justify-content: center;
+  min-width: 96px;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-divider {
+  height: 1px;
+  margin: 18px 0 0;
+  background: #d6dde5;
+}
+
+.prototype-grupo-calculo-vigencia .situacao-vigencia-divider + .situacao-vigencia-row {
+  margin-top: 16px;
 }
 
 .prototype-grupo-calculo-status-badge-wrap {
@@ -732,43 +963,141 @@
   margin-bottom: 0;
 }
 
-.prototype-grupo-calculo-picklist {
-  margin-top: 20px;
+.prototype-grupo-calculo-rubricas-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #d6dde5;
 }
 
-.prototype-grupo-calculo-rubrica-filters {
-  padding: 16px;
-  border: 1px solid #d6dde5;
-  border-radius: 4px;
-  background: #f8fafc;
+.prototype-grupo-calculo-rubricas-manager {
+  padding: 4px 0 0;
 }
 
-.prototype-grupo-calculo-rubrica-filters > strong {
+.prototype-grupo-calculo-rubricas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.prototype-grupo-calculo-rubricas-header strong {
   display: block;
-  margin-bottom: 2px;
-  color: #003f73;
+  margin-bottom: 4px;
+  color: #0f2742;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
-.prototype-grupo-calculo-rubrica-filters .prototype-category-form-fields {
-  margin-top: 8px;
+.prototype-grupo-calculo-rubricas-header span {
+  display: block;
+  color: #475569;
+  font-size: 0.9rem;
 }
 
-.prototype-grupo-calculo-rubrica-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+.prototype-grupo-calculo-rubricas-header .p-button {
+  min-width: 164px;
+  color: #0f2742;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
 }
 
-.prototype-grupo-calculo-rubrica-item > div {
-  display: flex;
+.prototype-grupo-calculo-rubricas-list {
+  display: grid;
+  gap: 5px;
+}
+
+.prototype-grupo-calculo-rubricas-list-head,
+.prototype-grupo-calculo-rubrica-row {
+  display: grid;
+  grid-template-columns: 34px 54px 44px 68px minmax(0, 1fr) 110px;
   align-items: center;
   gap: 10px;
 }
 
-.prototype-grupo-calculo-rubrica-item small {
-  color: #64748b;
+.prototype-grupo-calculo-rubricas-list-head {
+  min-height: 34px;
+  padding: 0 16px;
+  border-bottom: 1px solid #cbd5e1;
+  color: #334e68;
   font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.prototype-grupo-calculo-rubrica-row {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #d6dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f2742;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.prototype-grupo-calculo-rubrica-row:hover {
+  border-color: #9cc7ed;
+  box-shadow: 0 4px 12px rgba(16, 42, 67, 0.06);
+}
+
+.prototype-grupo-calculo-rubrica-row.is-inactive {
+  color: #8a94a3;
+  background: #fbfdff;
+  opacity: 0.66;
+}
+
+.prototype-grupo-calculo-rubrica-row.is-inactive strong,
+.prototype-grupo-calculo-rubrica-row.is-inactive code {
+  text-decoration: line-through;
+}
+
+.prototype-grupo-calculo-rubrica-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #005494;
+}
+
+.prototype-grupo-calculo-rubrica-row code {
+  display: inline;
+  min-width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #0f2742;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.prototype-grupo-calculo-rubrica-row.is-inactive code {
+  color: #64748b;
+}
+
+.prototype-grupo-calculo-rubrica-row strong {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prototype-grupo-calculo-drag-handle {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  cursor: grab;
+}
+
+.prototype-grupo-calculo-drag-handle:active {
+  cursor: grabbing;
 }
 
 .prototype-grupo-calculo-simple-table {
@@ -798,62 +1127,6 @@
 
 .prototype-grupo-calculo-simple-table tr:last-child td {
   border-bottom: 0;
-}
-
-.prototype-grupo-calculo-criterios-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.prototype-grupo-calculo-operador {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  color: #0f2742;
-}
-
-.prototype-grupo-calculo-operador > span {
-  font-weight: 700;
-}
-
-.prototype-grupo-calculo-operador label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.prototype-grupo-calculo-operador input[type="radio"] {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: #2b91e8;
-}
-
-.prototype-grupo-calculo-criterios-table table {
-  min-width: 780px;
-}
-
-.prototype-grupo-calculo-criterios-table th:last-child,
-.prototype-grupo-calculo-criterios-table td:last-child {
-  width: 136px;
-  text-align: center;
-}
-
-.prototype-grupo-calculo-criterios-table select,
-.prototype-grupo-calculo-criterios-table input {
-  width: 100%;
-  height: 38px;
-  padding: 0 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #0f2742;
-  font: inherit;
 }
 
 .prototype-grupo-calculo-row-actions {
@@ -888,42 +1161,6 @@
   opacity: 0.45;
   cursor: not-allowed;
   filter: grayscale(0.2);
-}
-
-.prototype-grupo-calculo-order-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
-.prototype-grupo-calculo-ordenacao-table table {
-  min-width: 1120px;
-}
-
-.prototype-grupo-calculo-ordenacao-table tr.is-dependency-blocked td {
-  background: #fffafa;
-}
-
-.prototype-grupo-calculo-ordenacao-table th:last-child,
-.prototype-grupo-calculo-ordenacao-table td:last-child {
-  min-width: 220px;
-}
-
-.prototype-grupo-calculo-order-row-actions {
-  justify-content: flex-start;
-}
-
-.prototype-grupo-calculo-position-input {
-  width: 58px;
-  height: 34px;
-  padding: 0 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  color: #0f2742;
-  font: inherit;
-  text-align: center;
 }
 
 .prototype-grupo-calculo-heritage {
@@ -1816,8 +2053,10 @@
 
 .prototype-component-dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .prototype-component-tile {
@@ -1907,11 +2146,6 @@
 @media (max-width: 720px) {
   .prototype-selection-page {
     padding: 28px 18px;
-  }
-
-  .prototype-grupo-calculo-criterios-toolbar {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .prototype-selection-header h1 {
