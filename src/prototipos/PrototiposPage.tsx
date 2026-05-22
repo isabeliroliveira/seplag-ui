@@ -1620,9 +1620,9 @@ export function PrototiposSituacaoVigenciaPage() {
               possuiVinculosOuDependencias={possuiVinculosOuDependencias}
               rotuloDataAtivacao="Data de Início"
               cols={{
-                situacao: "12 12 4",
+                situacao: "12 12 5",
                 dataAtivacao: "12 12 3",
-                statusOperacional: "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                statusOperacional: "col-12 md:col-12 lg:col-4 prototype-status-operacional-col",
                 dataEncerramento: "12 12 4",
                 motivoEncerramento: "12 12 8",
                 dataExtincao: "12 12 4",
@@ -1630,7 +1630,7 @@ export function PrototiposSituacaoVigenciaPage() {
               }}
               getFormErrorMessage={getFormErrorMessage(errors)}
             />
-            <div className="prototype-vigencia-actions">
+            <div className="col-12 prototype-vigencia-actions">
               <BotaoSalvarSeplag type="submit" />
             </div>
           </CardSeplag>
