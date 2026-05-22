@@ -532,9 +532,7 @@ interface RegimeJuridicoFiltroForm {
 
 interface GrupoEleitosFiltroForm {
   termo?: string;
-  finalidade?: string;
-  dataInicio?: string;
-  dataFim?: string;
+  situacao?: StatusOperacionalVigenciaSeplag | "";
 }
 
 interface GrupoCalculoFiltroForm {
@@ -561,7 +559,12 @@ interface GrupoCalculoForm {
 
 interface GrupoEleitoForm {
   descricao?: string;
-  finalidade?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  motivoEncerramento?: string;
+  dataExtincao?: string;
+  motivoExtincao?: string;
   observacoes?: string;
   participanteBusca?: string;
   consultar?: "todos" | "disponiveis" | "eleitos";
@@ -618,11 +621,9 @@ interface RegimeJuridicoRow {
 
 interface GrupoEleitosRow {
   id: number;
-  codigo: number;
   descricao: string;
-  finalidade: string;
+  situacao: StatusOperacionalVigenciaSeplag;
   quantidadeEleitos: number;
-  dataCadastro: string;
 }
 
 interface GrupoCalculoRow {
@@ -793,60 +794,46 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
 const gruposEleitosMock: GrupoEleitosRow[] = [
   {
     id: 81,
-    codigo: 81,
     descricao: "PESSOA FÍSICA",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
     quantidadeEleitos: 0,
-    dataCadastro: "15/05/2026",
   },
   {
     id: 79,
-    codigo: 79,
     descricao: "abc123",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
     quantidadeEleitos: 0,
-    dataCadastro: "14/05/2026",
   },
   {
     id: 80,
-    codigo: 80,
     descricao:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas minima reprehenderit cupiditate tempore. Commodi dignissimos ad impedit repellendus consequatur aliquam cumque magnam saepe vero dolor acc",
-    finalidade: "CONTAGEM DE TEMPO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
     quantidadeEleitos: 0,
-    dataCadastro: "14/05/2026",
   },
   {
     id: 77,
-    codigo: 77,
     descricao: "Grupo Teste",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
     quantidadeEleitos: 0,
-    dataCadastro: "11/05/2026",
   },
   {
     id: 75,
-    codigo: 75,
     descricao: "TESTE",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
     quantidadeEleitos: 0,
-    dataCadastro: "29/04/2026",
   },
   {
     id: 76,
-    codigo: 76,
     descricao: "TESTE",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
     quantidadeEleitos: 0,
-    dataCadastro: "29/04/2026",
   },
   {
     id: 74,
-    codigo: 74,
     descricao: "Teste 24/04/2026",
-    finalidade: "FOLHA DE PAGAMENTO",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.EXTINTO,
     quantidadeEleitos: 0,
-    dataCadastro: "27/04/2026",
   },
 ];
 
@@ -1244,11 +1231,6 @@ const instituicaoOptions = [
 
 const regimeInstituicaoOptions = [{ label: "GOVMT", value: "govmt" }];
 
-const grupoEleitosFinalidadeOptions = [
-  { label: "Folha de Pagamento", value: "FOLHA DE PAGAMENTO" },
-  { label: "Contagem de Tempo", value: "CONTAGEM DE TEMPO" },
-];
-
 const grupoCalculoOrgaoOptions = [
   { label: "Todos", value: "todos" },
   { label: "SEPLAG", value: "seplag" },
@@ -1493,11 +1475,6 @@ const regimeStatusMeta: Record<
 const categoriaTabs: TabItemSeplag<string>[] = [
   { label: "Dados Gerais", value: "dados-gerais", col: "lg:col-6" },
   { label: "Subcategoria", value: "subcategoria", col: "lg:col-6" },
-];
-
-const grupoEleitoTabs: TabItemSeplag<string>[] = [
-  { label: "Informações", value: "grupo-eleito", col: "lg:col-6" },
-  { label: "Participantes", value: "participantes", col: "lg:col-6" },
 ];
 
 function createResults<T>(content: T[]): ResultsSeplag<T> {
@@ -3251,9 +3228,7 @@ export function PrototiposFolhaGrupoEleitosPage() {
   const { control, reset } = useForm<GrupoEleitosFiltroForm>({
     defaultValues: {
       termo: "",
-      finalidade: undefined,
-      dataInicio: "",
-      dataFim: "",
+      situacao: "",
     },
   });
   const grupoEleitosResults = {
@@ -3265,24 +3240,16 @@ export function PrototiposFolhaGrupoEleitosPage() {
   };
   const grupoEleitosColumns: ColumnMetaSeplag<GrupoEleitosRow>[] = [
     {
-      field: "codigo",
-      header: "Código",
-    },
-    {
       field: "descricao",
       header: "Descrição",
-    },
-    {
-      header: "Finalidade",
-      body: (row) => <span>{row.finalidade}</span>,
     },
     {
       field: "quantidadeEleitos",
       header: "Quantidade Eleitos",
     },
     {
-      field: "dataCadastro",
-      header: "Data Cadastro",
+      header: "Situação",
+      body: (row) => renderGrupoCalculoStatusBadge(row.situacao),
     },
   ];
 
@@ -3302,32 +3269,18 @@ export function PrototiposFolhaGrupoEleitosPage() {
             <TextFieldSeplag
               name="termo"
               control={control}
-              label="Código, Descrição"
-              cols="12 12 4"
+              label="Descrição"
+              cols="12 12 6"
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
-              name="finalidade"
+              name="situacao"
               control={control}
-              label="Finalidade"
-              cols="12 6 2"
-              options={grupoEleitosFinalidadeOptions}
+              label="Situação"
+              cols="12 12 4"
+              options={regimeSituacaoOptions}
               optionLabel="label"
               optionValue="value"
-              getFormErrorMessage={() => null}
-            />
-            <DateFieldSeplag
-              name="dataInicio"
-              control={control}
-              label="Data Início"
-              cols="12 6 2"
-              getFormErrorMessage={() => null}
-            />
-            <DateFieldSeplag
-              name="dataFim"
-              control={control}
-              label="Data Fim"
-              cols="12 6 2"
               getFormErrorMessage={() => null}
             />
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
@@ -3338,9 +3291,7 @@ export function PrototiposFolhaGrupoEleitosPage() {
                 onClick={() =>
                   reset({
                     termo: "",
-                    finalidade: undefined,
-                    dataInicio: "",
-                    dataFim: "",
+                    situacao: "",
                   })
                 }
               />
@@ -3375,7 +3326,6 @@ export function PrototiposFolhaGrupoEleitosPage() {
 
 export function PrototiposFolhaGrupoEleitoFormPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("grupo-eleito");
   const [participantesDisponiveis, setParticipantesDisponiveis] = useState(
     grupoEleitoParticipantesMock.slice(4),
   );
@@ -3385,7 +3335,12 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
   const { control, setValue } = useForm<GrupoEleitoForm>({
     defaultValues: {
       descricao: "",
-      finalidade: undefined,
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "08/05/2026",
+      dataEncerramento: "",
+      motivoEncerramento: "",
+      dataExtincao: "",
+      motivoExtincao: "",
       observacoes: "",
       participanteBusca: "",
       consultar: "todos",
@@ -3426,171 +3381,168 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
-            <div className="prototype-category-form">
-              <TabsSeplag
-                items={grupoEleitoTabs}
-                activeValue={activeTab}
-                onChange={setActiveTab}
-                maxWidth="420px"
-              />
-
-              {activeTab === "grupo-eleito" ? (
-                <div className="grid prototype-category-form-fields prototype-grupo-eleito-form-fields">
-                  <TextFieldSeplag
-                    name="descricao"
+            <div className="col-12 prototype-category-form prototype-grupo-eleito-form">
+              <div className="grid prototype-category-form-fields prototype-grupo-eleito-form-fields">
+                <TextFieldSeplag
+                  name="descricao"
+                  control={control}
+                  label="Descrição"
+                  cols="12 12 12"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacoes"
+                  control={control}
+                  label="Observações"
+                  cols="12 12 12"
+                  maxLength={500}
+                  getFormErrorMessage={() => null}
+                />
+                <div className="col-12 prototype-category-vigencia">
+                  <SituacaoVigenciaSeplag<GrupoEleitoForm>
                     control={control}
-                    label="Descrição"
-                    cols="12 12 6"
-                    required
-                    getFormErrorMessage={() => null}
-                  />
-                  <DropdownFieldSeplag
-                    name="finalidade"
-                    control={control}
-                    label="Finalidade"
-                    cols="12 12 6"
-                    required
-                    options={grupoEleitosFinalidadeOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={() => null}
-                  />
-                  <TextAreaFieldSeplag
-                    name="observacoes"
-                    control={control}
-                    label="Observações"
-                    cols="12 12 12"
-                    maxLength={500}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início da Vigência"
+                    cols={{
+                      situacao: "12 12 4",
+                      dataAtivacao: "12 12 4",
+                      statusOperacional: "col-12 md:col-4 lg:col-4",
+                      dataEncerramento: "12 12 4",
+                      motivoEncerramento: "12 12 8",
+                      dataExtincao: "12 12 4",
+                      motivoExtincao: "12 12 8",
+                    }}
                     getFormErrorMessage={() => null}
                   />
                 </div>
-              ) : (
-                <div className="prototype-grupo-participantes">
-                  <div className="prototype-grupo-picklist-shell">
-                    <div className="prototype-grupo-card-search">
-                      <div className="prototype-grupo-card-search-label">
-                        Nome,CPF ou Matrícula<span>*</span>
-                      </div>
-                        <div className="prototype-grupo-card-search-row">
-                          <Controller
-                            name="participanteBusca"
-                            control={control}
-                            render={({ field }) => (
-                              <input
-                                {...field}
-                                className="p-inputtext p-component"
-                                placeholder="Buscar por nome ou matrícula..."
-                              />
-                            )}
-                          />
-                        </div>
-                      </div>
+              </div>
 
-                      <details className="prototype-grupo-inline-filters" open>
-                        <summary className="prototype-grupo-inline-filters-title">
-                          <span>
-                            <i className="pi pi-filter" aria-hidden="true" />
-                            Filtros avançados
-                          </span>
-                          <i className="pi pi-chevron-down prototype-grupo-accordion-chevron" aria-hidden="true" />
-                        </summary>
-                        <div className="grid prototype-grupo-advanced-filter-grid">
-                          <MultiSelectFieldSeplag
-                            name="filtroInstituicao"
-                            control={control}
-                            label="Instituição"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.instituicoes}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar instituições"
-                            getFormErrorMessage={() => null}
+              <div className="prototype-grupo-participantes">
+                <div className="prototype-grupo-picklist-shell">
+                  <div className="prototype-grupo-card-search">
+                    <div className="prototype-grupo-card-search-label">
+                      Nome,CPF ou Matrícula<span>*</span>
+                    </div>
+                    <div className="prototype-grupo-card-search-row">
+                      <Controller
+                        name="participanteBusca"
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            className="p-inputtext p-component"
+                            placeholder="Buscar por nome ou matrícula..."
                           />
-                          <MultiSelectFieldSeplag
-                            name="filtroOrgao"
-                            control={control}
-                            label="Órgão"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.orgaos}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar órgãos"
-                            getFormErrorMessage={() => null}
-                          />
-                          <MultiSelectFieldSeplag
-                            name="filtroTipoVinculo"
-                            control={control}
-                            label="Tipo de Vínculo"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar tipos"
-                            getFormErrorMessage={() => null}
-                          />
-                          <MultiSelectFieldSeplag
-                            name="filtroSetor"
-                            control={control}
-                            label="Setor"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.setores}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar setores"
-                            getFormErrorMessage={() => null}
-                          />
-                          <MultiSelectFieldSeplag
-                            name="filtroCategoria"
-                            control={control}
-                            label="Categoria"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.categorias}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar categorias"
-                            getFormErrorMessage={() => null}
-                          />
-                          <MultiSelectFieldSeplag
-                            name="filtroCargo"
-                            control={control}
-                            label="Cargo"
-                            cols="12 6 4"
-                            options={grupoEleitoFiltroAvancadoOptions.cargos}
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Selecionar cargos"
-                            getFormErrorMessage={() => null}
-                          />
-                        </div>
-                        <div className="prototype-grupo-inline-filter-actions">
-                          <BotaoLimparFiltroSeplag
-                            type="button"
-                            label="Limpar Filtros"
-                            icon="pi pi-refresh"
-                            style={{ height: 30, marginBottom: 0 }}
-                            onClick={handleClearParticipanteFilters}
-                          />
-                        </div>
-                      </details>
-
-                    <PickListSeplag<GrupoEleitoParticipanteRow>
-                      title=""
-                      titleNaoSelecionados="Disponíveis"
-                      titleSelecionados="Eleitos"
-                      dataKey="id"
-                      dataLabel="servidor"
-                      filterBy="matricula,servidor"
-                      filterPlaceholder="Filtrar participantes..."
-                      naoSelecionados={participantesDisponiveis}
-                      selecionados={participantesEleitos}
-                      setNaoSelecionados={setParticipantesDisponiveis}
-                      setSelecionados={setParticipantesEleitos}
-                      naoSelecionadosItemTemplate={renderParticipantePickListItem}
-                      selecionadosItemTemplate={renderParticipantePickListItem}
-                    />
+                        )}
+                      />
+                    </div>
                   </div>
+
+                  <details className="prototype-grupo-inline-filters" open>
+                    <summary className="prototype-grupo-inline-filters-title">
+                      <span>
+                        <i className="pi pi-filter" aria-hidden="true" />
+                        Filtros avançados
+                      </span>
+                      <i className="pi pi-chevron-down prototype-grupo-accordion-chevron" aria-hidden="true" />
+                    </summary>
+                    <div className="grid prototype-grupo-advanced-filter-grid">
+                      <MultiSelectFieldSeplag
+                        name="filtroInstituicao"
+                        control={control}
+                        label="Instituição"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.instituicoes}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar instituições"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroOrgao"
+                        control={control}
+                        label="Órgão"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.orgaos}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar órgãos"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroTipoVinculo"
+                        control={control}
+                        label="Tipo de Vínculo"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar tipos"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroSetor"
+                        control={control}
+                        label="Setor"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.setores}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar setores"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroCategoria"
+                        control={control}
+                        label="Categoria"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.categorias}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar categorias"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
+                        name="filtroCargo"
+                        control={control}
+                        label="Cargo"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.cargos}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar cargos"
+                        getFormErrorMessage={() => null}
+                      />
+                    </div>
+                    <div className="prototype-grupo-inline-filter-actions">
+                      <BotaoLimparFiltroSeplag
+                        type="button"
+                        label="Limpar Filtros"
+                        icon="pi pi-refresh"
+                        style={{ height: 30, marginBottom: 0 }}
+                        onClick={handleClearParticipanteFilters}
+                      />
+                    </div>
+                  </details>
+
+                  <PickListSeplag<GrupoEleitoParticipanteRow>
+                    title=""
+                    titleNaoSelecionados="Disponíveis"
+                    titleSelecionados="Eleitos"
+                    dataKey="id"
+                    dataLabel="servidor"
+                    filterBy="matricula,servidor"
+                    filterPlaceholder="Filtrar participantes..."
+                    naoSelecionados={participantesDisponiveis}
+                    selecionados={participantesEleitos}
+                    setNaoSelecionados={setParticipantesDisponiveis}
+                    setSelecionados={setParticipantesEleitos}
+                    naoSelecionadosItemTemplate={renderParticipantePickListItem}
+                    selecionadosItemTemplate={renderParticipantePickListItem}
+                  />
                 </div>
-              )}
+              </div>
 
               <div className="prototype-category-form-footer">
                 <BotaoVoltarSeplag

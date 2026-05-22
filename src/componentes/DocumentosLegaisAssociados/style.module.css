@@ -237,6 +237,12 @@
   overflow: hidden;
 }
 
+.selectedListScrollable {
+  max-height: 204px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .selectedRow {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -288,31 +294,4 @@
 .iconButton:hover {
   background: #eef5ff;
   color: #0072ce;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid #e5ebf2;
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-.pageButton {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d6dde5;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #0072ce;
-  cursor: pointer;
-}
-
-.pageButton:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
 }

@@ -19,10 +19,9 @@ export interface DocumentosLegaisAssociadosSeplagProps {
   onVisualizar?: (documento: DocumentoLegalAssociadoSeplag) => void;
   placeholder?: string;
   filtroPlaceholder?: string;
-  pageSize?: number;
 }
 
-const DEFAULT_PAGE_SIZE = 5;
+const MAX_VISIBLE_SELECTED_ITEMS = 3;
 
 function normalizeText(value: string) {
   return value
@@ -59,18 +58,27 @@ export function DocumentosLegaisAssociadosSeplag({
   onVisualizar,
   placeholder = "Buscar documentos legais...",
   filtroPlaceholder = "Filtrar por número ou descrição...",
-  pageSize = DEFAULT_PAGE_SIZE,
 }: Readonly<DocumentosLegaisAssociadosSeplagProps>) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const selectedListRef = useRef<HTMLDivElement>(null);
   const [internalValue, setInternalValue] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
   const selectedIds = value ?? internalValue;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const documentsById = useMemo(
+    () => new Map(options.map((item) => [item.id, item])),
+    [options],
+  );
   const selectedDocuments = useMemo(
-    () => options.filter((item) => selectedSet.has(item.id)),
-    [options, selectedSet],
+    () =>
+      selectedIds
+        .map((id) => documentsById.get(id))
+        .filter(
+          (documento): documento is DocumentoLegalAssociadoSeplag =>
+            Boolean(documento),
+        ),
+    [documentsById, selectedIds],
   );
   const filteredOptions = useMemo(() => {
     const query = normalizeText(search.trim());
@@ -83,14 +91,8 @@ export function DocumentosLegaisAssociadosSeplag({
       return content.includes(query);
     });
   }, [options, search]);
-  const shouldPaginate = selectedDocuments.length >= pageSize;
-  const totalPages = shouldPaginate
-    ? Math.max(1, Math.ceil(selectedDocuments.length / pageSize))
-    : 1;
-  const safePage = Math.min(page, totalPages - 1);
-  const visibleDocuments = shouldPaginate
-    ? selectedDocuments.slice(safePage * pageSize, safePage * pageSize + pageSize)
-    : selectedDocuments;
+  const shouldScrollSelectedList =
+    selectedDocuments.length > MAX_VISIBLE_SELECTED_ITEMS;
 
   const updateSelected = (nextValue: string[]) => {
     if (!value) setInternalValue(nextValue);
@@ -103,12 +105,10 @@ export function DocumentosLegaisAssociadosSeplag({
       : [...selectedIds, id];
 
     updateSelected(nextValue);
-    setPage(0);
   };
 
   const removeDocument = (id: string) => {
     updateSelected(selectedIds.filter((item) => item !== id));
-    setPage(0);
   };
 
   useEffect(() => {
@@ -125,8 +125,10 @@ export function DocumentosLegaisAssociadosSeplag({
   }, [isOpen]);
 
   useEffect(() => {
-    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
+    const list = selectedListRef.current;
+    if (!list || !shouldScrollSelectedList) return;
+    list.scrollTop = list.scrollHeight;
+  }, [selectedDocuments.length, shouldScrollSelectedList]);
 
   return (
     <div className={styles.container} ref={rootRef}>
@@ -252,8 +254,13 @@ export function DocumentosLegaisAssociadosSeplag({
       )}
 
       {selectedDocuments.length > 0 && (
-        <div className={styles.selectedList}>
-          {visibleDocuments.map((documento) => {
+        <div
+          className={`${styles.selectedList} ${
+            shouldScrollSelectedList ? styles.selectedListScrollable : ""
+          }`}
+          ref={selectedListRef}
+        >
+          {selectedDocuments.map((documento) => {
             const badgeColors = getCategoriaColors(documento.categoria);
 
             return (
@@ -294,32 +301,6 @@ export function DocumentosLegaisAssociadosSeplag({
               </div>
             );
           })}
-
-          {shouldPaginate && (
-            <div className={styles.pagination}>
-              <button
-                className={styles.pageButton}
-                type="button"
-                disabled={safePage === 0}
-                onClick={() => setPage((current) => Math.max(0, current - 1))}
-              >
-                <i className="pi pi-chevron-left" aria-hidden="true" />
-              </button>
-              <span>
-                Página {safePage + 1} de {totalPages}
-              </span>
-              <button
-                className={styles.pageButton}
-                type="button"
-                disabled={safePage >= totalPages - 1}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages - 1, current + 1))
-                }
-              >
-                <i className="pi pi-chevron-right" aria-hidden="true" />
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>
