@@ -573,6 +573,7 @@ interface GrupoEleitoForm {
   filtroTipoVinculo?: string[];
   filtroSetor?: string[];
   filtroCategoria?: string[];
+  filtroSubcategoria?: string[];
   filtroCargo?: string[];
 }
 
@@ -667,6 +668,7 @@ interface GrupoCalculoRubricaGerenciada extends RubricaRow {
 interface GrupoEleitoParticipanteRow {
   id: number;
   matricula: string;
+  cpf: string;
   vinculo: string;
   servidor: string;
   orgaoEntidade: string;
@@ -1176,6 +1178,7 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   {
     id: 1,
     matricula: "139151",
+    cpf: "012.014.025-02",
     vinculo: "15",
     servidor: "ADRIANA MAMEDES MENDONÇA",
     orgaoEntidade: "",
@@ -1184,6 +1187,7 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   {
     id: 2,
     matricula: "309263",
+    cpf: "123.456.789-00",
     vinculo: "1",
     servidor: "MARIA 322373",
     orgaoEntidade: "",
@@ -1192,6 +1196,7 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   {
     id: 3,
     matricula: "309263",
+    cpf: "123.456.789-00",
     vinculo: "2",
     servidor: "MARIA 322373",
     orgaoEntidade: "",
@@ -1199,7 +1204,8 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   },
   {
     id: 4,
-    matricula: "322603",
+    matricula: "",
+    cpf: "456.789.123-11",
     vinculo: "3",
     servidor: "ABELARDO PINTO TELES",
     orgaoEntidade: "",
@@ -1207,7 +1213,8 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   },
   {
     id: 5,
-    matricula: "322607",
+    matricula: "",
+    cpf: "012.014.025-02",
     vinculo: "9",
     servidor: "ABELVAL LUIZ GOMES DA SILVA",
     orgaoEntidade: "",
@@ -1215,7 +1222,8 @@ const grupoEleitoParticipantesMock: GrupoEleitoParticipanteRow[] = [
   },
   {
     id: 6,
-    matricula: "139151",
+    matricula: "322603",
+    cpf: "012.014.025-02",
     vinculo: "9",
     servidor: "ADRIANA MAMEDES MENDONÇA",
     orgaoEntidade: "",
@@ -1311,44 +1319,37 @@ function renderGrupoCalculoStatusBadge(status: StatusOperacionalVigenciaSeplag) 
     status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
     status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO;
 
-  if (!isStatusLongo) {
-    return <span className="prototype-grupo-calculo-status-badge-wrap">
-      <BadgeSeplag
-        label={badge.label}
-        color={badge.color}
-        bg={badge.bg}
-        icon={badge.icon}
-      />
-    </span>;
-  }
-
-  const segundaLinha =
-    status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO
-      ? "Encerramento"
-      : "Extinção";
-
   return (
     <span className="prototype-grupo-calculo-status-badge-wrap">
       <span
-        className="prototype-grupo-calculo-status-badge"
+        className={`prototype-sistema-status-badge${
+          isStatusLongo ? " prototype-sistema-status-badge--long" : ""
+        }`}
         style={{
           color: badge.color,
           backgroundColor: badge.bg,
-          borderColor: `${badge.color}50`,
+          borderColor: badge.border,
         }}
       >
-        <i className={badge.icon} aria-hidden="true" />
-        <span>
-          Agendado para
-          <strong>{segundaLinha}</strong>
-        </span>
+        {isStatusLongo ? (
+          <>
+            <span>Agendado para</span>
+            <strong>
+              {status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO
+                ? "Encerramento"
+                : "Extinção"}
+            </strong>
+          </>
+        ) : (
+          badge.label
+        )}
       </span>
     </span>
   );
 }
 
 function getGrupoCalculoRubricaTipo(rubrica: RubricaRow) {
-  if (["1003", "1010", "1012"].includes(rubrica.codigo)) return "Informativa";
+  if (["1003", "1010", "1012"].includes(rubrica.codigo)) return "Auxiliar";
   if (rubrica.naturezaVerba === "Desconto") return "Desconto";
   return "Vantagem";
 }
@@ -1362,7 +1363,7 @@ function getGrupoCalculoRubricaTipoBadge(tipo: string) {
     };
   }
 
-  if (tipo === "Informativa") {
+  if (tipo === "Auxiliar") {
     return {
       color: "#005a9c",
       bg: "#dbeafe",
@@ -1403,6 +1404,11 @@ const grupoEleitoFiltroAvancadoOptions = {
     { label: "Militar", value: "militar" },
     { label: "Celetista", value: "celetista" },
   ],
+  subcategorias: [
+    { label: "Professor 30h", value: "professor-30h" },
+    { label: "Professor 40h", value: "professor-40h" },
+    { label: "Administrativo", value: "administrativo" },
+  ],
   cargos: [
     { label: "Analista Administrativo", value: "analista-administrativo" },
     { label: "Técnico Administrativo", value: "tecnico-administrativo" },
@@ -1432,43 +1438,43 @@ const regimeSituacaoOptions = [
 
 const regimeStatusMeta: Record<
   StatusOperacionalVigenciaSeplag,
-  { label: string; color: string; bg: string; icon: string }
+  { label: string; color: string; bg: string; border: string }
 > = {
   AGENDADO: {
     label: "Agendado",
     color: "#8a5a00",
     bg: "#fff4d6",
-    icon: "pi pi-clock",
+    border: "#fff4d6",
   },
   ATIVO: {
     label: "Ativo",
     color: "#00843d",
-    bg: "#e2f3e8",
-    icon: "pi pi-check-circle",
+    bg: "#dff3e8",
+    border: "#dff3e8",
   },
   AGENDADO_ENCERRAMENTO: {
     label: "Agendado para Encerramento",
     color: "#6b7280",
     bg: "#f1f5f9",
-    icon: "pi pi-clock",
+    border: "#f1f5f9",
   },
   ENCERRADO: {
     label: "Encerrado",
     color: "#6b7280",
     bg: "#f1f5f9",
-    icon: "pi pi-lock",
+    border: "#f1f5f9",
   },
   AGENDADO_EXTINCAO: {
     label: "Agendado para Extinção",
     color: "#b42318",
     bg: "#fee4e2",
-    icon: "pi pi-clock",
+    border: "#fee4e2",
   },
   EXTINTO: {
     label: "Extinto",
     color: "#b42318",
     bg: "#fee4e2",
-    icon: "pi pi-times-circle",
+    border: "#fee4e2",
   },
 };
 
@@ -1597,13 +1603,13 @@ export function PrototiposSituacaoVigenciaPage() {
               possuiVinculosOuDependencias={possuiVinculosOuDependencias}
               rotuloDataAtivacao="Data de Início"
               cols={{
-                situacao: "12 12 5",
+                situacao: "12 12 3",
                 dataAtivacao: "12 12 3",
                 statusOperacional: "col-12 md:col-12 lg:col-4 prototype-status-operacional-col",
-                dataEncerramento: "12 12 4",
-                motivoEncerramento: "12 12 8",
-                dataExtincao: "12 12 4",
-                motivoExtincao: "12 12 8",
+                dataEncerramento: "12 12 3",
+                motivoEncerramento: "12",
+                dataExtincao: "12 12 3",
+                motivoExtincao: "12",
               }}
               getFormErrorMessage={getFormErrorMessage(errors)}
             />
@@ -2100,14 +2106,14 @@ export function PrototiposCategoriaFormPage() {
                     setValue={setValue}
                     rotuloDataAtivacao="Data de Início"
                     cols={{
-                      situacao: "12 12 4",
+                      situacao: "12 12 3",
                       dataAtivacao: "12 12 3",
                       statusOperacional:
                         "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
-                      dataEncerramento: "12 12 4",
-                      motivoEncerramento: "12 12 8",
-                      dataExtincao: "12 12 4",
-                      motivoExtincao: "12 12 8",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
                     }}
                     getFormErrorMessage={() => null}
                   />
@@ -2224,22 +2230,11 @@ export function PrototiposSigepRegimeJuridicoPage() {
     },
     {
       header: "Situação",
-      body: (row) => {
-        const statusConfig = regimeStatusMeta[row.situacao];
-
-        return (
-          <span className="prototype-regime-status-badge">
-            <BadgeSeplag
-              label={statusConfig.label}
-              color={statusConfig.color}
-              bg={statusConfig.bg}
-              border="transparent"
-              icon={statusConfig.icon}
-              size="sm"
-            />
-          </span>
-        );
-      },
+      body: (row) => (
+        <span className="prototype-regime-status-badge">
+          {renderGrupoCalculoStatusBadge(row.situacao)}
+        </span>
+      ),
     },
   ];
 
@@ -2401,14 +2396,14 @@ export function PrototiposSigepRegimeJuridicoNovoPage() {
                   setValue={setValue}
                   rotuloDataAtivacao="Início de Vigência"
                   cols={{
-                    situacao: "12 12 4",
+                    situacao: "12 12 3",
                     dataAtivacao: "12 12 3",
                     statusOperacional:
                       "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
-                    dataEncerramento: "12 12 4",
-                    motivoEncerramento: "12 12 8",
-                    dataExtincao: "12 12 4",
-                    motivoExtincao: "12 12 8",
+                    dataEncerramento: "12 12 3",
+                    motivoEncerramento: "12",
+                    dataExtincao: "12 12 3",
+                    motivoExtincao: "12",
                   }}
                   getFormErrorMessage={() => null}
                 />
@@ -2441,7 +2436,7 @@ export function PrototiposFolhaPage() {
 
 export function PrototiposFolhaGruposCalculoPage() {
   const navigate = useNavigate();
-  const [expandedGrupoCalculoIds, setExpandedGrupoCalculoIds] = useState<number[]>([3]);
+  const [expandedGrupoCalculoIds, setExpandedGrupoCalculoIds] = useState<number[]>([]);
   const { control, reset } = useForm<GrupoCalculoFiltroForm>({
     defaultValues: {
       nomeGrupo: "",
@@ -2547,12 +2542,10 @@ export function PrototiposFolhaGruposCalculoPage() {
               <table>
                 <thead>
                   <tr>
-                    <th aria-label="Expandir versões" />
                     <th>Grupo</th>
                     <th>Tipo vínculo</th>
                     <th>Situação atual</th>
-                    <th>Início vigência</th>
-                    <th>Ações</th>
+                    <th aria-label="Expandir versões" />
                   </tr>
                 </thead>
                 <tbody>
@@ -2564,6 +2557,11 @@ export function PrototiposFolhaGruposCalculoPage() {
                       <Fragment key={grupo.id}>
                         <tr className="prototype-grupos-calculo-group-row" key={grupo.id}>
                           <td>
+                            <strong>{grupo.grupo}</strong>
+                          </td>
+                          <td>{grupo.tipoVinculo}</td>
+                          <td>{renderGrupoCalculoStatusBadge(grupo.situacao)}</td>
+                          <td>
                             <button
                               type="button"
                               className="prototype-grupos-calculo-expand"
@@ -2572,34 +2570,25 @@ export function PrototiposFolhaGruposCalculoPage() {
                               onClick={() => toggleGrupoCalculo(grupo.id)}
                             >
                               <i
-                                className={`pi ${isExpanded ? "pi-chevron-down" : "pi-chevron-right"}`}
+                                className={`pi ${isExpanded ? "pi-chevron-up" : "pi-chevron-down"}`}
                                 aria-hidden="true"
                               />
                             </button>
                           </td>
-                          <td>
-                            <strong>{grupo.grupo}</strong>
-                            <small>{versoes.length} versão{versoes.length > 1 ? "es" : ""}</small>
-                          </td>
-                          <td>{grupo.tipoVinculo}</td>
-                          <td>{renderGrupoCalculoStatusBadge(grupo.situacao)}</td>
-                          <td>{grupo.inicioVigencia}</td>
-                          <td>{renderGrupoCalculoAction(grupo)}</td>
                         </tr>
 
                         {isExpanded && (
                           <tr className="prototype-grupos-calculo-versions-row" key={`${grupo.id}-versions`}>
-                            <td colSpan={6}>
+                            <td colSpan={4}>
                               <div className="prototype-grupos-calculo-versions">
                                 <table>
                                   <thead>
                                     <tr>
                                       <th>Versão</th>
-                                      <th>Situação</th>
                                       <th>Início vigência</th>
                                       <th>Fim vigência</th>
                                       <th>Rubricas</th>
-                                      <th>Pendências</th>
+                                      <th>Situação</th>
                                       <th>Ações</th>
                                     </tr>
                                   </thead>
@@ -2607,24 +2596,12 @@ export function PrototiposFolhaGruposCalculoPage() {
                                     {versoes.map((versao, index) => (
                                       <tr key={`${grupo.id}-${versao.codigo}-${index}`}>
                                         <td>
-                                          <strong>{index === 0 ? "Atual" : `V${versoes.length - index}`}</strong>
-                                          <small>{versao.codigo}</small>
+                                          <strong>{`V${versoes.length - index}`}</strong>
                                         </td>
-                                        <td>{renderGrupoCalculoStatusBadge(versao.situacao)}</td>
                                         <td>{versao.inicioVigencia}</td>
                                         <td>{versao.fimVigencia}</td>
                                         <td>{versao.rubricas}</td>
-                                        <td>
-                                          <BadgeSeplag
-                                            label={String(versao.pendencias)}
-                                            color={versao.pendencias > 0 ? "#dc2626" : "#008c3a"}
-                                            bg={versao.pendencias > 0 ? "#fde2e2" : "#dff3e8"}
-                                            border={versao.pendencias > 0 ? "#fca5a5" : "#86d0a8"}
-                                            icon={versao.pendencias > 0 ? "pi pi-exclamation-triangle" : "pi pi-check"}
-                                            minWidth={56}
-                                            textAlign="center"
-                                          />
-                                        </td>
+                                        <td>{renderGrupoCalculoStatusBadge(versao.situacao)}</td>
                                         <td>{renderGrupoCalculoAction(versao)}</td>
                                       </tr>
                                     ))}
@@ -2778,13 +2755,13 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               setValue={setValue}
               rotuloDataAtivacao="Início da Vigência"
               cols={{
-                situacao: "12 12 4",
-                dataAtivacao: "12 12 4",
+                situacao: "12 12 3",
+                dataAtivacao: "12 12 3",
                 statusOperacional: "col-12 md:col-4 lg:col-4",
-                dataEncerramento: "12 12 4",
-                motivoEncerramento: "12 12 8",
-                dataExtincao: "12 12 4",
-                motivoExtincao: "12 12 8",
+                dataEncerramento: "12 12 3",
+                motivoEncerramento: "12",
+                dataExtincao: "12 12 3",
+                motivoExtincao: "12",
               }}
               getFormErrorMessage={() => null}
             />
@@ -2923,13 +2900,16 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       <span>{index + 1}</span>
                       <code>{rubrica.codigo}</code>
                       <strong>{rubrica.nomeRubrica}</strong>
-                      <BadgeSeplag
-                        label={tipoRubrica}
-                        color={tipoRubricaBadge.color}
-                        bg={tipoRubricaBadge.bg}
-                        border={tipoRubricaBadge.border}
-                        size="xs"
-                      />
+                      <span
+                        className="prototype-grupo-calculo-tipo-pill"
+                        style={{
+                          color: tipoRubricaBadge.color,
+                          backgroundColor: tipoRubricaBadge.bg,
+                          borderColor: tipoRubricaBadge.border,
+                        }}
+                      >
+                        {tipoRubrica}
+                      </span>
                     </div>
                   );
                 })}
@@ -3349,13 +3329,15 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
       filtroTipoVinculo: [],
       filtroSetor: [],
       filtroCategoria: [],
+      filtroSubcategoria: [],
       filtroCargo: [],
     },
   });
   const renderParticipantePickListItem = (participante: GrupoEleitoParticipanteRow) => (
     <div className="prototype-grupo-picklist-item">
-      <span className="prototype-grupo-matricula">{participante.matricula}</span>
+      <span className="prototype-grupo-matricula">{participante.matricula || "-"}</span>
       <strong>{participante.servidor}</strong>
+      <span className="prototype-grupo-cpf">{participante.cpf}</span>
     </div>
   );
   const handleClearParticipanteFilters = () => {
@@ -3365,6 +3347,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
     setValue("filtroTipoVinculo", []);
     setValue("filtroSetor", []);
     setValue("filtroCategoria", []);
+    setValue("filtroSubcategoria", []);
     setValue("filtroCargo", []);
   };
 
@@ -3403,15 +3386,15 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                   <SituacaoVigenciaSeplag<GrupoEleitoForm>
                     control={control}
                     setValue={setValue}
-                    rotuloDataAtivacao="Início da Vigência"
+                    rotuloDataAtivacao="Data Criação"
                     cols={{
-                      situacao: "12 12 4",
-                      dataAtivacao: "12 12 4",
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
                       statusOperacional: "col-12 md:col-4 lg:col-4",
-                      dataEncerramento: "12 12 4",
-                      motivoEncerramento: "12 12 8",
-                      dataExtincao: "12 12 4",
-                      motivoExtincao: "12 12 8",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
                     }}
                     getFormErrorMessage={() => null}
                   />
@@ -3422,7 +3405,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                 <div className="prototype-grupo-picklist-shell">
                   <div className="prototype-grupo-card-search">
                     <div className="prototype-grupo-card-search-label">
-                      Nome,CPF ou Matrícula<span>*</span>
+                      Nome, CPF ou Matrícula<span>*</span>
                     </div>
                     <div className="prototype-grupo-card-search-row">
                       <Controller
@@ -3432,7 +3415,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                           <input
                             {...field}
                             className="p-inputtext p-component"
-                            placeholder="Buscar por nome ou matrícula..."
+                            placeholder="Buscar por nome, CPF ou matrícula..."
                           />
                         )}
                       />
@@ -3471,20 +3454,9 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                         getFormErrorMessage={() => null}
                       />
                       <MultiSelectFieldSeplag
-                        name="filtroTipoVinculo"
-                        control={control}
-                        label="Tipo de Vínculo"
-                        cols="12 6 4"
-                        options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Selecionar tipos"
-                        getFormErrorMessage={() => null}
-                      />
-                      <MultiSelectFieldSeplag
                         name="filtroSetor"
                         control={control}
-                        label="Setor"
+                        label="Setores"
                         cols="12 6 4"
                         options={grupoEleitoFiltroAvancadoOptions.setores}
                         optionLabel="label"
@@ -3504,6 +3476,17 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                         getFormErrorMessage={() => null}
                       />
                       <MultiSelectFieldSeplag
+                        name="filtroSubcategoria"
+                        control={control}
+                        label="Subcategoria"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.subcategorias}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar subcategorias"
+                        getFormErrorMessage={() => null}
+                      />
+                      <MultiSelectFieldSeplag
                         name="filtroCargo"
                         control={control}
                         label="Cargo"
@@ -3514,15 +3497,32 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                         placeholder="Selecionar cargos"
                         getFormErrorMessage={() => null}
                       />
-                    </div>
-                    <div className="prototype-grupo-inline-filter-actions">
-                      <BotaoLimparFiltroSeplag
-                        type="button"
-                        label="Limpar Filtros"
-                        icon="pi pi-refresh"
-                        style={{ height: 30, marginBottom: 0 }}
-                        onClick={handleClearParticipanteFilters}
+                      <MultiSelectFieldSeplag
+                        name="filtroTipoVinculo"
+                        control={control}
+                        label="Tipo de Vínculo"
+                        cols="12 6 4"
+                        options={grupoEleitoFiltroAvancadoOptions.tiposVinculo}
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecionar Tipo de Vínculo"
+                        getFormErrorMessage={() => null}
                       />
+                      <div className="col-12 md:col-6 lg:col-8 prototype-grupo-inline-filter-actions">
+                        <BotaoSeplag
+                          type="button"
+                          label="Aplicar Filtro"
+                          icon="pi pi-filter"
+                          style={{ height: 30, marginBottom: 0 }}
+                        />
+                        <BotaoLimparFiltroSeplag
+                          type="button"
+                          label="Limpar Filtro"
+                          icon="pi pi-refresh"
+                          style={{ height: 30, marginBottom: 0 }}
+                          onClick={handleClearParticipanteFilters}
+                        />
+                      </div>
                     </div>
                   </details>
 
@@ -3532,7 +3532,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                     titleSelecionados="Eleitos"
                     dataKey="id"
                     dataLabel="servidor"
-                    filterBy="matricula,servidor"
+                    filterBy="matricula,cpf,servidor"
                     filterPlaceholder="Filtrar participantes..."
                     naoSelecionados={participantesDisponiveis}
                     selecionados={participantesEleitos}

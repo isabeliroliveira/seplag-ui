@@ -322,31 +322,16 @@
   font-weight: 700;
 }
 
-.prototype-grupos-calculo-accordion-table > table > thead > tr > th:first-child,
-.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:first-child {
-  width: 54px;
-  text-align: center;
-}
-
-.prototype-grupos-calculo-accordion-table > table > thead > tr > th:nth-child(4),
-.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:nth-child(4) {
-  width: 260px;
-  text-align: center;
-}
-
-.prototype-grupos-calculo-accordion-table > table > thead > tr > th:nth-child(5),
-.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:nth-child(5) {
-  width: 180px;
-}
-
 .prototype-grupos-calculo-accordion-table > table > thead > tr > th:last-child,
 .prototype-grupos-calculo-accordion-table > table > tbody > tr > td:last-child {
-  width: 150px;
-  text-align: center;
+  width: 64px;
+  text-align: right;
 }
 
-.prototype-grupos-calculo-group-row:nth-of-type(4n + 3) td {
-  background: #f7f7f9;
+.prototype-grupos-calculo-accordion-table > table > thead > tr > th:nth-child(3),
+.prototype-grupos-calculo-accordion-table > table > tbody > tr > td:nth-child(3) {
+  width: 260px;
+  text-align: center;
 }
 
 .prototype-grupos-calculo-group-row td strong,
@@ -354,6 +339,10 @@
   display: block;
   color: #1f2933;
   font-weight: 500;
+}
+
+.prototype-grupos-calculo-group-row td {
+  background: #ffffff;
 }
 
 .prototype-grupos-calculo-group-row td small,
@@ -367,17 +356,43 @@
 .prototype-grupos-calculo-expand {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  background: #ffffff;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   color: #005494;
   cursor: pointer;
 }
 
 .prototype-grupos-calculo-expand:hover {
   background: #eef6ff;
+}
+
+.prototype-grupos-calculo-accordion-table .prototype-sistema-status-badge {
+  width: 154px;
+  height: 30px;
+  min-height: 30px;
+  padding: 5px 14px;
+}
+
+.prototype-grupos-calculo-accordion-table .prototype-sistema-status-badge--long {
+  width: 154px;
+  height: 34px;
+  min-height: 34px;
+  padding: 3px 14px;
+  font-size: 0.78rem;
+  line-height: 1;
+  background-clip: padding-box;
+  box-shadow: none;
+}
+
+.prototype-grupos-calculo-accordion-table .prototype-sistema-status-badge--long span,
+.prototype-grupos-calculo-accordion-table .prototype-sistema-status-badge--long strong {
+  color: inherit !important;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
 }
 
 .prototype-grupos-calculo-versions-row > td {
@@ -404,6 +419,18 @@
 .prototype-grupos-calculo-versions th {
   background: #f2f6fa;
   font-size: 0.92rem;
+}
+
+.prototype-grupos-calculo-versions th:nth-child(5),
+.prototype-grupos-calculo-versions td:nth-child(5) {
+  width: 210px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-versions th:nth-child(6),
+.prototype-grupos-calculo-versions td:nth-child(6) {
+  width: 170px;
+  text-align: center;
 }
 
 .prototype-accordion-action-button {
@@ -528,6 +555,19 @@
 
 .prototype-regime-status-badge i {
   font-size: 0.8rem;
+}
+
+.prototype-regime-status-badge .prototype-sistema-status-badge {
+  min-width: 86px;
+  min-height: 28px;
+  padding: 4px 14px;
+}
+
+.prototype-regime-status-badge .prototype-sistema-status-badge--long {
+  width: 154px;
+  min-height: 38px;
+  padding-block: 5px;
+  white-space: normal;
 }
 
 .prototype-regime-table .p-datatable-thead > tr > th:nth-child(4),
@@ -913,44 +953,83 @@
   width: 100%;
 }
 
-.prototype-grupo-calculo-status-badge-wrap > .flex {
-  justify-content: center;
-  width: 154px;
-  min-height: 24px;
-  text-align: center;
-}
-
-.prototype-grupo-calculo-status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  width: 154px;
-  min-height: 34px;
-  padding: 4px 10px;
+.prototype-sistema-status-badge,
+.situacao-vigencia-status-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 86px;
+  min-height: 28px;
+  padding: 4px 14px;
   border: 1px solid;
   border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  box-sizing: border-box;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prototype-sistema-status-badge--long {
+  width: 154px;
+  min-height: 38px;
+  padding-block: 5px;
   line-height: 1.05;
+  white-space: normal;
 }
 
-.prototype-grupo-calculo-status-badge i {
-  flex: 0 0 auto;
-  font-size: 0.8rem;
-}
-
-.prototype-grupo-calculo-status-badge span {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
+.prototype-sistema-status-badge--long span,
+.prototype-sistema-status-badge--long strong {
+  display: block;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
   text-align: center;
 }
 
-.prototype-grupo-calculo-status-badge strong {
-  font: inherit;
-  font-weight: 500;
+.situacao-vigencia-label-com-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.situacao-vigencia-status-badge--inline {
+  min-width: 0;
+  min-height: 22px;
+  padding: 3px 12px;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.situacao-vigencia-radio-row {
+  min-height: 40px;
+  align-items: center;
+}
+
+.situacao-vigencia-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 16px;
+}
+
+.situacao-vigencia-radio-option label {
+  margin: 0;
+  color: #1f2933;
+  font-weight: 400;
+}
+
+.situacao-vigencia-row-secundaria,
+.situacao-vigencia-row-extincao {
+  margin-top: 8px;
+}
+
+.situacao-vigencia-row-secundaria textarea,
+.situacao-vigencia-row-extincao textarea {
+  min-height: 38px !important;
+  resize: none;
 }
 
 .prototype-grupo-calculo-summary {
@@ -1092,6 +1171,11 @@
   gap: 10px;
 }
 
+.prototype-grupo-calculo-rubricas-list-head > span:last-child,
+.prototype-grupo-calculo-rubrica-row > span:last-child {
+  justify-self: center;
+}
+
 .prototype-grupo-calculo-rubricas-list-head {
   min-height: 34px;
   padding: 0 16px;
@@ -1160,6 +1244,27 @@
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.prototype-grupo-calculo-tipo-pill {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 110px;
+  min-height: 24px;
+  padding: 2px 12px;
+  border: 1px solid;
+  border-radius: 999px;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prototype-grupo-calculo-rubrica-row.is-inactive .prototype-grupo-calculo-tipo-pill {
+  opacity: 0.75;
 }
 
 .prototype-grupo-calculo-drag-handle {
@@ -1409,12 +1514,15 @@
 
 .prototype-grupo-inline-filter-actions {
   display: flex;
+  align-self: end;
+  gap: 8px;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .prototype-grupo-inline-filter-actions .p-button {
   min-width: 132px;
+  margin-bottom: 0;
 }
 
 .prototype-grupo-person-list {
@@ -1565,9 +1673,9 @@
 
 .prototype-grupo-picklist-item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   min-height: 46px;
   padding: 0 14px;
 }
@@ -1577,6 +1685,21 @@
   color: #0f2744;
   font-size: 0.84rem;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prototype-grupo-cpf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f2744;
+  font-size: 0.78rem;
+  font-weight: 800;
   white-space: nowrap;
 }
 
@@ -1926,7 +2049,15 @@
 }
 
 .prototype-situacao-page .p-card h5 {
+  margin-bottom: 14px;
   font-size: 1.4rem;
+}
+
+.prototype-situacao-page .p-card h5 + hr,
+.prototype-situacao-page .p-card h5 + .p-divider,
+.prototype-situacao-page .p-card-title + hr,
+.prototype-situacao-page .p-card-title + .p-divider {
+  margin-bottom: 18px;
 }
 
 .prototype-situacao-page .label-destaque,
@@ -1948,6 +2079,7 @@
 .prototype-situacao-page .situacao-vigencia-seplag {
   width: 100%;
   max-width: 100%;
+  margin-top: 14px;
   margin-left: 0;
   margin-right: 0;
 }
