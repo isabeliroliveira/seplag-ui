@@ -1137,14 +1137,31 @@
 
 .prototype-grupo-calculo-rubricas-header .p-button {
   min-width: 164px;
-  color: #0f2742;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+}
+
+.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn.p-button {
+  color: #ffffff;
+  background: #2f80ed;
+  border: 1px solid #2f80ed;
+}
+
+.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-label,
+.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-icon {
+  color: #ffffff;
 }
 
 .prototype-grupo-calculo-rubricas-list {
   display: grid;
   gap: 5px;
+}
+
+.prototype-grupo-calculo-rubricas-list-empty {
+  padding: 28px 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
 }
 
 .prototype-grupo-calculo-rubricas-empty {
@@ -1163,10 +1180,52 @@
   font-size: 1.65rem;
 }
 
+.prototype-grupo-calculo-modal-rubricas {
+  display: grid;
+  gap: 8px;
+  max-height: 430px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.prototype-grupo-calculo-modal-rubrica-item {
+  display: grid;
+  grid-template-columns: 28px 72px minmax(0, 1fr) 128px;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border: 1px solid #d6e0ea;
+  border-radius: 6px;
+  color: #0f2742;
+  cursor: pointer;
+}
+
+.prototype-grupo-calculo-modal-rubrica-item:hover {
+  background: #f8fbff;
+  border-color: #9ec5fe;
+}
+
+.prototype-grupo-calculo-modal-rubrica-codigo {
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.prototype-grupo-calculo-modal-rubrica-item .prototype-grupo-calculo-tipo-pill {
+  justify-self: end;
+}
+
+.prototype-grupo-calculo-modal-empty {
+  padding: 32px 16px;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+}
+
 .prototype-grupo-calculo-rubricas-list-head,
 .prototype-grupo-calculo-rubrica-row {
   display: grid;
-  grid-template-columns: 34px 54px 44px 68px minmax(0, 1fr) 110px;
+  grid-template-columns: 34px 54px 44px 68px minmax(0, 1fr) 110px 62px;
   align-items: center;
   gap: 10px;
 }
@@ -1212,6 +1271,30 @@
 .prototype-grupo-calculo-rubrica-row.is-inactive strong,
 .prototype-grupo-calculo-rubrica-row.is-inactive code {
   text-decoration: line-through;
+}
+
+.prototype-grupo-calculo-remove-rubrica-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  background: #ef4444;
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.prototype-grupo-calculo-remove-rubrica-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
 }
 
 .prototype-grupo-calculo-rubrica-row input[type="checkbox"] {

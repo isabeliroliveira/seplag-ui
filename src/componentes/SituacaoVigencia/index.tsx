@@ -273,6 +273,10 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     name: resolvedNames.motivoEncerramento,
   });
   const dataExtincao = useWatch({ control, name: resolvedNames.dataExtincao });
+  const motivoExtincao = useWatch({
+    control,
+    name: resolvedNames.motivoExtincao,
+  });
   const ultimoEncerramentoReplicado = useRef<{
     data?: unknown;
     motivo?: unknown;

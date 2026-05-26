@@ -2630,12 +2630,18 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const isEdit = Boolean(id);
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
   const [rubricasGerenciadas, setRubricasGerenciadas] = useState<GrupoCalculoRubricaGerenciada[]>(
-    catalogoRubricasMock.slice(0, 12).map((rubrica, index) => ({
-      ...rubrica,
-      ativaNoGrupo: index < 5 || index >= 8,
-    })),
+    () =>
+      isEdit
+        ? catalogoRubricasMock.slice(0, 12).map((rubrica) => ({
+            ...rubrica,
+            ativaNoGrupo: true,
+          }))
+        : [],
   );
   const [rubricaDragIndex, setRubricaDragIndex] = useState<number | null>(null);
+  const [modalRubricasAberto, setModalRubricasAberto] = useState(false);
+  const [rubricasSelecionadasParaAdicionar, setRubricasSelecionadasParaAdicionar] =
+    useState<number[]>([]);
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
@@ -2709,22 +2715,51 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     );
   };
 
-  const handleAdicionarRubricaGerenciada = () => {
-    setRubricasGerenciadas((current) => {
-      const primeiraInativa = current.find((rubrica) => !rubrica.ativaNoGrupo);
-      if (!primeiraInativa) return current;
-
-      return current.map((rubrica) =>
-        rubrica.id === primeiraInativa.id
-          ? { ...rubrica, ativaNoGrupo: true }
-          : rubrica,
-      );
-    });
+  const handleRemoverRubricaGerenciada = (idRubrica: number) => {
+    setRubricasGerenciadas((current) =>
+      current.filter((rubrica) => rubrica.id !== idRubrica),
+    );
   };
 
-  const rubricasAtivasNoGrupo = rubricasGerenciadas.filter(
-    (rubrica) => rubrica.ativaNoGrupo,
-  ).length;
+  const handleAbrirModalAdicionarRubricas = () => {
+    setRubricasSelecionadasParaAdicionar([]);
+    setModalRubricasAberto(true);
+  };
+
+  const handleToggleRubricaParaAdicionar = (idRubrica: number) => {
+    setRubricasSelecionadasParaAdicionar((current) =>
+      current.includes(idRubrica)
+        ? current.filter((idSelecionado) => idSelecionado !== idRubrica)
+        : [...current, idRubrica],
+    );
+  };
+
+  const handleConfirmarAdicionarRubricas = () => {
+    setRubricasGerenciadas((current) => {
+      const idsAtuais = new Set(current.map((rubrica) => rubrica.id));
+      const novasRubricas = catalogoRubricasMock
+        .filter(
+          (rubrica) =>
+            rubricasSelecionadasParaAdicionar.includes(rubrica.id) &&
+            !idsAtuais.has(rubrica.id),
+        )
+        .map((rubrica) => ({
+          ...rubrica,
+          ativaNoGrupo: true,
+        }));
+
+      return [...current, ...novasRubricas];
+    });
+    setModalRubricasAberto(false);
+    setRubricasSelecionadasParaAdicionar([]);
+  };
+
+  const rubricasDisponiveisParaAdicionar = catalogoRubricasMock.filter(
+    (rubrica) =>
+      !rubricasGerenciadas.some(
+        (rubricaGerenciada) => rubricaGerenciada.id === rubrica.id,
+      ),
+  );
   const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
   const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
   const podeGerenciarRubricas = Boolean(
@@ -2809,21 +2844,21 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   getFormErrorMessage={() => null}
                 />
                 <DropdownFieldSeplag
-                  name="abrangenciaHerdarDe"
+                  name="abrangenciaOrgao"
                   control={control}
-                  label="Herdar De"
+                  label="Órgão"
                   cols="12 12 3"
-                  options={grupoCalculoSuperiorOptions}
+                  options={grupoCalculoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
                   getFormErrorMessage={() => null}
                 />
                 <DropdownFieldSeplag
-                  name="abrangenciaOrgao"
+                  name="abrangenciaHerdarDe"
                   control={control}
-                  label="Órgão"
-                  cols="12 12 6"
-                  options={grupoCalculoOrgaoOptions}
+                  label="Herdar De"
+                  cols="12 12 3"
+                  options={grupoCalculoSuperiorOptions}
                   optionLabel="label"
                   optionValue="value"
                   getFormErrorMessage={() => null}
@@ -2835,19 +2870,17 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               <div className="prototype-grupo-calculo-rubricas-header">
                 <div>
                   <strong>Gerenciar Rubricas</strong>
-                  <span>
-                    {podeGerenciarRubricas
-                      ? `${rubricasAtivasNoGrupo} rubricas ativas de ${rubricasGerenciadas.length} - arraste para reordenar`
-                      : "Preencha os filtros acima para carregar as rubricas"}
-                  </span>
+                  {!podeGerenciarRubricas && (
+                    <span>Preencha os filtros acima para carregar as rubricas</span>
+                  )}
                 </div>
                 {podeGerenciarRubricas && (
                   <BotaoSeplag
                     type="button"
                     label="Adicionar Rubrica"
                     icon="pi pi-plus"
-                    severity="secondary"
-                    onClick={handleAdicionarRubricaGerenciada}
+                    className="prototype-grupo-calculo-add-rubrica-btn"
+                    onClick={handleAbrirModalAdicionarRubricas}
                   />
                 )}
               </div>
@@ -2861,9 +2894,11 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   <span>Código</span>
                   <span>Nome da Rubrica</span>
                   <span>Tipo</span>
+                  <span>Ações</span>
                 </div>
 
-                {rubricasGerenciadas.map((rubrica, index) => {
+                {rubricasGerenciadas.length > 0 ? (
+                  rubricasGerenciadas.map((rubrica, index) => {
                   const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                   const tipoRubricaBadge = getGrupoCalculoRubricaTipoBadge(tipoRubrica);
 
@@ -2910,9 +2945,23 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         {tipoRubrica}
                       </span>
+                      <button
+                        type="button"
+                        className="prototype-grupo-calculo-remove-rubrica-btn"
+                        title="Remover rubrica"
+                        aria-label={`Remover ${rubrica.nomeRubrica}`}
+                        onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
+                      >
+                        <i className="pi pi-trash" aria-hidden="true" />
+                      </button>
                     </div>
                   );
-                })}
+                })
+                ) : (
+                  <div className="prototype-grupo-calculo-rubricas-list-empty">
+                    Nenhuma rubrica adicionada.
+                  </div>
+                )}
                 </div>
               ) : (
                 <div className="prototype-grupo-calculo-rubricas-empty">
@@ -2961,6 +3010,66 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 />
               </div>
             </div>
+
+            <ModalSeplag
+              visible={modalRubricasAberto}
+              titulo="Adicionar Rubrica"
+              tamanho="720px"
+              labelFechar="Cancelar"
+              labelAcao="Adicionar"
+              iconAcao="pi pi-plus"
+              funcAcao={handleConfirmarAdicionarRubricas}
+              fechar={() => {
+                setModalRubricasAberto(false);
+                setRubricasSelecionadasParaAdicionar([]);
+              }}
+            >
+              <div className="col-12 prototype-grupo-calculo-modal-rubricas">
+                {rubricasDisponiveisParaAdicionar.length > 0 ? (
+                  rubricasDisponiveisParaAdicionar.map((rubrica) => {
+                    const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
+                    const tipoRubricaBadge =
+                      getGrupoCalculoRubricaTipoBadge(tipoRubrica);
+                    const checked = rubricasSelecionadasParaAdicionar.includes(
+                      rubrica.id,
+                    );
+
+                    return (
+                      <label
+                        className="prototype-grupo-calculo-modal-rubrica-item"
+                        key={rubrica.id}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            handleToggleRubricaParaAdicionar(rubrica.id)
+                          }
+                        />
+                        <span className="prototype-grupo-calculo-modal-rubrica-codigo">
+                          {rubrica.codigo}
+                        </span>
+                        <strong>{rubrica.nomeRubrica}</strong>
+                        <span
+                          className="prototype-grupo-calculo-tipo-pill"
+                          style={{
+                            color: tipoRubricaBadge.color,
+                            backgroundColor: tipoRubricaBadge.bg,
+                            borderColor: tipoRubricaBadge.border,
+                          }}
+                        >
+                          {tipoRubrica}
+                        </span>
+                      </label>
+                    );
+                  })
+                ) : (
+                  <div className="prototype-grupo-calculo-modal-empty">
+                    Todas as rubricas disponíveis já foram adicionadas.
+                  </div>
+                )}
+              </div>
+            </ModalSeplag>
           </CardSeplag>
         </div>
       </form>
