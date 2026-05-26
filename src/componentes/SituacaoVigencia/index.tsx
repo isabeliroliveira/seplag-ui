@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   Controller,
   useWatch,
@@ -256,7 +256,7 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
   readOnly = false,
   cols,
   possuiVinculosOuDependencias = false,
-  permitirExtincaoDireta = false,
+  permitirExtincaoDireta = true,
   ocultarRotuloSituacao = false,
   rotuloDataAtivacao = "Data de Ativação",
   getFormErrorMessage,
@@ -273,13 +273,14 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     name: resolvedNames.motivoEncerramento,
   });
   const dataExtincao = useWatch({ control, name: resolvedNames.dataExtincao });
+  const ultimoEncerramentoReplicado = useRef<{
+    data?: unknown;
+    motivo?: unknown;
+  }>({});
   const isDisabled = disabled || readOnly;
-  const possuiDadosEncerramento = Boolean(
-    dataEncerramento || String(motivoEncerramento ?? "").trim(),
-  );
   const mostrarEncerramento =
     situacao === SITUACAO_VIGENCIA.ENCERRADO ||
-    (situacao === SITUACAO_VIGENCIA.EXTINTO && possuiDadosEncerramento);
+    situacao === SITUACAO_VIGENCIA.EXTINTO;
   const mostrarExtincao = situacao === SITUACAO_VIGENCIA.EXTINTO;
   const statusOperacional = calcularStatusOperacionalVigenciaSeplag({
     situacao,
@@ -316,6 +317,51 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     setValue(resolvedNames.dataExtincao, undefined as any);
     setValue(resolvedNames.motivoExtincao, undefined as any);
   }, [resolvedNames.dataExtincao, resolvedNames.motivoExtincao, setValue, situacao]);
+
+  useEffect(() => {
+    if (
+      !setValue ||
+      !permitirExtincaoDireta ||
+      situacao !== SITUACAO_VIGENCIA.EXTINTO
+    ) {
+      return;
+    }
+
+    const encerramentoSemData =
+      !dataEncerramento ||
+      dataEncerramento === ultimoEncerramentoReplicado.current.data;
+    const encerramentoSemMotivo =
+      !String(motivoEncerramento ?? "").trim() ||
+      motivoEncerramento === ultimoEncerramentoReplicado.current.motivo;
+
+    if (
+      dataExtincao &&
+      encerramentoSemData &&
+      dataEncerramento !== dataExtincao
+    ) {
+      setValue(resolvedNames.dataEncerramento, dataExtincao as any);
+      ultimoEncerramentoReplicado.current.data = dataExtincao;
+    }
+
+    if (
+      motivoExtincao &&
+      encerramentoSemMotivo &&
+      motivoEncerramento !== motivoExtincao
+    ) {
+      setValue(resolvedNames.motivoEncerramento, motivoExtincao as any);
+      ultimoEncerramentoReplicado.current.motivo = motivoExtincao;
+    }
+  }, [
+    dataEncerramento,
+    dataExtincao,
+    motivoEncerramento,
+    motivoExtincao,
+    permitirExtincaoDireta,
+    resolvedNames.dataEncerramento,
+    resolvedNames.motivoEncerramento,
+    setValue,
+    situacao,
+  ]);
 
   return (
     <div className="grid situacao-vigencia-seplag">
