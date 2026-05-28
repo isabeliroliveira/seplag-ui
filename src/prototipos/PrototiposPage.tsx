@@ -3911,7 +3911,9 @@ export function PrototiposCategoriaPage({
               columns={categoriaColumns}
               hasEventoAcao
               handleAdicionar={() => navigate(`${routePrefix}/categoria/novo`)}
-              handleView={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/categoria/${row.id}/editar`)
+              }
               handleEdit={(row) =>
                 navigate(`${routePrefix}/categoria/${row.id}/editar`)
               }
@@ -4068,8 +4070,12 @@ export function PrototiposCargoPage({
               columns={cargoColumns}
               hasEventoAcao
               handleAdicionar={() => navigate(`${routePrefix}/cargo/novo`)}
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/cargo/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/cargo/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -4765,8 +4771,12 @@ export function PrototiposSigepRegimeJuridicoPage({
               handleAdicionar={() =>
                 navigate(`${routePrefix}/regime-juridico/novo`)
               }
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/regime-juridico/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/regime-juridico/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -5001,7 +5011,9 @@ export function PrototiposCategoriaTestePage() {
               columns={categoriaColumns}
               hasEventoAcao
               handleAdicionar={() => navigate(`${routePrefix}/categoria/novo`)}
-              handleView={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/categoria/${row.id}/editar`)
+              }
               handleEdit={(row) =>
                 navigate(`${routePrefix}/categoria/${row.id}/editar`)
               }
@@ -5342,8 +5354,12 @@ export function PrototiposCargoTestePage() {
               columns={cargoColumns}
               hasEventoAcao
               handleAdicionar={() => navigate(`${routePrefix}/cargo/novo`)}
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/cargo/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/cargo/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -5357,6 +5373,8 @@ export function PrototiposCargoTestePage() {
 export function PrototiposCargoTesteFormPage() {
   const navigate = useNavigate();
   const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { id } = useParams();
+  const isEditing = Boolean(id);
   const { control, setValue } = useForm<CargoForm>({
     defaultValues: {
       baseLegal: [],
@@ -5396,7 +5414,7 @@ export function PrototiposCargoTesteFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title="Cadastrar - Cargo"
+            title={`${isEditing ? "Alterar" : "Cadastrar"} - Cargo`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
@@ -5785,8 +5803,12 @@ export function PrototiposSigepRegimeJuridicoTestePage() {
               handleAdicionar={() =>
                 navigate(`${routePrefix}/regime-juridico/novo`)
               }
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/regime-juridico/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/regime-juridico/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -5800,6 +5822,8 @@ export function PrototiposSigepRegimeJuridicoTestePage() {
 export function PrototiposSigepRegimeJuridicoTesteNovoPage() {
   const navigate = useNavigate();
   const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { id } = useParams();
+  const isEditing = Boolean(id);
   const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
     [],
   );
@@ -5828,11 +5852,11 @@ export function PrototiposSigepRegimeJuridicoTesteNovoPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white prototype-regime-page">
           <CardSeplag
-            title="Cadastrar - Regime Jurídico"
+            title={`${isEditing ? "Alterar" : "Cadastrar"} - Regime Jurídico`}
             cols="12"
             cardHeaderClassNames="prototype-regime-card"
           >
-            <div className="prototype-regime-teste-form">
+            <div className="prototype-regime-teste-form col-12">
               <section className="prototype-cargo-form-section">
                 <h3>Dados Gerais</h3>
                 <div className="grid prototype-category-form-fields prototype-regime-form-fields">
@@ -5921,7 +5945,7 @@ export function PrototiposSigepRegimeJuridicoTesteNovoPage() {
               </section>
             </div>
 
-            <div className="prototype-category-form-footer">
+            <div className="prototype-category-form-footer prototype-regime-teste-footer col-12">
               <BotaoVoltarSeplag
                 type="button"
                 onClick={() => navigate(`${routePrefix}/regime-juridico`)}
@@ -6088,8 +6112,12 @@ export function PrototiposTipoVinculoTestePage() {
               handleAdicionar={() =>
                 navigate(`${routePrefix}/tipo-vinculo/novo`)
               }
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/tipo-vinculo/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/tipo-vinculo/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -6103,6 +6131,8 @@ export function PrototiposTipoVinculoTestePage() {
 export function PrototiposTipoVinculoTesteFormPage() {
   const navigate = useNavigate();
   const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { id } = useParams();
+  const isEditing = Boolean(id);
   const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
     [],
   );
@@ -6198,7 +6228,7 @@ export function PrototiposTipoVinculoTesteFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title="Cadastrar - Tipo de Vínculo"
+            title={`${isEditing ? "Alterar" : "Cadastrar"} - Tipo de Vínculo`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
@@ -6553,8 +6583,12 @@ export function PrototiposMatrizValidacaoTestePage() {
               handleAdicionar={() =>
                 navigate(`${routePrefix}/matriz-validacao/novo`)
               }
-              handleView={() => {}}
-              handleEdit={() => {}}
+              handleView={(row) =>
+                navigate(`${routePrefix}/matriz-validacao/${row.id}/editar`)
+              }
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/matriz-validacao/${row.id}/editar`)
+              }
               handleDelete={() => {}}
               handleOnPageChange={() => {}}
             />
@@ -6568,6 +6602,8 @@ export function PrototiposMatrizValidacaoTestePage() {
 export function PrototiposMatrizValidacaoTesteFormPage() {
   const navigate = useNavigate();
   const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { id } = useParams();
+  const isEditing = Boolean(id);
   const { control, setValue, watch } = useForm<MatrizValidacaoForm>({
     defaultValues: {
       instituicao: "GOVMT",
@@ -6628,7 +6664,7 @@ export function PrototiposMatrizValidacaoTesteFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title="Cadastrar - Matriz de Validação Funcional"
+            title={`${isEditing ? "Alterar" : "Cadastrar"} - Matriz de Validação Funcional`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >

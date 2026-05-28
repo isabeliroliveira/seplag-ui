@@ -312,6 +312,10 @@ function App() {
         element={<PrototiposSigepRegimeJuridicoTesteNovoPage />}
       />
       <Route
+        path="/prototipos/sigep/cargo-concurso-teste/regime-juridico/:id/editar"
+        element={<PrototiposSigepRegimeJuridicoTesteNovoPage />}
+      />
+      <Route
         path="/prototipos/sigep/cargo-concurso-teste/categoria"
         element={<PrototiposCategoriaTestePage />}
       />
@@ -332,6 +336,10 @@ function App() {
         element={<PrototiposCargoTesteFormPage />}
       />
       <Route
+        path="/prototipos/sigep/cargo-concurso-teste/cargo/:id/editar"
+        element={<PrototiposCargoTesteFormPage />}
+      />
+      <Route
         path="/prototipos/sigep/cargo-concurso-teste/tipo-vinculo"
         element={<PrototiposTipoVinculoTestePage />}
       />
@@ -340,11 +348,19 @@ function App() {
         element={<PrototiposTipoVinculoTesteFormPage />}
       />
       <Route
+        path="/prototipos/sigep/cargo-concurso-teste/tipo-vinculo/:id/editar"
+        element={<PrototiposTipoVinculoTesteFormPage />}
+      />
+      <Route
         path="/prototipos/sigep/cargo-concurso-teste/matriz-validacao"
         element={<PrototiposMatrizValidacaoTestePage />}
       />
       <Route
         path="/prototipos/sigep/cargo-concurso-teste/matriz-validacao/novo"
+        element={<PrototiposMatrizValidacaoTesteFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/matriz-validacao/:id/editar"
         element={<PrototiposMatrizValidacaoTesteFormPage />}
       />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
