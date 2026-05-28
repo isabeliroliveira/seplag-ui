@@ -72,6 +72,11 @@ import type {
 const SIGEP_BASE_PATH = "/prototipos/sigep";
 const SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH =
   "/prototipos/sigep/cargo-concurso-teste";
+const FOLHA_PAGAMENTO_BASE_PATH =
+  "/prototipos/folha/processamento/folha-pagamento";
+const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
+const getFolhaPagamentoLogPath = (execucaoId: number) =>
+  `${FOLHA_PAGAMENTO_BASE_PATH}/execucoes/${execucaoId}/log`;
 
 interface CargoConcursoRouteProps {
   routePrefix?: string;
@@ -294,7 +299,7 @@ const menuFolha: IMenuSeplag[] = [
       {
         label: "Folha de Pagamento",
         icon: "pi pi-circle-on",
-        to: "/prototipos/folha/processamento/folha-pagamento",
+        to: FOLHA_PAGAMENTO_BASE_PATH,
         visibleOnMenu: true,
         visibleOnRouter: true,
       },
@@ -6899,7 +6904,708 @@ export function PrototiposFolhaPage() {
   );
 }
 
+export function PrototiposFolhaPagamentoFormPage() {
+  const navigate = useNavigate();
+  const [formFeedback, setFormFeedback] = useState("");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FolhaPagamentoForm>({
+    defaultValues: {
+      nome: "",
+      numero: "",
+      mesAnoReferencia: "",
+      competencia: "",
+      observacao: "",
+      orgaos: [],
+      regimeJuridico: "",
+      categoria: "",
+      cargo: "",
+      grupoEleitos: "",
+      totalMesesAdiantar: 0,
+      totalMesesRetroagir: 0,
+    },
+  });
+
+  const normalizeMesAno = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
+    return cleanValue;
+  };
+
+  const isMesAnoValido = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const match =
+      cleanValue.match(/^(\d{4})-(\d{2})$/) ??
+      cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+
+    const mes = cleanValue.includes("-") ? Number(match[2]) : Number(match[1]);
+    return mes >= 1 && mes <= 12;
+  };
+
+  const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+
+  const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+
+  const validarObrigatoriosFolha = (data: FolhaPagamentoForm) => {
+    if (!isTextoPreenchido(data.nome)) {
+      return { tab: "dados", message: "Nome da folha é obrigatório." };
+    }
+
+    if (!isTextoPreenchido(data.numero)) {
+      return { tab: "dados", message: "Número da folha é obrigatório." };
+    }
+
+    if (!isTextoPreenchido(data.mesAnoReferencia)) {
+      return {
+        tab: "dados",
+        message: "Mês/ano de referência é obrigatório.",
+      };
+    }
+
+    if (!isTextoPreenchido(data.competencia)) {
+      return { tab: "dados", message: "Competência é obrigatória." };
+    }
+
+    if (!data.orgaos?.length) {
+      return {
+        tab: "abrangencia",
+        message: "Informe ao menos um órgão para a abrangência da folha.",
+      };
+    }
+
+    if (
+      data.totalMesesAdiantar === undefined ||
+      data.totalMesesAdiantar === null
+    ) {
+      return {
+        tab: "parametros",
+        message: "Total de meses a adiantar é obrigatório.",
+      };
+    }
+
+    if (
+      data.totalMesesRetroagir === undefined ||
+      data.totalMesesRetroagir === null
+    ) {
+      return {
+        tab: "parametros",
+        message: "Total de meses a retroagir é obrigatório.",
+      };
+    }
+
+    return null;
+  };
+
+  const salvarFolha = (data: FolhaPagamentoForm) => {
+    const validacaoObrigatorios = validarObrigatoriosFolha(data);
+
+    if (validacaoObrigatorios) {
+      setFormFeedback(validacaoObrigatorios.message);
+      return;
+    }
+
+    const orgaos = data.orgaos ?? [];
+    const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
+    const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
+    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
+    const competencia = normalizeMesAno(data.competencia);
+    const nome = data.nome?.trim() ?? "";
+    const numero = data.numero?.trim() ?? "";
+
+    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+      return;
+    }
+
+    if (totalMesesAdiantar < 0 || totalMesesRetroagir < 0) {
+      setFormFeedback("Total de meses a adiantar e retroagir não pode ser menor que zero.");
+      return;
+    }
+
+    const folhaDuplicada = folhaPagamentoService.listarFolhas().some((folha) => (
+      folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
+      folha.mesAnoReferencia === mesAnoReferencia &&
+      folha.competencia === competencia &&
+      folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
+        orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
+    ));
+
+    if (folhaDuplicada) {
+      setFormFeedback("Já existe folha cadastrada para a combinação de número, referência, competência e órgão(s).");
+      return;
+    }
+
+    folhaPagamentoService.criarFolha({
+      ...data,
+      nome,
+      numero,
+      mesAnoReferencia,
+      competencia,
+      orgaos,
+      totalMesesAdiantar,
+      totalMesesRetroagir,
+    });
+    navigate(FOLHA_PAGAMENTO_BASE_PATH);
+  };
+
+  const handleFolhaFormInvalido = (
+    _formErrors: FieldErrors<FolhaPagamentoForm>,
+  ) => {
+    setFormFeedback("Preencha os campos obrigatórios e corrija os valores inválidos antes de salvar.");
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={handleSubmit(salvarFolha, handleFolhaFormInvalido)}>
+        <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+          <CardSeplag
+            title="Cadastrar - Folha de Pagamento"
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="col-12 prototype-folha-pagamento-form">
+              {formFeedback ? (
+                <div className="prototype-validation-panel">{formFeedback}</div>
+              ) : null}
+
+              <section className="prototype-folha-form-section">
+                <h3>Dados da Folha</h3>
+                <div className="grid prototype-category-form-fields">
+                  <TextFieldSeplag
+                    name="nome"
+                    control={control}
+                    label="Nome da folha"
+                    cols="12 12 6"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("nome")}
+                  />
+                  <TextFieldSeplag
+                    name="numero"
+                    control={control}
+                    label="Número da folha"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("numero")}
+                  />
+                  <TextFieldSeplag
+                    name="mesAnoReferencia"
+                    control={control}
+                    label="Mês/ano de referência"
+                    placeholder="MM/AAAA"
+                    cols="12 12 3"
+                    required
+                    rules={{
+                      validate: (value) =>
+                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                    }}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("mesAnoReferencia")
+                    }
+                  />
+                  <TextFieldSeplag
+                    name="competencia"
+                    control={control}
+                    label="Competência"
+                    placeholder="MM/AAAA"
+                    cols="12 12 3"
+                    required
+                    rules={{
+                      validate: (value) =>
+                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                    }}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("competencia")
+                    }
+                  />
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("observacao")
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Abrangência</h3>
+                <div className="grid prototype-category-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="orgaos"
+                    control={control}
+                    label="Órgãos"
+                    cols="12 12 6"
+                    required
+                    options={folhaPagamentoOrgaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} órgãos selecionados"
+                    getFormErrorMessage={() => getFormErrorMessage("orgaos")}
+                  />
+                  <DropdownFieldSeplag
+                    name="regimeJuridico"
+                    control={control}
+                    label="Regime jurídico"
+                    cols="12 12 6"
+                    options={folhaPagamentoRegimeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("regimeJuridico")
+                    }
+                  />
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    cols="12 12 4"
+                    options={folhaPagamentoCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("categoria")
+                    }
+                  />
+                  <DropdownFieldSeplag
+                    name="cargo"
+                    control={control}
+                    label="Cargo"
+                    cols="12 12 4"
+                    options={folhaPagamentoCargoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("cargo")}
+                  />
+                  <DropdownFieldSeplag
+                    name="grupoEleitos"
+                    control={control}
+                    label="Grupo de eleitos"
+                    cols="12 12 4"
+                    options={folhaPagamentoGrupoEleitosOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("grupoEleitos")
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Parâmetros de Cálculo</h3>
+                <div className="grid prototype-category-form-fields">
+                  <NumberFieldSeplag
+                    name="totalMesesAdiantar"
+                    control={control}
+                    label="Total de meses a adiantar"
+                    cols="12 12 6"
+                    required
+                    min={0}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("totalMesesAdiantar")
+                    }
+                  />
+                  <NumberFieldSeplag
+                    name="totalMesesRetroagir"
+                    control={control}
+                    label="Total de meses a retroagir"
+                    cols="12 12 6"
+                    required
+                    min={0}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("totalMesesRetroagir")
+                    }
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(FOLHA_PAGAMENTO_BASE_PATH)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaPagamentoLogPage() {
+  const navigate = useNavigate();
+  const { execucaoId } = useParams();
+  const execucaoIdNumber = Number(execucaoId);
+  const execucaoSelecionada = folhaPagamentoService
+    .listarExecucoes()
+    .find((execucao) => execucao.id === execucaoIdNumber);
+  const folhaSelecionada = execucaoSelecionada
+    ? folhaPagamentoService.buscarFolhaPorId(execucaoSelecionada.folhaPagamentoId)
+    : undefined;
+  const [pessoaLogSelecionada, setPessoaLogSelecionada] =
+    useState<FolhaPagamentoPessoaLogRow | null>(null);
+  const [modalPessoaLogAberto, setModalPessoaLogAberto] = useState(false);
+  const { control, reset, watch } =
+    useForm<FolhaPagamentoPessoaLogFiltroForm>({
+      defaultValues: {
+        matricula: "",
+        nome: "",
+        cpf: "",
+        orgao: "",
+        situacao: "",
+        rubrica: "",
+        mensagem: "",
+      },
+    });
+
+  const formatMesAno = (value?: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
+  };
+
+  const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
+    const meta = folhaPagamentoSituacaoMeta[situacao];
+    const label =
+      situacao === "PROCESSADA_COM_ALERTA"
+        ? "Processada\ncom alerta"
+        : situacao === "PROCESSADA_COM_ERRO"
+          ? "Processada\ncom erro"
+          : meta.label;
+
+    return (
+      <BadgeSeplag
+        {...meta}
+        label={label}
+        size="md"
+        customStyle={
+          situacao === "PROCESSADA_COM_ALERTA" ||
+          situacao === "PROCESSADA_COM_ERRO"
+            ? {
+                whiteSpace: "pre-line",
+                lineHeight: 1.12,
+                textAlign: "center",
+                paddingInline: 12,
+              }
+            : undefined
+        }
+      />
+    );
+  };
+
+  const renderExecucaoSituacaoBadge = (
+    situacao: FolhaPagamentoExecucaoSituacao,
+  ) => <BadgeSeplag {...folhaPagamentoExecucaoSituacaoMeta[situacao]} size="md" />;
+
+  const renderPessoaLogSituacaoBadge = (
+    situacao: FolhaPagamentoPessoaLogSituacao,
+  ) => <BadgeSeplag {...folhaPagamentoPessoaLogSituacaoMeta[situacao]} size="md" />;
+
+  const renderRubricaLogSituacaoBadge = (
+    situacao: FolhaPagamentoRubricaLogSituacao,
+  ) => <BadgeSeplag {...folhaPagamentoRubricaLogSituacaoMeta[situacao]} size="sm" />;
+
+  const logFiltros = watch();
+  const pessoaLogs = folhaPagamentoService.listarPessoaLogs();
+  const rubricaLogs = folhaPagamentoService.listarRubricaLogs();
+  const logsDaExecucao = execucaoSelecionada
+    ? pessoaLogs.filter((log) => log.execucaoId === execucaoSelecionada.id)
+    : [];
+  const rubricasDaPessoa = pessoaLogSelecionada
+    ? rubricaLogs.filter((rubrica) => rubrica.pessoaLogId === pessoaLogSelecionada.id)
+    : [];
+  const logsFiltrados = logsDaExecucao.filter((log) => {
+    const rubricasPessoa = rubricaLogs.filter(
+      (rubrica) => rubrica.pessoaLogId === log.id,
+    );
+    const rubricaBusca = logFiltros.rubrica?.trim().toLowerCase();
+
+    return (
+      (!logFiltros.matricula ||
+        `${log.matricula}/${log.vinculo}`.includes(logFiltros.matricula)) &&
+      (!logFiltros.nome ||
+        log.nome.toLowerCase().includes(logFiltros.nome.toLowerCase())) &&
+      (!logFiltros.cpf || log.cpf.includes(logFiltros.cpf)) &&
+      (!logFiltros.orgao || log.orgao === logFiltros.orgao) &&
+      (!logFiltros.situacao || log.situacao === logFiltros.situacao) &&
+      (!logFiltros.mensagem ||
+        log.mensagem.toLowerCase().includes(logFiltros.mensagem.toLowerCase())) &&
+      (!rubricaBusca ||
+        rubricasPessoa.some(
+          (rubrica) =>
+            rubrica.codigoRubrica.toLowerCase().includes(rubricaBusca) ||
+            rubrica.nomeRubrica.toLowerCase().includes(rubricaBusca),
+        ))
+    );
+  });
+  const logResults = createResults(logsFiltrados);
+  const rubricasResults = createResults(rubricasDaPessoa);
+  const logPessoaColumns: ColumnMetaSeplag<FolhaPagamentoPessoaLogRow>[] = [
+    { header: "Matrícula/vínculo", body: (row) => `${row.matricula}/${row.vinculo}` },
+    { field: "nome", header: "Nome" },
+    { field: "cpf", header: "CPF" },
+    { field: "orgao", header: "Órgão" },
+    { field: "cargo", header: "Cargo" },
+    {
+      header: "Situação",
+      body: (row) => renderPessoaLogSituacaoBadge(row.situacao),
+    },
+    { field: "mensagem", header: "Mensagem" },
+  ];
+  const rubricaLogColumns: ColumnMetaSeplag<FolhaPagamentoRubricaLogRow>[] = [
+    { field: "codigoRubrica", header: "Código" },
+    { field: "nomeRubrica", header: "Rubrica" },
+    { field: "tipoRubrica", header: "Tipo" },
+    { field: "valorCalculado", header: "Valor calculado" },
+    {
+      header: "Situação",
+      body: (row) => renderRubricaLogSituacaoBadge(row.situacao),
+    },
+    { field: "mensagem", header: "Mensagem" },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Log de Processamento"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          {!execucaoSelecionada ? (
+            <div className="prototype-empty-content">
+              Execução não encontrada.
+            </div>
+          ) : (
+            <div className="col-12 prototype-folha-log-modal">
+              <div className="prototype-folha-execucoes-summary">
+                <div>
+                  <span>Folha</span>
+                  <strong>{folhaSelecionada?.numero ?? "-"}</strong>
+                  <p>{folhaSelecionada?.nome ?? "-"}</p>
+                </div>
+                <div>
+                  <span>Referência</span>
+                  <strong>{formatMesAno(folhaSelecionada?.mesAnoReferencia)}</strong>
+                  <p>Competência {formatMesAno(folhaSelecionada?.competencia)}</p>
+                </div>
+                <div>
+                  <span>Situação da folha</span>
+                  {folhaSelecionada
+                    ? renderFolhaSituacaoBadge(folhaSelecionada.situacao)
+                    : "-"}
+                </div>
+                <div>
+                  <span>Execução</span>
+                  <strong>{execucaoSelecionada.id}</strong>
+                  <p>{execucaoSelecionada.usuarioResponsavel}</p>
+                </div>
+                <div>
+                  <span>Situação da execução</span>
+                  {renderExecucaoSituacaoBadge(execucaoSelecionada.situacao)}
+                </div>
+                <div>
+                  <span>Início / fim</span>
+                  <strong>{execucaoSelecionada.dataHoraInicio}</strong>
+                  <p>{execucaoSelecionada.dataHoraFim}</p>
+                </div>
+                <div>
+                  <span>Totais</span>
+                  <strong>{execucaoSelecionada.totalPessoas}</strong>
+                  <p>
+                    {execucaoSelecionada.totalSucesso} sucesso,{" "}
+                    {execucaoSelecionada.totalAlerta} alerta,{" "}
+                    {execucaoSelecionada.totalErro} erro
+                  </p>
+                </div>
+              </div>
+
+              <div className="prototype-category-filters prototype-folha-log-filters">
+                <TextFieldSeplag
+                  name="matricula"
+                  control={control}
+                  label="Matrícula/vínculo"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="nome"
+                  control={control}
+                  label="Nome"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="cpf"
+                  control={control}
+                  label="CPF"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="orgao"
+                  control={control}
+                  label="Órgão"
+                  cols="12"
+                  options={[{ label: "Todos", value: "" }, ...folhaPagamentoOrgaoOptions]}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="situacao"
+                  control={control}
+                  label="Situação"
+                  cols="12"
+                  options={folhaPagamentoPessoaLogSituacaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="rubrica"
+                  control={control}
+                  label="Rubrica"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="mensagem"
+                  control={control}
+                  label="Mensagem contém"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <div className="prototype-category-clear">
+                  <BotaoLimparFiltroSeplag
+                    type="button"
+                    label="Limpar"
+                    icon="pi pi-refresh"
+                    onClick={() =>
+                      reset({
+                        matricula: "",
+                        nome: "",
+                        cpf: "",
+                        orgao: "",
+                        situacao: "",
+                        rubrica: "",
+                        mensagem: "",
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              {logsFiltrados.length ? (
+                <TablePaginadoSeplag
+                  dataKey="id"
+                  data={logResults}
+                  rows={10}
+                  rowsPerPage={[10, 20]}
+                  paginator
+                  lazy={false}
+                  selectionMode={null}
+                  columns={logPessoaColumns}
+                  hasEventoAcao
+                  renderBotoes={(log) => (
+                    <BotaoIconSeplag
+                      type="button"
+                      tooltip="Ver detalhe"
+                      icon="pi pi-eye"
+                      onClick={() => {
+                        setPessoaLogSelecionada(log);
+                        setModalPessoaLogAberto(true);
+                      }}
+                    />
+                  )}
+                  handleOnPageChange={() => {}}
+                />
+              ) : (
+                <div className="prototype-empty-content">
+                  Nenhum log encontrado para os filtros informados.
+                </div>
+              )}
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(FOLHA_PAGAMENTO_BASE_PATH)}
+                />
+              </div>
+            </div>
+          )}
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalPessoaLogAberto}
+          titulo="Detalhe do Processamento por Pessoa"
+          fechar={() => setModalPessoaLogAberto(false)}
+          tamanho="980px"
+          hideFooter
+        >
+          {pessoaLogSelecionada ? (
+            <div className="col-12 prototype-folha-pessoa-log-detail">
+              <div className="prototype-folha-pessoa-log-grid">
+                <p><strong>Matrícula/vínculo:</strong> {pessoaLogSelecionada.matricula}/{pessoaLogSelecionada.vinculo}</p>
+                <p><strong>Nome:</strong> {pessoaLogSelecionada.nome}</p>
+                <p><strong>CPF:</strong> {pessoaLogSelecionada.cpf}</p>
+                <p><strong>Órgão:</strong> {pessoaLogSelecionada.orgao}</p>
+                <p><strong>Regime jurídico:</strong> {pessoaLogSelecionada.regimeJuridico}</p>
+                <p><strong>Categoria:</strong> {pessoaLogSelecionada.categoria}</p>
+                <p><strong>Cargo:</strong> {pessoaLogSelecionada.cargo}</p>
+                <p><strong>Grupo de eleitos:</strong> {pessoaLogSelecionada.grupoEleitos || "Não informado"}</p>
+                <p><strong>Situação:</strong> {renderPessoaLogSituacaoBadge(pessoaLogSelecionada.situacao)}</p>
+                <p><strong>Mensagem:</strong> {pessoaLogSelecionada.mensagem}</p>
+              </div>
+
+              {rubricasDaPessoa.length ? (
+                <TablePaginadoSeplag
+                  dataKey="id"
+                  data={rubricasResults}
+                  rows={5}
+                  rowsPerPage={[5, 10]}
+                  paginator
+                  lazy={false}
+                  selectionMode={null}
+                  columns={rubricaLogColumns}
+                  handleOnPageChange={() => {}}
+                />
+              ) : (
+                <div className="prototype-empty-content">
+                  Nenhuma rubrica registrada para esta pessoa nesta execução.
+                </div>
+              )}
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposFolhaPagamentoPage() {
+  const navigate = useNavigate();
   const [folhas, setFolhas] = useState<FolhaPagamentoRow[]>(() =>
     folhaPagamentoService.listarFolhas(),
   );
@@ -6982,7 +7688,11 @@ export function PrototiposFolhaPagamentoPage() {
 
   const isMesAnoValido = (value?: string) => {
     const cleanValue = value?.trim() ?? "";
-    return /^(\d{4}-\d{2}|\d{2}\/\d{4})$/.test(cleanValue);
+    const match = cleanValue.match(/^(\d{4})-(\d{2})$/) ?? cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+
+    const mes = cleanValue.includes("-") ? Number(match[2]) : Number(match[1]);
+    return mes >= 1 && mes <= 12;
   };
 
   const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
@@ -7070,11 +7780,104 @@ export function PrototiposFolhaPagamentoPage() {
     return mes && ano ? `${mes}/${ano}` : value;
   };
 
+  const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+
   const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
     folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
 
   const folhaPodeProcessar = (folha: FolhaPagamentoRow) =>
     folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+
+  const getMensagemBloqueioEdicao = (folha: FolhaPagamentoRow) =>
+    folhaPodeEditar(folha)
+      ? ""
+      : "Não é possível editar uma folha em fila, em processamento, processada, bloqueada ou cancelada.";
+
+  const getMensagemBloqueioProcessamento = (folha: FolhaPagamentoRow) =>
+    folhaPodeProcessar(folha)
+      ? ""
+      : "Só é possível processar folhas em rascunho ou abertas.";
+
+  const validarObrigatoriosFolha = (data: FolhaPagamentoForm) => {
+    if (!isTextoPreenchido(data.nome)) {
+      return {
+        tab: "dados",
+        message: "Nome da folha é obrigatório.",
+      };
+    }
+
+    if (!isTextoPreenchido(data.numero)) {
+      return {
+        tab: "dados",
+        message: "Número da folha é obrigatório.",
+      };
+    }
+
+    if (!isTextoPreenchido(data.mesAnoReferencia)) {
+      return {
+        tab: "dados",
+        message: "Mês/ano de referência é obrigatório.",
+      };
+    }
+
+    if (!isTextoPreenchido(data.competencia)) {
+      return {
+        tab: "dados",
+        message: "Competência é obrigatória.",
+      };
+    }
+
+    if (!data.orgaos?.length) {
+      return {
+        tab: "abrangencia",
+        message: "Informe ao menos um órgão para a abrangência da folha.",
+      };
+    }
+
+    if (
+      data.totalMesesAdiantar === undefined ||
+      data.totalMesesAdiantar === null
+    ) {
+      return {
+        tab: "parametros",
+        message: "Total de meses a adiantar é obrigatório.",
+      };
+    }
+
+    if (
+      data.totalMesesRetroagir === undefined ||
+      data.totalMesesRetroagir === null
+    ) {
+      return {
+        tab: "parametros",
+        message: "Total de meses a retroagir é obrigatório.",
+      };
+    }
+
+    return null;
+  };
+
+  const validarProcessamentoFolha = (folha: FolhaPagamentoRow) => {
+    const bloqueioSituacao = getMensagemBloqueioProcessamento(folha);
+
+    if (bloqueioSituacao) return bloqueioSituacao;
+    if (!isTextoPreenchido(folha.nome)) return "Nome da folha é obrigatório.";
+    if (!isTextoPreenchido(folha.numero)) return "Número da folha é obrigatório.";
+    if (!isMesAnoValido(folha.mesAnoReferencia)) {
+      return "Mês/ano de referência é obrigatório e deve estar no formato MM/AAAA.";
+    }
+    if (!isMesAnoValido(folha.competencia)) {
+      return "Competência é obrigatória e deve estar no formato MM/AAAA.";
+    }
+    if (!folha.orgaos.length) {
+      return "Informe ao menos um órgão antes de processar a folha.";
+    }
+    if (folha.totalMesesAdiantar < 0 || folha.totalMesesRetroagir < 0) {
+      return "Total de meses a adiantar e retroagir não pode ser menor que zero.";
+    }
+
+    return "";
+  };
 
   const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
     const message = errors[name]?.message;
@@ -7082,31 +7885,13 @@ export function PrototiposFolhaPagamentoPage() {
   };
 
   const abrirNovaFolha = () => {
-    setFeedback("");
-    setFormFeedback("");
-    setFolhaSelecionada(null);
-    setFormMode("create");
-    setActiveTab("dados");
-    resetForm({
-      nome: "",
-      numero: "",
-      mesAnoReferencia: "",
-      competencia: "",
-      observacao: "",
-      orgaos: [],
-      regimeJuridico: "",
-      categoria: "",
-      cargo: "",
-      grupoEleitos: "",
-      totalMesesAdiantar: 0,
-      totalMesesRetroagir: 0,
-    });
-    setModalFormularioAberto(true);
+    navigate(FOLHA_PAGAMENTO_NOVA_PATH);
   };
 
   const abrirEditarFolha = (folha: FolhaPagamentoRow) => {
-    if (!folhaPodeEditar(folha)) {
-      setFeedback("Não é possível editar uma folha em processamento, processada, bloqueada ou cancelada.");
+    const mensagemBloqueio = getMensagemBloqueioEdicao(folha);
+    if (mensagemBloqueio) {
+      setFeedback(mensagemBloqueio);
       return;
     }
 
@@ -7139,20 +7924,24 @@ export function PrototiposFolhaPagamentoPage() {
 
   const salvarFolha = (data: FolhaPagamentoForm) => {
     const orgaos = data.orgaos ?? [];
+    const validacaoObrigatorios = validarObrigatoriosFolha(data);
+
+    if (validacaoObrigatorios) {
+      setFormFeedback(validacaoObrigatorios.message);
+      setActiveTab(validacaoObrigatorios.tab);
+      return;
+    }
+
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
     const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
     const competencia = normalizeMesAno(data.competencia);
+    const nome = data.nome?.trim() ?? "";
+    const numero = data.numero?.trim() ?? "";
 
     if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
       setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
       setActiveTab("dados");
-      return;
-    }
-
-    if (!orgaos.length) {
-      setFormFeedback("Informe ao menos um órgão para a abrangência da folha.");
-      setActiveTab("abrangencia");
       return;
     }
 
@@ -7166,10 +7955,11 @@ export function PrototiposFolhaPagamentoPage() {
       if (formMode === "edit" && folha.id === folhaSelecionada?.id) return false;
 
       return (
-        folha.numero === data.numero &&
+        folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
         folha.mesAnoReferencia === mesAnoReferencia &&
         folha.competencia === competencia &&
-        folha.orgaos.slice().sort().join("|") === orgaos.slice().sort().join("|")
+        folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
+          orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
       );
     });
 
@@ -7182,6 +7972,8 @@ export function PrototiposFolhaPagamentoPage() {
     if (formMode === "edit" && folhaSelecionada) {
       folhaPagamentoService.atualizarFolha(folhaSelecionada.id, {
         ...data,
+        nome,
+        numero,
         mesAnoReferencia,
         competencia,
         orgaos,
@@ -7193,8 +7985,8 @@ export function PrototiposFolhaPagamentoPage() {
           folha.id === folhaSelecionada.id
             ? {
                 ...folha,
-                nome: data.nome ?? "",
-                numero: data.numero ?? "",
+                nome,
+                numero,
                 mesAnoReferencia,
                 competencia,
                 observacao: data.observacao ?? "",
@@ -7213,6 +8005,8 @@ export function PrototiposFolhaPagamentoPage() {
     } else {
       folhaPagamentoService.criarFolha({
         ...data,
+        nome,
+        numero,
         mesAnoReferencia,
         competencia,
         orgaos,
@@ -7222,8 +8016,8 @@ export function PrototiposFolhaPagamentoPage() {
       setFolhas((current) => [
         {
           id: Math.max(...current.map((folha) => folha.id), 0) + 1,
-          nome: data.nome ?? "",
-          numero: data.numero ?? "",
+          nome,
+          numero,
           mesAnoReferencia,
           competencia,
           observacao: data.observacao ?? "",
@@ -7250,8 +8044,9 @@ export function PrototiposFolhaPagamentoPage() {
   };
 
   const processarFolha = (folha: FolhaPagamentoRow) => {
-    if (!folhaPodeProcessar(folha) || !folha.orgaos.length) {
-      setFeedback("Não foi possível processar a folha. Verifique os dados obrigatórios.");
+    const mensagemValidacao = validarProcessamentoFolha(folha);
+    if (mensagemValidacao) {
+      setFeedback(`Não foi possível processar a folha. ${mensagemValidacao}`);
       return;
     }
 
@@ -7422,6 +8217,34 @@ export function PrototiposFolhaPagamentoPage() {
     </>
   );
 
+  const handleFolhaFormInvalido = (
+    formErrors: FieldErrors<FolhaPagamentoForm>,
+  ) => {
+    const dadosFields: Array<keyof FolhaPagamentoForm> = [
+      "nome",
+      "numero",
+      "mesAnoReferencia",
+      "competencia",
+    ];
+    const abrangenciaFields: Array<keyof FolhaPagamentoForm> = [
+      "orgaos",
+      "regimeJuridico",
+      "categoria",
+      "cargo",
+      "grupoEleitos",
+    ];
+
+    if (dadosFields.some((field) => formErrors[field])) {
+      setActiveTab("dados");
+    } else if (abrangenciaFields.some((field) => formErrors[field])) {
+      setActiveTab("abrangencia");
+    } else {
+      setActiveTab("parametros");
+    }
+
+    setFormFeedback("Preencha os campos obrigatórios e corrija os valores inválidos antes de salvar.");
+  };
+
   return (
     <PrototypeSystemPage
       nomeSistema="FOLHA"
@@ -7525,7 +8348,7 @@ export function PrototiposFolhaPagamentoPage() {
           fechar={() => setModalFormularioAberto(false)}
           labelAcao="Salvar"
           iconAcao="pi pi-save"
-          funcAcao={handleSubmit(salvarFolha)}
+          funcAcao={handleSubmit(salvarFolha, handleFolhaFormInvalido)}
           tamanho="960px"
         >
           <div className="col-12 prototype-folha-pagamento-form">
@@ -7564,6 +8387,10 @@ export function PrototiposFolhaPagamentoPage() {
                   placeholder="MM/AAAA"
                   cols="12 12 3"
                   required
+                  rules={{
+                    validate: (value) =>
+                      isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                  }}
                   getFormErrorMessage={() =>
                     getFormErrorMessage("mesAnoReferencia")
                   }
@@ -7575,6 +8402,10 @@ export function PrototiposFolhaPagamentoPage() {
                   placeholder="MM/AAAA"
                   cols="12 12 3"
                   required
+                  rules={{
+                    validate: (value) =>
+                      isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                  }}
                   getFormErrorMessage={() => getFormErrorMessage("competencia")}
                 />
                 <TextAreaFieldSeplag
@@ -7754,17 +8585,8 @@ export function PrototiposFolhaPagamentoPage() {
                         tooltip="Ver log pessoa por pessoa"
                         icon="pi pi-search"
                         onClick={() => {
-                          setExecucaoSelecionada(execucao);
-                          resetLog({
-                            matricula: "",
-                            nome: "",
-                            cpf: "",
-                            orgao: "",
-                            situacao: "",
-                            rubrica: "",
-                            mensagem: "",
-                          });
-                          setModalLogAberto(true);
+                          setModalExecucoesAberto(false);
+                          navigate(getFolhaPagamentoLogPath(execucao.id));
                         }}
                       />
                     )}

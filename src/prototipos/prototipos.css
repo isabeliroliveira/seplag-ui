@@ -1839,6 +1839,28 @@
   resize: none;
 }
 
+.prototype-folha-form-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #d6dde5;
+}
+
+.prototype-folha-form-section:first-of-type {
+  margin-top: 8px;
+}
+
+.prototype-folha-form-section h3 {
+  margin: 0 0 12px;
+  color: #334e68;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.prototype-folha-form-section .prototype-category-form-fields {
+  margin-top: 0;
+}
+
 .prototype-category-documents {
   margin-top: 8px;
   padding-top: 18px;

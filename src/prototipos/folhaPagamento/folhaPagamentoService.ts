@@ -291,6 +291,63 @@ const folhasPagamentoRubricaLogsMock: FolhaPagamentoRubricaLogRow[] = [
 
 export const folhaPagamentoMockRepository = {
   listarFolhas: (): FolhaPagamentoRow[] => structuredClone(folhasPagamentoMock),
+  criarFolha: (request: CreateFolhaPagamentoRequest): FolhaPagamentoRow => {
+    const novaFolha: FolhaPagamentoRow = {
+      id: Math.max(...folhasPagamentoMock.map((folha) => folha.id), 0) + 1,
+      nome: request.nome ?? "",
+      numero: request.numero ?? "",
+      mesAnoReferencia: request.mesAnoReferencia ?? "",
+      competencia: request.competencia ?? "",
+      observacao: request.observacao ?? "",
+      orgaos: request.orgaos ?? [],
+      regimeJuridico: request.regimeJuridico ?? "",
+      categoria: request.categoria ?? "",
+      cargo: request.cargo ?? "",
+      grupoEleitos: request.grupoEleitos ?? "",
+      totalMesesAdiantar: request.totalMesesAdiantar ?? 0,
+      totalMesesRetroagir: request.totalMesesRetroagir ?? 0,
+      situacao: "RASCUNHO",
+      totalPessoas: 0,
+      totalSucesso: 0,
+      totalAlerta: 0,
+      totalErro: 0,
+      ultimaExecucao: "-",
+    };
+
+    folhasPagamentoMock.unshift(novaFolha);
+    return structuredClone(novaFolha);
+  },
+  atualizarFolha: (
+    id: number,
+    request: UpdateFolhaPagamentoRequest,
+  ): FolhaPagamentoRow | undefined => {
+    const index = folhasPagamentoMock.findIndex((folha) => folha.id === id);
+    if (index < 0) return undefined;
+
+    folhasPagamentoMock[index] = {
+      ...folhasPagamentoMock[index],
+      ...request,
+      nome: request.nome ?? folhasPagamentoMock[index].nome,
+      numero: request.numero ?? folhasPagamentoMock[index].numero,
+      mesAnoReferencia:
+        request.mesAnoReferencia ?? folhasPagamentoMock[index].mesAnoReferencia,
+      competencia: request.competencia ?? folhasPagamentoMock[index].competencia,
+      observacao: request.observacao ?? "",
+      orgaos: request.orgaos ?? folhasPagamentoMock[index].orgaos,
+      regimeJuridico: request.regimeJuridico ?? "",
+      categoria: request.categoria ?? "",
+      cargo: request.cargo ?? "",
+      grupoEleitos: request.grupoEleitos ?? "",
+      totalMesesAdiantar:
+        request.totalMesesAdiantar ??
+        folhasPagamentoMock[index].totalMesesAdiantar,
+      totalMesesRetroagir:
+        request.totalMesesRetroagir ??
+        folhasPagamentoMock[index].totalMesesRetroagir,
+    };
+
+    return structuredClone(folhasPagamentoMock[index]);
+  },
   listarExecucoes: (): FolhaPagamentoExecucaoRow[] =>
     structuredClone(folhasPagamentoExecucoesMock),
   listarPessoaLogs: (): FolhaPagamentoPessoaLogRow[] =>
@@ -308,10 +365,9 @@ export const folhaPagamentoService = {
       .listarFolhas()
       .find((folha) => folha.id === id),
   // TODO backend: POST /folhas-pagamento
-  criarFolha: (_request: CreateFolhaPagamentoRequest) => undefined,
+  criarFolha: folhaPagamentoMockRepository.criarFolha,
   // TODO backend: PUT /folhas-pagamento/{id}
-  atualizarFolha: (_id: number, _request: UpdateFolhaPagamentoRequest) =>
-    undefined,
+  atualizarFolha: folhaPagamentoMockRepository.atualizarFolha,
   // TODO backend: POST /folhas-pagamento/{id}/executar
   executarFolha: (_request: ExecutarFolhaPagamentoRequest) => undefined,
   // TODO backend: GET /folhas-pagamento/{id}/execucoes

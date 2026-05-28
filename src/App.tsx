@@ -29,6 +29,8 @@ import {
   PrototiposFolhaGrupoEleitosPage,
   PrototiposFolhaGrupoCalculoFormPage,
   PrototiposFolhaGruposCalculoPage,
+  PrototiposFolhaPagamentoFormPage,
+  PrototiposFolhaPagamentoLogPage,
   PrototiposFolhaPagamentoPage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
@@ -349,6 +351,14 @@ function App() {
       <Route
         path="/prototipos/folha/processamento/folha-pagamento"
         element={<PrototiposFolhaPagamentoPage />}
+      />
+      <Route
+        path="/prototipos/folha/processamento/folha-pagamento/novo"
+        element={<PrototiposFolhaPagamentoFormPage />}
+      />
+      <Route
+        path="/prototipos/folha/processamento/folha-pagamento/execucoes/:execucaoId/log"
+        element={<PrototiposFolhaPagamentoLogPage />}
       />
       <Route
         path="/prototipos/folha/catalogo-rubricas"
