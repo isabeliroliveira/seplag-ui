@@ -6,9 +6,18 @@ import {
   PrototiposAnexarDocumentoPage,
   PrototiposAposentadoriaPage,
   PrototiposAuditoriaPage,
+  PrototiposCargoFormPage,
+  PrototiposCargoPage,
+  PrototiposCargoTesteFormPage,
+  PrototiposCargoTestePage,
   PrototiposCategoriaPage,
   PrototiposCategoriaFormPage,
+  PrototiposCategoriaTesteFormPage,
+  PrototiposCategoriaTestePage,
   PrototiposComponentesPage,
+  PrototiposControleVagasConfiguracaoFormPage,
+  PrototiposControleVagasPage,
+  PrototiposControleVagasConfiguracaoPage,
   PrototiposDocumentosVinculadosPage,
   PrototiposEstruturaOrganizacionalPage,
   PrototiposSituacaoVigenciaPage,
@@ -20,15 +29,22 @@ import {
   PrototiposFolhaGrupoEleitosPage,
   PrototiposFolhaGrupoCalculoFormPage,
   PrototiposFolhaGruposCalculoPage,
+  PrototiposFolhaPagamentoPage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
   PrototiposFolhaCatalogoRubricaViewPage,
   PrototiposFolhaPage,
+  PrototiposMatrizValidacaoTesteFormPage,
+  PrototiposMatrizValidacaoTestePage,
   PrototiposPage,
   PrototiposPericiaPage,
   PrototiposSigepPage,
   PrototiposSigepRegimeJuridicoNovoPage,
   PrototiposSigepRegimeJuridicoPage,
+  PrototiposSigepRegimeJuridicoTesteNovoPage,
+  PrototiposSigepRegimeJuridicoTestePage,
+  PrototiposTipoVinculoTesteFormPage,
+  PrototiposTipoVinculoTestePage,
 } from "./prototipos/PrototiposPage";
 
 function HomePage() {
@@ -41,7 +57,9 @@ function HomePage() {
       to: "/prototipos/sigep",
       links: [
         { label: "Categoria", to: "/prototipos/sigep/categoria" },
+        { label: "Cargo", to: "/prototipos/sigep/cargo" },
         { label: "Regime Jurídico", to: "/prototipos/sigep/regime-juridico" },
+        { label: "Controle de Vagas", to: "/prototipos/sigep/controle-vagas" },
         { label: "Componentes", to: "/prototipos/sigep/componentes" },
       ],
     },
@@ -52,6 +70,7 @@ function HomePage() {
       status: "Em evolução",
       to: "/prototipos/folha",
       links: [
+        { label: "Folha de Pagamento", to: "/prototipos/folha/processamento/folha-pagamento" },
         { label: "Grupo de Eleitos", to: "/prototipos/folha/grupo-eleitos" },
         { label: "Grupos de Cálculo", to: "/prototipos/folha/grupos-calculo" },
         { label: "Catálogo de Rubricas", to: "/prototipos/folha/catalogo-rubricas" },
@@ -243,8 +262,32 @@ function App() {
         element={<PrototiposSigepRegimeJuridicoPage />}
       />
       <Route
+        path="/prototipos/sigep/controle-vagas"
+        element={<PrototiposControleVagasPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/configuracao"
+        element={<PrototiposControleVagasConfiguracaoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/configuracao/novo"
+        element={<PrototiposControleVagasConfiguracaoFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/configuracao/:id/editar"
+        element={<PrototiposControleVagasConfiguracaoFormPage />}
+      />
+      <Route
         path="/prototipos/sigep/categoria"
         element={<PrototiposCategoriaPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo"
+        element={<PrototiposCargoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo/novo"
+        element={<PrototiposCargoFormPage />}
       />
       <Route
         path="/prototipos/sigep/categoria/novo"
@@ -258,7 +301,55 @@ function App() {
         path="/prototipos/sigep/regime-juridico/novo"
         element={<PrototiposSigepRegimeJuridicoNovoPage />}
       />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/regime-juridico"
+        element={<PrototiposSigepRegimeJuridicoTestePage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/regime-juridico/novo"
+        element={<PrototiposSigepRegimeJuridicoTesteNovoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/categoria"
+        element={<PrototiposCategoriaTestePage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/categoria/novo"
+        element={<PrototiposCategoriaTesteFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/categoria/:id/editar"
+        element={<PrototiposCategoriaTesteFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/cargo"
+        element={<PrototiposCargoTestePage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/cargo/novo"
+        element={<PrototiposCargoTesteFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/tipo-vinculo"
+        element={<PrototiposTipoVinculoTestePage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/tipo-vinculo/novo"
+        element={<PrototiposTipoVinculoTesteFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/matriz-validacao"
+        element={<PrototiposMatrizValidacaoTestePage />}
+      />
+      <Route
+        path="/prototipos/sigep/cargo-concurso-teste/matriz-validacao/novo"
+        element={<PrototiposMatrizValidacaoTesteFormPage />}
+      />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
+      <Route
+        path="/prototipos/folha/processamento/folha-pagamento"
+        element={<PrototiposFolhaPagamentoPage />}
+      />
       <Route
         path="/prototipos/folha/catalogo-rubricas"
         element={<PrototiposFolhaCatalogoRubricasPage />}

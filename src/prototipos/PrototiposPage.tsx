@@ -1,8 +1,9 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
+  BotaoIconSeplag,
   BotaoSalvarSeplag,
   BotaoSeplag,
   BotaoVoltarSeplag,
@@ -18,8 +19,11 @@ import {
 } from "@componentes/DocumentosLegaisAssociados";
 import {
   DateFieldSeplag,
+  CheckboxFieldSeplag,
   DropdownFieldSeplag,
   MultiSelectFieldSeplag,
+  NumberFieldSeplag,
+  SwitchFieldSeplag,
   TextAreaFieldSeplag,
   TextFieldSeplag,
 } from "@componentes/Fields";
@@ -50,6 +54,28 @@ import logoEstado from "../assets/img/Logo_Branco_Estado_MT.png";
 import logoSeplag from "../assets/img/logo-seplag.png";
 import "../componentes/layout/layout/Layout.css";
 import "./prototipos.css";
+import { folhaPagamentoService } from "./folhaPagamento/folhaPagamentoService";
+import type {
+  FolhaPagamentoExecucaoRow,
+  FolhaPagamentoExecucaoSituacao,
+  FolhaPagamentoFiltroForm,
+  FolhaPagamentoForm,
+  FolhaPagamentoPessoaLogFiltroForm,
+  FolhaPagamentoPessoaLogRow,
+  FolhaPagamentoPessoaLogSituacao,
+  FolhaPagamentoRow,
+  FolhaPagamentoRubricaLogRow,
+  FolhaPagamentoRubricaLogSituacao,
+  FolhaPagamentoSituacao,
+} from "./folhaPagamento/types";
+
+const SIGEP_BASE_PATH = "/prototipos/sigep";
+const SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH =
+  "/prototipos/sigep/cargo-concurso-teste";
+
+interface CargoConcursoRouteProps {
+  routePrefix?: string;
+}
 
 const menuGestaoPessoas: IMenuSeplag[] = [
   {
@@ -107,8 +133,59 @@ const menuGestaoPessoas: IMenuSeplag[] = [
             visibleOnRouter: true,
           },
           { label: "Categoria", icon: "pi pi-circle-on", to: "/prototipos/sigep/categoria", visibleOnMenu: true, visibleOnRouter: true },
-          { label: "Cargo", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+          { label: "Cargo", icon: "pi pi-circle-on", to: "/prototipos/sigep/cargo", visibleOnMenu: true, visibleOnRouter: true },
+          {
+            label: "Controle de Vagas",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/controle-vagas",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
           { label: "Tabelas de Vencimentos", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+        ],
+      },
+      {
+        label: "Cargo e Concurso TESTE",
+        icon: "pi pi-clone",
+        url: "#",
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+        items: [
+          {
+            label: "Regime Jurídico",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/cargo-concurso-teste/regime-juridico",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
+          {
+            label: "Categoria/Subcategoria",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/cargo-concurso-teste/categoria",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
+          {
+            label: "Cargo",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/cargo-concurso-teste/cargo",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
+          {
+            label: "Tipo de Vínculo",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/cargo-concurso-teste/tipo-vinculo",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
+          {
+            label: "Matriz/Regras",
+            icon: "pi pi-circle-on",
+            to: "/prototipos/sigep/cargo-concurso-teste/matriz-validacao",
+            visibleOnMenu: true,
+            visibleOnRouter: true,
+          },
         ],
       },
       {
@@ -185,8 +262,6 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnMenu: true,
     visibleOnRouter: true,
     items: [
-      { label: "Configurações de Folha", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
-      { label: "Folha de Pagamento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Tipo Evento", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       {
@@ -207,6 +282,22 @@ const menuFolha: IMenuSeplag[] = [
       { label: "Pensão Alimentícia", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão Especial", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão por Morte", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+    ],
+  },
+  {
+    label: "Processamento",
+    icon: "pi pi-cog",
+    url: "#",
+    visibleOnMenu: true,
+    visibleOnRouter: true,
+    items: [
+      {
+        label: "Folha de Pagamento",
+        icon: "pi pi-circle-on",
+        to: "/prototipos/folha/processamento/folha-pagamento",
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
     ],
   },
   {
@@ -259,6 +350,14 @@ const prototypeSystems = [
     path: "/prototipos/sigep",
     icon: "pi pi-users",
     status: "Protótipo disponível",
+  },
+  {
+    id: "folha",
+    title: "Folha de Pagamento",
+    description: "Protótipos para rubricas, grupos de cálculo, grupos de eleitos e lançamentos financeiros.",
+    path: "/prototipos/folha",
+    icon: "pi pi-money-bill",
+    status: "Protótipo em evolução",
   },
 ];
 
@@ -524,10 +623,149 @@ interface CategoriaFiltroForm {
   situacao?: string;
 }
 
+interface CargoFiltroForm {
+  cargo?: string;
+  categoria?: string;
+  situacao?: string;
+}
+
+interface TipoVinculoFiltroForm {
+  termo?: string;
+  natureza?: string;
+  instituicao?: string;
+  situacao?: string;
+}
+
+interface MatrizValidacaoFiltroForm {
+  instituicao?: string;
+  orgao?: string;
+  regimeJuridico?: string;
+  tipoVinculo?: string;
+  categoria?: string;
+  cargo?: string;
+  situacao?: string;
+}
+
+interface CargoForm {
+  codigo?: string;
+  baseLegal?: string[];
+  categoria?: string;
+  subcategoria?: string;
+  instituicao?: string[];
+  nomeCargo?: string;
+  descricao?: string;
+  tipoCargo?: string;
+  naturezaCargo?: string;
+  formaProvimento?: string;
+  regimeJuridico?: string;
+  jornadaTrabalho?: string;
+  escolaridadeMinima?: string;
+  cbo?: string;
+  especialidade?: string;
+  naturezaVinculo?: string;
+  cargoChefia?: "S" | "N";
+  permiteSubstituicao?: "S" | "N";
+  exibirPortal?: "S" | "N";
+  observacao?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  dataExtincao?: string;
+  motivoEncerramento?: string;
+  motivoExtincao?: string;
+}
+
+interface TipoVinculoForm {
+  codigo?: string;
+  nome?: string;
+  descricao?: string;
+  natureza?: string;
+  baseLegal?: string[];
+  geraVinculoFuncional?: "S" | "N";
+  exigeCargo?: "S" | "N";
+  exigeVaga?: "S" | "N";
+  permiteControleVagas?: "S" | "N";
+  permiteFolha?: "S" | "N";
+  permiteAposentadoria?: "S" | "N";
+  permitePensionista?: "S" | "N";
+  permiteEventoCargo?: "S" | "N";
+  exigeDataFim?: "S" | "N";
+  observacao?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  dataExtincao?: string;
+  motivoEncerramento?: string;
+  motivoExtincao?: string;
+}
+
+interface MatrizValidacaoForm {
+  instituicao?: string;
+  orgao?: string;
+  setor?: string;
+  regimeJuridico?: string;
+  tipoVinculo?: string;
+  categoria?: string;
+  subcategoria?: string;
+  cargo?: string;
+  formaProvimento?: string;
+  jornada?: string;
+  controlaVaga?: string;
+  tipoControleVaga?: string;
+  aplicaIngresso?: "S" | "N";
+  aplicaEventoCargo?: "S" | "N";
+  aplicaConcurso?: "S" | "N";
+  aplicaControleVagas?: "S" | "N";
+  observacao?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  dataExtincao?: string;
+  motivoEncerramento?: string;
+  motivoExtincao?: string;
+}
+
+
 interface RegimeJuridicoFiltroForm {
   nome?: string;
   instituicao?: string;
   situacao?: string;
+}
+
+interface ControleVagasConfiguracaoFiltroForm {
+  cargoFuncao?: string;
+  tipo?: "" | "Cargo" | "Função";
+  controlaVaga?: "" | "Sim" | "Não";
+  tipoControle?: "" | "Quantitativo" | "Numerado" | "Híbrido";
+  situacao?: "" | "Ativo" | "Agendado" | "Encerrado" | "Inativo";
+}
+
+interface ControleVagasConfiguracaoForm {
+  tipo?: "Cargo" | "Função" | "";
+  codigo?: string;
+  cargoFuncao?: string;
+  controlaVaga?: "Sim" | "Não" | "";
+  tipoControle?: "Quantitativo" | "Numerado" | "Híbrido" | "";
+  dataInicio?: string;
+  permiteSaldoNegativo?: "Sim" | "Não" | "";
+  justificativaSaldoNegativo?: string;
+  observacao?: string;
+  criterioCargoFuncao?: "S" | "N";
+  criterioRegimeJuridico?: "S" | "N";
+  criterioTipoVinculo?: "S" | "N";
+  criterioOrgaoSetor?: "S" | "N";
+  criterioSetoresSubordinados?: "S" | "N";
+  criterioLocalidade?: "S" | "N";
+  criterioEspecialidade?: "S" | "N";
+  criterioJornada?: "S" | "N";
+}
+
+interface ControleVagasHistoricoRow {
+  id: number;
+  dataHora: string;
+  evento: string;
+  usuario: string;
+  detalhe: string;
 }
 
 interface GrupoEleitosFiltroForm {
@@ -580,6 +818,7 @@ interface GrupoEleitoForm {
 interface RegimeJuridicoForm {
   nome?: string;
   sigla?: string;
+  descricao?: string;
   situacao?: SituacaoVigenciaValueSeplag["situacao"];
   dataAtivacao?: string;
   dataEncerramento?: string;
@@ -592,6 +831,7 @@ interface CategoriaForm {
   sigla?: string;
   descricao?: string;
   observacao?: string;
+  subcategoriaSigla?: string;
   subcategoriaNome?: string;
   subcategoriaDescricao?: string;
   situacao?: SituacaoVigenciaValueSeplag["situacao"];
@@ -611,6 +851,58 @@ interface CategoriaRow {
   situacao: "ATIVO" | "ENCERRADO";
 }
 
+interface CategoriaTesteRow extends CategoriaRow {
+  subcategorias: number;
+  vigencia: string;
+}
+
+interface CargoRow {
+  id: number;
+  cargo: string;
+  categoria: string;
+  baseLegal: number;
+  instituicoes: number;
+  situacao: "ATIVO" | "ENCERRADO";
+}
+
+interface CargoTesteRow extends CargoRow {
+  codigo: string;
+  subcategoria: string;
+  jornadaPadrao: string;
+  regrasUso: number;
+  vigencia: string;
+}
+
+interface TipoVinculoTesteRow {
+  id: number;
+  codigo: string;
+  nome: string;
+  descricao: string;
+  natureza: string;
+  instituicao: string;
+  instituicoesVinculadas: number;
+  comportamentos: string[];
+  vigencia: string;
+  situacao: "ATIVO" | "ENCERRADO";
+}
+
+interface MatrizValidacaoTesteRow {
+  id: number;
+  instituicao: string;
+  orgao: string;
+  setor: string;
+  regimeJuridico: string;
+  tipoVinculo: string;
+  categoria: string;
+  subcategoria: string;
+  cargo: string;
+  formaProvimento: string;
+  jornada: string;
+  vigencia: string;
+  situacao: "ATIVO" | "ENCERRADO";
+  especificidade: "Genérica" | "Por órgão" | "Por cargo";
+}
+
 interface RegimeJuridicoRow {
   id: number;
   nome: string;
@@ -618,6 +910,24 @@ interface RegimeJuridicoRow {
   instituicao: string;
   instituicoesVinculadas: number;
   situacao: StatusOperacionalVigenciaSeplag;
+}
+
+interface RegimeJuridicoTesteRow extends RegimeJuridicoRow {
+  codigo: string;
+  vigencia: string;
+}
+
+interface ControleVagasConfiguracaoRow {
+  id: number;
+  tipo: "Cargo" | "Função";
+  codigo: string;
+  cargoFuncao: string;
+  controlaVaga: "Sim" | "Não";
+  tipoControle: "Quantitativo" | "Numerado" | "Híbrido" | "-";
+  dataInicio: string;
+  criterios: string[];
+  situacao: "Ativo" | "Agendado" | "Encerrado" | "Inativo";
+  ultimaAlteracao: string;
 }
 
 interface GrupoEleitosRow {
@@ -662,7 +972,8 @@ interface RubricaRow {
 }
 
 interface GrupoCalculoRubricaGerenciada extends RubricaRow {
-  ativaNoGrupo: boolean;
+  origem: "filtro" | "manual";
+  reordenada?: boolean;
 }
 
 interface GrupoEleitoParticipanteRow {
@@ -680,6 +991,17 @@ interface SubcategoriaRow {
   nome: string;
   descricao: string;
   orgaosVinculados: number;
+  situacao: "ATIVO" | "ENCERRADO";
+}
+
+interface SubcategoriaTesteRow {
+  id: number;
+  sigla: string;
+  nome: string;
+  descricao: string;
+  cargos: number;
+  regrasUso: number;
+  vigencia: string;
   situacao: "ATIVO" | "ENCERRADO";
 }
 
@@ -739,6 +1061,389 @@ const categoriasMock: CategoriaRow[] = [
     instituicao: "mti",
     instituicoesVinculadas: 1,
     situacao: "ATIVO",
+  },
+];
+
+const categoriasTesteMock: CategoriaTesteRow[] = [
+  {
+    id: 1,
+    sigla: "EDU",
+    descricao: "Profissionais da Educação",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    subcategorias: 3,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    sigla: "MIL",
+    descricao: "Militar",
+    instituicao: "govmt",
+    instituicoesVinculadas: 2,
+    subcategorias: 2,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    sigla: "SAUDE",
+    descricao: "Profissionais da Saúde",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    subcategorias: 4,
+    vigencia: "01/03/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 4,
+    sigla: "AREA_MEIO",
+    descricao: "Profissionais da Área Meio",
+    instituicao: "mti",
+    instituicoesVinculadas: 3,
+    subcategorias: 5,
+    vigencia: "01/01/2026 -",
+    situacao: "ENCERRADO",
+  },
+];
+
+const subcategoriasTesteMock: SubcategoriaTesteRow[] = [
+  {
+    id: 1,
+    sigla: "PROF",
+    nome: "Professor",
+    descricao: "Subcategoria da carreira de profissionais da educação.",
+    cargos: 2,
+    regrasUso: 3,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    sigla: "TAE",
+    nome: "Técnico Administrativo Educacional",
+    descricao: "Subcategoria administrativa vinculada à educação.",
+    cargos: 5,
+    regrasUso: 2,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    sigla: "OFICIAL",
+    nome: "Oficial",
+    descricao: "Subcategoria composta pelos postos de oficiais militares.",
+    cargos: 8,
+    regrasUso: 4,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+];
+
+const cargosMock: CargoRow[] = [
+  {
+    id: 1,
+    cargo: "ENGENHEIRO DE SOFTWARE",
+    categoria: "B/A BA/",
+    baseLegal: 1,
+    instituicoes: 2,
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    cargo: "CARGO 1 abc",
+    categoria: "Agentes de Administração Fazendária",
+    baseLegal: 1,
+    instituicoes: 1,
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    cargo: "CARGO THAUÃ",
+    categoria: "Bolsista",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 4,
+    cargo: "ASSIST. TEC. DE DEFESA AGROP.",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 5,
+    cargo: "ASSISTENTE ADM. DEF. AGROPEC.",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 6,
+    cargo: "AUXILIAR SERV DEF AGROPECUARIA",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 7,
+    cargo: "TEC. DEF AGROPEC FLORESTAL - PROV",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 8,
+    cargo: "TEC. ADM. DEF. AGROPEC. FLORES - PROV",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 9,
+    cargo: "ASSIST. TEC. DE DEFESA AGROP. - PROV",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 10,
+    cargo: "ASSISTENTE ADM. DEF. AGROPEC. - PROV",
+    categoria: "Profissionais do Instituto de Defesa Agropecuario",
+    baseLegal: 0,
+    instituicoes: 0,
+    situacao: "ATIVO",
+  },
+  {
+    id: 11,
+    cargo: "ANALISTA ADMINISTRATIVO",
+    categoria: "Agentes Governamentais da Cultura sss",
+    baseLegal: 2,
+    instituicoes: 3,
+    situacao: "ENCERRADO",
+  },
+  {
+    id: 12,
+    cargo: "GESTOR GOVERNAMENTAL",
+    categoria: "N/A/D",
+    baseLegal: 1,
+    instituicoes: 2,
+    situacao: "ATIVO",
+  },
+];
+
+const cargosTesteMock: CargoTesteRow[] = [
+  {
+    id: 1,
+    codigo: "PROF_ED_BAS",
+    cargo: "Professor da Educação Básica",
+    categoria: "Profissionais da Educação",
+    subcategoria: "Professor",
+    jornadaPadrao: "30H",
+    baseLegal: 1,
+    instituicoes: 0,
+    regrasUso: 3,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    codigo: "MEDICO",
+    cargo: "Médico",
+    categoria: "Profissionais da Saúde",
+    subcategoria: "Médico",
+    jornadaPadrao: "Conforme regra",
+    baseLegal: 2,
+    instituicoes: 0,
+    regrasUso: 2,
+    vigencia: "01/03/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    codigo: "TEN_BM",
+    cargo: "Tenente BM",
+    categoria: "Militar",
+    subcategoria: "Oficial",
+    jornadaPadrao: "Dedicação integral",
+    baseLegal: 1,
+    instituicoes: 0,
+    regrasUso: 4,
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 4,
+    codigo: "ANALISTA_ADM",
+    cargo: "Analista Administrativo",
+    categoria: "Profissionais da Área Meio",
+    subcategoria: "Administrativo",
+    jornadaPadrao: "40H",
+    baseLegal: 1,
+    instituicoes: 0,
+    regrasUso: 1,
+    vigencia: "01/01/2026 -",
+    situacao: "ENCERRADO",
+  },
+];
+
+const cargoRegrasUsoTesteMock = [
+  {
+    id: 1,
+    instituicao: "GOVMT",
+    orgao: "SEDUC",
+    regime: "Estatutário Civil",
+    tipoVinculo: "Efetivo",
+    formaProvimento: "Concurso Público",
+    jornada: "30H",
+    situacao: "Ativo",
+  },
+  {
+    id: 2,
+    instituicao: "GOVMT",
+    orgao: "Todos",
+    regime: "Regime Especial",
+    tipoVinculo: "Contratado",
+    formaProvimento: "Processo Seletivo",
+    jornada: "Conforme matriz",
+    situacao: "Ativo",
+  },
+];
+
+const tiposVinculoTesteMock: TipoVinculoTesteRow[] = [
+  {
+    id: 1,
+    codigo: "EFET",
+    nome: "Efetivo",
+    descricao: "Vínculo decorrente de provimento efetivo em cargo público.",
+    natureza: "Permanente",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    comportamentos: ["Gera vínculo", "Exige cargo", "Permite folha"],
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 2,
+    codigo: "CONT",
+    nome: "Contratado",
+    descricao: "Vínculo temporário decorrente de contratação por prazo determinado.",
+    natureza: "Temporário",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    comportamentos: ["Gera vínculo", "Exige cargo", "Exige data fim"],
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 3,
+    codigo: "COM",
+    nome: "Comissionado",
+    descricao: "Vínculo de livre nomeação e exoneração.",
+    natureza: "Comissionado",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    comportamentos: ["Gera vínculo", "Permite folha", "Permite evento"],
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 4,
+    codigo: "APOS",
+    nome: "Aposentado/Inativo",
+    descricao: "Vínculo previdenciário de servidor aposentado ou inativo.",
+    natureza: "Previdenciário",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    comportamentos: ["Permite folha", "Permite aposentadoria"],
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+  },
+  {
+    id: 5,
+    codigo: "PENS",
+    nome: "Pensionista",
+    descricao: "Vínculo previdenciário ou especial para beneficiário de pensão.",
+    natureza: "Previdenciário",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    comportamentos: ["Permite folha", "Permite pensionista"],
+    vigencia: "01/01/2026 -",
+    situacao: "ENCERRADO",
+  },
+];
+
+const matrizValidacaoTesteMock: MatrizValidacaoTesteRow[] = [
+  {
+    id: 1,
+    instituicao: "GOVMT",
+    orgao: "SEDUC",
+    setor: "Todos",
+    regimeJuridico: "Estatutário Civil",
+    tipoVinculo: "Efetivo",
+    categoria: "Profissionais da Educação",
+    subcategoria: "Professor",
+    cargo: "Professor da Educação Básica",
+    formaProvimento: "Concurso Público",
+    jornada: "30H",
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+    especificidade: "Por cargo",
+  },
+  {
+    id: 2,
+    instituicao: "GOVMT",
+    orgao: "SES",
+    setor: "Todos",
+    regimeJuridico: "Regime Especial",
+    tipoVinculo: "Contratado",
+    categoria: "Profissionais da Saúde",
+    subcategoria: "Médico",
+    cargo: "Médico",
+    formaProvimento: "Processo Seletivo",
+    jornada: "Plantão",
+    vigencia: "01/03/2026 -",
+    situacao: "ATIVO",
+    especificidade: "Por cargo",
+  },
+  {
+    id: 3,
+    instituicao: "GOVMT",
+    orgao: "CBMMT",
+    setor: "Todos",
+    regimeJuridico: "Estatutário Militar",
+    tipoVinculo: "Efetivo",
+    categoria: "Militar",
+    subcategoria: "Oficial",
+    cargo: "Todos",
+    formaProvimento: "Concurso Público",
+    jornada: "Dedicação integral",
+    vigencia: "01/01/2026 -",
+    situacao: "ATIVO",
+    especificidade: "Por órgão",
+  },
+  {
+    id: 4,
+    instituicao: "GOVMT",
+    orgao: "Todos",
+    setor: "Todos",
+    regimeJuridico: "Estatutário Civil",
+    tipoVinculo: "Efetivo",
+    categoria: "Profissionais da Área Meio",
+    subcategoria: "Todos",
+    cargo: "Todos",
+    formaProvimento: "Todos",
+    jornada: "Todos",
+    vigencia: "01/01/2026 -",
+    situacao: "ENCERRADO",
+    especificidade: "Genérica",
   },
 ];
 
@@ -837,6 +1542,325 @@ const gruposEleitosMock: GrupoEleitosRow[] = [
     situacao: STATUS_OPERACIONAL_VIGENCIA.EXTINTO,
     quantidadeEleitos: 0,
   },
+];
+
+const regimesJuridicosTesteMock: RegimeJuridicoTesteRow[] = [
+  {
+    id: 1,
+    codigo: "EST_CIVIL",
+    nome: "Estatutário Civil",
+    descricao: "Servidores civis estatutários da Administração Pública.",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    vigencia: "01/01/2026 -",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 2,
+    codigo: "EST_MIL",
+    nome: "Estatutário Militar",
+    descricao: "Militares estaduais regidos por estatuto próprio.",
+    instituicao: "govmt",
+    instituicoesVinculadas: 2,
+    vigencia: "01/01/2026 -",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 3,
+    codigo: "TEMP_MIL",
+    nome: "Militar Temporário",
+    descricao: "Militares temporários com vínculo por tempo determinado.",
+    instituicao: "govmt",
+    instituicoesVinculadas: 2,
+    vigencia: "01/01/2026 -",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
+  },
+  {
+    id: 4,
+    codigo: "CLT",
+    nome: "Regime Celetista",
+    descricao: "Empregados públicos regidos pela CLT.",
+    instituicao: "mti",
+    instituicoesVinculadas: 3,
+    vigencia: "01/01/2026 -",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 5,
+    codigo: "REG_ESP",
+    nome: "Regime Especial",
+    descricao: "Contratos temporários e hipóteses especiais previstas em lei.",
+    instituicao: "govmt",
+    instituicoesVinculadas: 1,
+    vigencia: "01/03/2026 -",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+  },
+];
+
+const controleVagasConfiguracoesMock: ControleVagasConfiguracaoRow[] = [
+  {
+    id: 1,
+    tipo: "Cargo",
+    codigo: "C001",
+    cargoFuncao: "Analista Administrativo",
+    controlaVaga: "Sim",
+    tipoControle: "Quantitativo",
+    dataInicio: "01/01/2026",
+    criterios: ["Cargo/Função", "Órgão/Setor", "Especialidade"],
+    situacao: "Ativo",
+    ultimaAlteracao: "12/05/2026 09:20",
+  },
+  {
+    id: 2,
+    tipo: "Cargo",
+    codigo: "C014",
+    cargoFuncao: "Técnico Administrativo",
+    controlaVaga: "Sim",
+    tipoControle: "Híbrido",
+    dataInicio: "01/03/2026",
+    criterios: ["Cargo/Função", "Localidade", "Tipo de Vínculo"],
+    situacao: "Agendado",
+    ultimaAlteracao: "18/05/2026 14:05",
+  },
+  {
+    id: 3,
+    tipo: "Função",
+    codigo: "F023",
+    cargoFuncao: "Coordenador",
+    controlaVaga: "Sim",
+    tipoControle: "Numerado",
+    dataInicio: "15/01/2026",
+    criterios: ["Cargo/Função", "Órgão/Setor", "Setores subordinados"],
+    situacao: "Ativo",
+    ultimaAlteracao: "20/05/2026 10:42",
+  },
+  {
+    id: 4,
+    tipo: "Cargo",
+    codigo: "C032",
+    cargoFuncao: "Professor da Educação Básica",
+    controlaVaga: "Sim",
+    tipoControle: "Quantitativo",
+    dataInicio: "01/02/2026",
+    criterios: ["Cargo/Função", "Especialidade", "Jornada", "Localidade"],
+    situacao: "Ativo",
+    ultimaAlteracao: "21/05/2026 08:11",
+  },
+  {
+    id: 5,
+    tipo: "Função",
+    codigo: "F041",
+    cargoFuncao: "Assessor Técnico",
+    controlaVaga: "Não",
+    tipoControle: "-",
+    dataInicio: "-",
+    criterios: ["Cargo/Função"],
+    situacao: "Inativo",
+    ultimaAlteracao: "22/05/2026 16:30",
+  },
+  {
+    id: 6,
+    tipo: "Cargo",
+    codigo: "C008",
+    cargoFuncao: "Gestor Governamental",
+    controlaVaga: "Sim",
+    tipoControle: "Quantitativo",
+    dataInicio: "01/01/2025",
+    criterios: ["Cargo/Função", "Regime Jurídico", "Tipo de Vínculo"],
+    situacao: "Encerrado",
+    ultimaAlteracao: "23/05/2026 11:15",
+  },
+];
+
+const controleVagasHistoricoMock: ControleVagasHistoricoRow[] = [
+  {
+    id: 1,
+    dataHora: "27/05/2026 09:12",
+    evento: "Configuração criada",
+    usuario: "ROBERTO JUNIOR",
+    detalhe: "Controle quantitativo habilitado para o cargo/função selecionado.",
+  },
+  {
+    id: 2,
+    dataHora: "27/05/2026 09:18",
+    evento: "Critérios atualizados",
+    usuario: "ROBERTO JUNIOR",
+    detalhe: "Validação por órgão/setor e tipo de vínculo incluída.",
+  },
+  {
+    id: 3,
+    dataHora: "27/05/2026 09:24",
+    evento: "Vigência ajustada",
+    usuario: "ROBERTO JUNIOR",
+    detalhe: "Data de início alterada para compatibilizar com a competência de implantação.",
+  },
+];
+
+const controleVagasModuleItems = [
+  {
+    id: "configuracao",
+    title: "Configuração",
+    description: "Define quais cargos e funções controlam vagas e quais critérios serão validados.",
+    path: "/prototipos/sigep/controle-vagas/configuracao",
+    icon: "pi pi-sliders-h",
+    status: "Etapa 01",
+  },
+  {
+    id: "quadro-autorizado",
+    title: "Quadro Autorizado",
+    description: "Cadastra o quantitativo autorizado de vagas por cargo ou função.",
+    path: "",
+    icon: "pi pi-table",
+    status: "Em breve",
+  },
+  {
+    id: "vagas-numeradas",
+    title: "Vagas Numeradas",
+    description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
+    path: "",
+    icon: "pi pi-hashtag",
+    status: "Em breve",
+  },
+  {
+    id: "saldo",
+    title: "Consulta de Saldo",
+    description: "Exibe vagas autorizadas, ocupadas, reservadas e disponíveis por referência.",
+    path: "",
+    icon: "pi pi-chart-bar",
+    status: "Em breve",
+  },
+  {
+    id: "historico",
+    title: "Histórico/Ocupação",
+    description: "Consulta a linha do tempo de ocupações, reservas, liberações e alterações.",
+    path: "",
+    icon: "pi pi-history",
+    status: "Em breve",
+  },
+];
+
+const folhaPagamentoSituacaoOptions: {
+  label: string;
+  value: FolhaPagamentoSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Rascunho", value: "RASCUNHO" },
+  { label: "Aberta", value: "ABERTA" },
+  { label: "Em fila", value: "EM_FILA" },
+  { label: "Em processamento", value: "EM_PROCESSAMENTO" },
+  { label: "Processada", value: "PROCESSADA" },
+  { label: "Processada com alerta", value: "PROCESSADA_COM_ALERTA" },
+  { label: "Processada com erro", value: "PROCESSADA_COM_ERRO" },
+  { label: "Bloqueada", value: "BLOQUEADA" },
+  { label: "Cancelada", value: "CANCELADA" },
+];
+
+const folhaPagamentoSituacaoMeta: Record<
+  FolhaPagamentoSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  RASCUNHO: { label: "Rascunho", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
+  ABERTA: { label: "Aberta", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
+  EM_FILA: { label: "Em fila", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
+  PROCESSADA: { label: "Processada", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  PROCESSADA_COM_ALERTA: { label: "Processada com alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  PROCESSADA_COM_ERRO: { label: "Processada com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  BLOQUEADA: { label: "Bloqueada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const folhaPagamentoExecucaoSituacaoMeta: Record<
+  FolhaPagamentoExecucaoSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  EM_FILA: { label: "Em fila", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
+  CONCLUIDA: { label: "Concluída", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  CONCLUIDA_COM_ALERTA: { label: "Concluída com alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  CONCLUIDA_COM_ERRO: { label: "Concluída com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const folhaPagamentoPessoaLogSituacaoOptions: {
+  label: string;
+  value: FolhaPagamentoPessoaLogSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Não processada", value: "NAO_PROCESSADA" },
+  { label: "Em processamento", value: "EM_PROCESSAMENTO" },
+  { label: "Sucesso", value: "SUCESSO" },
+  { label: "Alerta", value: "ALERTA" },
+  { label: "Erro", value: "ERRO" },
+  { label: "Ignorada", value: "IGNORADA" },
+];
+
+const folhaPagamentoPessoaLogSituacaoMeta: Record<
+  FolhaPagamentoPessoaLogSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  NAO_PROCESSADA: { label: "Não processada", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
+  EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
+  SUCESSO: { label: "Sucesso", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  ALERTA: { label: "Alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  ERRO: { label: "Erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  IGNORADA: { label: "Ignorada", color: "#64748b", bg: "#f1f5f9", border: "#f1f5f9" },
+};
+
+const folhaPagamentoRubricaLogSituacaoMeta: Record<
+  FolhaPagamentoRubricaLogSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  CALCULADA: { label: "Calculada", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  NAO_ELEGIVEL: { label: "Não elegível", color: "#64748b", bg: "#f1f5f9", border: "#f1f5f9" },
+  ALERTA: { label: "Alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  ERRO: { label: "Erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  NAO_PROCESSADA: { label: "Não processada", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
+};
+
+const folhaPagamentoOrgaoOptions = [
+  { label: "SEPLAG", value: "SEPLAG" },
+  { label: "MTI", value: "MTI" },
+  { label: "SEDUC", value: "SEDUC" },
+  { label: "SES", value: "SES" },
+  { label: "SAD", value: "SAD" },
+];
+
+const folhaPagamentoRegimeOptions = [
+  { label: "Todos", value: "" },
+  { label: "Estatutário Civil", value: "Estatutário Civil" },
+  { label: "Estatutário Militar", value: "Estatutário Militar" },
+  { label: "Regime Celetista", value: "Regime Celetista" },
+  { label: "Contrato Temporário", value: "Contrato Temporário" },
+];
+
+const folhaPagamentoCategoriaOptions = [
+  { label: "Todas", value: "" },
+  { label: "Profissionais da Educação", value: "Profissionais da Educação" },
+  { label: "Profissionais da Saúde", value: "Profissionais da Saúde" },
+  { label: "Área Meio", value: "Área Meio" },
+  { label: "Militar", value: "Militar" },
+];
+
+const folhaPagamentoCargoOptions = [
+  { label: "Todos", value: "" },
+  { label: "Professor da Educação Básica", value: "Professor da Educação Básica" },
+  { label: "Analista Administrativo", value: "Analista Administrativo" },
+  { label: "Médico", value: "Médico" },
+  { label: "Gestor Governamental", value: "Gestor Governamental" },
+];
+
+const folhaPagamentoGrupoEleitosOptions = [
+  { label: "Nenhum", value: "" },
+  { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
+  { label: "Grupo Teste", value: "Grupo Teste" },
+  { label: "Teste 24/04/2026", value: "Teste 24/04/2026" },
+];
+
+const folhaPagamentoTabs: TabItemSeplag<string>[] = [
+  { label: "Dados da Folha", value: "dados", col: "lg:col-4" },
+  { label: "Abrangência", value: "abrangencia", col: "lg:col-4" },
+  { label: "Parâmetros de Cálculo", value: "parametros", col: "lg:col-4" },
 ];
 
 const catalogoRubricaStatusOptions = [
@@ -1239,6 +2263,22 @@ const instituicaoOptions = [
 
 const regimeInstituicaoOptions = [{ label: "GOVMT", value: "govmt" }];
 
+const regimeTesteInstituicaoOptions = [
+  { label: "GOVMT", value: "govmt" },
+  { label: "MTI", value: "mti" },
+  { label: "METAMAT", value: "metamat" },
+  { label: "JUCEMAT", value: "jucemat" },
+  { label: "PMMT", value: "pmmt" },
+  { label: "CBMMT", value: "cbmmt" },
+];
+
+const grupoCalculoInstituicaoOptions = [
+  { label: "GOVMT", value: "govmt" },
+  { label: "METAMAT", value: "metamat" },
+  { label: "UCEMAT", value: "ucemat" },
+  { label: "MTI", value: "mti" },
+];
+
 const grupoCalculoOrgaoOptions = [
   { label: "Todos", value: "todos" },
   { label: "SEPLAG", value: "seplag" },
@@ -1278,6 +2318,42 @@ const grupoCalculoRegimeJuridicoOptions = regimesJuridicosMock.map((regime) => (
   label: regime.nome,
   value: regime.nome,
 }));
+
+const grupoCalculoRubricasPorFiltro: Record<string, string[]> = {
+  "regime:ESTATUTARIO CIVIL": ["1001", "1006", "1007", "1008", "1010", "1011"],
+  "regime:ESTATUTARIO MILITAR": ["1001", "1006", "1007", "1008", "1010", "1011"],
+  "regime:MILITAR TEMPORARIO": ["1001", "1002", "1007", "1009", "1010"],
+  "regime:REGIME CELETISTA": ["1001", "1002", "1005", "1007", "1009", "1013"],
+  "regime:REGIME ESPECIAL": ["1001", "1007", "1008", "1012", "1014"],
+  "regime:REGIME MISTO": ["1001", "1006", "1007", "1008", "1009", "1010", "1011"],
+  "vinculo:efetivo": ["1001", "1003", "1006", "1007", "1008", "1009", "1010", "1011"],
+  "vinculo:contratado": ["1001", "1002", "1003", "1007", "1009", "1013"],
+  "vinculo:comissionado": ["1001", "1003", "1007", "1008", "1011", "1012"],
+  "vinculo:aposentado": ["1001", "1006", "1007", "1010", "1011", "1014"],
+  "instituicao:govmt": ["1001", "1003", "1006", "1007", "1008", "1009", "1010", "1011"],
+  "instituicao:metamat": ["1001", "1002", "1007", "1009", "1013", "1014"],
+  "instituicao:ucemat": ["1001", "1003", "1007", "1008", "1011", "1012"],
+  "instituicao:mti": ["1001", "1002", "1007", "1008", "1009", "1012", "1013"],
+  "orgao:todos": ["1001", "1002", "1003", "1005", "1006", "1007", "1008", "1009", "1010", "1011", "1012", "1013", "1014"],
+  "orgao:seplag": ["1001", "1003", "1006", "1007", "1008", "1010", "1011"],
+  "orgao:seduc": ["1001", "1002", "1003", "1007", "1009", "1013"],
+  "orgao:pge": ["1001", "1003", "1006", "1007", "1008", "1011", "1012"],
+  "herdar:Geral": ["1001", "1003", "1007", "1012"],
+  "herdar:Efetivos": ["1001", "1003", "1006", "1007", "1008", "1010", "1011"],
+  "herdar:Contratados": ["1001", "1002", "1003", "1007", "1009", "1013"],
+  "herdar:Comissionados": ["1001", "1003", "1007", "1008", "1011", "1012"],
+};
+
+const grupoCalculoRubricasPorCombinacao: Record<string, string[]> = {
+  "ESTATUTARIO CIVIL|efetivo|govmt|seplag|Geral": ["1001", "1003", "1006", "1007", "1008", "1010", "1011"],
+  "ESTATUTARIO CIVIL|aposentado|govmt|seplag|Efetivos": ["1001", "1006", "1007", "1010", "1011", "1014"],
+  "REGIME CELETISTA|contratado|metamat|seduc|Contratados": ["1001", "1002", "1003", "1005", "1007", "1009", "1013"],
+  "ESTATUTARIO CIVIL|comissionado|ucemat|pge|Comissionados": ["1001", "1003", "1007", "1008", "1011", "1012"],
+  "REGIME ESPECIAL|comissionado|mti|seplag|nenhum": ["1001", "1007", "1008", "1012", "1014"],
+  "MILITAR TEMPORARIO|contratado|govmt|todos|Geral": ["1001", "1002", "1007", "1009", "1010"],
+  "ESTATUTARIO MILITAR|efetivo|govmt|todos|Geral": ["1001", "1003", "1006", "1007", "1008", "1010", "1011"],
+  "REGIME MISTO|efetivo|mti|seplag|Efetivos": ["1001", "1006", "1007", "1008", "1009", "1010", "1011"],
+};
 
 const grupoCalculoNivelOptions = [
   { label: "Geral", value: "geral" },
@@ -1348,6 +2424,26 @@ function renderGrupoCalculoStatusBadge(status: StatusOperacionalVigenciaSeplag) 
   );
 }
 
+function renderControleVagasSituacaoBadge(
+  situacao: ControleVagasConfiguracaoRow["situacao"],
+) {
+  const meta = {
+    Ativo: { color: "#00843d", bg: "#dff3e7" },
+    Agendado: { color: "#8a5a00", bg: "#fff4d6" },
+    Encerrado: { color: "#6b7280", bg: "#f1f5f9" },
+    Inativo: { color: "#6b7280", bg: "#eef2f7" },
+  }[situacao];
+
+  return (
+    <span
+      className="prototype-sistema-status-badge"
+      style={{ color: meta.color, backgroundColor: meta.bg, borderColor: meta.bg }}
+    >
+      {situacao}
+    </span>
+  );
+}
+
 function getGrupoCalculoRubricaTipo(rubrica: RubricaRow) {
   if (["1003", "1010", "1012"].includes(rubrica.codigo)) return "Auxiliar";
   if (rubrica.naturezaVerba === "Desconto") return "Desconto";
@@ -1376,6 +2472,48 @@ function getGrupoCalculoRubricaTipoBadge(tipo: string) {
     bg: "#d1fae5",
     border: "#bbf7d0",
   };
+}
+
+function getRubricasGrupoCalculoPorAbrangencia({
+  regimeJuridico,
+  tipoVinculo,
+  instituicao,
+  orgao,
+  herdarDe,
+}: {
+  regimeJuridico?: string;
+  tipoVinculo?: string;
+  instituicao?: string;
+  orgao?: string;
+  herdarDe?: string;
+}) {
+  const combinationKey = [
+    regimeJuridico,
+    tipoVinculo,
+    instituicao,
+    orgao,
+    herdarDe,
+  ].join("|");
+
+  const exactCodes = grupoCalculoRubricasPorCombinacao[combinationKey];
+  if (exactCodes) return exactCodes;
+
+  const filterKeys = [
+    regimeJuridico ? `regime:${regimeJuridico}` : "",
+    tipoVinculo ? `vinculo:${tipoVinculo}` : "",
+    instituicao ? `instituicao:${instituicao}` : "",
+    orgao ? `orgao:${orgao}` : "",
+    herdarDe && herdarDe !== "nenhum" ? `herdar:${herdarDe}` : "",
+  ].filter(Boolean);
+
+  const codes = new Set<string>();
+  filterKeys.forEach((filterKey) => {
+    grupoCalculoRubricasPorFiltro[filterKey]?.forEach((codigo) =>
+      codes.add(codigo),
+    );
+  });
+
+  return Array.from(codes);
 }
 
 const grupoEleitoFiltroAvancadoOptions = {
@@ -1421,6 +2559,156 @@ const situacaoOptions = [
   { label: "Encerrado", value: "ENCERRADO" },
 ];
 
+const cargoCategoriaOptions = Array.from(
+  new Set(cargosMock.map((cargo) => cargo.categoria)),
+).map((categoria) => ({ label: categoria, value: categoria }));
+
+const cargoTesteCategoriaOptions = Array.from(
+  new Set(cargosTesteMock.map((cargo) => cargo.categoria)),
+).map((categoria) => ({ label: categoria, value: categoria }));
+
+const cargoBaseLegalOptions = documentosLegaisMock.map((documento) => ({
+  label: documento.titulo,
+  value: documento.id,
+}));
+
+const cargoInstituicaoOptions = [
+  { label: "Governo do Estado de Mato Grosso", value: "govmt" },
+  { label: "SEPLAG", value: "seplag" },
+  { label: "Casa Civil", value: "casa-civil" },
+  { label: "MTI", value: "mti" },
+];
+
+const cargoSubcategoriaOptions = [
+  { label: "Administração Direta", value: "administracao-direta" },
+  { label: "Defesa Agropecuária", value: "defesa-agropecuaria" },
+  { label: "Tecnologia da Informação", value: "tecnologia-informacao" },
+  { label: "Educação Básica", value: "educacao-basica" },
+];
+
+const cargoTipoOptions = [
+  { label: "Efetivo", value: "efetivo" },
+  { label: "Comissionado", value: "comissionado" },
+  { label: "Temporário", value: "temporario" },
+];
+
+const cargoNaturezaOptions = [
+  { label: "Civil", value: "civil" },
+  { label: "Militar", value: "militar" },
+  { label: "Especial", value: "especial" },
+];
+
+const cargoFormaProvimentoOptions = [
+  { label: "Concurso Público", value: "concurso-publico" },
+  { label: "Nomeação", value: "nomeacao" },
+  { label: "Contrato Temporário", value: "contrato-temporario" },
+];
+
+const cargoJornadaOptions = [
+  { label: "20 horas", value: "20h" },
+  { label: "30 horas", value: "30h" },
+  { label: "40 horas", value: "40h" },
+];
+
+const cargoEscolaridadeOptions = [
+  { label: "Ensino Fundamental", value: "fundamental" },
+  { label: "Ensino Médio", value: "medio" },
+  { label: "Ensino Superior", value: "superior" },
+  { label: "Pós-graduação", value: "pos-graduacao" },
+];
+
+const cargoCboOptions = [
+  { label: "2124-05 - Analista de sistemas", value: "2124-05" },
+  { label: "2521-05 - Administrador", value: "2521-05" },
+  { label: "3211-05 - Técnico agropecuário", value: "3211-05" },
+];
+
+const cargoEspecialidadeOptions = [
+  { label: "Geral", value: "geral" },
+  { label: "Software", value: "software" },
+  { label: "Agropecuária", value: "agropecuaria" },
+  { label: "Gestão Pública", value: "gestao-publica" },
+];
+
+const tipoVinculoNaturezaOptions = [
+  { label: "Permanente", value: "Permanente" },
+  { label: "Temporário", value: "Temporário" },
+  { label: "Comissionado", value: "Comissionado" },
+  { label: "Previdenciário", value: "Previdenciário" },
+  { label: "Especial", value: "Especial" },
+  { label: "Requisitado/Cedido", value: "Requisitado/Cedido" },
+  { label: "Militar", value: "Militar" },
+  { label: "Não Funcional", value: "Não Funcional" },
+];
+
+const matrizInstituicaoOptions = regimeTesteInstituicaoOptions.map((item) => ({
+  label: item.label,
+  value: item.label,
+}));
+
+const matrizOrgaoOptions = [
+  { label: "Todos", value: "Todos" },
+  { label: "SEDUC", value: "SEDUC" },
+  { label: "SES", value: "SES" },
+  { label: "CBMMT", value: "CBMMT" },
+  { label: "SEPLAG", value: "SEPLAG" },
+];
+
+const matrizSetorOptions = [
+  { label: "Todos", value: "Todos" },
+  { label: "Gabinete", value: "Gabinete" },
+  { label: "Coordenadoria", value: "Coordenadoria" },
+  { label: "Unidade Administrativa", value: "Unidade Administrativa" },
+];
+
+const matrizRegimeOptions = regimesJuridicosTesteMock.map((regime) => ({
+  label: regime.nome,
+  value: regime.nome,
+}));
+
+const matrizTipoVinculoOptions = tiposVinculoTesteMock.map((tipo) => ({
+  label: tipo.nome,
+  value: tipo.nome,
+}));
+
+const matrizCategoriaOptions = categoriasTesteMock.map((categoria) => ({
+  label: categoria.descricao,
+  value: categoria.descricao,
+}));
+
+const matrizSubcategoriaOptions = [
+  { label: "Todos", value: "Todos" },
+  ...subcategoriasTesteMock.map((subcategoria) => ({
+    label: subcategoria.nome,
+    value: subcategoria.nome,
+  })),
+];
+
+const matrizCargoOptions = [
+  { label: "Todos", value: "Todos" },
+  ...cargosTesteMock.map((cargo) => ({
+    label: cargo.cargo,
+    value: cargo.cargo,
+  })),
+];
+
+const matrizControlaVagaOptions = [
+  { label: "Sim", value: "Sim" },
+  { label: "Não", value: "Não" },
+];
+
+const matrizTipoControleVagaOptions = [
+  { label: "Quantitativa", value: "Quantitativa" },
+  { label: "Numerada", value: "Numerada" },
+  { label: "Ambas", value: "Ambas" },
+];
+
+const cargoNaturezaVinculoOptions = [
+  { label: "Estatutário", value: "estatutario" },
+  { label: "Celetista", value: "celetista" },
+  { label: "Temporário", value: "temporario" },
+];
+
 const regimeSituacaoOptions = [
   { label: "AGENDADO", value: STATUS_OPERACIONAL_VIGENCIA.AGENDADO },
   { label: "ATIVO", value: STATUS_OPERACIONAL_VIGENCIA.ATIVO },
@@ -1434,6 +2722,59 @@ const regimeSituacaoOptions = [
     value: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO,
   },
   { label: "EXTINTO", value: STATUS_OPERACIONAL_VIGENCIA.EXTINTO },
+];
+
+const controleVagasTipoOptions = [
+  { label: "Todos", value: "" },
+  { label: "Cargo", value: "Cargo" },
+  { label: "Função", value: "Função" },
+];
+
+const controleVagasSimNaoOptions = [
+  { label: "Todos", value: "" },
+  { label: "Sim", value: "Sim" },
+  { label: "Não", value: "Não" },
+];
+
+const controleVagasTipoControleOptions = [
+  { label: "Todos", value: "" },
+  { label: "Quantitativo", value: "Quantitativo" },
+  { label: "Numerado", value: "Numerado" },
+  { label: "Híbrido", value: "Híbrido" },
+];
+
+const controleVagasSituacaoOptions = [
+  { label: "Todas", value: "" },
+  { label: "Ativo", value: "Ativo" },
+  { label: "Agendado", value: "Agendado" },
+  { label: "Encerrado", value: "Encerrado" },
+  { label: "Inativo", value: "Inativo" },
+];
+
+const controleVagasTipoFormOptions = controleVagasTipoOptions.filter(
+  (option) => option.value,
+);
+
+const controleVagasSimNaoFormOptions = controleVagasSimNaoOptions.filter(
+  (option) => option.value,
+);
+
+const controleVagasTipoControleFormOptions =
+  controleVagasTipoControleOptions.filter((option) => option.value);
+
+const controleVagasCargoFuncaoOptions = [
+  { label: "Analista Administrativo", value: "Analista Administrativo" },
+  { label: "Técnico Administrativo", value: "Técnico Administrativo" },
+  { label: "Coordenador", value: "Coordenador" },
+  { label: "Professor da Educação Básica", value: "Professor da Educação Básica" },
+  { label: "Assessor Técnico", value: "Assessor Técnico" },
+  { label: "Gestor Governamental", value: "Gestor Governamental" },
+];
+
+const controleVagasConfiguracaoTabs: TabItemSeplag<string>[] = [
+  { label: "Detalhes", value: "detalhes" },
+  { label: "Critérios de Compatibilidade", value: "criterios" },
+  { label: "Histórico", value: "historico" },
 ];
 
 const regimeStatusMeta: Record<
@@ -1878,8 +3219,1668 @@ export function PrototiposSigepPage() {
   );
 }
 
-export function PrototiposCategoriaPage() {
+export function PrototiposControleVagasPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Controle de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          legenda={() => (
+            <p className="prototype-card-description">
+              Selecione uma área para configurar, consultar ou acompanhar o controle de vagas do SIGEP.
+            </p>
+          )}
+        >
+          <div className="prototype-module-card-grid">
+            {controleVagasModuleItems.map((item) => {
+              const content = (
+                <article
+                  className={`prototype-module-card${
+                    item.path ? "" : " is-disabled"
+                  }`}
+                >
+                  <div className="prototype-module-card-icon" aria-hidden="true">
+                    <i className={item.icon} />
+                  </div>
+                  <div className="prototype-module-card-body">
+                    <span>{item.status}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                  <i className="pi pi-arrow-right prototype-module-card-action" aria-hidden="true" />
+                </article>
+              );
+
+              return item.path ? (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className="prototype-module-card-link"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div key={item.id} className="prototype-module-card-link">
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasConfiguracaoPage() {
   const navigate = useNavigate();
+  const { control, reset, watch } =
+    useForm<ControleVagasConfiguracaoFiltroForm>({
+      defaultValues: {
+        cargoFuncao: "",
+        tipo: "",
+        controlaVaga: "",
+        tipoControle: "",
+        situacao: "",
+      },
+    });
+  const filtros = watch();
+  const termoBusca = filtros.cargoFuncao?.trim().toLowerCase();
+  const configuracoesFiltradas = controleVagasConfiguracoesMock.filter(
+    (configuracao) => {
+      const atendeCargoFuncao =
+        !termoBusca ||
+        configuracao.codigo.toLowerCase().includes(termoBusca) ||
+        configuracao.cargoFuncao.toLowerCase().includes(termoBusca);
+      const atendeTipo = !filtros.tipo || configuracao.tipo === filtros.tipo;
+      const atendeControla =
+        !filtros.controlaVaga ||
+        configuracao.controlaVaga === filtros.controlaVaga;
+      const atendeTipoControle =
+        !filtros.tipoControle ||
+        configuracao.tipoControle === filtros.tipoControle;
+      const atendeSituacao =
+        !filtros.situacao || configuracao.situacao === filtros.situacao;
+
+      return (
+        atendeCargoFuncao &&
+        atendeTipo &&
+        atendeControla &&
+        atendeTipoControle &&
+        atendeSituacao
+      );
+    },
+  );
+  const configuracaoResults = createResults(configuracoesFiltradas);
+  const configuracaoColumns: ColumnMetaSeplag<ControleVagasConfiguracaoRow>[] = [
+    { field: "tipo", header: "Tipo" },
+    { field: "codigo", header: "Código" },
+    { field: "cargoFuncao", header: "Cargo/Função" },
+    { field: "controlaVaga", header: "Controla Vaga" },
+    { field: "tipoControle", header: "Tipo de Controle" },
+    { field: "dataInicio", header: "Data Início" },
+    {
+      header: "Critérios",
+      body: (row) => row.criterios.join(", "),
+    },
+    {
+      header: "Situação",
+      body: (row) => renderControleVagasSituacaoBadge(row.situacao),
+    },
+    { field: "ultimaAlteracao", header: "Última Alteração" },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Configuração de Controle de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-category-filters prototype-controle-vagas-filters grid">
+            <TextFieldSeplag
+              name="cargoFuncao"
+              control={control}
+              label="Cargo/Função"
+              placeholder="Código ou descrição"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipo"
+              control={control}
+              label="Tipo"
+              cols="12 6 2"
+              options={controleVagasTipoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="controlaVaga"
+              control={control}
+              label="Controla Vaga"
+              cols="12 6 2"
+              options={controleVagasSimNaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipoControle"
+              control={control}
+              label="Tipo de Controle"
+              cols="12 6 2"
+              options={controleVagasTipoControleOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 2"
+              options={controleVagasSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtros"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    cargoFuncao: "",
+                    tipo: "",
+                    controlaVaga: "",
+                    tipoControle: "",
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-controle-vagas-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={configuracaoResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={configuracaoColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate("/prototipos/sigep/controle-vagas/configuracao/novo")
+              }
+              handleView={(row) =>
+                navigate(
+                  `/prototipos/sigep/controle-vagas/configuracao/${row.id}/editar`,
+                )
+              }
+              handleEdit={(row) =>
+                navigate(
+                  `/prototipos/sigep/controle-vagas/configuracao/${row.id}/editar`,
+                )
+              }
+              handleInativar={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasConfiguracaoFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const configuracao = controleVagasConfiguracoesMock.find(
+    (item) => String(item.id) === id,
+  );
+  const isEditing = Boolean(id);
+  const [activeTab, setActiveTab] = useState("detalhes");
+  const { control, watch, setValue } = useForm<ControleVagasConfiguracaoForm>({
+    defaultValues: {
+      tipo: configuracao?.tipo ?? "",
+      codigo: configuracao?.codigo ?? "",
+      cargoFuncao: configuracao?.cargoFuncao ?? "",
+      controlaVaga: configuracao?.controlaVaga ?? "Sim",
+      tipoControle:
+        configuracao?.tipoControle === "-" ? "" : configuracao?.tipoControle ?? "",
+      dataInicio: configuracao?.dataInicio ?? "01/06/2026",
+      permiteSaldoNegativo: "Não",
+      justificativaSaldoNegativo: "",
+      observacao: "",
+      criterioCargoFuncao: "S",
+      criterioRegimeJuridico: configuracao?.criterios.includes("Regime Jurídico")
+        ? "S"
+        : "N",
+      criterioTipoVinculo: configuracao?.criterios.includes("Tipo de Vínculo")
+        ? "S"
+        : "N",
+      criterioOrgaoSetor: configuracao?.criterios.includes("Órgão/Setor")
+        ? "S"
+        : "N",
+      criterioSetoresSubordinados: configuracao?.criterios.includes(
+        "Setores subordinados",
+      )
+        ? "S"
+        : "N",
+      criterioLocalidade: configuracao?.criterios.includes("Localidade")
+        ? "S"
+        : "N",
+      criterioEspecialidade: configuracao?.criterios.includes("Especialidade")
+        ? "S"
+        : "N",
+      criterioJornada: configuracao?.criterios.includes("Jornada") ? "S" : "N",
+    },
+  });
+  const controlaVaga = watch("controlaVaga");
+  const orgaoSetorSelecionado = watch("criterioOrgaoSetor") === "S";
+  const camposDependentesDesabilitados = controlaVaga === "Não";
+
+  useEffect(() => {
+    if (controlaVaga !== "Não") return;
+
+    setValue("tipoControle", "");
+    setValue("dataInicio", "");
+    setValue("permiteSaldoNegativo", "Não");
+    setValue("justificativaSaldoNegativo", "");
+    setValue("criterioRegimeJuridico", "N");
+    setValue("criterioTipoVinculo", "N");
+    setValue("criterioOrgaoSetor", "N");
+    setValue("criterioSetoresSubordinados", "N");
+    setValue("criterioLocalidade", "N");
+    setValue("criterioEspecialidade", "N");
+    setValue("criterioJornada", "N");
+  }, [controlaVaga, setValue]);
+
+  useEffect(() => {
+    if (!orgaoSetorSelecionado) {
+      setValue("criterioSetoresSubordinados", "N");
+    }
+  }, [orgaoSetorSelecionado, setValue]);
+
+  const criterioRows = [
+    {
+      name: "criterioCargoFuncao" as const,
+      titulo: "Cargo/Função",
+      descricao: "Sempre validado para garantir que a configuração pertence ao cargo ou função selecionado.",
+      bloqueado: true,
+    },
+    {
+      name: "criterioRegimeJuridico" as const,
+      titulo: "Regime Jurídico",
+      descricao: "Valida compatibilidade do vínculo com o regime jurídico informado.",
+    },
+    {
+      name: "criterioTipoVinculo" as const,
+      titulo: "Tipo de Vínculo",
+      descricao: "Restringe a ocupação conforme efetivo, contratado, comissionado ou aposentado.",
+    },
+    {
+      name: "criterioOrgaoSetor" as const,
+      titulo: "Órgão/Setor",
+      descricao: "Valida se a vaga pertence à estrutura organizacional informada.",
+    },
+    {
+      name: "criterioSetoresSubordinados" as const,
+      titulo: "Setores subordinados",
+      descricao: "Inclui estruturas filhas quando órgão/setor estiver marcado.",
+      bloqueado: !orgaoSetorSelecionado,
+    },
+    {
+      name: "criterioLocalidade" as const,
+      titulo: "Localidade",
+      descricao: "Considera município, unidade ou localidade de exercício.",
+    },
+    {
+      name: "criterioEspecialidade" as const,
+      titulo: "Especialidade",
+      descricao: "Valida perfil ou especialidade exigida para a vaga.",
+    },
+    {
+      name: "criterioJornada" as const,
+      titulo: "Jornada",
+      descricao: "Compara carga horária ou referência da vaga com o vínculo funcional.",
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={`${isEditing ? "Alterar" : "Cadastrar"} - Configuração de Controle de Vagas`}
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-form">
+            <TabsSeplag
+              items={controleVagasConfiguracaoTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              equalWidth
+            />
+
+            {activeTab === "detalhes" && (
+              <div className="grid prototype-controle-vagas-form-section">
+                <DropdownFieldSeplag
+                  name="tipo"
+                  control={control}
+                  label="Tipo"
+                  cols="12 12 3"
+                  options={controleVagasTipoFormOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="codigo"
+                  control={control}
+                  label="Código"
+                  cols="12 12 3"
+                  placeholder="Ex.: C001"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="cargoFuncao"
+                  control={control}
+                  label="Cargo/Função"
+                  cols="12 12 6"
+                  options={controleVagasCargoFuncaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="controlaVaga"
+                  control={control}
+                  label="Controla Vaga"
+                  cols="12 12 3"
+                  options={controleVagasSimNaoFormOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="tipoControle"
+                  control={control}
+                  label="Tipo de Controle"
+                  cols="12 12 3"
+                  options={controleVagasTipoControleFormOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required={!camposDependentesDesabilitados}
+                  disabled={camposDependentesDesabilitados}
+                  getFormErrorMessage={() => null}
+                />
+                <DateFieldSeplag
+                  name="dataInicio"
+                  control={control}
+                  label="Data Início"
+                  cols="12 12 3"
+                  required={!camposDependentesDesabilitados}
+                  disabled={camposDependentesDesabilitados}
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="permiteSaldoNegativo"
+                  control={control}
+                  label="Permite saldo negativo"
+                  cols="12 12 3"
+                  options={controleVagasSimNaoFormOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  disabled={camposDependentesDesabilitados}
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="justificativaSaldoNegativo"
+                  control={control}
+                  label="Justificativa para saldo negativo"
+                  cols="12"
+                  rows={3}
+                  disabled={camposDependentesDesabilitados}
+                  placeholder="Informe a justificativa quando a regra permitir saldo negativo."
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={control}
+                  label="Observação"
+                  cols="12"
+                  rows={3}
+                  placeholder="Uso administrativo."
+                  getFormErrorMessage={() => null}
+                />
+                {camposDependentesDesabilitados && (
+                  <div className="col-12">
+                    <div className="prototype-controle-vagas-rule-alert">
+                      Ao marcar <strong>Controla Vaga = Não</strong>, os campos de controle, vigência e critérios ficam desabilitados.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "criterios" && (
+              <div
+                className={`prototype-controle-vagas-criterios${
+                  camposDependentesDesabilitados ? " is-disabled" : ""
+                }`}
+              >
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Critérios de Compatibilidade</h3>
+                  <p>
+                    Defina quais dados do vínculo funcional serão comparados antes
+                    de ocupar ou reservar uma vaga.
+                  </p>
+                </div>
+                <div className="prototype-controle-vagas-criterios-list">
+                  {criterioRows.map((criterio) => (
+                    <div
+                      className="prototype-controle-vagas-criterio-item"
+                      key={criterio.name}
+                    >
+                      <CheckboxFieldSeplag
+                        name={criterio.name}
+                        control={control}
+                        checkboxLabel={criterio.titulo}
+                        cols="12"
+                        disabled={
+                          camposDependentesDesabilitados || criterio.bloqueado
+                        }
+                      />
+                      <span>{criterio.descricao}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "historico" && (
+              <div className="prototype-controle-vagas-historico">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Histórico da Configuração</h3>
+                  <p>
+                    Registro somente leitura das principais alterações simuladas
+                    nesta configuração.
+                  </p>
+                </div>
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Data/Hora</th>
+                        <th>Evento</th>
+                        <th>Usuário</th>
+                        <th>Detalhe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controleVagasHistoricoMock.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.dataHora}</td>
+                          <td>{item.evento}</td>
+                          <td>{item.usuario}</td>
+                          <td>{item.detalhe}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() =>
+                  navigate("/prototipos/sigep/controle-vagas/configuracao")
+                }
+              />
+              <BotaoSalvarSeplag type="button" label="Salvar" />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCategoriaPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<CategoriaFiltroForm>({
+    defaultValues: {
+      categoria: "",
+      instituicao: undefined,
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const categoriaBusca = filtros.categoria?.trim().toLowerCase();
+  const categoriasFiltradas = categoriasTesteMock.filter((categoria) => {
+    const atendeCategoria =
+      !categoriaBusca ||
+      categoria.sigla.toLowerCase().includes(categoriaBusca) ||
+      categoria.descricao.toLowerCase().includes(categoriaBusca);
+    const atendeSituacao =
+      !filtros.situacao || categoria.situacao === filtros.situacao;
+    const atendeInstituicao =
+      !filtros.instituicao || categoria.instituicao === filtros.instituicao;
+
+    return atendeCategoria && atendeSituacao && atendeInstituicao;
+  });
+  const categoriaResults = createResults(categoriasFiltradas);
+  const categoriaColumns: ColumnMetaSeplag<CategoriaTesteRow>[] = [
+    { field: "sigla", header: "Sigla/Código" },
+    { field: "descricao", header: "Categoria" },
+    {
+      header: "Subcategorias",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.subcategorias}
+        </button>
+      ),
+    },
+    {
+      header: "Instituições",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoesVinculadas}{" "}
+          {row.instituicoesVinculadas === 1 ? "Instituição" : "Instituições"}
+        </button>
+      ),
+    },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Categorias" cols="12">
+          <div className="prototype-category-filters prototype-categoria-filters grid">
+            <TextFieldSeplag
+              name="categoria"
+              control={control}
+              label="Categoria (Sigla, Descrição)"
+              cols="12 6 3"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              cols="12 6 3"
+              options={instituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 3"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-3">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    categoria: "",
+                    instituicao: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-category-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={categoriaResults}
+              rows={10}
+              paginator={false}
+              lazy={false}
+              selectionMode={null}
+              columns={categoriaColumns}
+              hasEventoAcao
+              handleAdicionar={() => navigate(`${routePrefix}/categoria/novo`)}
+              handleView={() => {}}
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/categoria/${row.id}/editar`)
+              }
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCargoPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<CargoFiltroForm>({
+    defaultValues: {
+      cargo: "",
+      categoria: undefined,
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const cargoBusca = filtros.cargo?.trim().toLowerCase();
+  const cargosFiltrados = cargosTesteMock.filter((cargo) => {
+    const atendeCargo =
+      !cargoBusca ||
+      cargo.codigo.toLowerCase().includes(cargoBusca) ||
+      cargo.cargo.toLowerCase().includes(cargoBusca);
+    const atendeCategoria =
+      !filtros.categoria || cargo.categoria === filtros.categoria;
+    const atendeSituacao =
+      !filtros.situacao || cargo.situacao === filtros.situacao;
+
+    return atendeCargo && atendeCategoria && atendeSituacao;
+  });
+  const cargoResults = {
+    ...createResults(cargosFiltrados),
+    totalPages: Math.max(1, Math.ceil(cargosFiltrados.length / 10)),
+    sizePage: 10,
+    size: 10,
+  };
+  const cargoColumns: ColumnMetaSeplag<CargoTesteRow>[] = [
+    { field: "codigo", header: "Código/Sigla" },
+    { field: "cargo", header: "Cargo" },
+    { field: "categoria", header: "Categoria" },
+    { field: "subcategoria", header: "Subcategoria" },
+    { field: "jornadaPadrao", header: "Jornada Padrão" },
+    {
+      header: "Base Legal",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.baseLegal} Base(s)
+        </button>
+      ),
+    },
+    { field: "vigencia", header: "Vigência" },
+    {
+      header: "Instituições",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoes} Instituição(ões)
+        </button>
+      ),
+    },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Cargos" cols="12">
+          <div className="prototype-category-filters prototype-cargo-filters grid">
+            <TextFieldSeplag
+              name="cargo"
+              control={control}
+              label="Cargo"
+              placeholder="Nome do Cargo"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="categoria"
+              control={control}
+              label="Categoria"
+              placeholder="Selecione a Categoria"
+              cols="12 12 4"
+              options={cargoCategoriaOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              placeholder="Selecione a Situação"
+              cols="12 12 2"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    cargo: "",
+                    categoria: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-cargo-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={cargoResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={cargoColumns}
+              hasEventoAcao
+              handleAdicionar={() => navigate(`${routePrefix}/cargo/novo`)}
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCargoFormPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const { control, setValue } = useForm<CargoForm>({
+    defaultValues: {
+      codigo: "",
+      baseLegal: [],
+      categoria: "",
+      subcategoria: "",
+      instituicao: [],
+      nomeCargo: "",
+      descricao: "",
+      tipoCargo: "",
+      naturezaCargo: "",
+      formaProvimento: "",
+      regimeJuridico: "",
+      jornadaTrabalho: "",
+      escolaridadeMinima: "",
+      cbo: "",
+      especialidade: "",
+      naturezaVinculo: "",
+      cargoChefia: "N",
+      permiteSubstituicao: "N",
+      exibirPortal: "N",
+      observacao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "",
+      dataEncerramento: "",
+      dataExtincao: "",
+      motivoEncerramento: "",
+      motivoExtincao: "",
+    },
+  });
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white">
+          <CardSeplag
+            title="Cadastrar - Cargo"
+            cols="12"
+            cardHeaderClassNames="prototype-category-card"
+          >
+            <div className="prototype-cargo-form">
+              <section className="prototype-cargo-form-section">
+                <h3>Identificação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <TextFieldSeplag
+                    name="codigo"
+                    control={control}
+                    label="Código/Sigla"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="nomeCargo"
+                    control={control}
+                    label="Nome do Cargo"
+                    cols="12 12 9"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12"
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Classificação Funcional</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    placeholder="Selecione..."
+                    cols="12 12 6"
+                    options={cargoTesteCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="subcategoria"
+                    control={control}
+                    label="Subcategoria"
+                    placeholder="Selecione..."
+                    cols="12 12 6"
+                    options={cargoSubcategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="tipoCargo"
+                    control={control}
+                    label="Tipo de Cargo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoTipoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="naturezaCargo"
+                    control={control}
+                    label="Natureza do Cargo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoNaturezaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Características do Cargo</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="jornadaTrabalho"
+                    control={control}
+                    label="Jornada padrão do cargo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoJornadaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="escolaridadeMinima"
+                    control={control}
+                    label="Escolaridade Mínima"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoEscolaridadeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="cbo"
+                    control={control}
+                    label="CBO"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoCboOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="especialidade"
+                    control={control}
+                    label="Especialidade"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoEspecialidadeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <SwitchFieldSeplag
+                    name="cargoChefia"
+                    control={control}
+                    label="Cargo de Chefia"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <SwitchFieldSeplag
+                    name="permiteSubstituicao"
+                    control={control}
+                    label="Permite Substituição"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <SwitchFieldSeplag
+                    name="exibirPortal"
+                    control={control}
+                    label="Exibir no Portal?"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Base Legal</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="baseLegal"
+                    control={control}
+                    label="Base Legal"
+                    placeholder="Selecione as Bases Legais"
+                    cols="12"
+                    options={cargoBaseLegalOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Vigência</h3>
+                <div className="prototype-cargo-vigencia-fields">
+                  <SituacaoVigenciaSeplag<CargoForm>
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início de Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-4 lg:col-4 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Regras de Uso</h3>
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Instituição</th>
+                        <th>Órgão</th>
+                        <th>Regime</th>
+                        <th>Tipo de Vínculo</th>
+                        <th>Forma Provimento</th>
+                        <th>Jornada</th>
+                        <th>Situação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cargoRegrasUsoTesteMock.map((regra) => (
+                        <tr key={regra.id}>
+                          <td>{regra.instituicao}</td>
+                          <td>{regra.orgao}</td>
+                          <td>{regra.regime}</td>
+                          <td>{regra.tipoVinculo}</td>
+                          <td>{regra.formaProvimento}</td>
+                          <td>{regra.jornada}</td>
+                          <td>{regra.situacao}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(`${routePrefix}/cargo`)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCategoriaFormPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const categoria = categoriasTesteMock.find((item) => String(item.id) === id);
+  const isEditing = Boolean(id);
+  const [activeTab, setActiveTab] = useState("dados-gerais");
+  const [isAddingSubcategory, setIsAddingSubcategory] = useState(false);
+  const [documentosCategoria, setDocumentosCategoria] = useState<string[]>([
+    "lei-12345-2023",
+    "decreto-456-2024",
+  ]);
+  const [documentosSubcategoria, setDocumentosSubcategoria] = useState<
+    string[]
+  >([]);
+  const [instituicoesDisponiveis, setInstituicoesDisponiveis] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value !== "govmt"),
+  );
+  const [instituicoesSelecionadas, setInstituicoesSelecionadas] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value === "govmt"),
+  );
+  const { control, setValue } = useForm<CategoriaForm>({
+    defaultValues: {
+      sigla: categoria?.sigla ?? "",
+      descricao: categoria?.descricao ?? "",
+      observacao: isEditing ? "a" : "",
+      subcategoriaSigla: "",
+      subcategoriaNome: "",
+      subcategoriaDescricao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "08/05/2026",
+    },
+  });
+  const categoriaResumo = {
+    sigla: categoria?.sigla || "EDU",
+    descricao: categoria?.descricao || "Profissionais da Educação",
+  };
+  const subcategoriaColumns: ColumnMetaSeplag<SubcategoriaTesteRow>[] = [
+    { field: "sigla", header: "Sigla" },
+    { field: "nome", header: "Nome" },
+    { field: "descricao", header: "Descrição" },
+    { field: "cargos", header: "Cargos" },
+    {
+      header: "Regras de Uso",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.regrasUso}
+        </button>
+      ),
+    },
+    { field: "vigencia", header: "Vigência" },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={`${isEditing ? "Alterar" : "Cadastrar"} - Categoria e Subcategoria`}
+          cols="12"
+          cardHeaderClassNames="prototype-category-card"
+        >
+          <div className="prototype-category-form">
+            <TabsSeplag
+              items={categoriaTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              maxWidth="512px"
+            />
+
+            {activeTab === "dados-gerais" ? (
+              <div className="grid prototype-category-form-fields">
+                <TextFieldSeplag
+                  name="sigla"
+                  control={control}
+                  label="Sigla/Código"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="descricao"
+                  control={control}
+                  label="Nome da Categoria"
+                  cols="12 12 9"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={control}
+                  label="Observação"
+                  cols="12"
+                  rows={4}
+                  maxLength={500}
+                  getFormErrorMessage={() => null}
+                />
+                <div className="col-12 prototype-category-documents">
+                  <DocumentosLegaisAssociadosSeplag
+                    required
+                    options={documentosLegaisMock}
+                    value={documentosCategoria}
+                    onChange={setDocumentosCategoria}
+                    onNovoCadastro={() => {}}
+                    onVisualizar={() => {}}
+                  />
+                </div>
+                <div className="col-12 prototype-category-vigencia">
+                  <h6>Vigência</h6>
+                  <SituacaoVigenciaSeplag
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Data de Início"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+                <div className="col-12 prototype-category-structure">
+                  <PickListSeplag<(typeof regimeTesteInstituicaoOptions)[number]>
+                    title="Instituições"
+                    titleNaoSelecionados="Instituições disponíveis"
+                    titleSelecionados="Instituições selecionadas"
+                    dataKey="value"
+                    dataLabel="label"
+                    filterBy="label"
+                    filterPlaceholder="Procurar por instituição"
+                    naoSelecionados={instituicoesDisponiveis}
+                    selecionados={instituicoesSelecionadas}
+                    setNaoSelecionados={setInstituicoesDisponiveis}
+                    setSelecionados={setInstituicoesSelecionadas}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="prototype-category-subcategory">
+                <div className="prototype-category-summary">
+                  <strong>Categoria</strong>
+                  <p>
+                    <span>Sigla/Código:</span> {categoriaResumo.sigla}
+                  </p>
+                  <p>
+                    <span>Nome da Categoria:</span>{" "}
+                    {categoriaResumo.descricao}
+                  </p>
+                </div>
+
+                {isAddingSubcategory ? (
+                  <div className="grid prototype-subcategory-form-fields">
+                    <TextFieldSeplag
+                      name="subcategoriaSigla"
+                      control={control}
+                      label="Sigla/Código"
+                      placeholder="Sigla da subcategoria"
+                      cols="12 12 3"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextFieldSeplag
+                      name="subcategoriaNome"
+                      control={control}
+                      label="Nome da Subcategoria"
+                      placeholder="Nome da subcategoria"
+                      cols="12 12 9"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextAreaFieldSeplag
+                      name="subcategoriaDescricao"
+                      control={control}
+                      label="Descrição"
+                      placeholder="Descreva a subcategoria"
+                      cols="12"
+                      rows={4}
+                      maxLength={500}
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <div className="col-12 prototype-category-documents">
+                      <DocumentosLegaisAssociadosSeplag
+                        label="Base Legal da Subcategoria"
+                        options={documentosLegaisMock}
+                        value={documentosSubcategoria}
+                        onChange={setDocumentosSubcategoria}
+                        onNovoCadastro={() => {}}
+                        onVisualizar={() => {}}
+                      />
+                    </div>
+                    <div className="col-12 prototype-category-vigencia">
+                      <h6>Vigência da Subcategoria</h6>
+                      <SituacaoVigenciaSeplag
+                        control={control}
+                        setValue={setValue}
+                        rotuloDataAtivacao="Data de Início"
+                        cols={{
+                          situacao: "12 12 3",
+                          dataAtivacao: "12 12 3",
+                          statusOperacional:
+                            "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                          dataEncerramento: "12 12 3",
+                          motivoEncerramento: "12",
+                          dataExtincao: "12 12 3",
+                          motivoExtincao: "12",
+                        }}
+                        getFormErrorMessage={() => null}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <TablePaginadoSeplag
+                    dataKey="id"
+                    data={createResults<SubcategoriaTesteRow>(subcategoriasTesteMock)}
+                    rows={5}
+                    rowsPerPage={[5, 10, 20]}
+                    paginator
+                    lazy={false}
+                    selectionMode={null}
+                    columns={subcategoriaColumns}
+                    hasEventoAcao
+                    handleAdicionar={() => setIsAddingSubcategory(true)}
+                    handleView={() => {}}
+                    handleEdit={() => {}}
+                    handleDelete={() => {}}
+                    handleOnPageChange={() => {}}
+                  />
+                )}
+
+                <div className="prototype-category-form-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    onClick={() => navigate(`${routePrefix}/categoria`)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposSigepRegimeJuridicoPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const { control, reset } = useForm<RegimeJuridicoFiltroForm>({
+    defaultValues: {
+      nome: "REGIME ESPECIAL",
+      instituicao: "govmt",
+      situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    },
+  });
+  const regimeResults = {
+    ...createResults(regimesJuridicosMock),
+    totalPages: 5,
+    totalRecords: 45,
+    size: 10,
+    sizePage: 10,
+  };
+  const regimeColumns: ColumnMetaSeplag<RegimeJuridicoRow>[] = [
+    { field: "nome", header: "Nome" },
+    { field: "descricao", header: "Descrição" },
+    {
+      header: "Instituições Vinculadas",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoesVinculadas}{" "}
+          {row.instituicoesVinculadas === 1 ? "Instituição" : "Instituições"}
+        </button>
+      ),
+    },
+    {
+      header: "Situação",
+      body: (row) => (
+        <span className="prototype-regime-status-badge">
+          {renderGrupoCalculoStatusBadge(row.situacao)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-regime-page">
+        <CardSeplag
+          title="Regime Jurídico"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-category-filters prototype-regime-filters grid">
+            <TextFieldSeplag
+              name="nome"
+              control={control}
+              label="Nome"
+              cols="12 6 3"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              cols="12 6 2"
+              options={regimeInstituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 2"
+              options={regimeSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtros"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    nome: "",
+                    instituicao: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-regime-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={regimeResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy
+              selectionMode={null}
+              columns={regimeColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate(`${routePrefix}/regime-juridico/novo`)
+              }
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposSigepRegimeJuridicoNovoPage({
+  routePrefix = SIGEP_BASE_PATH,
+}: CargoConcursoRouteProps = {}) {
+  const navigate = useNavigate();
+  const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
+    [],
+  );
+  const [estruturaSelecionada, setEstruturaSelecionada] =
+    useState<SeletorEstruturaOrganizacionalValueSeplag>({});
+  const { control, setValue } = useForm<RegimeJuridicoForm>({
+    defaultValues: {
+      nome: "",
+      sigla: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "13/05/2026",
+    },
+  });
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white prototype-regime-page">
+          <CardSeplag
+            title="Cadastrar - Regime Jurídico"
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="grid prototype-category-form-fields prototype-regime-form-fields">
+              <TextFieldSeplag
+                name="nome"
+                control={control}
+                label="Nome"
+                cols="12 12 8"
+                required
+                maxLength={150}
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="sigla"
+                control={control}
+                label="Sigla"
+                cols="12 12 4"
+                required
+                maxLength={30}
+                getFormErrorMessage={() => null}
+              />
+
+              <div className="col-12 prototype-regime-section">
+                <DocumentosLegaisAssociadosSeplag
+                  label="Base Legal"
+                  required
+                  options={documentosLegaisMock}
+                  value={baseLegalSelecionada}
+                  onChange={setBaseLegalSelecionada}
+                  onNovoCadastro={() => {}}
+                  onVisualizar={() => {}}
+                />
+              </div>
+
+              <div className="col-12 prototype-regime-section">
+                <SeletorEstruturaOrganizacionalSeplag
+                  niveis={estruturaOrganizacionalNiveis}
+                  value={estruturaSelecionada}
+                  onChange={setEstruturaSelecionada}
+                />
+              </div>
+
+              <div className="col-12 prototype-category-vigencia">
+                <h6>Vigência</h6>
+                <SituacaoVigenciaSeplag
+                  control={control}
+                  setValue={setValue}
+                  rotuloDataAtivacao="Início de Vigência"
+                  cols={{
+                    situacao: "12 12 3",
+                    dataAtivacao: "12 12 3",
+                    statusOperacional:
+                      "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                    dataEncerramento: "12 12 3",
+                    motivoEncerramento: "12",
+                    dataExtincao: "12 12 3",
+                    motivoExtincao: "12",
+                  }}
+                  getFormErrorMessage={() => null}
+                />
+              </div>
+            </div>
+
+            <div className="prototype-category-form-footer">
+              <BotaoVoltarSeplag
+                type="button"
+                onClick={() => navigate(`${routePrefix}/regime-juridico`)}
+              />
+              <BotaoSalvarSeplag type="submit" />
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCategoriaTestePage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
   const { control, reset, watch } = useForm<CategoriaFiltroForm>({
     defaultValues: {
       categoria: "",
@@ -1939,12 +4940,12 @@ export function PrototiposCategoriaPage() {
       menuItems={menuGestaoPessoas}
     >
       <div className="prototype-page-content prototype-page-content--white">
-        <CardSeplag title="Categorias" cols="12">
-          <div className="prototype-category-filters grid">
+        <CardSeplag title="Categoria e Subcategoria" cols="12">
+          <div className="prototype-category-filters prototype-categoria-filters grid">
             <TextFieldSeplag
               name="categoria"
               control={control}
-              label="Categoria (Sigla, Descrição)"
+              label="Categoria (Sigla/Código, Nome)"
               cols="12 6 3"
               getFormErrorMessage={() => null}
             />
@@ -1953,7 +4954,7 @@ export function PrototiposCategoriaPage() {
               control={control}
               label="Instituição"
               cols="12 6 3"
-              options={instituicaoOptions}
+              options={regimeTesteInstituicaoOptions}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
@@ -1984,31 +4985,34 @@ export function PrototiposCategoriaPage() {
             </div>
           </div>
 
-          <TablePaginadoSeplag
-            dataKey="id"
-            data={categoriaResults}
-            rows={10}
-            paginator={false}
-            lazy={false}
-            selectionMode={null}
-            columns={categoriaColumns}
-            hasEventoAcao
-            handleAdicionar={() => navigate("/prototipos/sigep/categoria/novo")}
-            handleView={() => {}}
-            handleEdit={(row) =>
-              navigate(`/prototipos/sigep/categoria/${row.id}/editar`)
-            }
-            handleDelete={() => {}}
-            handleOnPageChange={() => {}}
-          />
+          <div className="prototype-category-table prototype-category-teste-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={categoriaResults}
+              rows={10}
+              paginator={false}
+              lazy={false}
+              selectionMode={null}
+              columns={categoriaColumns}
+              hasEventoAcao
+              handleAdicionar={() => navigate(`${routePrefix}/categoria/novo`)}
+              handleView={() => {}}
+              handleEdit={(row) =>
+                navigate(`${routePrefix}/categoria/${row.id}/editar`)
+              }
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
         </CardSeplag>
       </div>
     </PrototypeSystemPage>
   );
 }
 
-export function PrototiposCategoriaFormPage() {
+export function PrototiposCategoriaTesteFormPage() {
   const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
   const { id } = useParams();
   const categoria = categoriasMock.find((item) => String(item.id) === id);
   const isEditing = Boolean(id);
@@ -2184,7 +5188,7 @@ export function PrototiposCategoriaFormPage() {
                 <div className="prototype-category-form-footer">
                   <BotaoVoltarSeplag
                     type="button"
-                    onClick={() => navigate("/prototipos/sigep/categoria")}
+                    onClick={() => navigate(`${routePrefix}/categoria`)}
                   />
                 </div>
               </div>
@@ -2196,27 +5200,494 @@ export function PrototiposCategoriaFormPage() {
   );
 }
 
-export function PrototiposSigepRegimeJuridicoPage() {
+export function PrototiposCargoTestePage() {
   const navigate = useNavigate();
-  const { control, reset } = useForm<RegimeJuridicoFiltroForm>({
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, reset, watch } = useForm<CargoFiltroForm>({
     defaultValues: {
-      nome: "REGIME ESPECIAL",
-      instituicao: "govmt",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+      cargo: "",
+      categoria: undefined,
+      situacao: undefined,
     },
   });
+  const filtros = watch();
+  const cargoBusca = filtros.cargo?.trim().toLowerCase();
+  const cargosFiltrados = cargosMock.filter((cargo) => {
+    const atendeCargo =
+      !cargoBusca || cargo.cargo.toLowerCase().includes(cargoBusca);
+    const atendeCategoria =
+      !filtros.categoria || cargo.categoria === filtros.categoria;
+    const atendeSituacao =
+      !filtros.situacao || cargo.situacao === filtros.situacao;
+
+    return atendeCargo && atendeCategoria && atendeSituacao;
+  });
+  const cargoResults = {
+    ...createResults(cargosFiltrados),
+    totalPages: Math.max(1, Math.ceil(cargosFiltrados.length / 10)),
+    sizePage: 10,
+    size: 10,
+  };
+  const cargoColumns: ColumnMetaSeplag<CargoRow>[] = [
+    { field: "cargo", header: "Cargo" },
+    { field: "categoria", header: "Categoria" },
+    {
+      header: "Base Legal",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.baseLegal} Base(s)
+        </button>
+      ),
+    },
+    {
+      header: "Regras de Uso",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.regrasUso}
+        </button>
+      ),
+    },
+    { field: "vigencia", header: "Vigência" },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Cargos" cols="12">
+          <div className="prototype-category-filters prototype-cargo-filters grid">
+            <TextFieldSeplag
+              name="cargo"
+              control={control}
+              label="Cargo"
+              placeholder="Código/Sigla ou Nome do Cargo"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="categoria"
+              control={control}
+              label="Categoria"
+              placeholder="Selecione a Categoria"
+              cols="12 12 4"
+              options={cargoTesteCategoriaOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              placeholder="Selecione a Situação"
+              cols="12 12 2"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    cargo: "",
+                    categoria: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-cargo-table prototype-cargo-teste-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={cargoResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={cargoColumns}
+              hasEventoAcao
+              handleAdicionar={() => navigate(`${routePrefix}/cargo/novo`)}
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposCargoTesteFormPage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, setValue } = useForm<CargoForm>({
+    defaultValues: {
+      baseLegal: [],
+      categoria: "",
+      subcategoria: "",
+      instituicao: [],
+      nomeCargo: "",
+      descricao: "",
+      tipoCargo: "",
+      naturezaCargo: "",
+      formaProvimento: "",
+      regimeJuridico: "",
+      jornadaTrabalho: "",
+      escolaridadeMinima: "",
+      cbo: "",
+      especialidade: "",
+      naturezaVinculo: "",
+      cargoChefia: "N",
+      permiteSubstituicao: "N",
+      exibirPortal: "N",
+      observacao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "",
+      dataEncerramento: "",
+      dataExtincao: "",
+      motivoEncerramento: "",
+      motivoExtincao: "",
+    },
+  });
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white">
+          <CardSeplag
+            title="Cadastrar - Cargo"
+            cols="12"
+            cardHeaderClassNames="prototype-category-card"
+          >
+            <div className="prototype-cargo-form">
+              <section className="prototype-cargo-form-section">
+                <h3>Estrutura do Cargo</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="baseLegal"
+                    control={control}
+                    label="Base Legal"
+                    placeholder="Selecione as Bases Legais"
+                    cols="12"
+                    options={cargoBaseLegalOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    placeholder="Selecione..."
+                    cols="12 12 6"
+                    options={cargoCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="subcategoria"
+                    control={control}
+                    label="Subcategoria"
+                    placeholder="Selecione..."
+                    cols="12 12 6"
+                    options={cargoSubcategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <MultiSelectFieldSeplag
+                    name="instituicao"
+                    control={control}
+                    label="Instituição"
+                    placeholder="Selecione as Instituições"
+                    cols="12"
+                    options={cargoInstituicaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="nomeCargo"
+                    control={control}
+                    label="Nome do Cargo"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12 12 9"
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Classificação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="tipoCargo"
+                    control={control}
+                    label="Tipo de Cargo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoTipoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="naturezaCargo"
+                    control={control}
+                    label="Natureza do Cargo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoNaturezaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="formaProvimento"
+                    control={control}
+                    label="Forma Provimento"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoFormaProvimentoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="regimeJuridico"
+                    control={control}
+                    label="Regime Jurídico"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={grupoCalculoRegimeJuridicoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="jornadaTrabalho"
+                    control={control}
+                    label="Jornada de Trabalho"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoJornadaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="escolaridadeMinima"
+                    control={control}
+                    label="Escolaridade Mínima"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoEscolaridadeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="cbo"
+                    control={control}
+                    label="CBO"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoCboOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="especialidade"
+                    control={control}
+                    label="Especialidade"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoEspecialidadeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="naturezaVinculo"
+                    control={control}
+                    label="Natureza do Vínculo"
+                    placeholder="Selecione..."
+                    cols="12 12 3"
+                    options={cargoNaturezaVinculoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Regras Funcionais</h3>
+                <div className="grid prototype-cargo-form-fields prototype-cargo-switch-row">
+                  <SwitchFieldSeplag
+                    name="cargoChefia"
+                    control={control}
+                    label="Cargo de Chefia"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <SwitchFieldSeplag
+                    name="permiteSubstituicao"
+                    control={control}
+                    label="Permite Substituição"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <SwitchFieldSeplag
+                    name="exibirPortal"
+                    control={control}
+                    label="Exibir no Portal?"
+                    cols="12 12 4"
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Vigência</h3>
+                <div className="prototype-cargo-vigencia-fields">
+                  <SituacaoVigenciaSeplag<CargoForm>
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início de Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-4 lg:col-4 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(`${routePrefix}/cargo`)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposSigepRegimeJuridicoTestePage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, reset, watch } = useForm<RegimeJuridicoFiltroForm>({
+    defaultValues: {
+      nome: "",
+      instituicao: undefined,
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const regimeBusca = filtros.nome?.trim().toLowerCase();
+  const regimesFiltrados = regimesJuridicosTesteMock.filter((regime) => {
+    const atendeNome =
+      !regimeBusca ||
+      regime.codigo.toLowerCase().includes(regimeBusca) ||
+      regime.nome.toLowerCase().includes(regimeBusca) ||
+      regime.descricao.toLowerCase().includes(regimeBusca);
+    const atendeInstituicao =
+      !filtros.instituicao || regime.instituicao === filtros.instituicao;
+    const atendeSituacao =
+      !filtros.situacao || regime.situacao === filtros.situacao;
+
+    return atendeNome && atendeInstituicao && atendeSituacao;
+  });
   const regimeResults = {
-    ...createResults(regimesJuridicosMock),
-    totalPages: 5,
-    totalRecords: 45,
+    ...createResults(regimesFiltrados),
+    totalPages: Math.max(1, Math.ceil(regimesFiltrados.length / 10)),
+    totalRecords: regimesFiltrados.length,
     size: 10,
     sizePage: 10,
   };
-  const regimeColumns: ColumnMetaSeplag<RegimeJuridicoRow>[] = [
+  const regimeColumns: ColumnMetaSeplag<RegimeJuridicoTesteRow>[] = [
+    { field: "codigo", header: "Código/Sigla" },
     { field: "nome", header: "Nome" },
     { field: "descricao", header: "Descrição" },
     {
-      header: "Instituições Vinculadas",
+      header: "Instituições",
       body: (row) => (
         <button
           type="button"
@@ -2228,6 +5699,7 @@ export function PrototiposSigepRegimeJuridicoPage() {
         </button>
       ),
     },
+    { field: "vigencia", header: "Vigência" },
     {
       header: "Situação",
       body: (row) => (
@@ -2254,16 +5726,16 @@ export function PrototiposSigepRegimeJuridicoPage() {
             <TextFieldSeplag
               name="nome"
               control={control}
-              label="Nome"
-              cols="12 6 3"
+              label="Nome ou Código/Sigla"
+              cols="12 6 4"
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
               name="instituicao"
               control={control}
               label="Instituição"
-              cols="12 6 2"
-              options={regimeInstituicaoOptions}
+              cols="12 6 3"
+              options={regimeTesteInstituicaoOptions}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
@@ -2272,7 +5744,7 @@ export function PrototiposSigepRegimeJuridicoPage() {
               name="situacao"
               control={control}
               label="Situação"
-              cols="12 6 2"
+              cols="12 6 3"
               options={regimeSituacaoOptions}
               optionLabel="label"
               optionValue="value"
@@ -2306,7 +5778,7 @@ export function PrototiposSigepRegimeJuridicoPage() {
               columns={regimeColumns}
               hasEventoAcao
               handleAdicionar={() =>
-                navigate("/prototipos/sigep/regime-juridico/novo")
+                navigate(`${routePrefix}/regime-juridico/novo`)
               }
               handleView={() => {}}
               handleEdit={() => {}}
@@ -2320,17 +5792,23 @@ export function PrototiposSigepRegimeJuridicoPage() {
   );
 }
 
-export function PrototiposSigepRegimeJuridicoNovoPage() {
+export function PrototiposSigepRegimeJuridicoTesteNovoPage() {
   const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
   const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
     [],
   );
-  const [estruturaSelecionada, setEstruturaSelecionada] =
-    useState<SeletorEstruturaOrganizacionalValueSeplag>({});
+  const [instituicoesDisponiveis, setInstituicoesDisponiveis] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value !== "govmt"),
+  );
+  const [instituicoesSelecionadas, setInstituicoesSelecionadas] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value === "govmt"),
+  );
   const { control, setValue } = useForm<RegimeJuridicoForm>({
     defaultValues: {
       nome: "",
       sigla: "",
+      descricao: "",
       situacao: SITUACAO_VIGENCIA.ATIVO,
       dataAtivacao: "13/05/2026",
     },
@@ -2349,73 +5827,1060 @@ export function PrototiposSigepRegimeJuridicoNovoPage() {
             cols="12"
             cardHeaderClassNames="prototype-regime-card"
           >
-            <div className="grid prototype-category-form-fields prototype-regime-form-fields">
-              <TextFieldSeplag
-                name="nome"
-                control={control}
-                label="Nome"
-                cols="12 12 8"
-                required
-                maxLength={150}
-                getFormErrorMessage={() => null}
-              />
-              <TextFieldSeplag
-                name="sigla"
-                control={control}
-                label="Sigla"
-                cols="12 12 4"
-                required
-                maxLength={30}
-                getFormErrorMessage={() => null}
-              />
+            <div className="prototype-regime-teste-form">
+              <section className="prototype-cargo-form-section">
+                <h3>Dados Gerais</h3>
+                <div className="grid prototype-category-form-fields prototype-regime-form-fields">
+                  <TextFieldSeplag
+                    name="nome"
+                    control={control}
+                    label="Nome"
+                    cols="12 12 8"
+                    required
+                    maxLength={150}
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="sigla"
+                    control={control}
+                    label="Sigla/Código"
+                    cols="12 12 4"
+                    required
+                    maxLength={30}
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextAreaFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
 
-              <div className="col-12 prototype-regime-section">
-                <DocumentosLegaisAssociadosSeplag
-                  label="Base Legal"
-                  required
-                  options={documentosLegaisMock}
-                  value={baseLegalSelecionada}
-                  onChange={setBaseLegalSelecionada}
-                  onNovoCadastro={() => {}}
-                  onVisualizar={() => {}}
-                />
-              </div>
+              <section className="prototype-cargo-form-section">
+                <h3>Base Legal</h3>
+                <div className="prototype-regime-section">
+                  <DocumentosLegaisAssociadosSeplag
+                    label="Base Legal"
+                    required
+                    options={documentosLegaisMock}
+                    value={baseLegalSelecionada}
+                    onChange={setBaseLegalSelecionada}
+                    onNovoCadastro={() => {}}
+                    onVisualizar={() => {}}
+                  />
+                </div>
+              </section>
 
-              <div className="col-12 prototype-regime-section">
-                <SeletorEstruturaOrganizacionalSeplag
-                  niveis={estruturaOrganizacionalNiveis}
-                  value={estruturaSelecionada}
-                  onChange={setEstruturaSelecionada}
+              <section className="prototype-cargo-form-section">
+                <h3>Instituições</h3>
+                <PickListSeplag<(typeof regimeTesteInstituicaoOptions)[number]>
+                  title=""
+                  titleNaoSelecionados="Instituições disponíveis"
+                  titleSelecionados="Instituições selecionadas"
+                  dataKey="value"
+                  dataLabel="label"
+                  filterBy="label"
+                  filterPlaceholder="Procurar por instituição"
+                  naoSelecionados={instituicoesDisponiveis}
+                  selecionados={instituicoesSelecionadas}
+                  setNaoSelecionados={setInstituicoesDisponiveis}
+                  setSelecionados={setInstituicoesSelecionadas}
                 />
-              </div>
+              </section>
 
-              <div className="col-12 prototype-category-vigencia">
-                <h6>Vigência</h6>
-                <SituacaoVigenciaSeplag
-                  control={control}
-                  setValue={setValue}
-                  rotuloDataAtivacao="Início de Vigência"
-                  cols={{
-                    situacao: "12 12 3",
-                    dataAtivacao: "12 12 3",
-                    statusOperacional:
-                      "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
-                    dataEncerramento: "12 12 3",
-                    motivoEncerramento: "12",
-                    dataExtincao: "12 12 3",
-                    motivoExtincao: "12",
-                  }}
-                  getFormErrorMessage={() => null}
-                />
-              </div>
+              <section className="prototype-cargo-form-section">
+                <h3>Vigência</h3>
+                <div className="prototype-cargo-vigencia-fields">
+                  <SituacaoVigenciaSeplag
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início de Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-12 lg:col-5 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
             </div>
 
             <div className="prototype-category-form-footer">
               <BotaoVoltarSeplag
                 type="button"
-                onClick={() => navigate("/prototipos/sigep/regime-juridico")}
+                onClick={() => navigate(`${routePrefix}/regime-juridico`)}
               />
               <BotaoSalvarSeplag type="submit" />
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposTipoVinculoTestePage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, reset, watch } = useForm<TipoVinculoFiltroForm>({
+    defaultValues: {
+      termo: "",
+      natureza: undefined,
+      instituicao: undefined,
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const termoBusca = filtros.termo?.trim().toLowerCase();
+  const tiposFiltrados = tiposVinculoTesteMock.filter((tipo) => {
+    const atendeTermo =
+      !termoBusca ||
+      tipo.codigo.toLowerCase().includes(termoBusca) ||
+      tipo.nome.toLowerCase().includes(termoBusca) ||
+      tipo.descricao.toLowerCase().includes(termoBusca);
+    const atendeNatureza =
+      !filtros.natureza || tipo.natureza === filtros.natureza;
+    const atendeInstituicao =
+      !filtros.instituicao || tipo.instituicao === filtros.instituicao;
+    const atendeSituacao =
+      !filtros.situacao || tipo.situacao === filtros.situacao;
+
+    return (
+      atendeTermo && atendeNatureza && atendeInstituicao && atendeSituacao
+    );
+  });
+  const tipoVinculoResults = {
+    ...createResults(tiposFiltrados),
+    totalPages: Math.max(1, Math.ceil(tiposFiltrados.length / 10)),
+    totalRecords: tiposFiltrados.length,
+    size: 10,
+    sizePage: 10,
+  };
+  const tipoVinculoColumns: ColumnMetaSeplag<TipoVinculoTesteRow>[] = [
+    { field: "codigo", header: "Sigla/Código" },
+    { field: "nome", header: "Tipo de Vínculo" },
+    { field: "natureza", header: "Natureza" },
+    {
+      header: "Instituições",
+      body: (row) => (
+        <button
+          type="button"
+          className="prototype-link-button"
+          onClick={() => {}}
+        >
+          {row.instituicoesVinculadas}{" "}
+          {row.instituicoesVinculadas === 1 ? "Instituição" : "Instituições"}
+        </button>
+      ),
+    },
+    {
+      header: "Comportamentos",
+      body: (row) => row.comportamentos.join(", "),
+    },
+    { field: "vigencia", header: "Vigência" },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Tipo de Vínculo" cols="12">
+          <div className="prototype-category-filters prototype-tipo-vinculo-filters grid">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Nome ou Código/Sigla"
+              cols="12 12 3"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="natureza"
+              control={control}
+              label="Natureza do Vínculo"
+              placeholder="Selecione..."
+              cols="12 12 3"
+              options={tipoVinculoNaturezaOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              placeholder="Selecione..."
+              cols="12 12 2"
+              options={regimeTesteInstituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              placeholder="Selecione..."
+              cols="12 12 2"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termo: "",
+                    natureza: undefined,
+                    instituicao: undefined,
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-tipo-vinculo-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={tipoVinculoResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={tipoVinculoColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate(`${routePrefix}/tipo-vinculo/novo`)
+              }
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposTipoVinculoTesteFormPage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const [baseLegalSelecionada, setBaseLegalSelecionada] = useState<string[]>(
+    [],
+  );
+  const [instituicoesDisponiveis, setInstituicoesDisponiveis] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value !== "govmt"),
+  );
+  const [instituicoesSelecionadas, setInstituicoesSelecionadas] = useState(
+    regimeTesteInstituicaoOptions.filter((item) => item.value === "govmt"),
+  );
+  const { control, setValue } = useForm<TipoVinculoForm>({
+    defaultValues: {
+      codigo: "",
+      nome: "",
+      descricao: "",
+      natureza: "",
+      baseLegal: [],
+      geraVinculoFuncional: "S",
+      exigeCargo: "S",
+      exigeVaga: "N",
+      permiteControleVagas: "S",
+      permiteFolha: "S",
+      permiteAposentadoria: "N",
+      permitePensionista: "N",
+      permiteEventoCargo: "S",
+      exigeDataFim: "N",
+      observacao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "",
+      dataEncerramento: "",
+      dataExtincao: "",
+      motivoEncerramento: "",
+      motivoExtincao: "",
+    },
+  });
+  const comportamentoRows: Array<{
+    name: keyof TipoVinculoForm;
+    titulo: string;
+    descricao: string;
+  }> = [
+    {
+      name: "geraVinculoFuncional",
+      titulo: "Gera vínculo funcional?",
+      descricao: "Indica se o tipo cria um vínculo funcional para a pessoa.",
+    },
+    {
+      name: "exigeCargo",
+      titulo: "Exige cargo?",
+      descricao: "Torna obrigatória a seleção de cargo nos fluxos aplicáveis.",
+    },
+    {
+      name: "exigeVaga",
+      titulo: "Exige vaga?",
+      descricao: "Permite exigir vaga quando o cargo controlar quadro.",
+    },
+    {
+      name: "permiteControleVagas",
+      titulo: "Permite controle de vagas?",
+      descricao: "Habilita uso no módulo de Controle de Vagas.",
+    },
+    {
+      name: "permiteFolha",
+      titulo: "Permite folha?",
+      descricao: "Indica se o vínculo pode gerar registros para pagamento.",
+    },
+    {
+      name: "permiteAposentadoria",
+      titulo: "Permite aposentadoria?",
+      descricao: "Habilita fluxos previdenciários de aposentadoria/inatividade.",
+    },
+    {
+      name: "permitePensionista",
+      titulo: "Permite pensionista?",
+      descricao: "Habilita fluxos específicos de pensionista.",
+    },
+    {
+      name: "permiteEventoCargo",
+      titulo: "Permite evento de cargo?",
+      descricao: "Permite uso em provimento, alteração ou evento de cargo.",
+    },
+    {
+      name: "exigeDataFim",
+      titulo: "Exige data fim?",
+      descricao: "Obrigatoriedade de data final prevista para o vínculo.",
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white">
+          <CardSeplag
+            title="Cadastrar - Tipo de Vínculo"
+            cols="12"
+            cardHeaderClassNames="prototype-category-card"
+          >
+            <div className="prototype-cargo-form">
+              <section className="prototype-cargo-form-section">
+                <h3>Dados Gerais</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <TextFieldSeplag
+                    name="codigo"
+                    control={control}
+                    label="Sigla/Código"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextFieldSeplag
+                    name="nome"
+                    control={control}
+                    label="Nome do Tipo de Vínculo"
+                    cols="12 12 9"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <TextAreaFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Classificação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="natureza"
+                    control={control}
+                    label="Natureza do Vínculo"
+                    placeholder="Selecione..."
+                    cols="12 12 4"
+                    options={tipoVinculoNaturezaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Instituições</h3>
+                <PickListSeplag<(typeof regimeTesteInstituicaoOptions)[number]>
+                  title=""
+                  titleNaoSelecionados="Instituições disponíveis"
+                  titleSelecionados="Instituições selecionadas"
+                  dataKey="value"
+                  dataLabel="label"
+                  filterBy="label"
+                  filterPlaceholder="Procurar por instituição"
+                  naoSelecionados={instituicoesDisponiveis}
+                  selecionados={instituicoesSelecionadas}
+                  setNaoSelecionados={setInstituicoesDisponiveis}
+                  setSelecionados={setInstituicoesSelecionadas}
+                />
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Comportamentos do Vínculo</h3>
+                <div className="prototype-controle-vagas-criterios-list prototype-tipo-vinculo-comportamentos">
+                  {comportamentoRows.map((comportamento) => (
+                    <div
+                      className="prototype-controle-vagas-criterio-item"
+                      key={comportamento.name}
+                    >
+                      <CheckboxFieldSeplag<TipoVinculoForm>
+                        name={comportamento.name}
+                        control={control}
+                        checkboxLabel={comportamento.titulo}
+                        cols="12"
+                      />
+                      <span>{comportamento.descricao}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Base Legal</h3>
+                <div className="prototype-regime-section">
+                  <DocumentosLegaisAssociadosSeplag
+                    label="Base Legal"
+                    options={documentosLegaisMock}
+                    value={baseLegalSelecionada}
+                    onChange={setBaseLegalSelecionada}
+                    onNovoCadastro={() => {}}
+                    onVisualizar={() => {}}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Vigência</h3>
+                <div className="prototype-cargo-vigencia-fields">
+                  <SituacaoVigenciaSeplag<TipoVinculoForm>
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início de Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-4 lg:col-4 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Observação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(`${routePrefix}/tipo-vinculo`)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposMatrizValidacaoTestePage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, reset, watch } = useForm<MatrizValidacaoFiltroForm>({
+    defaultValues: {
+      instituicao: undefined,
+      orgao: undefined,
+      regimeJuridico: undefined,
+      tipoVinculo: undefined,
+      categoria: undefined,
+      cargo: "",
+      situacao: undefined,
+    },
+  });
+  const filtros = watch();
+  const cargoBusca = filtros.cargo?.trim().toLowerCase();
+  const regrasFiltradas = matrizValidacaoTesteMock.filter((regra) => {
+    const atendeInstituicao =
+      !filtros.instituicao || regra.instituicao === filtros.instituicao;
+    const atendeOrgao = !filtros.orgao || regra.orgao === filtros.orgao;
+    const atendeRegime =
+      !filtros.regimeJuridico ||
+      regra.regimeJuridico === filtros.regimeJuridico;
+    const atendeTipoVinculo =
+      !filtros.tipoVinculo || regra.tipoVinculo === filtros.tipoVinculo;
+    const atendeCategoria =
+      !filtros.categoria || regra.categoria === filtros.categoria;
+    const atendeCargo =
+      !cargoBusca ||
+      regra.cargo.toLowerCase().includes(cargoBusca) ||
+      regra.subcategoria.toLowerCase().includes(cargoBusca);
+    const atendeSituacao =
+      !filtros.situacao || regra.situacao === filtros.situacao;
+
+    return (
+      atendeInstituicao &&
+      atendeOrgao &&
+      atendeRegime &&
+      atendeTipoVinculo &&
+      atendeCategoria &&
+      atendeCargo &&
+      atendeSituacao
+    );
+  });
+  const matrizResults = {
+    ...createResults(regrasFiltradas),
+    totalPages: Math.max(1, Math.ceil(regrasFiltradas.length / 10)),
+    totalRecords: regrasFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+  const matrizColumns: ColumnMetaSeplag<MatrizValidacaoTesteRow>[] = [
+    { field: "instituicao", header: "Instituição" },
+    { field: "orgao", header: "Órgão" },
+    { field: "regimeJuridico", header: "Regime Jurídico" },
+    { field: "tipoVinculo", header: "Tipo de Vínculo" },
+    { field: "categoria", header: "Categoria" },
+    { field: "subcategoria", header: "Subcategoria" },
+    { field: "cargo", header: "Cargo" },
+    { field: "formaProvimento", header: "Provimento" },
+    { field: "jornada", header: "Jornada" },
+    {
+      header: "Especificidade",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.especificidade}
+          color={row.especificidade === "Genérica" ? "#52616b" : "#005494"}
+          bg={row.especificidade === "Genérica" ? "#eef2f6" : "#e6f0f8"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+    { field: "vigencia", header: "Vigência" },
+    {
+      header: "Situação",
+      body: (row) => (
+        <BadgeSeplag
+          label={row.situacao === "ATIVO" ? "Ativo" : "Encerrado"}
+          color={row.situacao === "ATIVO" ? "#00843d" : "#9a6500"}
+          bg={row.situacao === "ATIVO" ? "#e2f3e8" : "#fff1c7"}
+          border="transparent"
+          size="md"
+        />
+      ),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag title="Matriz de Validação Funcional" cols="12">
+          <div className="prototype-category-filters prototype-matriz-filters grid">
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              cols="12 12 2"
+              options={matrizInstituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="orgao"
+              control={control}
+              label="Órgão"
+              cols="12 12 2"
+              options={matrizOrgaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="regimeJuridico"
+              control={control}
+              label="Regime Jurídico"
+              cols="12 12 2"
+              options={matrizRegimeOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipoVinculo"
+              control={control}
+              label="Tipo de Vínculo"
+              cols="12 12 2"
+              options={matrizTipoVinculoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="categoria"
+              control={control}
+              label="Categoria"
+              cols="12 12 2"
+              options={matrizCategoriaOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="cargo"
+              control={control}
+              label="Cargo/Subcategoria"
+              cols="12 12 2"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 12 2"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    instituicao: undefined,
+                    orgao: undefined,
+                    regimeJuridico: undefined,
+                    tipoVinculo: undefined,
+                    categoria: undefined,
+                    cargo: "",
+                    situacao: undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-matriz-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={matrizResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={matrizColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate(`${routePrefix}/matriz-validacao/novo`)
+              }
+              handleView={() => {}}
+              handleEdit={() => {}}
+              handleDelete={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposMatrizValidacaoTesteFormPage() {
+  const navigate = useNavigate();
+  const routePrefix = SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH;
+  const { control, setValue, watch } = useForm<MatrizValidacaoForm>({
+    defaultValues: {
+      instituicao: "GOVMT",
+      orgao: "Todos",
+      setor: "Todos",
+      regimeJuridico: "",
+      tipoVinculo: "",
+      categoria: "",
+      subcategoria: "Todos",
+      cargo: "Todos",
+      formaProvimento: "",
+      jornada: "",
+      controlaVaga: "Sim",
+      tipoControleVaga: "Quantitativa",
+      aplicaIngresso: "S",
+      aplicaEventoCargo: "S",
+      aplicaConcurso: "S",
+      aplicaControleVagas: "S",
+      observacao: "",
+      situacao: SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: "",
+      dataEncerramento: "",
+      dataExtincao: "",
+      motivoEncerramento: "",
+      motivoExtincao: "",
+    },
+  });
+  const valores = watch();
+  const aplicacoes = [
+    valores.aplicaIngresso === "S" ? "Ingresso" : null,
+    valores.aplicaEventoCargo === "S" ? "Evento de Cargo/Provimento" : null,
+    valores.aplicaConcurso === "S" ? "Concurso" : null,
+    valores.aplicaControleVagas === "S" ? "Controle de Vagas" : null,
+  ].filter(Boolean);
+  const especificidade =
+    valores.cargo && valores.cargo !== "Todos"
+      ? "Regra específica por cargo"
+      : valores.orgao && valores.orgao !== "Todos"
+        ? "Regra específica por órgão"
+        : "Regra genérica";
+  const resumo = [
+    valores.instituicao,
+    valores.orgao,
+    valores.setor,
+    valores.regimeJuridico,
+    valores.tipoVinculo,
+    valores.categoria,
+    valores.subcategoria,
+    valores.cargo,
+  ].filter(Boolean);
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <form onSubmit={(event) => event.preventDefault()}>
+        <div className="prototype-page-content prototype-page-content--white">
+          <CardSeplag
+            title="Cadastrar - Matriz de Validação Funcional"
+            cols="12"
+            cardHeaderClassNames="prototype-category-card"
+          >
+            <div className="prototype-cargo-form">
+              <section className="prototype-cargo-form-section">
+                <h3>Contexto Organizacional</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="instituicao"
+                    control={control}
+                    label="Instituição"
+                    cols="12 12 4"
+                    options={matrizInstituicaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="orgao"
+                    control={control}
+                    label="Órgão"
+                    cols="12 12 4"
+                    options={matrizOrgaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="setor"
+                    control={control}
+                    label="Setor"
+                    cols="12 12 4"
+                    options={matrizSetorOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Composição Funcional</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="regimeJuridico"
+                    control={control}
+                    label="Regime Jurídico"
+                    cols="12 12 6"
+                    options={matrizRegimeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="tipoVinculo"
+                    control={control}
+                    label="Tipo de Vínculo"
+                    cols="12 12 6"
+                    options={matrizTipoVinculoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    cols="12 12 4"
+                    options={matrizCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    required
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="subcategoria"
+                    control={control}
+                    label="Subcategoria"
+                    cols="12 12 4"
+                    options={matrizSubcategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="cargo"
+                    control={control}
+                    label="Cargo"
+                    cols="12 12 4"
+                    options={matrizCargoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Parâmetros de Ocupação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <DropdownFieldSeplag
+                    name="formaProvimento"
+                    control={control}
+                    label="Forma de Provimento"
+                    cols="12 12 3"
+                    options={cargoFormaProvimentoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="jornada"
+                    control={control}
+                    label="Jornada de Trabalho"
+                    cols="12 12 3"
+                    options={cargoJornadaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="controlaVaga"
+                    control={control}
+                    label="Controla Vaga?"
+                    cols="12 12 3"
+                    options={matrizControlaVagaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                  <DropdownFieldSeplag
+                    name="tipoControleVaga"
+                    control={control}
+                    label="Tipo de Controle de Vaga"
+                    cols="12 12 3"
+                    options={matrizTipoControleVagaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Aplicação da Regra</h3>
+                <div className="prototype-controle-vagas-criterios-list prototype-matriz-aplicacoes">
+                  <div className="prototype-controle-vagas-criterio-item">
+                    <CheckboxFieldSeplag<MatrizValidacaoForm>
+                      name="aplicaIngresso"
+                      control={control}
+                      checkboxLabel="Ingresso"
+                      cols="12"
+                    />
+                    <span>Permite usar a combinação no ingresso.</span>
+                  </div>
+                  <div className="prototype-controle-vagas-criterio-item">
+                    <CheckboxFieldSeplag<MatrizValidacaoForm>
+                      name="aplicaEventoCargo"
+                      control={control}
+                      checkboxLabel="Evento de Cargo / Provimento"
+                      cols="12"
+                    />
+                    <span>Permite usar em eventos de cargo e provimento.</span>
+                  </div>
+                  <div className="prototype-controle-vagas-criterio-item">
+                    <CheckboxFieldSeplag<MatrizValidacaoForm>
+                      name="aplicaConcurso"
+                      control={control}
+                      checkboxLabel="Concurso"
+                      cols="12"
+                    />
+                    <span>Permite ofertar a combinação em concurso.</span>
+                  </div>
+                  <div className="prototype-controle-vagas-criterio-item">
+                    <CheckboxFieldSeplag<MatrizValidacaoForm>
+                      name="aplicaControleVagas"
+                      control={control}
+                      checkboxLabel="Controle de Vagas"
+                      cols="12"
+                    />
+                    <span>Permite criar quadro ou vaga para a combinação.</span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Resumo e Validações</h3>
+                <div className="prototype-matriz-summary">
+                  <div>
+                    <strong>{especificidade}</strong>
+                    <p>{resumo.length ? resumo.join(" + ") : "Preencha os campos para visualizar a combinação."}</p>
+                  </div>
+                  <div>
+                    <strong>Aplicação</strong>
+                    <p>
+                      {aplicacoes.length
+                        ? aplicacoes.join(", ")
+                        : "Nenhuma funcionalidade selecionada."}
+                    </p>
+                  </div>
+                  <div className="prototype-matriz-warning">
+                    <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+                    <span>
+                      Validação visual: verificar sobreposição de vigência para a
+                      mesma combinação antes de salvar.
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Vigência</h3>
+                <div className="prototype-cargo-vigencia-fields">
+                  <SituacaoVigenciaSeplag<MatrizValidacaoForm>
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início de Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional:
+                        "col-12 md:col-4 lg:col-4 prototype-status-operacional-col",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-cargo-form-section">
+                <h3>Observação</h3>
+                <div className="grid prototype-cargo-form-fields">
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(`${routePrefix}/matriz-validacao`)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
             </div>
           </CardSeplag>
         </div>
@@ -2431,6 +6896,1076 @@ export function PrototiposFolhaPage() {
       ambienteSistema="Teste"
       menuItems={menuFolha}
     />
+  );
+}
+
+export function PrototiposFolhaPagamentoPage() {
+  const [folhas, setFolhas] = useState<FolhaPagamentoRow[]>(() =>
+    folhaPagamentoService.listarFolhas(),
+  );
+  const [execucoes, setExecucoes] = useState<FolhaPagamentoExecucaoRow[]>(
+    () => folhaPagamentoService.listarExecucoes(),
+  );
+  const [pessoaLogs] = useState<FolhaPagamentoPessoaLogRow[]>(() =>
+    folhaPagamentoService.listarPessoaLogs(),
+  );
+  const [rubricaLogs] = useState<FolhaPagamentoRubricaLogRow[]>(
+    () => folhaPagamentoService.listarRubricaLogs(),
+  );
+  const [folhaSelecionada, setFolhaSelecionada] =
+    useState<FolhaPagamentoRow | null>(null);
+  const [modalFormularioAberto, setModalFormularioAberto] = useState(false);
+  const [modalDetalheAberto, setModalDetalheAberto] = useState(false);
+  const [modalExecucoesAberto, setModalExecucoesAberto] = useState(false);
+  const [modalLogAberto, setModalLogAberto] = useState(false);
+  const [modalPessoaLogAberto, setModalPessoaLogAberto] = useState(false);
+  const [execucaoSelecionada, setExecucaoSelecionada] =
+    useState<FolhaPagamentoExecucaoRow | null>(null);
+  const [pessoaLogSelecionada, setPessoaLogSelecionada] =
+    useState<FolhaPagamentoPessoaLogRow | null>(null);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [activeTab, setActiveTab] = useState("dados");
+  const [feedback, setFeedback] = useState("");
+  const [formFeedback, setFormFeedback] = useState("");
+  const { control, reset, watch } = useForm<FolhaPagamentoFiltroForm>({
+    defaultValues: {
+      termo: "",
+      orgaos: [],
+      mesAnoReferencia: "",
+      situacao: "",
+    },
+  });
+  const {
+    control: formControl,
+    reset: resetForm,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FolhaPagamentoForm>({
+    defaultValues: {
+      nome: "",
+      numero: "",
+      mesAnoReferencia: "",
+      competencia: "",
+      observacao: "",
+      orgaos: [],
+      regimeJuridico: "",
+      categoria: "",
+      cargo: "",
+      grupoEleitos: "",
+      totalMesesAdiantar: 0,
+      totalMesesRetroagir: 0,
+    },
+  });
+  const {
+    control: logControl,
+    reset: resetLog,
+    watch: watchLog,
+  } = useForm<FolhaPagamentoPessoaLogFiltroForm>({
+    defaultValues: {
+      matricula: "",
+      nome: "",
+      cpf: "",
+      orgao: "",
+      situacao: "",
+      rubrica: "",
+      mensagem: "",
+    },
+  });
+
+  const filtros = watch();
+  const normalizeMesAno = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
+    return cleanValue;
+  };
+
+  const isMesAnoValido = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    return /^(\d{4}-\d{2}|\d{2}\/\d{4})$/.test(cleanValue);
+  };
+
+  const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
+  const termoBusca =
+    termoBuscaDigitado.length >= 3 ? termoBuscaDigitado : "";
+  const mesAnoReferenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
+  const folhasFiltradas = folhas.filter((folha) => {
+    const atendeTermo =
+      !termoBusca ||
+      folha.numero.toLowerCase().includes(termoBusca) ||
+      folha.nome.toLowerCase().includes(termoBusca);
+    const atendeOrgao =
+      !filtros.orgaos?.length ||
+      filtros.orgaos.some((orgao) => folha.orgaos.includes(orgao));
+    const atendeMes =
+      !mesAnoReferenciaFiltro ||
+      folha.mesAnoReferencia === mesAnoReferenciaFiltro;
+    const atendeSituacao =
+      !filtros.situacao || folha.situacao === filtros.situacao;
+
+    return atendeTermo && atendeOrgao && atendeMes && atendeSituacao;
+  });
+
+  const folhaResults = {
+    ...createResults(folhasFiltradas),
+    totalPages: Math.max(1, Math.ceil(folhasFiltradas.length / 10)),
+    totalRecords: folhasFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+
+  const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
+    const meta = folhaPagamentoSituacaoMeta[situacao];
+    const label =
+      situacao === "PROCESSADA_COM_ALERTA"
+        ? "Processada\ncom alerta"
+        : situacao === "PROCESSADA_COM_ERRO"
+          ? "Processada\ncom erro"
+          : meta.label;
+
+    return (
+      <BadgeSeplag
+        {...meta}
+        label={label}
+        size="md"
+        customStyle={
+          situacao === "PROCESSADA_COM_ALERTA" ||
+          situacao === "PROCESSADA_COM_ERRO"
+            ? {
+                whiteSpace: "pre-line",
+                lineHeight: 1.12,
+                textAlign: "center",
+                paddingInline: 12,
+              }
+            : undefined
+        }
+      />
+    );
+  };
+
+  const renderExecucaoSituacaoBadge = (
+    situacao: FolhaPagamentoExecucaoSituacao,
+  ) => {
+    const meta = folhaPagamentoExecucaoSituacaoMeta[situacao];
+    return <BadgeSeplag {...meta} size="md" />;
+  };
+
+  const renderPessoaLogSituacaoBadge = (
+    situacao: FolhaPagamentoPessoaLogSituacao,
+  ) => {
+    const meta = folhaPagamentoPessoaLogSituacaoMeta[situacao];
+    return <BadgeSeplag {...meta} size="md" />;
+  };
+
+  const renderRubricaLogSituacaoBadge = (
+    situacao: FolhaPagamentoRubricaLogSituacao,
+  ) => {
+    const meta = folhaPagamentoRubricaLogSituacaoMeta[situacao];
+    return <BadgeSeplag {...meta} size="sm" />;
+  };
+
+  const formatMesAno = (value: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
+  };
+
+  const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
+    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+
+  const folhaPodeProcessar = (folha: FolhaPagamentoRow) =>
+    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+
+  const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+
+  const abrirNovaFolha = () => {
+    setFeedback("");
+    setFormFeedback("");
+    setFolhaSelecionada(null);
+    setFormMode("create");
+    setActiveTab("dados");
+    resetForm({
+      nome: "",
+      numero: "",
+      mesAnoReferencia: "",
+      competencia: "",
+      observacao: "",
+      orgaos: [],
+      regimeJuridico: "",
+      categoria: "",
+      cargo: "",
+      grupoEleitos: "",
+      totalMesesAdiantar: 0,
+      totalMesesRetroagir: 0,
+    });
+    setModalFormularioAberto(true);
+  };
+
+  const abrirEditarFolha = (folha: FolhaPagamentoRow) => {
+    if (!folhaPodeEditar(folha)) {
+      setFeedback("Não é possível editar uma folha em processamento, processada, bloqueada ou cancelada.");
+      return;
+    }
+
+    setFeedback("");
+    setFormFeedback("");
+    setFolhaSelecionada(folha);
+    setFormMode("edit");
+    setActiveTab("dados");
+    resetForm({
+      nome: folha.nome,
+      numero: folha.numero,
+      mesAnoReferencia: formatMesAno(folha.mesAnoReferencia),
+      competencia: formatMesAno(folha.competencia),
+      observacao: folha.observacao,
+      orgaos: folha.orgaos,
+      regimeJuridico: folha.regimeJuridico,
+      categoria: folha.categoria,
+      cargo: folha.cargo,
+      grupoEleitos: folha.grupoEleitos,
+      totalMesesAdiantar: folha.totalMesesAdiantar,
+      totalMesesRetroagir: folha.totalMesesRetroagir,
+    });
+    setModalFormularioAberto(true);
+  };
+
+  const abrirDetalheFolha = (folha: FolhaPagamentoRow) => {
+    setFolhaSelecionada(folha);
+    setModalDetalheAberto(true);
+  };
+
+  const salvarFolha = (data: FolhaPagamentoForm) => {
+    const orgaos = data.orgaos ?? [];
+    const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
+    const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
+    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
+    const competencia = normalizeMesAno(data.competencia);
+
+    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+      setActiveTab("dados");
+      return;
+    }
+
+    if (!orgaos.length) {
+      setFormFeedback("Informe ao menos um órgão para a abrangência da folha.");
+      setActiveTab("abrangencia");
+      return;
+    }
+
+    if (totalMesesAdiantar < 0 || totalMesesRetroagir < 0) {
+      setFormFeedback("Total de meses a adiantar e retroagir não pode ser menor que zero.");
+      setActiveTab("parametros");
+      return;
+    }
+
+    const folhaDuplicada = folhas.some((folha) => {
+      if (formMode === "edit" && folha.id === folhaSelecionada?.id) return false;
+
+      return (
+        folha.numero === data.numero &&
+        folha.mesAnoReferencia === mesAnoReferencia &&
+        folha.competencia === competencia &&
+        folha.orgaos.slice().sort().join("|") === orgaos.slice().sort().join("|")
+      );
+    });
+
+    if (folhaDuplicada) {
+      setFormFeedback("Já existe folha cadastrada para a combinação de número, referência, competência e órgão(s).");
+      setActiveTab("dados");
+      return;
+    }
+
+    if (formMode === "edit" && folhaSelecionada) {
+      folhaPagamentoService.atualizarFolha(folhaSelecionada.id, {
+        ...data,
+        mesAnoReferencia,
+        competencia,
+        orgaos,
+        totalMesesAdiantar,
+        totalMesesRetroagir,
+      });
+      setFolhas((current) =>
+        current.map((folha) =>
+          folha.id === folhaSelecionada.id
+            ? {
+                ...folha,
+                nome: data.nome ?? "",
+                numero: data.numero ?? "",
+                mesAnoReferencia,
+                competencia,
+                observacao: data.observacao ?? "",
+                orgaos,
+                regimeJuridico: data.regimeJuridico ?? "",
+                categoria: data.categoria ?? "",
+                cargo: data.cargo ?? "",
+                grupoEleitos: data.grupoEleitos ?? "",
+                totalMesesAdiantar,
+                totalMesesRetroagir,
+              }
+            : folha,
+        ),
+      );
+      setFeedback("Folha atualizada com sucesso.");
+    } else {
+      folhaPagamentoService.criarFolha({
+        ...data,
+        mesAnoReferencia,
+        competencia,
+        orgaos,
+        totalMesesAdiantar,
+        totalMesesRetroagir,
+      });
+      setFolhas((current) => [
+        {
+          id: Math.max(...current.map((folha) => folha.id), 0) + 1,
+          nome: data.nome ?? "",
+          numero: data.numero ?? "",
+          mesAnoReferencia,
+          competencia,
+          observacao: data.observacao ?? "",
+          orgaos,
+          regimeJuridico: data.regimeJuridico ?? "",
+          categoria: data.categoria ?? "",
+          cargo: data.cargo ?? "",
+          grupoEleitos: data.grupoEleitos ?? "",
+          totalMesesAdiantar,
+          totalMesesRetroagir,
+          situacao: "RASCUNHO",
+          totalPessoas: 0,
+          totalSucesso: 0,
+          totalAlerta: 0,
+          totalErro: 0,
+          ultimaExecucao: "-",
+        },
+        ...current,
+      ]);
+      setFeedback("Folha cadastrada com sucesso.");
+    }
+
+    setModalFormularioAberto(false);
+  };
+
+  const processarFolha = (folha: FolhaPagamentoRow) => {
+    if (!folhaPodeProcessar(folha) || !folha.orgaos.length) {
+      setFeedback("Não foi possível processar a folha. Verifique os dados obrigatórios.");
+      return;
+    }
+
+    folhaPagamentoService.executarFolha({ folhaPagamentoId: folha.id });
+
+    const novaExecucao: FolhaPagamentoExecucaoRow = {
+      id: Math.max(...execucoes.map((execucao) => execucao.id), 1000) + 1,
+      folhaPagamentoId: folha.id,
+      situacao: "EM_FILA",
+      dataHoraInicio: "28/05/2026 10:00",
+      dataHoraFim: "-",
+      usuarioResponsavel: "ROBERTO JUNIOR",
+      totalPessoas: folha.totalPessoas,
+      totalSucesso: 0,
+      totalAlerta: 0,
+      totalErro: 0,
+      parametrosResumo: `Adiantar ${folha.totalMesesAdiantar} mês(es), retroagir ${folha.totalMesesRetroagir} mês(es)`,
+    };
+
+    setExecucoes((current) => [novaExecucao, ...current]);
+    setFolhas((current) =>
+      current.map((item) =>
+        item.id === folha.id
+          ? {
+              ...item,
+              situacao: "EM_FILA",
+              ultimaExecucao: "28/05/2026 10:00",
+            }
+          : item,
+      ),
+    );
+    setFeedback("Processamento enviado para a fila.");
+  };
+
+  const abrirExecucoesFolha = (folha: FolhaPagamentoRow) => {
+    setFolhaSelecionada(folha);
+    setModalExecucoesAberto(true);
+  };
+
+  const folhaColumns: ColumnMetaSeplag<FolhaPagamentoRow>[] = [
+    { field: "numero", header: "Número da folha" },
+    { field: "nome", header: "Nome da folha" },
+    { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
+    { header: "Mês/ano ref.", body: (row) => formatMesAno(row.mesAnoReferencia) },
+    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
+    { header: "Situação", body: (row) => renderFolhaSituacaoBadge(row.situacao) },
+    { field: "totalPessoas", header: "Total pessoas" },
+    { field: "totalSucesso", header: "Sucesso" },
+    { field: "totalAlerta", header: "Alerta" },
+    { field: "totalErro", header: "Erro" },
+    { field: "ultimaExecucao", header: "Última execução" },
+  ];
+
+  const execucoesFolha = folhaSelecionada
+    ? execucoes.filter(
+        (execucao) => execucao.folhaPagamentoId === folhaSelecionada.id,
+      )
+    : [];
+  const execucoesResults = createResults(execucoesFolha);
+  const execucaoColumns: ColumnMetaSeplag<FolhaPagamentoExecucaoRow>[] = [
+    { field: "id", header: "Execução" },
+    {
+      header: "Situação",
+      body: (row) => renderExecucaoSituacaoBadge(row.situacao),
+    },
+    { field: "dataHoraInicio", header: "Início" },
+    { field: "dataHoraFim", header: "Fim" },
+    { field: "usuarioResponsavel", header: "Usuário" },
+    { field: "totalPessoas", header: "Pessoas" },
+    { field: "totalSucesso", header: "Sucesso" },
+    { field: "totalAlerta", header: "Alerta" },
+    { field: "totalErro", header: "Erro" },
+  ];
+
+  const logFiltros = watchLog();
+  const logsDaExecucao = execucaoSelecionada
+    ? pessoaLogs.filter(
+        (log) => log.execucaoId === execucaoSelecionada.id,
+      )
+    : [];
+  const rubricasDaPessoa = pessoaLogSelecionada
+    ? rubricaLogs.filter(
+        (rubrica) => rubrica.pessoaLogId === pessoaLogSelecionada.id,
+      )
+    : [];
+  const logsFiltrados = logsDaExecucao.filter((log) => {
+    const rubricasPessoa = rubricaLogs.filter(
+      (rubrica) => rubrica.pessoaLogId === log.id,
+    );
+    const rubricaBusca = logFiltros.rubrica?.trim().toLowerCase();
+
+    return (
+      (!logFiltros.matricula ||
+        `${log.matricula}/${log.vinculo}`.includes(logFiltros.matricula)) &&
+      (!logFiltros.nome ||
+        log.nome.toLowerCase().includes(logFiltros.nome.toLowerCase())) &&
+      (!logFiltros.cpf || log.cpf.includes(logFiltros.cpf)) &&
+      (!logFiltros.orgao || log.orgao === logFiltros.orgao) &&
+      (!logFiltros.situacao || log.situacao === logFiltros.situacao) &&
+      (!logFiltros.mensagem ||
+        log.mensagem.toLowerCase().includes(logFiltros.mensagem.toLowerCase())) &&
+      (!rubricaBusca ||
+        rubricasPessoa.some(
+          (rubrica) =>
+            rubrica.codigoRubrica.toLowerCase().includes(rubricaBusca) ||
+            rubrica.nomeRubrica.toLowerCase().includes(rubricaBusca),
+        ))
+    );
+  });
+  const logResults = createResults(logsFiltrados);
+  const rubricasResults = createResults(rubricasDaPessoa);
+  const logPessoaColumns: ColumnMetaSeplag<FolhaPagamentoPessoaLogRow>[] = [
+    { header: "Matrícula/vínculo", body: (row) => `${row.matricula}/${row.vinculo}` },
+    { field: "nome", header: "Nome" },
+    { field: "cpf", header: "CPF" },
+    { field: "orgao", header: "Órgão" },
+    { field: "cargo", header: "Cargo" },
+    {
+      header: "Situação",
+      body: (row) => renderPessoaLogSituacaoBadge(row.situacao),
+    },
+    { field: "mensagem", header: "Mensagem" },
+  ];
+  const rubricaLogColumns: ColumnMetaSeplag<FolhaPagamentoRubricaLogRow>[] = [
+    { field: "codigoRubrica", header: "Código" },
+    { field: "nomeRubrica", header: "Rubrica" },
+    { field: "tipoRubrica", header: "Tipo" },
+    { field: "valorCalculado", header: "Valor calculado" },
+    {
+      header: "Situação",
+      body: (row) => renderRubricaLogSituacaoBadge(row.situacao),
+    },
+    { field: "mensagem", header: "Mensagem" },
+  ];
+
+  const renderAcoesFolha = (folha: FolhaPagamentoRow) => (
+    <>
+      <BotaoIconSeplag
+        severity="warning"
+        type="button"
+        tooltip={
+          folhaPodeEditar(folha)
+            ? "Editar"
+            : "Edição bloqueada pela situação da folha"
+        }
+        icon="pi pi-pencil"
+        disabled={!folhaPodeEditar(folha)}
+        onClick={() => abrirEditarFolha(folha)}
+      />
+      <BotaoIconSeplag
+        type="button"
+        tooltip={
+          folhaPodeProcessar(folha)
+            ? "Processar folha"
+            : "Processamento indisponível para esta situação"
+        }
+        icon="pi pi-play"
+        disabled={!folhaPodeProcessar(folha)}
+        onClick={() => processarFolha(folha)}
+      />
+      <BotaoIconSeplag
+        type="button"
+        tooltip="Consultar execuções"
+        icon="pi pi-list-check"
+        disabled={!execucoes.some((execucao) => execucao.folhaPagamentoId === folha.id)}
+        onClick={() => abrirExecucoesFolha(folha)}
+      />
+    </>
+  );
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Folha de Pagamento"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Pesquisar por número ou nome da folha"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="orgaos"
+              control={control}
+              label="Órgãos"
+              cols="12 12 3"
+              options={folhaPagamentoOrgaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} órgãos selecionados"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="mesAnoReferencia"
+              control={control}
+              label="Mês/ano de referência"
+              placeholder="MM/AAAA"
+              cols="12 6 2"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 2"
+              options={folhaPagamentoSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termo: "",
+                    orgaos: [],
+                    mesAnoReferencia: "",
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-actions">
+            <BotaoSeplag
+              type="button"
+              label="Nova Folha"
+              icon="pi pi-plus"
+              onClick={abrirNovaFolha}
+            />
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={folhaResults}
+              rows={10}
+              rowsPerPage={[10, 20, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={folhaColumns}
+              hasEventoAcao
+              handleView={abrirDetalheFolha}
+              renderBotoes={renderAcoesFolha}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalFormularioAberto}
+          titulo={`${formMode === "edit" ? "Alterar" : "Cadastrar"} - Folha de Pagamento`}
+          fechar={() => setModalFormularioAberto(false)}
+          labelAcao="Salvar"
+          iconAcao="pi pi-save"
+          funcAcao={handleSubmit(salvarFolha)}
+          tamanho="960px"
+        >
+          <div className="col-12 prototype-folha-pagamento-form">
+            {formFeedback ? (
+              <div className="prototype-validation-panel">{formFeedback}</div>
+            ) : null}
+            <TabsSeplag
+              items={folhaPagamentoTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              equalWidth
+            />
+
+            {activeTab === "dados" && (
+              <div className="grid prototype-category-form-fields">
+                <TextFieldSeplag
+                  name="nome"
+                  control={formControl}
+                  label="Nome da folha"
+                  cols="12 12 6"
+                  required
+                  getFormErrorMessage={() => getFormErrorMessage("nome")}
+                />
+                <TextFieldSeplag
+                  name="numero"
+                  control={formControl}
+                  label="Número da folha"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() => getFormErrorMessage("numero")}
+                />
+                <TextFieldSeplag
+                  name="mesAnoReferencia"
+                  control={formControl}
+                  label="Mês/ano de referência"
+                  placeholder="MM/AAAA"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() =>
+                    getFormErrorMessage("mesAnoReferencia")
+                  }
+                />
+                <TextFieldSeplag
+                  name="competencia"
+                  control={formControl}
+                  label="Competência"
+                  placeholder="MM/AAAA"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() => getFormErrorMessage("competencia")}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={formControl}
+                  label="Observação"
+                  cols="12"
+                  rows={4}
+                  maxLength={500}
+                  getFormErrorMessage={() => getFormErrorMessage("observacao")}
+                />
+              </div>
+            )}
+
+            {activeTab === "abrangencia" && (
+              <div className="grid prototype-category-form-fields">
+                <MultiSelectFieldSeplag
+                  name="orgaos"
+                  control={formControl}
+                  label="Órgãos"
+                  cols="12 12 6"
+                  required
+                  options={folhaPagamentoOrgaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} órgãos selecionados"
+                  getFormErrorMessage={() => getFormErrorMessage("orgaos")}
+                />
+                <DropdownFieldSeplag
+                  name="regimeJuridico"
+                  control={formControl}
+                  label="Regime jurídico"
+                  cols="12 12 6"
+                  options={folhaPagamentoRegimeOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() =>
+                    getFormErrorMessage("regimeJuridico")
+                  }
+                />
+                <DropdownFieldSeplag
+                  name="categoria"
+                  control={formControl}
+                  label="Categoria"
+                  cols="12 12 4"
+                  options={folhaPagamentoCategoriaOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => getFormErrorMessage("categoria")}
+                />
+                <DropdownFieldSeplag
+                  name="cargo"
+                  control={formControl}
+                  label="Cargo"
+                  cols="12 12 4"
+                  options={folhaPagamentoCargoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => getFormErrorMessage("cargo")}
+                />
+                <DropdownFieldSeplag
+                  name="grupoEleitos"
+                  control={formControl}
+                  label="Grupo de eleitos"
+                  cols="12 12 4"
+                  options={folhaPagamentoGrupoEleitosOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() =>
+                    getFormErrorMessage("grupoEleitos")
+                  }
+                />
+              </div>
+            )}
+
+            {activeTab === "parametros" && (
+              <div className="grid prototype-category-form-fields">
+                <NumberFieldSeplag
+                  name="totalMesesAdiantar"
+                  control={formControl}
+                  label="Total de meses a adiantar"
+                  cols="12 12 6"
+                  required
+                  min={0}
+                  getFormErrorMessage={() =>
+                    getFormErrorMessage("totalMesesAdiantar")
+                  }
+                />
+                <NumberFieldSeplag
+                  name="totalMesesRetroagir"
+                  control={formControl}
+                  label="Total de meses a retroagir"
+                  cols="12 12 6"
+                  required
+                  min={0}
+                  getFormErrorMessage={() =>
+                    getFormErrorMessage("totalMesesRetroagir")
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalDetalheAberto}
+          titulo="Detalhar Folha de Pagamento"
+          fechar={() => setModalDetalheAberto(false)}
+          tamanho="760px"
+          hideFooter
+        >
+          {folhaSelecionada ? (
+            <div className="col-12 prototype-catalogo-view-content">
+              <p><strong>Número:</strong> {folhaSelecionada.numero}</p>
+              <p><strong>Nome:</strong> {folhaSelecionada.nome}</p>
+              <p><strong>Órgão(s):</strong> {folhaSelecionada.orgaos.join(", ")}</p>
+              <p><strong>Mês/ano de referência:</strong> {formatMesAno(folhaSelecionada.mesAnoReferencia)}</p>
+              <p><strong>Competência:</strong> {formatMesAno(folhaSelecionada.competencia)}</p>
+              <p><strong>Situação:</strong> {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}</p>
+              <p><strong>Regime jurídico:</strong> {folhaSelecionada.regimeJuridico || "Todos"}</p>
+              <p><strong>Categoria:</strong> {folhaSelecionada.categoria || "Todas"}</p>
+              <p><strong>Cargo:</strong> {folhaSelecionada.cargo || "Todos"}</p>
+              <p><strong>Grupo de eleitos:</strong> {folhaSelecionada.grupoEleitos || "Não informado"}</p>
+              <p><strong>Meses a adiantar:</strong> {folhaSelecionada.totalMesesAdiantar}</p>
+              <p><strong>Meses a retroagir:</strong> {folhaSelecionada.totalMesesRetroagir}</p>
+              <p><strong>Observação:</strong> {folhaSelecionada.observacao || "-"}</p>
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalExecucoesAberto}
+          titulo="Execuções da Folha de Pagamento"
+          fechar={() => setModalExecucoesAberto(false)}
+          tamanho="1120px"
+          hideFooter
+        >
+          {folhaSelecionada ? (
+            <div className="col-12 prototype-folha-execucoes-modal">
+              <div className="prototype-folha-execucoes-summary">
+                <div>
+                  <span>Folha</span>
+                  <strong>{folhaSelecionada.numero}</strong>
+                  <p>{folhaSelecionada.nome}</p>
+                </div>
+                <div>
+                  <span>Referência</span>
+                  <strong>{formatMesAno(folhaSelecionada.mesAnoReferencia)}</strong>
+                  <p>Competência {formatMesAno(folhaSelecionada.competencia)}</p>
+                </div>
+                <div>
+                  <span>Situação atual</span>
+                  {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}
+                </div>
+                <div>
+                  <span>Histórico</span>
+                  <strong>{execucoesFolha.length}</strong>
+                  <p>{execucoesFolha.length === 1 ? "execução" : "execuções"}</p>
+                </div>
+              </div>
+
+              {execucoesFolha.length ? (
+                <div className="prototype-folha-execucoes-table">
+                  <TablePaginadoSeplag
+                    dataKey="id"
+                    data={execucoesResults}
+                    rows={5}
+                    rowsPerPage={[5, 10]}
+                    paginator
+                    lazy={false}
+                    selectionMode={null}
+                    columns={execucaoColumns}
+                    hasEventoAcao
+                    renderBotoes={(execucao) => (
+                      <BotaoIconSeplag
+                        type="button"
+                        tooltip="Ver log pessoa por pessoa"
+                        icon="pi pi-search"
+                        onClick={() => {
+                          setExecucaoSelecionada(execucao);
+                          resetLog({
+                            matricula: "",
+                            nome: "",
+                            cpf: "",
+                            orgao: "",
+                            situacao: "",
+                            rubrica: "",
+                            mensagem: "",
+                          });
+                          setModalLogAberto(true);
+                        }}
+                      />
+                    )}
+                    handleOnPageChange={() => {}}
+                  />
+                </div>
+              ) : (
+                <div className="prototype-empty-content">
+                  Nenhuma execução registrada para esta folha.
+                </div>
+              )}
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalLogAberto}
+          titulo="Log de Processamento"
+          fechar={() => setModalLogAberto(false)}
+          tamanho="1180px"
+          hideFooter
+        >
+          {execucaoSelecionada ? (
+            <div className="col-12 prototype-folha-log-modal">
+              <div className="prototype-folha-execucoes-summary">
+                <div>
+                  <span>Execução</span>
+                  <strong>{execucaoSelecionada.id}</strong>
+                  <p>{execucaoSelecionada.usuarioResponsavel}</p>
+                </div>
+                <div>
+                  <span>Situação</span>
+                  {renderExecucaoSituacaoBadge(execucaoSelecionada.situacao)}
+                </div>
+                <div>
+                  <span>Início / fim</span>
+                  <strong>{execucaoSelecionada.dataHoraInicio}</strong>
+                  <p>{execucaoSelecionada.dataHoraFim}</p>
+                </div>
+                <div>
+                  <span>Totais</span>
+                  <strong>{execucaoSelecionada.totalPessoas}</strong>
+                  <p>
+                    {execucaoSelecionada.totalSucesso} sucesso,{" "}
+                    {execucaoSelecionada.totalAlerta} alerta,{" "}
+                    {execucaoSelecionada.totalErro} erro
+                  </p>
+                </div>
+              </div>
+
+              <div className="prototype-category-filters prototype-folha-log-filters">
+                <TextFieldSeplag
+                  name="matricula"
+                  control={logControl}
+                  label="Matrícula/vínculo"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="nome"
+                  control={logControl}
+                  label="Nome"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="cpf"
+                  control={logControl}
+                  label="CPF"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="orgao"
+                  control={logControl}
+                  label="Órgão"
+                  cols="12"
+                  options={[{ label: "Todos", value: "" }, ...folhaPagamentoOrgaoOptions]}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="situacao"
+                  control={logControl}
+                  label="Situação"
+                  cols="12"
+                  options={folhaPagamentoPessoaLogSituacaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="rubrica"
+                  control={logControl}
+                  label="Rubrica"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="mensagem"
+                  control={logControl}
+                  label="Mensagem contém"
+                  cols="12"
+                  getFormErrorMessage={() => null}
+                />
+                <div className="prototype-category-clear">
+                  <BotaoLimparFiltroSeplag
+                    type="button"
+                    label="Limpar"
+                    icon="pi pi-refresh"
+                    onClick={() =>
+                      resetLog({
+                        matricula: "",
+                        nome: "",
+                        cpf: "",
+                        orgao: "",
+                        situacao: "",
+                        rubrica: "",
+                        mensagem: "",
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="prototype-folha-log-table">
+                <TablePaginadoSeplag
+                  dataKey="id"
+                  data={logResults}
+                  rows={8}
+                  rowsPerPage={[8, 16]}
+                  paginator
+                  lazy={false}
+                  selectionMode={null}
+                  columns={logPessoaColumns}
+                  hasEventoAcao
+                  renderBotoes={(row) => (
+                    <BotaoIconSeplag
+                      type="button"
+                      tooltip="Ver detalhe"
+                      icon="pi pi-eye"
+                      onClick={() => {
+                        setPessoaLogSelecionada(row);
+                        setModalPessoaLogAberto(true);
+                      }}
+                    />
+                  )}
+                  handleOnPageChange={() => {}}
+                />
+              </div>
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalPessoaLogAberto}
+          titulo="Detalhe do Processamento por Pessoa"
+          fechar={() => setModalPessoaLogAberto(false)}
+          tamanho="980px"
+          hideFooter
+        >
+          {pessoaLogSelecionada ? (
+            <div className="col-12 prototype-folha-pessoa-log-modal">
+              <div className="prototype-folha-pessoa-log-summary">
+                <p><strong>Matrícula/vínculo:</strong> {pessoaLogSelecionada.matricula}/{pessoaLogSelecionada.vinculo}</p>
+                <p><strong>Nome:</strong> {pessoaLogSelecionada.nome}</p>
+                <p><strong>CPF:</strong> {pessoaLogSelecionada.cpf}</p>
+                <p><strong>Órgão:</strong> {pessoaLogSelecionada.orgao}</p>
+                <p><strong>Regime jurídico:</strong> {pessoaLogSelecionada.regimeJuridico}</p>
+                <p><strong>Categoria:</strong> {pessoaLogSelecionada.categoria}</p>
+                <p><strong>Cargo:</strong> {pessoaLogSelecionada.cargo}</p>
+                <p><strong>Grupo de eleitos:</strong> {pessoaLogSelecionada.grupoEleitos || "Não informado"}</p>
+                <p><strong>Situação:</strong> {renderPessoaLogSituacaoBadge(pessoaLogSelecionada.situacao)}</p>
+                <p><strong>Mensagem:</strong> {pessoaLogSelecionada.mensagem}</p>
+              </div>
+
+              {rubricasDaPessoa.length ? (
+                <div className="prototype-folha-rubricas-log-table">
+                  <TablePaginadoSeplag
+                    dataKey="id"
+                    data={rubricasResults}
+                    rows={6}
+                    rowsPerPage={[6, 12]}
+                    paginator={false}
+                    lazy={false}
+                    selectionMode={null}
+                    columns={rubricaLogColumns}
+                    handleOnPageChange={() => {}}
+                  />
+                </div>
+              ) : (
+                <div className="prototype-empty-content">
+                  Nenhuma rubrica registrada para esta pessoa nesta execução.
+                </div>
+              )}
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
   );
 }
 
@@ -2634,7 +8169,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       isEdit
         ? catalogoRubricasMock.slice(0, 12).map((rubrica) => ({
             ...rubrica,
-            ativaNoGrupo: true,
+            origem: "filtro",
           }))
         : [],
   );
@@ -2642,6 +8177,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const [modalRubricasAberto, setModalRubricasAberto] = useState(false);
   const [rubricasSelecionadasParaAdicionar, setRubricasSelecionadasParaAdicionar] =
     useState<number[]>([]);
+  const ultimaAbrangenciaKeyRef = useRef("");
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
@@ -2700,19 +8236,9 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
 
       const next = [...current];
       const [item] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, item);
+      next.splice(toIndex, 0, { ...item, reordenada: true });
       return next;
     });
-  };
-
-  const handleToggleRubricaGerenciada = (idRubrica: number) => {
-    setRubricasGerenciadas((current) =>
-      current.map((rubrica) =>
-        rubrica.id === idRubrica
-          ? { ...rubrica, ativaNoGrupo: !rubrica.ativaNoGrupo }
-          : rubrica,
-      ),
-    );
   };
 
   const handleRemoverRubricaGerenciada = (idRubrica: number) => {
@@ -2745,7 +8271,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         )
         .map((rubrica) => ({
           ...rubrica,
-          ativaNoGrupo: true,
+          origem: "manual" as const,
         }));
 
       return [...current, ...novasRubricas];
@@ -2754,16 +8280,64 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     setRubricasSelecionadasParaAdicionar([]);
   };
 
+  const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
+  const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
+  const abrangenciaInstituicao = watch("abrangenciaInstituicao");
+  const abrangenciaOrgao = watch("abrangenciaOrgao");
+  const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
+  const podeGerenciarRubricas = Boolean(
+    abrangenciaRegimeJuridico && abrangenciaTipoVinculo,
+  );
+  const abrangenciaKey = [
+    abrangenciaRegimeJuridico,
+    abrangenciaTipoVinculo,
+    abrangenciaInstituicao,
+    abrangenciaOrgao,
+    abrangenciaHerdarDe,
+  ].join("|");
+
+  useEffect(() => {
+    if (ultimaAbrangenciaKeyRef.current === abrangenciaKey) return;
+
+    ultimaAbrangenciaKeyRef.current = abrangenciaKey;
+
+    if (!podeGerenciarRubricas) {
+      if (!isEdit) setRubricasGerenciadas([]);
+      return;
+    }
+
+    const codigosRubricas = getRubricasGrupoCalculoPorAbrangencia({
+      regimeJuridico: abrangenciaRegimeJuridico,
+      tipoVinculo: abrangenciaTipoVinculo,
+      instituicao: abrangenciaInstituicao,
+      orgao: abrangenciaOrgao,
+      herdarDe: abrangenciaHerdarDe,
+    });
+
+    setRubricasGerenciadas(
+      catalogoRubricasMock
+        .filter((rubrica) => codigosRubricas.includes(rubrica.codigo))
+        .map((rubrica) => ({
+          ...rubrica,
+          origem: "filtro" as const,
+        })),
+    );
+  }, [
+    abrangenciaHerdarDe,
+    abrangenciaInstituicao,
+    abrangenciaKey,
+    abrangenciaOrgao,
+    abrangenciaRegimeJuridico,
+    abrangenciaTipoVinculo,
+    isEdit,
+    podeGerenciarRubricas,
+  ]);
+
   const rubricasDisponiveisParaAdicionar = catalogoRubricasMock.filter(
     (rubrica) =>
       !rubricasGerenciadas.some(
         (rubricaGerenciada) => rubricaGerenciada.id === rubrica.id,
       ),
-  );
-  const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
-  const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
-  const podeGerenciarRubricas = Boolean(
-    abrangenciaRegimeJuridico && abrangenciaTipoVinculo,
   );
 
   const renderGrupoCalculoContent = () => (
@@ -2838,7 +8412,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Instituição"
                   cols="12 12 3"
-                  options={regimeInstituicaoOptions}
+                  options={grupoCalculoInstituicaoOptions}
                   optionLabel="label"
                   optionValue="value"
                   getFormErrorMessage={() => null}
@@ -2889,7 +8463,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 <div className="prototype-grupo-calculo-rubricas-list">
                 <div className="prototype-grupo-calculo-rubricas-list-head">
                   <span aria-label="Ordenar" />
-                  <span>Ativo</span>
                   <span>#</span>
                   <span>Código</span>
                   <span>Nome da Rubrica</span>
@@ -2901,12 +8474,15 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   rubricasGerenciadas.map((rubrica, index) => {
                   const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                   const tipoRubricaBadge = getGrupoCalculoRubricaTipoBadge(tipoRubrica);
+                  const rubricaBloqueada = rubrica.origem === "filtro";
+                  const rubricaFiltradaApagada =
+                    rubricaBloqueada && !rubrica.reordenada;
 
                   return (
                     <div
                       key={rubrica.id}
                       className={`prototype-grupo-calculo-rubrica-row${
-                        rubrica.ativaNoGrupo ? "" : " is-inactive"
+                        rubricaFiltradaApagada ? " is-filtered" : ""
                       }`}
                       draggable
                       onDragStart={() => setRubricaDragIndex(index)}
@@ -2926,12 +8502,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         <i className="pi pi-bars" aria-hidden="true" />
                       </button>
-                      <input
-                        type="checkbox"
-                        checked={rubrica.ativaNoGrupo}
-                        aria-label={`Ativar ${rubrica.nomeRubrica}`}
-                        onChange={() => handleToggleRubricaGerenciada(rubrica.id)}
-                      />
                       <span>{index + 1}</span>
                       <code>{rubrica.codigo}</code>
                       <strong>{rubrica.nomeRubrica}</strong>
@@ -2945,15 +8515,27 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         {tipoRubrica}
                       </span>
-                      <button
-                        type="button"
-                        className="prototype-grupo-calculo-remove-rubrica-btn"
-                        title="Remover rubrica"
-                        aria-label={`Remover ${rubrica.nomeRubrica}`}
-                        onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
-                      >
-                        <i className="pi pi-trash" aria-hidden="true" />
-                      </button>
+                      {rubricaBloqueada ? (
+                        <button
+                          type="button"
+                          className="prototype-grupo-calculo-lock-rubrica-btn"
+                          title="Rubrica carregada pelos filtros"
+                          aria-label={`${rubrica.nomeRubrica} carregada pelos filtros`}
+                          disabled
+                        >
+                          <i className="pi pi-lock" aria-hidden="true" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="prototype-grupo-calculo-remove-rubrica-btn"
+                          title="Remover rubrica"
+                          aria-label={`Remover ${rubrica.nomeRubrica}`}
+                          onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
+                        >
+                          <i className="pi pi-trash" aria-hidden="true" />
+                        </button>
+                      )}
                     </div>
                   );
                 })

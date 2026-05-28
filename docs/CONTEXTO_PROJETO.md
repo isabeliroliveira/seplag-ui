@@ -162,7 +162,7 @@ Observação: a chamada visual "Acessar" dentro do card foi implementada como te
 /#/prototipos/sigep  Protótipo do módulo Gestão de Pessoas
 ```
 
-Rotas antigas de outros protótipos ainda existem no código e continuam acessíveis pelo switcher do canto superior direito. A seleção principal em `/prototipos` mostra apenas SIGEP neste momento.
+Rotas antigas de outros protótipos ainda existem no código e continuam acessíveis pelo switcher do canto superior direito. A seleção principal em `/prototipos` mostra SIGEP e Folha de Pagamento neste momento.
 
 ## Mudança Implementada em Folha de Pagamento
 
