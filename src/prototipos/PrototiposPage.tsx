@@ -836,6 +836,107 @@ interface ControleVagasDistribuicaoForm {
   observacao?: string;
 }
 
+interface ControleVagasReservaForm {
+  tipoReserva?: string;
+  orgaoSetor?: string;
+  quantidade?: number;
+  motivo?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  situacao?: ControleVagasReservaStatus;
+  observacao?: string;
+}
+
+interface ControleVagasReservaRow {
+  id: number;
+  quadroId: number;
+  tipoReserva: string;
+  orgaoSetor: string;
+  quantidade: number;
+  motivo: string;
+  dataInicio: string;
+  dataFim?: string;
+  situacao: ControleVagasReservaStatus;
+  observacao: string;
+}
+
+type ControleVagasReservaStatus = "Ativa" | "Cancelada" | "Encerrada";
+
+interface ControleVagasConsultaSaldoFiltroForm {
+  dataReferencia?: string;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  tipo?: "" | "Cargo" | "Função";
+  situacao?: StatusOperacionalVigenciaSeplag | "";
+}
+
+interface ControleVagasConsultaSaldoResumo {
+  quadroId: number;
+  codigo: string;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  tipo: "Cargo" | "Função";
+  autorizado: number;
+  distribuido: number;
+  naoDistribuido: number;
+  ocupado: number;
+  reservado: number;
+  disponivel: number;
+  situacao: StatusOperacionalVigenciaSeplag;
+}
+
+type ControleVagasVagaNumeradaSituacao =
+  | "Disponível"
+  | "Ocupada"
+  | "Reservada"
+  | "Bloqueada"
+  | "Agendada"
+  | "Extinta";
+
+interface ControleVagasVagaNumeradaOcupacao {
+  id: number;
+  pessoa: string;
+  cpf: string;
+  cargoFuncao: string;
+  dataOcupacao: string;
+  tipoVinculo: string;
+  nomeVinculo: string;
+  observacao?: string;
+}
+
+interface ControleVagasVagaNumeradaForm {
+  numero?: string;
+  quadroId?: number;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  situacao?: ControleVagasVagaNumeradaSituacao;
+  dataAtivacao?: string;
+  dataDesativacao?: string;
+  motivo?: string;
+  observacao?: string;
+}
+
+interface ControleVagasVagaNumeradaRow {
+  id: number;
+  numero: string;
+  quadroId: number;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  situacao: ControleVagasVagaNumeradaSituacao;
+  dataAtivacao: string;
+  dataDesativacao?: string;
+  motivo?: string;
+  ocupacao?: ControleVagasVagaNumeradaOcupacao;
+  observacao: string;
+}
+
+interface ControleVagasVagaNumeradaFiltroForm {
+  numero?: string;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  situacao?: ControleVagasVagaNumeradaSituacao | "";
+}
+
 interface GrupoEleitosFiltroForm {
   termo?: string;
   situacao?: StatusOperacionalVigenciaSeplag | "";
@@ -1930,6 +2031,190 @@ const controleVagasDistribuicoesMock: ControleVagasDistribuicaoRow[] = [
   },
 ];
 
+const controleVagasReservasMock: ControleVagasReservaRow[] = [
+  {
+    id: 1,
+    quadroId: 1,
+    tipoReserva: "Processo Seletivo",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Provimento",
+    quantidade: 2,
+    motivo: "Reserva de vagas para reposição de vencimentos.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva planejada para o processo seletivo deste semestre.",
+  },
+  {
+    id: 2,
+    quadroId: 1,
+    tipoReserva: "Reposição",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Carreiras",
+    quantidade: 1,
+    motivo: "Reserva para movimentação interna programada.",
+    dataInicio: "15/07/2026",
+    dataFim: "15/10/2026",
+    situacao: "Cancelada",
+    observacao: "Reserva cancelada após revisão de necessidades.",
+  },
+];
+
+const controleVagasVagaNumeradaMock: ControleVagasVagaNumeradaRow[] = [
+  {
+    id: 1,
+    numero: "VA-001",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Ocupada",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga ocupada via processo seletivo.",
+    ocupacao: {
+      id: 1,
+      pessoa: "ROBERTO JÚNIOR SILVA",
+      cpf: "123.456.789-00",
+      cargoFuncao: "Analista Administrativo",
+      dataOcupacao: "15/02/2025",
+      tipoVinculo: "Efetivo",
+      nomeVinculo: "Servidor Público",
+      observacao: "Nomeado por concurso público.",
+    },
+  },
+  {
+    id: 2,
+    numero: "VA-002",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Disponível",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga disponível para ocupação.",
+  },
+  {
+    id: 3,
+    numero: "VA-003",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Reservada",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga reservada para processo seletivo.",
+  },
+  {
+    id: 4,
+    numero: "VA-004",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Bloqueada",
+    dataAtivacao: "01/02/2025",
+    dataDesativacao: "29/05/2026",
+    motivo: "Bloqueio temporário para reestruturação.",
+    observacao: "Bloqueada por decisão gerencial.",
+  },
+  {
+    id: 5,
+    numero: "VA-005",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Provimento",
+    situacao: "Agendada",
+    dataAtivacao: "15/06/2026",
+    observacao: "Vaga agendada para ativação futuro.",
+  },
+  {
+    id: 6,
+    numero: "VA-006",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Extinta",
+    dataAtivacao: "01/01/2023",
+    dataDesativacao: "31/12/2025",
+    motivo: "Eliminação por reestruturação.",
+    observacao: "Vaga extinta conforme reorganização.",
+  },
+  {
+    id: 7,
+    numero: "AA-001",
+    quadroId: 2,
+    cargoFuncao: "Técnico Administrativo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    situacao: "Ocupada",
+    dataAtivacao: "01/03/2025",
+    observacao: "Técnico designado temporariamente.",
+    ocupacao: {
+      id: 2,
+      pessoa: "MARIA DOS SANTOS",
+      cpf: "987.654.321-00",
+      cargoFuncao: "Técnico Administrativo",
+      dataOcupacao: "10/03/2025",
+      tipoVinculo: "Designado",
+      nomeVinculo: "Designação",
+      observacao: "Designada para funções de coordenação.",
+    },
+  },
+  {
+    id: 8,
+    numero: "AA-002",
+    quadroId: 2,
+    cargoFuncao: "Técnico Administrativo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    situacao: "Disponível",
+    dataAtivacao: "01/03/2025",
+    observacao: "Vaga em disponibilidade.",
+  },
+];
+
+const controleVagasVagaNumeradaHistoricoMock: Array<{
+  id: number;
+  vagaNumero: string;
+  dataHora: string;
+  evento: string;
+  usuario: string;
+  detalhe: string;
+}> = [
+  {
+    id: 1,
+    vagaNumero: "VA-001",
+    dataHora: "15/02/2025 10:30",
+    evento: "Ocupação",
+    usuario: "SISTEMA",
+    detalhe: "Vaga ocupada por ROBERTO JÚNIOR SILVA conforme processo seletivo.",
+  },
+  {
+    id: 2,
+    vagaNumero: "VA-001",
+    dataHora: "01/02/2025 09:15",
+    evento: "Ativação",
+    usuario: "GESTOR VAGAS",
+    detalhe: "Vaga ativada no sistema para controle.",
+  },
+  {
+    id: 3,
+    vagaNumero: "VA-004",
+    dataHora: "29/05/2026 14:22",
+    evento: "Bloqueio",
+    usuario: "GESTOR VAGAS",
+    detalhe: "Bloqueio temporário para reestruturação de setores.",
+  },
+  {
+    id: 4,
+    vagaNumero: "VA-006",
+    dataHora: "31/12/2025 23:59",
+    evento: "Extinção",
+    usuario: "SISTEMA",
+    detalhe: "Vaga extinta conforme decisão de reorganização.",
+  },
+  {
+    id: 5,
+    vagaNumero: "AA-001",
+    dataHora: "10/03/2025 11:45",
+    evento: "Designação",
+    usuario: "SISTEMA",
+    detalhe: "Designação de MARIA DOS SANTOS para a vaga.",
+  },
+];
+
 const controleVagasModuleItems = [
   {
     id: "configuracao",
@@ -1951,17 +2236,17 @@ const controleVagasModuleItems = [
     id: "vagas-numeradas",
     title: "Vagas Numeradas",
     description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
-    path: "",
+    path: "/prototipos/sigep/controle-vagas/vagas-numeradas",
     icon: "pi pi-hashtag",
-    status: "Em breve",
+    status: "Etapa 06",
   },
   {
     id: "saldo",
     title: "Consulta de Saldo",
     description: "Exibe vagas autorizadas, ocupadas, reservadas e disponíveis por referência.",
-    path: "",
+    path: "/prototipos/sigep/controle-vagas/consulta-saldo",
     icon: "pi pi-chart-bar",
-    status: "Em breve",
+    status: "Etapa 05",
   },
   {
     id: "historico",
@@ -3029,9 +3314,45 @@ const controleVagasDistribuicaoOrgaoSetorOptions = [
   { label: "CGE-MT / Auditoria Geral", value: "CGE-MT / Auditoria Geral" },
 ];
 
+const controleVagasReservaTipoOptions = [
+  { label: "Reserva por Processo Seletivo", value: "Processo Seletivo" },
+  { label: "Reserva de Reposição", value: "Reposição" },
+  { label: "Reserva de Retenção", value: "Retenção" },
+  { label: "Reserva Estratégica", value: "Estratégica" },
+];
+
+const controleVagasReservaSituacaoOptions = [
+  { label: "Ativa", value: "Ativa" },
+  { label: "Cancelada", value: "Cancelada" },
+  { label: "Encerrada", value: "Encerrada" },
+];
+
+const controleVagasVagaNumeradaSituacaoOptions = [
+  { label: "Disponível", value: "Disponível" },
+  { label: "Ocupada", value: "Ocupada" },
+  { label: "Reservada", value: "Reservada" },
+  { label: "Bloqueada", value: "Bloqueada" },
+  { label: "Agendada", value: "Agendada" },
+  { label: "Extinta", value: "Extinta" },
+];
+
 const controleVagasConfiguracaoTabs: TabItemSeplag<string>[] = [
   { label: "Detalhes", value: "detalhes" },
   { label: "Critérios de Compatibilidade", value: "criterios" },
+  { label: "Histórico", value: "historico" },
+];
+
+const controleVagasConsultaSaldoTabs: TabItemSeplag<string>[] = [
+  { label: "Por Quadro", value: "por-quadro" },
+  { label: "Por Distribuição", value: "por-distribuicao" },
+  { label: "Reservadas", value: "reservadas" },
+  { label: "Ocupadas", value: "ocupadas" },
+  { label: "Disponíveis", value: "disponiveis" },
+];
+
+const controleVagasVagaNumeradaTabs: TabItemSeplag<string>[] = [
+  { label: "Detalhes", value: "detalhes" },
+  { label: "Ocupação Atual", value: "ocupacao-atual" },
   { label: "Histórico", value: "historico" },
 ];
 
@@ -3881,6 +4202,14 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
           )
         : [],
   );
+  const [reservas, setReservas] = useState<ControleVagasReservaRow[]>(
+    () =>
+      quadro
+        ? controleVagasReservasMock.filter((reserva) => reserva.quadroId === quadro.id)
+        : [],
+  );
+  const [editingReservaId, setEditingReservaId] = useState<number | null>(null);
+
   const { control, setValue, watch } = useForm<ControleVagasQuadroAutorizadoForm>({
     defaultValues: {
       codigo: quadro?.codigo ?? "",
@@ -3898,6 +4227,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
       motivoExtincao: "",
     },
   });
+
   const {
     control: distribuicaoControl,
     getValues: getDistribuicaoValues,
@@ -3909,11 +4239,31 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
       observacao: "",
     },
   });
+
+  const {
+    control: reservaControl,
+    getValues: getReservaValues,
+    reset: resetReserva,
+    setValue: setReservaValue,
+  } = useForm<ControleVagasReservaForm>({
+    defaultValues: {
+      tipoReserva: "Processo Seletivo",
+      orgaoSetor: "",
+      quantidade: undefined,
+      motivo: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "Ativa",
+      observacao: "",
+    },
+  });
+
   const quantidadeAutorizada = Number(watch("quantidadeAutorizada") ?? 0);
   const totalDistribuido = distribuicoes.reduce(
     (total, distribuicao) => total + distribuicao.quantidadeDistribuida,
     0,
   );
+
   const totalOcupado = distribuicoes.reduce(
     (total, distribuicao) => total + distribuicao.vagasOcupadas,
     0,
@@ -3934,6 +4284,34 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
     0,
   );
   const totalNaoDistribuido = Math.max(quantidadeAutorizada - totalDistribuido, 0);
+
+  const totalReservasAtivas = reservas
+    .filter((reserva) => reserva.situacao === "Ativa")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const totalReservasCanceladas = reservas
+    .filter((reserva) => reserva.situacao === "Cancelada")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const totalReservasEncerradas = reservas
+    .filter((reserva) => reserva.situacao === "Encerrada")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const disponivelAposReservas = Math.max(totalDisponivel - totalReservasAtivas, 0);
+
+  const syncReservaComDistribuicao = (
+    reserva: ControleVagasReservaRow,
+    delta: number,
+  ) => {
+    if (!reserva.orgaoSetor) return;
+
+    setDistribuicoes((current) =>
+      current.map((distribuicao) => {
+        if (distribuicao.orgaoSetor !== reserva.orgaoSetor) return distribuicao;
+        return {
+          ...distribuicao,
+          vagasReservadas: Math.max(distribuicao.vagasReservadas + delta, 0),
+        };
+      }),
+    );
+  };
 
   const handleAdicionarDistribuicao = () => {
     const values = getDistribuicaoValues();
@@ -3965,6 +4343,113 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
     setDistribuicoes((current) =>
       current.filter((distribuicao) => distribuicao.id !== idDistribuicao),
     );
+  };
+
+  const handleAdicionarReserva = () => {
+    const values = getReservaValues();
+    const quantidade = Number(values.quantidade ?? 0);
+
+    if (!values.tipoReserva || !values.orgaoSetor || quantidade <= 0) return;
+
+    const novaReserva: ControleVagasReservaRow = {
+      id: editingReservaId ?? Date.now(),
+      quadroId: quadro?.id ?? 0,
+      tipoReserva: values.tipoReserva,
+      orgaoSetor: values.orgaoSetor,
+      quantidade,
+      motivo: values.motivo ?? "",
+      dataInicio: values.dataInicio ?? "",
+      dataFim: values.dataFim,
+      situacao: values.situacao ?? "Ativa",
+      observacao: values.observacao ?? "",
+    };
+
+    setReservas((current) => {
+      if (editingReservaId) {
+        const reservaAnterior = current.find((item) => item.id === editingReservaId);
+        if (reservaAnterior && reservaAnterior.situacao === "Ativa") {
+          syncReservaComDistribuicao(reservaAnterior, -reservaAnterior.quantidade);
+        }
+
+        const atualizadas = current.map((item) =>
+          item.id === editingReservaId ? novaReserva : item,
+        );
+        if (novaReserva.situacao === "Ativa") {
+          syncReservaComDistribuicao(novaReserva, novaReserva.quantidade);
+        }
+        return atualizadas;
+      }
+
+      if (novaReserva.situacao === "Ativa") {
+        syncReservaComDistribuicao(novaReserva, novaReserva.quantidade);
+      }
+      return [...current, novaReserva];
+    });
+
+    setEditingReservaId(null);
+    resetReserva({
+      tipoReserva: "Processo Seletivo",
+      orgaoSetor: "",
+      quantidade: undefined,
+      motivo: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "Ativa",
+      observacao: "",
+    });
+  };
+
+  const handleEditarReserva = (reserva: ControleVagasReservaRow) => {
+    setEditingReservaId(reserva.id);
+    setReservaValue("tipoReserva", reserva.tipoReserva);
+    setReservaValue("orgaoSetor", reserva.orgaoSetor);
+    setReservaValue("quantidade", reserva.quantidade);
+    setReservaValue("motivo", reserva.motivo);
+    setReservaValue("dataInicio", reserva.dataInicio);
+    setReservaValue("dataFim", reserva.dataFim ?? "");
+    setReservaValue("situacao", reserva.situacao);
+    setReservaValue("observacao", reserva.observacao);
+  };
+
+  const handleAlterarSituacaoReserva = (
+    reservaId: number,
+    situacao: ControleVagasReservaStatus,
+  ) => {
+    setReservas((current) =>
+      current.map((reserva) => {
+        if (reserva.id !== reservaId) return reserva;
+        if (reserva.situacao === "Ativa" && situacao !== "Ativa") {
+          syncReservaComDistribuicao(reserva, -reserva.quantidade);
+        }
+        return {
+          ...reserva,
+          situacao,
+        };
+      }),
+    );
+  };
+
+  const renderReservaStatusBadge = (status: ControleVagasReservaStatus) => {
+    const badgeClass = {
+      Ativa: "prototype-badge prototype-badge--success",
+      Cancelada: "prototype-badge prototype-badge--warning",
+      Encerrada: "prototype-badge prototype-badge--danger",
+    }[status];
+
+    return <span className={badgeClass}>{status}</span>;
+  };
+
+  const renderVagaNumeradaStatusBadge = (status: ControleVagasVagaNumeradaSituacao) => {
+    const badgeClass = {
+      Disponível: "prototype-badge prototype-badge--success",
+      Ocupada: "prototype-badge prototype-badge--info",
+      Reservada: "prototype-badge prototype-badge--warning",
+      Bloqueada: "prototype-badge prototype-badge--danger",
+      Agendada: "prototype-badge prototype-badge--secondary",
+      Extinta: "prototype-badge prototype-badge--light",
+    }[status];
+
+    return <span className={badgeClass}>{status}</span>;
   };
 
   return (
@@ -4231,12 +4716,184 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
             )}
 
             {activeTab === "reservas" && (
-              <div className="prototype-controle-vagas-placeholder">
-                <h3>Reservas</h3>
-                <p>
-                  Área preparada para controlar reservas de vagas antes da
-                  ocupação definitiva por vínculo funcional.
-                </p>
+              <div className="prototype-controle-vagas-reservas">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Reservas</h3>
+                  <p>
+                    Controle as reservas de vagas que impactam o saldo antes da
+                    ocupação definitiva.
+                  </p>
+                </div>
+
+                <div className="prototype-controle-vagas-quadro-summary">
+                  <div>
+                    <span>Reservas Ativas</span>
+                    <strong>{totalReservasAtivas}</strong>
+                  </div>
+                  <div>
+                    <span>Reservas Canceladas</span>
+                    <strong>{totalReservasCanceladas}</strong>
+                  </div>
+                  <div>
+                    <span>Reservas Encerradas</span>
+                    <strong>{totalReservasEncerradas}</strong>
+                  </div>
+                  <div>
+                    <span>Disponível após reservas</span>
+                    <strong>{disponivelAposReservas}</strong>
+                  </div>
+                </div>
+
+                <div className="prototype-controle-vagas-reserva-form">
+                  <div className="prototype-controle-vagas-section-title">
+                    <h3>{editingReservaId ? "Editar Reserva" : "Nova Reserva"}</h3>
+                  </div>
+                  <div className="grid prototype-controle-vagas-form-section">
+                    <DropdownFieldSeplag
+                      name="tipoReserva"
+                      control={reservaControl}
+                      label="Tipo de Reserva"
+                      cols="12 12 4"
+                      options={controleVagasReservaTipoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <DropdownFieldSeplag
+                      name="orgaoSetor"
+                      control={reservaControl}
+                      label="Órgão/Setor"
+                      cols="12 12 4"
+                      options={controleVagasDistribuicaoOrgaoSetorOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <NumberFieldSeplag
+                      name="quantidade"
+                      control={reservaControl}
+                      label="Quantidade"
+                      cols="12 12 2"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <DropdownFieldSeplag
+                      name="situacao"
+                      control={reservaControl}
+                      label="Situação"
+                      cols="12 12 2"
+                      options={controleVagasReservaSituacaoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextFieldSeplag
+                      name="motivo"
+                      control={reservaControl}
+                      label="Motivo"
+                      cols="12 12 4"
+                      placeholder="Motivo da reserva"
+                      getFormErrorMessage={() => null}
+                    />
+                    <DateFieldSeplag
+                      name="dataInicio"
+                      control={reservaControl}
+                      label="Data Início"
+                      cols="12 12 2"
+                      getFormErrorMessage={() => null}
+                    />
+                    <DateFieldSeplag
+                      name="dataFim"
+                      control={reservaControl}
+                      label="Data Fim"
+                      cols="12 12 2"
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextAreaFieldSeplag
+                      name="observacao"
+                      control={reservaControl}
+                      label="Observação"
+                      cols="12 12 4"
+                      rows={3}
+                      getFormErrorMessage={() => null}
+                    />
+                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-2">
+                      <BotaoSeplag
+                        type="button"
+                        label={editingReservaId ? "Salvar Reserva" : "Adicionar Reserva"}
+                        icon="pi pi-save"
+                        onClick={handleAdicionarReserva}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table prototype-controle-vagas-reservas-table">
+                    <thead>
+                      <tr>
+                        <th>Tipo de Reserva</th>
+                        <th>Órgão/Setor</th>
+                        <th>Quantidade</th>
+                        <th>Período</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reservas.length > 0 ? (
+                        reservas.map((reserva) => (
+                          <tr key={reserva.id}>
+                            <td>
+                              <strong>{reserva.tipoReserva}</strong>
+                              <small>{reserva.motivo}</small>
+                            </td>
+                            <td>{reserva.orgaoSetor}</td>
+                            <td>{reserva.quantidade}</td>
+                            <td>
+                              {reserva.dataInicio}
+                              {reserva.dataFim ? ` → ${reserva.dataFim}` : ""}
+                            </td>
+                            <td>{renderReservaStatusBadge(reserva.situacao)}</td>
+                            <td>
+                              <div className="prototype-controle-vagas-row-actions">
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-pencil"
+                                  onClick={() => handleEditarReserva(reserva)}
+                                />
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-times"
+                                  severity="warning"
+                                  onClick={() =>
+                                    handleAlterarSituacaoReserva(reserva.id, "Cancelada")
+                                  }
+                                />
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-check"
+                                  severity="success"
+                                  onClick={() =>
+                                    handleAlterarSituacaoReserva(reserva.id, "Encerrada")
+                                  }
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="prototype-empty-table-cell">
+                            Nenhuma reserva cadastrada.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -4284,6 +4941,370 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                 }
               />
               <BotaoSalvarSeplag type="button" label="Salvar" />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasConsultaSaldoPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("por-quadro");
+  const [dataReferencia, setDataReferencia] = useState<string>("29/05/2026");
+  const { control, watch, reset } = useForm<ControleVagasConsultaSaldoFiltroForm>({
+    defaultValues: {
+      dataReferencia: "29/05/2026",
+      cargoFuncao: "",
+      orgaoSetor: "",
+      tipo: "",
+      situacao: "",
+    },
+  });
+
+  // Calcular resumo geral com base na data de referência
+  const quadrosComResumo: ControleVagasConsultaSaldoResumo[] = controleVagasQuadroAutorizadoMock.map(
+    (quadro) => {
+      const distribuicoesDoQuadro = controleVagasDistribuicoesMock.filter(
+        (d) => d.quadroId === quadro.id,
+      );
+      const reservasDoQuadro = controleVagasReservasMock.filter(
+        (r) => r.quadroId === quadro.id && r.situacao === "Ativa",
+      );
+
+      const totalDistribuido = distribuicoesDoQuadro.reduce(
+        (sum, d) => sum + d.quantidadeDistribuida,
+        0,
+      );
+      const totalOcupado = distribuicoesDoQuadro.reduce(
+        (sum, d) => sum + d.vagasOcupadas,
+        0,
+      );
+      const totalReservado = distribuicoesDoQuadro.reduce(
+        (sum, d) => sum + d.vagasReservadas,
+        0,
+      );
+
+      const naoDistribuido = Math.max(quadro.quantidadeAutorizada - totalDistribuido, 0);
+      const disponivel = Math.max(totalDistribuido - totalOcupado - totalReservado, 0);
+
+      return {
+        quadroId: quadro.id,
+        codigo: quadro.codigo,
+        cargoFuncao: quadro.cargoFuncao,
+        orgaoSetor: quadro.orgaoSetor,
+        tipo: quadro.tipo,
+        autorizado: quadro.quantidadeAutorizada,
+        distribuido: totalDistribuido,
+        naoDistribuido,
+        ocupado: totalOcupado,
+        reservado: totalReservado,
+        disponivel,
+        situacao: quadro.situacao,
+      };
+    },
+  );
+
+  const totalAutorizado = quadrosComResumo.reduce((sum, q) => sum + q.autorizado, 0);
+  const totalDistribuido = quadrosComResumo.reduce((sum, q) => sum + q.distribuido, 0);
+  const totalNaoDistribuido = quadrosComResumo.reduce((sum, q) => sum + q.naoDistribuido, 0);
+  const totalOcupado = quadrosComResumo.reduce((sum, q) => sum + q.ocupado, 0);
+  const totalReservado = quadrosComResumo.reduce((sum, q) => sum + q.reservado, 0);
+  const totalDisponivel = quadrosComResumo.reduce((sum, q) => sum + q.disponivel, 0);
+
+  const handleLimparFiltros = () => {
+    reset({
+      dataReferencia: "29/05/2026",
+      cargoFuncao: "",
+      orgaoSetor: "",
+      tipo: "",
+      situacao: "",
+    });
+    setDataReferencia("29/05/2026");
+  };
+
+  const renderSaldoAba = (tipo: "ocupadas" | "reservadas" | "disponiveis") => {
+    const dados = quadrosComResumo.filter((q) => {
+      if (tipo === "ocupadas") return q.ocupado > 0;
+      if (tipo === "reservadas") return q.reservado > 0;
+      if (tipo === "disponiveis") return q.disponivel > 0;
+      return true;
+    });
+
+    return (
+      <div className="prototype-table-wrapper">
+        <table className="prototype-simple-table">
+          <thead>
+            <tr>
+              <th>Cargo/Função</th>
+              <th>Órgão/Setor</th>
+              {tipo === "ocupadas" && <th>Ocupadas</th>}
+              {tipo === "reservadas" && <th>Reservadas</th>}
+              {tipo === "disponiveis" && <th>Disponíveis</th>}
+              <th>Autorizado</th>
+              <th>Distribuído</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dados.length > 0 ? (
+              dados.map((quadro) => (
+                <tr key={quadro.quadroId}>
+                  <td>{quadro.cargoFuncao}</td>
+                  <td>{quadro.orgaoSetor}</td>
+                  <td>
+                    <strong>
+                      {tipo === "ocupadas"
+                        ? quadro.ocupado
+                        : tipo === "reservadas"
+                          ? quadro.reservado
+                          : quadro.disponivel}
+                    </strong>
+                  </td>
+                  <td>{quadro.autorizado}</td>
+                  <td>{quadro.distribuido}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="prototype-empty-table-cell">
+                  Nenhum dado disponível para esta visualização.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Consulta de Saldo de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-consulta-saldo">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Filtros de Consulta</h3>
+              <p>
+                Selecione a data de referência e filtros adicionais para visualizar o saldo
+                de vagas.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros">
+              <DateFieldSeplag
+                name="dataReferencia"
+                control={control}
+                label="Data de Referência"
+                cols="12 6 2"
+                required
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="cargoFuncao"
+                control={control}
+                label="Cargo/Função"
+                cols="12 6 3"
+                options={controleVagasCargoFuncaoOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="orgaoSetor"
+                control={control}
+                label="Órgão/Setor"
+                cols="12 6 3"
+                options={controleVagasOrgaoSetorOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="tipo"
+                control={control}
+                label="Tipo"
+                cols="12 6 2"
+                options={[
+                  { label: "Todos", value: "" },
+                  { label: "Cargo", value: "Cargo" },
+                  { label: "Função", value: "Função" },
+                ]}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="situacao"
+                control={control}
+                label="Situação"
+                cols="12 6 2"
+                options={controleVagasStatusOperacionalOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+                <BotaoLimparFiltroSeplag
+                  type="button"
+                  label="Limpar Filtros"
+                  icon="pi pi-refresh"
+                  onClick={handleLimparFiltros}
+                />
+              </div>
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary">
+              <div>
+                <span>Autorizado</span>
+                <strong>{totalAutorizado}</strong>
+              </div>
+              <div>
+                <span>Distribuído</span>
+                <strong>{totalDistribuido}</strong>
+              </div>
+              <div>
+                <span>Não Distribuído</span>
+                <strong>{totalNaoDistribuido}</strong>
+              </div>
+              <div>
+                <span>Ocupado</span>
+                <strong>{totalOcupado}</strong>
+              </div>
+              <div>
+                <span>Reservado</span>
+                <strong>{totalReservado}</strong>
+              </div>
+              <div>
+                <span>Disponível</span>
+                <strong>{totalDisponivel}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-controle-vagas-consulta-abas">
+              <TabsSeplag
+                items={controleVagasConsultaSaldoTabs}
+                activeValue={activeTab}
+                onChange={setActiveTab}
+                equalWidth
+              />
+
+              {activeTab === "por-quadro" && (
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Cargo/Função</th>
+                        <th>Órgão/Setor</th>
+                        <th>Autorizado</th>
+                        <th>Distribuído</th>
+                        <th>Ocupado</th>
+                        <th>Reservado</th>
+                        <th>Disponível</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quadrosComResumo.length > 0 ? (
+                        quadrosComResumo.map((quadro) => (
+                          <tr key={quadro.quadroId}>
+                            <td>{quadro.codigo}</td>
+                            <td>{quadro.cargoFuncao}</td>
+                            <td>{quadro.orgaoSetor}</td>
+                            <td>{quadro.autorizado}</td>
+                            <td>{quadro.distribuido}</td>
+                            <td>{quadro.ocupado}</td>
+                            <td>{quadro.reservado}</td>
+                            <td>
+                              <strong>{quadro.disponivel}</strong>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={8} className="prototype-empty-table-cell">
+                            Nenhum quadro autorizado disponível.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === "por-distribuicao" && (
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Órgão/Setor</th>
+                        <th>Cargo/Função</th>
+                        <th>Distribuído</th>
+                        <th>Ocupado</th>
+                        <th>Reservado</th>
+                        <th>Disponível</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controleVagasDistribuicoesMock.length > 0 ? (
+                        controleVagasDistribuicoesMock.map((dist) => {
+                          const quadro = controleVagasQuadroAutorizadoMock.find(
+                            (q) => q.id === dist.quadroId,
+                          );
+                          const disponivel = Math.max(
+                            dist.quantidadeDistribuida -
+                              dist.vagasOcupadas -
+                              dist.vagasReservadas,
+                            0,
+                          );
+
+                          return (
+                            <tr key={dist.id}>
+                              <td>{dist.orgaoSetor}</td>
+                              <td>{quadro?.cargoFuncao}</td>
+                              <td>{dist.quantidadeDistribuida}</td>
+                              <td>{dist.vagasOcupadas}</td>
+                              <td>{dist.vagasReservadas}</td>
+                              <td>
+                                <strong>{disponivel}</strong>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="prototype-empty-table-cell">
+                            Nenhuma distribuição disponível.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === "reservadas" && renderSaldoAba("reservadas")}
+
+              {activeTab === "ocupadas" && renderSaldoAba("ocupadas")}
+
+              {activeTab === "disponiveis" && renderSaldoAba("disponiveis")}
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+              />
             </div>
           </div>
         </CardSeplag>

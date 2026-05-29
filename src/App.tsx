@@ -20,6 +20,7 @@ import {
   PrototiposControleVagasConfiguracaoPage,
   PrototiposControleVagasQuadroAutorizadoFormPage,
   PrototiposControleVagasQuadroAutorizadoPage,
+  PrototiposControleVagasConsultaSaldoPage,
   PrototiposDocumentosVinculadosPage,
   PrototiposEstruturaOrganizacionalPage,
   PrototiposSituacaoVigenciaPage,
@@ -292,6 +293,10 @@ function App() {
       <Route
         path="/prototipos/sigep/controle-vagas/quadro-autorizado/:id/editar"
         element={<PrototiposControleVagasQuadroAutorizadoFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/consulta-saldo"
+        element={<PrototiposControleVagasConsultaSaldoPage />}
       />
       <Route
         path="/prototipos/sigep/categoria"
