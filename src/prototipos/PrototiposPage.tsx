@@ -773,6 +773,69 @@ interface ControleVagasHistoricoRow {
   detalhe: string;
 }
 
+interface ControleVagasQuadroAutorizadoFiltroForm {
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  tipo?: "" | "Cargo" | "Função";
+  situacao?: StatusOperacionalVigenciaSeplag | "";
+}
+
+interface ControleVagasQuadroAutorizadoForm {
+  codigo?: string;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  tipo?: "Cargo" | "Função" | "";
+  quantidadeAutorizada?: number;
+  processoSei?: string;
+  observacao?: string;
+  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  dataAtivacao?: string;
+  dataEncerramento?: string;
+  motivoEncerramento?: string;
+  dataExtincao?: string;
+  motivoExtincao?: string;
+}
+
+interface ControleVagasQuadroAutorizadoRow {
+  id: number;
+  codigo: string;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  tipo: "Cargo" | "Função";
+  quantidadeAutorizada: number;
+  vagasOcupadas: number;
+  vagasReservadas: number;
+  vagasDisponiveis: number;
+  situacao: StatusOperacionalVigenciaSeplag;
+  inicioVigencia: string;
+  atoLegal: string;
+}
+
+interface ControleVagasQuadroHistoricoRow {
+  id: number;
+  dataHora: string;
+  evento: string;
+  usuario: string;
+  detalhe: string;
+}
+
+interface ControleVagasDistribuicaoRow {
+  id: number;
+  quadroId: number;
+  orgaoSetor: string;
+  quantidadeDistribuida: number;
+  vagasOcupadas: number;
+  vagasReservadas: number;
+  observacao: string;
+  situacao: StatusOperacionalVigenciaSeplag;
+}
+
+interface ControleVagasDistribuicaoForm {
+  orgaoSetor?: string;
+  quantidadeDistribuida?: number;
+  observacao?: string;
+}
+
 interface GrupoEleitosFiltroForm {
   termo?: string;
   situacao?: StatusOperacionalVigenciaSeplag | "";
@@ -1701,6 +1764,172 @@ const controleVagasHistoricoMock: ControleVagasHistoricoRow[] = [
   },
 ];
 
+const controleVagasQuadroAutorizadoMock: ControleVagasQuadroAutorizadoRow[] = [
+  {
+    id: 1,
+    codigo: "QA-001",
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT",
+    tipo: "Cargo",
+    quantidadeAutorizada: 120,
+    vagasOcupadas: 98,
+    vagasReservadas: 6,
+    vagasDisponiveis: 16,
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    inicioVigencia: "01/01/2026",
+    atoLegal: "Lei 12.345/2023",
+  },
+  {
+    id: 2,
+    codigo: "QA-002",
+    cargoFuncao: "Técnico Administrativo",
+    orgaoSetor: "SEDUC-MT",
+    tipo: "Cargo",
+    quantidadeAutorizada: 80,
+    vagasOcupadas: 65,
+    vagasReservadas: 5,
+    vagasDisponiveis: 10,
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+    inicioVigencia: "01/07/2026",
+    atoLegal: "Decreto 456/2024",
+  },
+  {
+    id: 3,
+    codigo: "QA-003",
+    cargoFuncao: "Coordenador",
+    orgaoSetor: "PGE-MT",
+    tipo: "Função",
+    quantidadeAutorizada: 25,
+    vagasOcupadas: 19,
+    vagasReservadas: 2,
+    vagasDisponiveis: 4,
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    inicioVigencia: "15/01/2026",
+    atoLegal: "Portaria 123/2024",
+  },
+  {
+    id: 4,
+    codigo: "QA-004",
+    cargoFuncao: "Gestor Governamental",
+    orgaoSetor: "SEPLAG-MT",
+    tipo: "Cargo",
+    quantidadeAutorizada: 45,
+    vagasOcupadas: 45,
+    vagasReservadas: 0,
+    vagasDisponiveis: 0,
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+    inicioVigencia: "01/01/2025",
+    atoLegal: "Norma 001-A/2022",
+  },
+];
+
+const controleVagasQuadroHistoricoMock: ControleVagasQuadroHistoricoRow[] = [
+  {
+    id: 1,
+    dataHora: "28/05/2026 08:42",
+    evento: "Quadro criado",
+    usuario: "ROBERTO JUNIOR",
+    detalhe: "Quantidade autorizada inicial registrada com documento legal vinculado.",
+  },
+  {
+    id: 2,
+    dataHora: "28/05/2026 09:10",
+    evento: "Vigência revisada",
+    usuario: "ROBERTO JUNIOR",
+    detalhe: "Data de início ajustada para refletir o ato autorizativo.",
+  },
+  {
+    id: 3,
+    dataHora: "28/05/2026 09:35",
+    evento: "Reserva simulada",
+    usuario: "SISTEMA",
+    detalhe: "Reserva futura registrada para demonstrar integração com a próxima etapa.",
+  },
+];
+
+const controleVagasDistribuicoesMock: ControleVagasDistribuicaoRow[] = [
+  {
+    id: 1,
+    quadroId: 1,
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    quantidadeDistribuida: 50,
+    vagasOcupadas: 41,
+    vagasReservadas: 3,
+    observacao: "Distribuição inicial para unidade central.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 2,
+    quadroId: 1,
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Provimento",
+    quantidadeDistribuida: 35,
+    vagasOcupadas: 29,
+    vagasReservadas: 2,
+    observacao: "Reserva operacional para reposições previstas.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 3,
+    quadroId: 1,
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Carreiras",
+    quantidadeDistribuida: 20,
+    vagasOcupadas: 16,
+    vagasReservadas: 1,
+    observacao: "Atende movimentações internas da carreira.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+  },
+  {
+    id: 4,
+    quadroId: 2,
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    quantidadeDistribuida: 30,
+    vagasOcupadas: 24,
+    vagasReservadas: 2,
+    observacao: "Distribuição para expansão regional.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+  },
+  {
+    id: 5,
+    quadroId: 2,
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Sul",
+    quantidadeDistribuida: 28,
+    vagasOcupadas: 22,
+    vagasReservadas: 1,
+    observacao: "Distribuição vinculada ao novo quadro autorizado.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+  },
+  {
+    id: 6,
+    quadroId: 3,
+    orgaoSetor: "PGE-MT / Procuradoria Administrativa",
+    quantidadeDistribuida: 12,
+    vagasOcupadas: 9,
+    vagasReservadas: 1,
+    observacao: "Funções de coordenação administrativa.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 7,
+    quadroId: 3,
+    orgaoSetor: "PGE-MT / Procuradoria Judicial",
+    quantidadeDistribuida: 8,
+    vagasOcupadas: 6,
+    vagasReservadas: 1,
+    observacao: "Funções de apoio à gestão judicial.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+  },
+  {
+    id: 8,
+    quadroId: 4,
+    orgaoSetor: "SEPLAG-MT / Unidades Extintas",
+    quantidadeDistribuida: 45,
+    vagasOcupadas: 45,
+    vagasReservadas: 0,
+    observacao: "Registro histórico encerrado.",
+    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+  },
+];
+
 const controleVagasModuleItems = [
   {
     id: "configuracao",
@@ -1714,9 +1943,9 @@ const controleVagasModuleItems = [
     id: "quadro-autorizado",
     title: "Quadro Autorizado",
     description: "Cadastra o quantitativo autorizado de vagas por cargo ou função.",
-    path: "",
+    path: "/prototipos/sigep/controle-vagas/quadro-autorizado",
     icon: "pi pi-table",
-    status: "Em breve",
+    status: "Etapa 02",
   },
   {
     id: "vagas-numeradas",
@@ -2756,6 +2985,11 @@ const controleVagasSituacaoOptions = [
   { label: "Inativo", value: "Inativo" },
 ];
 
+const controleVagasStatusOperacionalOptions = [
+  { label: "Todas", value: "" },
+  ...regimeSituacaoOptions,
+];
+
 const controleVagasTipoFormOptions = controleVagasTipoOptions.filter(
   (option) => option.value,
 );
@@ -2776,9 +3010,35 @@ const controleVagasCargoFuncaoOptions = [
   { label: "Gestor Governamental", value: "Gestor Governamental" },
 ];
 
+const controleVagasOrgaoSetorOptions = [
+  { label: "Todos", value: "Todos" },
+  { label: "SEPLAG-MT", value: "SEPLAG-MT" },
+  { label: "SEDUC-MT", value: "SEDUC-MT" },
+  { label: "PGE-MT", value: "PGE-MT" },
+  { label: "CGE-MT", value: "CGE-MT" },
+];
+
+const controleVagasDistribuicaoOrgaoSetorOptions = [
+  { label: "SEPLAG-MT / Superintendência de Gestão de Pessoas", value: "SEPLAG-MT / Superintendência de Gestão de Pessoas" },
+  { label: "SEPLAG-MT / Coordenadoria de Provimento", value: "SEPLAG-MT / Coordenadoria de Provimento" },
+  { label: "SEPLAG-MT / Coordenadoria de Carreiras", value: "SEPLAG-MT / Coordenadoria de Carreiras" },
+  { label: "SEDUC-MT / Diretoria Regional Norte", value: "SEDUC-MT / Diretoria Regional Norte" },
+  { label: "SEDUC-MT / Diretoria Regional Sul", value: "SEDUC-MT / Diretoria Regional Sul" },
+  { label: "PGE-MT / Procuradoria Administrativa", value: "PGE-MT / Procuradoria Administrativa" },
+  { label: "PGE-MT / Procuradoria Judicial", value: "PGE-MT / Procuradoria Judicial" },
+  { label: "CGE-MT / Auditoria Geral", value: "CGE-MT / Auditoria Geral" },
+];
+
 const controleVagasConfiguracaoTabs: TabItemSeplag<string>[] = [
   { label: "Detalhes", value: "detalhes" },
   { label: "Critérios de Compatibilidade", value: "criterios" },
+  { label: "Histórico", value: "historico" },
+];
+
+const controleVagasQuadroAutorizadoTabs: TabItemSeplag<string>[] = [
+  { label: "Dados Gerais", value: "dados-gerais" },
+  { label: "Distribuições", value: "distribuicoes" },
+  { label: "Reservas", value: "reservas" },
   { label: "Histórico", value: "historico" },
 ];
 
@@ -3447,6 +3707,584 @@ export function PrototiposControleVagasConfiguracaoPage() {
               handleInativar={() => {}}
               handleOnPageChange={() => {}}
             />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasQuadroAutorizadoPage() {
+  const navigate = useNavigate();
+  const { control, reset, watch } =
+    useForm<ControleVagasQuadroAutorizadoFiltroForm>({
+      defaultValues: {
+        cargoFuncao: "",
+        orgaoSetor: "",
+        tipo: "",
+        situacao: "",
+      },
+    });
+  const filtros = watch();
+  const termoBusca = filtros.cargoFuncao?.trim().toLowerCase();
+  const quadroFiltrado = controleVagasQuadroAutorizadoMock.filter((quadro) => {
+    const atendeCargoFuncao =
+      !termoBusca ||
+      quadro.codigo.toLowerCase().includes(termoBusca) ||
+      quadro.cargoFuncao.toLowerCase().includes(termoBusca);
+    const atendeOrgaoSetor =
+      !filtros.orgaoSetor || quadro.orgaoSetor === filtros.orgaoSetor;
+    const atendeTipo = !filtros.tipo || quadro.tipo === filtros.tipo;
+    const atendeSituacao =
+      !filtros.situacao || quadro.situacao === filtros.situacao;
+
+    return atendeCargoFuncao && atendeOrgaoSetor && atendeTipo && atendeSituacao;
+  });
+  const quadroResults = createResults(quadroFiltrado);
+  const quadroColumns: ColumnMetaSeplag<ControleVagasQuadroAutorizadoRow>[] = [
+    { field: "codigo", header: "Código" },
+    { field: "cargoFuncao", header: "Cargo/Função" },
+    { field: "orgaoSetor", header: "Órgão/Setor" },
+    { field: "tipo", header: "Tipo" },
+    { field: "quantidadeAutorizada", header: "Autorizadas" },
+    { field: "vagasOcupadas", header: "Ocupadas" },
+    { field: "vagasReservadas", header: "Reservadas" },
+    { field: "vagasDisponiveis", header: "Disponíveis" },
+    {
+      header: "Situação",
+      body: (row) => renderGrupoCalculoStatusBadge(row.situacao),
+    },
+    { field: "inicioVigencia", header: "Início Vigência" },
+    { field: "atoLegal", header: "Ato Legal" },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Quadro Autorizado de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-category-filters prototype-controle-vagas-filters prototype-controle-vagas-quadro-filters grid">
+            <TextFieldSeplag
+              name="cargoFuncao"
+              control={control}
+              label="Cargo/Função"
+              placeholder="Código ou descrição"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="orgaoSetor"
+              control={control}
+              label="Órgão/Setor"
+              cols="12 6 2"
+              options={controleVagasOrgaoSetorOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipo"
+              control={control}
+              label="Tipo"
+              cols="12 6 2"
+              options={controleVagasTipoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 2"
+              options={controleVagasStatusOperacionalOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtros"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    cargoFuncao: "",
+                    orgaoSetor: "",
+                    tipo: "",
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="prototype-controle-vagas-table prototype-controle-vagas-quadro-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={quadroResults}
+              rows={10}
+              rowsPerPage={[10]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={quadroColumns}
+              hasEventoAcao
+              handleAdicionar={() =>
+                navigate(
+                  "/prototipos/sigep/controle-vagas/quadro-autorizado/novo",
+                )
+              }
+              handleView={(row) =>
+                navigate(
+                  `/prototipos/sigep/controle-vagas/quadro-autorizado/${row.id}/editar`,
+                )
+              }
+              handleEdit={(row) =>
+                navigate(
+                  `/prototipos/sigep/controle-vagas/quadro-autorizado/${row.id}/editar`,
+                )
+              }
+              handleInativar={() => {}}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasQuadroAutorizadoFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const quadro = controleVagasQuadroAutorizadoMock.find(
+    (item) => String(item.id) === id,
+  );
+  const isEditing = Boolean(id);
+  const [activeTab, setActiveTab] = useState("dados-gerais");
+  const [documentosSelecionados, setDocumentosSelecionados] = useState<string[]>(
+    quadro ? ["lei-12345-2023", "decreto-456-2024"] : [],
+  );
+  const [distribuicoes, setDistribuicoes] = useState<ControleVagasDistribuicaoRow[]>(
+    () =>
+      quadro
+        ? controleVagasDistribuicoesMock.filter(
+            (distribuicao) => distribuicao.quadroId === quadro.id,
+          )
+        : [],
+  );
+  const { control, setValue, watch } = useForm<ControleVagasQuadroAutorizadoForm>({
+    defaultValues: {
+      codigo: quadro?.codigo ?? "",
+      cargoFuncao: quadro?.cargoFuncao ?? "",
+      orgaoSetor: quadro?.orgaoSetor ?? "",
+      tipo: quadro?.tipo ?? "",
+      quantidadeAutorizada: quadro?.quantidadeAutorizada ?? undefined,
+      processoSei: quadro ? "00000.000000/2026-00" : "",
+      observacao: "",
+      situacao: mapGrupoCalculoSituacao(quadro?.situacao) ?? SITUACAO_VIGENCIA.ATIVO,
+      dataAtivacao: quadro?.inicioVigencia ?? "01/06/2026",
+      dataEncerramento: "",
+      motivoEncerramento: "",
+      dataExtincao: "",
+      motivoExtincao: "",
+    },
+  });
+  const {
+    control: distribuicaoControl,
+    getValues: getDistribuicaoValues,
+    reset: resetDistribuicao,
+  } = useForm<ControleVagasDistribuicaoForm>({
+    defaultValues: {
+      orgaoSetor: "",
+      quantidadeDistribuida: undefined,
+      observacao: "",
+    },
+  });
+  const quantidadeAutorizada = Number(watch("quantidadeAutorizada") ?? 0);
+  const totalDistribuido = distribuicoes.reduce(
+    (total, distribuicao) => total + distribuicao.quantidadeDistribuida,
+    0,
+  );
+  const totalOcupado = distribuicoes.reduce(
+    (total, distribuicao) => total + distribuicao.vagasOcupadas,
+    0,
+  );
+  const totalReservado = distribuicoes.reduce(
+    (total, distribuicao) => total + distribuicao.vagasReservadas,
+    0,
+  );
+  const totalDisponivel = distribuicoes.reduce(
+    (total, distribuicao) =>
+      total +
+      Math.max(
+        distribuicao.quantidadeDistribuida -
+          distribuicao.vagasOcupadas -
+          distribuicao.vagasReservadas,
+        0,
+      ),
+    0,
+  );
+  const totalNaoDistribuido = Math.max(quantidadeAutorizada - totalDistribuido, 0);
+
+  const handleAdicionarDistribuicao = () => {
+    const values = getDistribuicaoValues();
+    const quantidade = Number(values.quantidadeDistribuida ?? 0);
+
+    if (!values.orgaoSetor || quantidade <= 0) return;
+
+    setDistribuicoes((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        quadroId: quadro?.id ?? 0,
+        orgaoSetor: values.orgaoSetor ?? "",
+        quantidadeDistribuida: quantidade,
+        vagasOcupadas: 0,
+        vagasReservadas: 0,
+        observacao: values.observacao ?? "Distribuição adicionada no protótipo.",
+        situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+      },
+    ]);
+    resetDistribuicao({
+      orgaoSetor: "",
+      quantidadeDistribuida: undefined,
+      observacao: "",
+    });
+  };
+
+  const handleRemoverDistribuicao = (idDistribuicao: number) => {
+    setDistribuicoes((current) =>
+      current.filter((distribuicao) => distribuicao.id !== idDistribuicao),
+    );
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={`${isEditing ? "Alterar" : "Cadastrar"} - Quadro Autorizado de Vagas`}
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-form prototype-controle-vagas-quadro-form">
+            <TabsSeplag
+              items={controleVagasQuadroAutorizadoTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              equalWidth
+            />
+
+            {activeTab === "dados-gerais" && (
+              <div className="grid prototype-controle-vagas-form-section">
+                <TextFieldSeplag
+                  name="codigo"
+                  control={control}
+                  label="Código"
+                  cols="12 12 2"
+                  placeholder="Ex.: QA-001"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="tipo"
+                  control={control}
+                  label="Tipo"
+                  cols="12 12 2"
+                  options={controleVagasTipoFormOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="cargoFuncao"
+                  control={control}
+                  label="Cargo/Função"
+                  cols="12 12 4"
+                  options={controleVagasCargoFuncaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="orgaoSetor"
+                  control={control}
+                  label="Órgão/Setor"
+                  cols="12 12 4"
+                  options={controleVagasOrgaoSetorOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <NumberFieldSeplag
+                  name="quantidadeAutorizada"
+                  control={control}
+                  label="Quantidade Autorizada"
+                  cols="12 12 3"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="processoSei"
+                  control={control}
+                  label="Processo SEI"
+                  cols="12 12 3"
+                  placeholder="00000.000000/0000-00"
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={control}
+                  label="Observação"
+                  cols="12"
+                  rows={3}
+                  maxLength={500}
+                  getFormErrorMessage={() => null}
+                />
+                <div className="col-12 prototype-controle-vagas-quadro-vigencia">
+                  <SituacaoVigenciaSeplag<ControleVagasQuadroAutorizadoForm>
+                    control={control}
+                    setValue={setValue}
+                    rotuloDataAtivacao="Início da Vigência"
+                    cols={{
+                      situacao: "12 12 3",
+                      dataAtivacao: "12 12 3",
+                      statusOperacional: "col-12 md:col-4 lg:col-4",
+                      dataEncerramento: "12 12 3",
+                      motivoEncerramento: "12",
+                      dataExtincao: "12 12 3",
+                      motivoExtincao: "12",
+                    }}
+                    getFormErrorMessage={() => null}
+                  />
+                </div>
+                <div className="col-12 prototype-controle-vagas-documentos">
+                  <DocumentosLegaisAssociadosSeplag
+                    required
+                    options={documentosLegaisMock}
+                    value={documentosSelecionados}
+                    onChange={setDocumentosSelecionados}
+                    onNovoCadastro={() => {}}
+                    onVisualizar={() => {}}
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "distribuicoes" && (
+              <div className="prototype-controle-vagas-distribuicoes">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Distribuições do Quadro</h3>
+                  <p>
+                    Distribua o quantitativo autorizado entre órgãos e setores e
+                    acompanhe o saldo calculado para o protótipo.
+                  </p>
+                </div>
+
+                <div className="prototype-controle-vagas-quadro-summary">
+                  <div>
+                    <span>Autorizado</span>
+                    <strong>{quantidadeAutorizada}</strong>
+                  </div>
+                  <div>
+                    <span>Distribuído</span>
+                    <strong>{totalDistribuido}</strong>
+                  </div>
+                  <div>
+                    <span>Não distribuído</span>
+                    <strong>{totalNaoDistribuido}</strong>
+                  </div>
+                  <div>
+                    <span>Ocupado</span>
+                    <strong>{totalOcupado}</strong>
+                  </div>
+                  <div>
+                    <span>Reservado</span>
+                    <strong>{totalReservado}</strong>
+                  </div>
+                  <div>
+                    <span>Disponível</span>
+                    <strong>{totalDisponivel}</strong>
+                  </div>
+                </div>
+
+                <div className="prototype-controle-vagas-distribuicao-form">
+                  <div className="prototype-controle-vagas-section-title">
+                    <h3>Nova Distribuição</h3>
+                  </div>
+                  <div className="grid prototype-controle-vagas-form-section">
+                    <DropdownFieldSeplag
+                      name="orgaoSetor"
+                      control={distribuicaoControl}
+                      label="Órgão/Setor"
+                      cols="12 12 5"
+                      options={controleVagasDistribuicaoOrgaoSetorOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={() => null}
+                    />
+                    <NumberFieldSeplag
+                      name="quantidadeDistribuida"
+                      control={distribuicaoControl}
+                      label="Quantidade Distribuída"
+                      cols="12 12 3"
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextFieldSeplag
+                      name="observacao"
+                      control={distribuicaoControl}
+                      label="Observação"
+                      cols="12 12 3"
+                      placeholder="Descrição curta"
+                      getFormErrorMessage={() => null}
+                    />
+                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-1">
+                      <BotaoSeplag
+                        type="button"
+                        label="Adicionar"
+                        icon="pi pi-plus"
+                        onClick={handleAdicionarDistribuicao}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table prototype-controle-vagas-distribuicoes-table">
+                    <thead>
+                      <tr>
+                        <th>Órgão/Setor</th>
+                        <th>Distribuído</th>
+                        <th>Ocupado</th>
+                        <th>Reservado</th>
+                        <th>Disponível</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {distribuicoes.length > 0 ? (
+                        distribuicoes.map((distribuicao) => {
+                          const disponivel = Math.max(
+                            distribuicao.quantidadeDistribuida -
+                              distribuicao.vagasOcupadas -
+                              distribuicao.vagasReservadas,
+                            0,
+                          );
+
+                          return (
+                            <tr key={distribuicao.id}>
+                              <td>
+                                <strong>{distribuicao.orgaoSetor}</strong>
+                                <small>{distribuicao.observacao}</small>
+                              </td>
+                              <td>{distribuicao.quantidadeDistribuida}</td>
+                              <td>{distribuicao.vagasOcupadas}</td>
+                              <td>{distribuicao.vagasReservadas}</td>
+                              <td>{disponivel}</td>
+                              <td>{renderGrupoCalculoStatusBadge(distribuicao.situacao)}</td>
+                              <td>
+                                <div className="prototype-controle-vagas-row-actions">
+                                  <BotaoIconSeplag
+                                    type="button"
+                                    icon="pi pi-pencil"
+                                    onClick={() => {}}
+                                  />
+                                  <BotaoIconSeplag
+                                    type="button"
+                                    icon="pi pi-trash"
+                                    severity="danger"
+                                    onClick={() =>
+                                      handleRemoverDistribuicao(distribuicao.id)
+                                    }
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="prototype-empty-table-cell">
+                            Nenhuma distribuição cadastrada.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "reservas" && (
+              <div className="prototype-controle-vagas-placeholder">
+                <h3>Reservas</h3>
+                <p>
+                  Área preparada para controlar reservas de vagas antes da
+                  ocupação definitiva por vínculo funcional.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "historico" && (
+              <div className="prototype-controle-vagas-historico">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Histórico do Quadro Autorizado</h3>
+                  <p>
+                    Registro somente leitura das alterações simuladas para este
+                    quadro autorizado.
+                  </p>
+                </div>
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Data/Hora</th>
+                        <th>Evento</th>
+                        <th>Usuário</th>
+                        <th>Detalhe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controleVagasQuadroHistoricoMock.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.dataHora}</td>
+                          <td>{item.evento}</td>
+                          <td>{item.usuario}</td>
+                          <td>{item.detalhe}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() =>
+                  navigate("/prototipos/sigep/controle-vagas/quadro-autorizado")
+                }
+              />
+              <BotaoSalvarSeplag type="button" label="Salvar" />
+            </div>
           </div>
         </CardSeplag>
       </div>

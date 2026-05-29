@@ -18,6 +18,8 @@ import {
   PrototiposControleVagasConfiguracaoFormPage,
   PrototiposControleVagasPage,
   PrototiposControleVagasConfiguracaoPage,
+  PrototiposControleVagasQuadroAutorizadoFormPage,
+  PrototiposControleVagasQuadroAutorizadoPage,
   PrototiposDocumentosVinculadosPage,
   PrototiposEstruturaOrganizacionalPage,
   PrototiposSituacaoVigenciaPage,
@@ -278,6 +280,18 @@ function App() {
       <Route
         path="/prototipos/sigep/controle-vagas/configuracao/:id/editar"
         element={<PrototiposControleVagasConfiguracaoFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/quadro-autorizado"
+        element={<PrototiposControleVagasQuadroAutorizadoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/quadro-autorizado/novo"
+        element={<PrototiposControleVagasQuadroAutorizadoFormPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/quadro-autorizado/:id/editar"
+        element={<PrototiposControleVagasQuadroAutorizadoFormPage />}
       />
       <Route
         path="/prototipos/sigep/categoria"
