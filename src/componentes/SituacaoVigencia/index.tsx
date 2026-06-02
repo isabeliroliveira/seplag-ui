@@ -76,6 +76,7 @@ export interface SituacaoVigenciaSeplagProps<T extends FieldValues = any> {
   permitirExtincaoDireta?: boolean;
   ocultarRotuloSituacao?: boolean;
   rotuloDataAtivacao?: string;
+  dataAtivacaoMinDate?: Date;
   getFormErrorMessage: (name: string) => ReactNode;
 }
 
@@ -259,6 +260,7 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
   permitirExtincaoDireta = true,
   ocultarRotuloSituacao = false,
   rotuloDataAtivacao = "Data de Ativação",
+  dataAtivacaoMinDate,
   getFormErrorMessage,
 }: Readonly<SituacaoVigenciaSeplagProps<T>>) {
   const resolvedNames = resolveNames(names);
@@ -455,6 +457,7 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
             cols={cols?.dataAtivacao ?? "12 12 3"}
             required
             disabled={isDisabled}
+            minDate={dataAtivacaoMinDate}
             getFormErrorMessage={getFormErrorMessage}
           />
 

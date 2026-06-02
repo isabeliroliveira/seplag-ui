@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
 import "./App.css";
 import pkg from "../package.json";
 import { DocsLayout, DocsRenderer } from "./docs/layout/DocsLayout";
@@ -35,6 +35,7 @@ import {
   PrototiposFolhaGrupoEleitosPage,
   PrototiposFolhaGrupoCalculoFormPage,
   PrototiposFolhaGruposCalculoPage,
+  PrototiposFolhaCompetenciasPage,
   PrototiposFolhaPagamentoFormPage,
   PrototiposFolhaPagamentoLogPage,
   PrototiposFolhaPagamentoPage,
@@ -74,10 +75,11 @@ function HomePage() {
     {
       sigla: "FOLHA",
       titulo: "Folha de Pagamento",
-      descricao: "Protótipos para grupos de eleitos, catálogo de rubricas e grupos de cálculo da folha.",
+      descricao: "Protótipos para grupos de cálculo, folhas por competência, rubricas e cálculos.",
       status: "Em evolução",
       to: "/prototipos/folha",
       links: [
+        { label: "Competências da Folha", to: "/prototipos/folha/processamento/competencias" },
         { label: "Folha de Pagamento", to: "/prototipos/folha/processamento/folha-pagamento" },
         { label: "Grupo de Eleitos", to: "/prototipos/folha/grupo-eleitos" },
         { label: "Grupos de Cálculo", to: "/prototipos/folha/grupos-calculo" },
@@ -403,6 +405,10 @@ function App() {
       />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
       <Route
+        path="/prototipos/folha/processamento/competencias"
+        element={<PrototiposFolhaCompetenciasPage />}
+      />
+      <Route
         path="/prototipos/folha/processamento/folha-pagamento"
         element={<PrototiposFolhaPagamentoPage />}
       />
@@ -411,8 +417,24 @@ function App() {
         element={<PrototiposFolhaPagamentoFormPage />}
       />
       <Route
+        path="/prototipos/folha/processamento/folha-pagamento/:id/editar"
+        element={<PrototiposFolhaPagamentoFormPage />}
+      />
+      <Route
         path="/prototipos/folha/processamento/folha-pagamento/execucoes/:execucaoId/log"
         element={<PrototiposFolhaPagamentoLogPage />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-folha"
+        element={<Navigate to="/prototipos/folha/grupos-calculo" replace />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-folha/novo"
+        element={<Navigate to="/prototipos/folha/grupos-calculo/novo" replace />}
+      />
+      <Route
+        path="/prototipos/folha/grupos-folha/:id/editar"
+        element={<Navigate to="/prototipos/folha/grupos-calculo" replace />}
       />
       <Route
         path="/prototipos/folha/catalogo-rubricas"

@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
@@ -58,6 +58,10 @@ import { folhaPagamentoService } from "./folhaPagamento/folhaPagamentoService";
 import type {
   FolhaPagamentoExecucaoRow,
   FolhaPagamentoExecucaoSituacao,
+  FolhaCompetenciaFiltroForm,
+  FolhaCompetenciaForm,
+  FolhaCompetenciaRow,
+  FolhaCompetenciaSituacao,
   FolhaPagamentoFiltroForm,
   FolhaPagamentoForm,
   FolhaPagamentoPessoaLogFiltroForm,
@@ -67,6 +71,12 @@ import type {
   FolhaPagamentoRubricaLogRow,
   FolhaPagamentoRubricaLogSituacao,
   FolhaPagamentoSituacao,
+  GrupoFolhaFiltroForm,
+  GrupoFolhaForm,
+  GrupoFolhaRow,
+  GrupoFolhaSituacao,
+  GrupoFolhaTipo,
+  GrupoFolhaVersaoRow,
 } from "./folhaPagamento/types";
 
 const SIGEP_BASE_PATH = "/prototipos/sigep";
@@ -74,6 +84,9 @@ const SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH =
   "/prototipos/sigep/cargo-concurso-teste";
 const FOLHA_PAGAMENTO_BASE_PATH =
   "/prototipos/folha/processamento/folha-pagamento";
+const FOLHA_COMPETENCIAS_BASE_PATH =
+  "/prototipos/folha/processamento/competencias";
+const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
   `${FOLHA_PAGAMENTO_BASE_PATH}/execucoes/${execucaoId}/log`;
@@ -261,7 +274,7 @@ const menuFolha: IMenuSeplag[] = [
     ],
   },
   {
-    label: "Cadastro",
+    label: "Configuração",
     icon: "pi pi-list",
     url: "#",
     visibleOnMenu: true,
@@ -296,6 +309,13 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnMenu: true,
     visibleOnRouter: true,
     items: [
+      {
+        label: "Competências da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_COMPETENCIAS_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
       {
         label: "Folha de Pagamento",
         icon: "pi pi-circle-on",
@@ -951,7 +971,7 @@ interface GrupoCalculoFiltroForm {
 interface GrupoCalculoForm {
   nome?: string;
   descricao?: string;
-  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  situacao?: SituacaoVigenciaValueSeplag["situacao"] | "RASCUNHO";
   dataAtivacao?: string;
   dataEncerramento?: string;
   motivoEncerramento?: string;
@@ -1143,6 +1163,7 @@ interface RubricaRow {
 interface GrupoCalculoRubricaGerenciada extends RubricaRow {
   origem: "filtro" | "manual";
   reordenada?: boolean;
+  excluida?: boolean;
 }
 
 interface GrupoEleitoParticipanteRow {
@@ -2326,29 +2347,86 @@ const folhaPagamentoSituacaoOptions: {
 }[] = [
   { label: "Todas", value: "" },
   { label: "Rascunho", value: "RASCUNHO" },
-  { label: "Aberta", value: "ABERTA" },
-  { label: "Em fila", value: "EM_FILA" },
+  { label: "Aberto", value: "ABERTO" },
+  { label: "Aguardando processamento", value: "AGUARDANDO_PROCESSAMENTO" },
   { label: "Em processamento", value: "EM_PROCESSAMENTO" },
-  { label: "Processada", value: "PROCESSADA" },
-  { label: "Processada com alerta", value: "PROCESSADA_COM_ALERTA" },
-  { label: "Processada com erro", value: "PROCESSADA_COM_ERRO" },
-  { label: "Bloqueada", value: "BLOQUEADA" },
+  { label: "Processo com sucesso", value: "PROCESSO_COM_SUCESSO" },
+  { label: "Processo com erro", value: "PROCESSO_COM_ERRO" },
+  { label: "Processo com falhas", value: "PROCESSO_COM_FALHAS" },
   { label: "Cancelada", value: "CANCELADA" },
 ];
+
+const folhaCompetenciaSituacaoOptions: {
+  label: string;
+  value: FolhaCompetenciaSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Ativa", value: "ATIVA" },
+  { label: "Fechada", value: "FECHADA" },
+];
+
+const grupoFolhaTipoOptions: { label: string; value: GrupoFolhaTipo | "" }[] = [
+  { label: "Todos", value: "" },
+  { label: "Normal", value: "NORMAL" },
+  { label: "Complementar", value: "COMPLEMENTAR" },
+  { label: "13º salário", value: "DECIMO_TERCEIRO" },
+  { label: "Férias", value: "FERIAS" },
+  { label: "Rescisão", value: "RESCISAO" },
+  { label: "Pensionistas", value: "PENSIONISTAS" },
+];
+
+const grupoFolhaSituacaoOptions: {
+  label: string;
+  value: GrupoFolhaSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Rascunho", value: "RASCUNHO" },
+  { label: "Vigente", value: "VIGENTE" },
+  { label: "Inativo", value: "INATIVO" },
+  { label: "Encerrado", value: "ENCERRADO" },
+  { label: "Cancelado", value: "CANCELADO" },
+];
+
+const grupoFolhaSituacaoMeta: Record<
+  GrupoFolhaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  RASCUNHO: { label: "Rascunho", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
+  VIGENTE: { label: "Vigente", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  INATIVO: { label: "Inativo", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  ENCERRADO: { label: "Encerrado", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  CANCELADO: { label: "Cancelado", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const grupoFolhaTipoLabel: Record<GrupoFolhaTipo, string> = {
+  NORMAL: "Normal",
+  COMPLEMENTAR: "Complementar",
+  DECIMO_TERCEIRO: "13º salário",
+  FERIAS: "Férias",
+  RESCISAO: "Rescisão",
+  PENSIONISTAS: "Pensionistas",
+};
 
 const folhaPagamentoSituacaoMeta: Record<
   FolhaPagamentoSituacao,
   { label: string; color: string; bg: string; border: string }
 > = {
   RASCUNHO: { label: "Rascunho", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
-  ABERTA: { label: "Aberta", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
-  EM_FILA: { label: "Em fila", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  ABERTO: { label: "Aberto", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
+  AGUARDANDO_PROCESSAMENTO: { label: "Aguardando processamento", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
   EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
-  PROCESSADA: { label: "Processada", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
-  PROCESSADA_COM_ALERTA: { label: "Processada com alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
-  PROCESSADA_COM_ERRO: { label: "Processada com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
-  BLOQUEADA: { label: "Bloqueada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  PROCESSO_COM_SUCESSO: { label: "Processo com sucesso", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  PROCESSO_COM_ERRO: { label: "Processo com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  PROCESSO_COM_FALHAS: { label: "Processo com falhas", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
   CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const folhaCompetenciaSituacaoMeta: Record<
+  FolhaCompetenciaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  ATIVA: { label: "Ativa", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  FECHADA: { label: "Fechada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
 };
 
 const folhaPagamentoExecucaoSituacaoMeta: Record<
@@ -2436,6 +2514,21 @@ const folhaPagamentoGrupoEleitosOptions = [
   { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
   { label: "Grupo Teste", value: "Grupo Teste" },
   { label: "Teste 24/04/2026", value: "Teste 24/04/2026" },
+];
+
+const grupoFolhaRubricaOptions = [
+  { label: "1001 - SALÁRIO BÁSICO", value: "1001 - SALÁRIO BÁSICO" },
+  { label: "1002 - ADICIONAL NOTURNO", value: "1002 - ADICIONAL NOTURNO" },
+  { label: "1003 - DÉCIMO TERCEIRO", value: "1003 - DÉCIMO TERCEIRO" },
+  { label: "1004 - VALE ALIMENTAÇÃO", value: "1004 - VALE ALIMENTAÇÃO" },
+  { label: "1006 - PREVIDÊNCIA RPPS", value: "1006 - PREVIDÊNCIA RPPS" },
+];
+
+const grupoFolhaRelatorioOptions = [
+  { label: "Resumo financeiro", value: "Resumo financeiro" },
+  { label: "Divergências por servidor", value: "Divergências por servidor" },
+  { label: "Alertas de jornada", value: "Alertas de jornada" },
+  { label: "Comparativo entre versões", value: "Comparativo entre versões" },
 ];
 
 const folhaPagamentoTabs: TabItemSeplag<string>[] = [
@@ -3055,6 +3148,21 @@ function getGrupoCalculoRubricaTipoBadge(tipo: string) {
   };
 }
 
+function getAmanhaDate() {
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  amanha.setHours(0, 0, 0, 0);
+  return amanha;
+}
+
+function formatDatePtBr(date: Date) {
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 function getRubricasGrupoCalculoPorAbrangencia({
   regimeJuridico,
   tipoVinculo,
@@ -3387,15 +3495,6 @@ const controleVagasReservaSituacaoOptions = [
   { label: "Ativa", value: "Ativa" },
   { label: "Cancelada", value: "Cancelada" },
   { label: "Encerrada", value: "Encerrada" },
-];
-
-const controleVagasVagaNumeradaSituacaoOptions = [
-  { label: "Disponível", value: "Disponível" },
-  { label: "Ocupada", value: "Ocupada" },
-  { label: "Reservada", value: "Reservada" },
-  { label: "Bloqueada", value: "Bloqueada" },
-  { label: "Agendada", value: "Agendada" },
-  { label: "Extinta", value: "Extinta" },
 ];
 
 const controleVagasConfiguracaoTabs: TabItemSeplag<string>[] = [
@@ -8861,15 +8960,1046 @@ export function PrototiposFolhaPage() {
   );
 }
 
-export function PrototiposFolhaPagamentoFormPage() {
+export function PrototiposFolhaGruposFolhaPage() {
   const navigate = useNavigate();
+  const [grupos] = useState<GrupoFolhaRow[]>(() =>
+    folhaPagamentoService.listarGruposFolha(),
+  );
+  const [grupoSelecionado, setGrupoSelecionado] =
+    useState<GrupoFolhaRow | null>(null);
+  const [modalDetalheAberto, setModalDetalheAberto] = useState(false);
+  const { control, reset, watch } = useForm<GrupoFolhaFiltroForm>({
+    defaultValues: {
+      termo: "",
+      tipoFolha: "",
+      orgaos: [],
+      situacao: "",
+    },
+  });
+  const filtros = watch();
+  const termo = filtros.termo?.trim().toLowerCase() ?? "";
+  const gruposFiltrados = grupos.filter((grupo) => {
+    const atendeTermo =
+      !termo ||
+      grupo.codigo.toLowerCase().includes(termo) ||
+      grupo.nome.toLowerCase().includes(termo);
+    const atendeTipo = !filtros.tipoFolha || grupo.tipoFolha === filtros.tipoFolha;
+    const atendeOrgao =
+      !filtros.orgaos?.length ||
+      filtros.orgaos.some((orgao) => grupo.orgaos.includes(orgao));
+    const atendeSituacao =
+      !filtros.situacao || grupo.situacao === filtros.situacao;
+
+    return atendeTermo && atendeTipo && atendeOrgao && atendeSituacao;
+  });
+  const grupoResults = createResults(gruposFiltrados);
+  const renderGrupoSituacaoBadge = (situacao: GrupoFolhaSituacao) => (
+    <BadgeSeplag {...grupoFolhaSituacaoMeta[situacao]} size="md" />
+  );
+  const grupoColumns: ColumnMetaSeplag<GrupoFolhaRow>[] = [
+    { field: "codigo", header: "Código" },
+    { field: "nome", header: "Nome do grupo" },
+    { header: "Tipo de folha", body: (row) => grupoFolhaTipoLabel[row.tipoFolha] },
+    { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
+    { field: "versaoVigente", header: "Versão vigente" },
+    { field: "vigenciaInicial", header: "Início da vigência" },
+    { header: "Situação", body: (row) => renderGrupoSituacaoBadge(row.situacao) },
+    { field: "ultimaAlteracao", header: "Última alteração" },
+  ];
+  const versoesGrupo = grupoSelecionado
+    ? folhaPagamentoService.listarVersoesGrupoFolha(grupoSelecionado.id)
+    : [];
+  const versoesColumns: ColumnMetaSeplag<GrupoFolhaVersaoRow>[] = [
+    { field: "versao", header: "Versão" },
+    { field: "vigenciaInicial", header: "Vigência inicial" },
+    { field: "vigenciaFinal", header: "Vigência final" },
+    { field: "alteracao", header: "Alteração" },
+    { field: "motivo", header: "Motivo" },
+    { field: "usuarioResponsavel", header: "Usuário" },
+    { field: "dataHora", header: "Data/hora" },
+    { header: "Situação", body: (row) => renderGrupoSituacaoBadge(row.situacao) },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Grupos de Folha"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Pesquisar por código ou nome"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipoFolha"
+              control={control}
+              label="Tipo de folha"
+              cols="12 12 2"
+              options={grupoFolhaTipoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="orgaos"
+              control={control}
+              label="Órgãos"
+              cols="12 12 3"
+              options={folhaPagamentoOrgaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} órgãos selecionados"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 12 2"
+              options={grupoFolhaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termo: "",
+                    tipoFolha: "",
+                    orgaos: [],
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-actions">
+            <BotaoSeplag
+              type="button"
+              label="Novo Grupo"
+              icon="pi pi-plus"
+              onClick={() => navigate(`${GRUPOS_FOLHA_BASE_PATH}/novo`)}
+            />
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={grupoResults}
+              rows={10}
+              rowsPerPage={[10, 20]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={grupoColumns}
+              hasEventoAcao
+              handleView={(grupo) => {
+                setGrupoSelecionado(grupo);
+                setModalDetalheAberto(true);
+              }}
+              handleEdit={(grupo) =>
+                navigate(`${GRUPOS_FOLHA_BASE_PATH}/${grupo.id}/editar`)
+              }
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalDetalheAberto}
+          titulo="Detalhar Grupo de Folha"
+          fechar={() => setModalDetalheAberto(false)}
+          tamanho="1100px"
+          hideFooter
+        >
+          {grupoSelecionado ? (
+            <div className="col-12 prototype-folha-execucoes-modal">
+              <div className="prototype-folha-execucoes-summary">
+                <div>
+                  <span>Código</span>
+                  <strong>{grupoSelecionado.codigo}</strong>
+                  <p>{grupoSelecionado.nome}</p>
+                </div>
+                <div>
+                  <span>Tipo</span>
+                  <strong>{grupoFolhaTipoLabel[grupoSelecionado.tipoFolha]}</strong>
+                  <p>Versão {grupoSelecionado.versaoVigente}</p>
+                </div>
+                <div>
+                  <span>Situação</span>
+                  {renderGrupoSituacaoBadge(grupoSelecionado.situacao)}
+                </div>
+                <div>
+                  <span>Abrangência</span>
+                  <strong>{grupoSelecionado.orgaos.join(", ")}</strong>
+                  <p>{grupoSelecionado.regimeJuridico || "Todos os regimes"}</p>
+                </div>
+              </div>
+
+              <div className="prototype-catalogo-view-content">
+                <p><strong>Descrição:</strong> {grupoSelecionado.descricao || "-"}</p>
+                <p><strong>Categoria:</strong> {grupoSelecionado.categoria || "Todas"}</p>
+                <p><strong>Cargo:</strong> {grupoSelecionado.cargo || "Todos"}</p>
+                <p><strong>Grupo de eleitos padrão:</strong> {grupoSelecionado.grupoEleitosPadrao || "Não informado"}</p>
+                <p><strong>Rubricas associadas:</strong> {grupoSelecionado.rubricasAssociadas.join(", ") || "-"}</p>
+                <p><strong>Ordem de processamento:</strong> {grupoSelecionado.ordemProcessamento || "-"}</p>
+                <p><strong>Relatórios disponíveis:</strong> {grupoSelecionado.relatoriosDisponiveis.join(", ") || "-"}</p>
+              </div>
+
+              <TablePaginadoSeplag
+                dataKey="id"
+                data={createResults(versoesGrupo)}
+                rows={5}
+                rowsPerPage={[5, 10]}
+                paginator
+                lazy={false}
+                selectionMode={null}
+                columns={versoesColumns}
+                handleOnPageChange={() => {}}
+              />
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaGrupoFolhaFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const grupoAtual = isEdit
+    ? folhaPagamentoService.buscarGrupoFolhaPorId(Number(id))
+    : undefined;
   const [formFeedback, setFormFeedback] = useState("");
   const {
     control,
     handleSubmit,
     formState: { errors },
+  } = useForm<GrupoFolhaForm>({
+    defaultValues: {
+      codigo: grupoAtual?.codigo ?? "",
+      nome: grupoAtual?.nome ?? "",
+      descricao: grupoAtual?.descricao ?? "",
+      tipoFolha: grupoAtual?.tipoFolha ?? "NORMAL",
+      orgaos: grupoAtual?.orgaos ?? [],
+      regimeJuridico: grupoAtual?.regimeJuridico ?? "",
+      categoria: grupoAtual?.categoria ?? "",
+      cargo: grupoAtual?.cargo ?? "",
+      grupoEleitosPadrao: grupoAtual?.grupoEleitosPadrao ?? "",
+      situacao: grupoAtual?.situacao ?? "RASCUNHO",
+      vigenciaInicial: grupoAtual?.vigenciaInicial ?? "",
+      vigenciaFinal: grupoAtual?.vigenciaFinal ?? "",
+      totalMesesAdiantarPadrao: grupoAtual?.totalMesesAdiantarPadrao ?? 0,
+      totalMesesRetroagirPadrao: grupoAtual?.totalMesesRetroagirPadrao ?? 0,
+      permiteRetroacao: grupoAtual?.permiteRetroacao ?? "S",
+      herdarConfiguracaoCompetenciaAnterior:
+        grupoAtual?.herdarConfiguracaoCompetenciaAnterior ?? "S",
+      rubricasAssociadas: grupoAtual?.rubricasAssociadas ?? [],
+      ordemProcessamento: grupoAtual?.ordemProcessamento ?? "",
+      relatoriosDisponiveis: grupoAtual?.relatoriosDisponiveis ?? [],
+    },
+  });
+  const getFormErrorMessage = (name: keyof GrupoFolhaForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+  const validarGrupoFolha = (data: GrupoFolhaForm) => {
+    if (!data.codigo?.trim()) return "Código do grupo é obrigatório.";
+    if (!data.nome?.trim()) return "Nome do grupo é obrigatório.";
+    if (!data.tipoFolha) return "Tipo de folha é obrigatório.";
+    if (!data.orgaos?.length) return "Informe ao menos um órgão abrangido.";
+    if (!data.situacao) return "Situação é obrigatória.";
+    if (!data.vigenciaInicial?.trim()) return "Vigência inicial é obrigatória.";
+    if ((data.totalMesesAdiantarPadrao ?? 0) < 0 || (data.totalMesesRetroagirPadrao ?? 0) < 0) {
+      return "Meses a adiantar e retroagir não podem ser negativos.";
+    }
+    return "";
+  };
+  const salvarGrupoFolha = (data: GrupoFolhaForm) => {
+    const mensagem = validarGrupoFolha(data);
+    if (mensagem) {
+      setFormFeedback(mensagem);
+      return;
+    }
+
+    const request: GrupoFolhaForm = {
+      ...data,
+      codigo: data.codigo?.trim(),
+      nome: data.nome?.trim(),
+      descricao: data.descricao?.trim() ?? "",
+      orgaos: data.orgaos ?? [],
+      rubricasAssociadas: data.rubricasAssociadas ?? [],
+      relatoriosDisponiveis: data.relatoriosDisponiveis ?? [],
+      totalMesesAdiantarPadrao: data.totalMesesAdiantarPadrao ?? 0,
+      totalMesesRetroagirPadrao: data.totalMesesRetroagirPadrao ?? 0,
+    };
+
+    if (isEdit && grupoAtual) {
+      folhaPagamentoService.atualizarGrupoFolha(grupoAtual.id, request);
+    } else {
+      folhaPagamentoService.criarGrupoFolha(request);
+    }
+
+    navigate(GRUPOS_FOLHA_BASE_PATH);
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={handleSubmit(salvarGrupoFolha)}>
+        <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+          <CardSeplag
+            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupo de Folha`}
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="col-12 prototype-folha-pagamento-form">
+              {formFeedback ? (
+                <div className="prototype-validation-panel">{formFeedback}</div>
+              ) : null}
+
+              <section className="prototype-folha-form-section">
+                <h3>Dados Gerais</h3>
+                <div className="grid prototype-category-form-fields">
+                  <TextFieldSeplag
+                    name="codigo"
+                    control={control}
+                    label="Código do grupo"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("codigo")}
+                  />
+                  <TextFieldSeplag
+                    name="nome"
+                    control={control}
+                    label="Nome do grupo"
+                    cols="12 12 5"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("nome")}
+                  />
+                  <DropdownFieldSeplag
+                    name="tipoFolha"
+                    control={control}
+                    label="Tipo de folha"
+                    cols="12 12 2"
+                    required
+                    options={grupoFolhaTipoOptions.filter((option) => option.value)}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("tipoFolha")}
+                  />
+                  <DropdownFieldSeplag
+                    name="situacao"
+                    control={control}
+                    label="Situação"
+                    cols="12 12 2"
+                    required
+                    options={grupoFolhaSituacaoOptions.filter((option) => option.value)}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("situacao")}
+                  />
+                  <TextAreaFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12"
+                    rows={3}
+                    maxLength={500}
+                    getFormErrorMessage={() => getFormErrorMessage("descricao")}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Abrangência Padrão</h3>
+                <div className="grid prototype-category-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="orgaos"
+                    control={control}
+                    label="Órgãos abrangidos"
+                    cols="12 12 6"
+                    required
+                    options={folhaPagamentoOrgaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} órgãos selecionados"
+                    getFormErrorMessage={() => getFormErrorMessage("orgaos")}
+                  />
+                  <DropdownFieldSeplag
+                    name="regimeJuridico"
+                    control={control}
+                    label="Regime jurídico"
+                    cols="12 12 6"
+                    options={folhaPagamentoRegimeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("regimeJuridico")}
+                  />
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    cols="12 12 4"
+                    options={folhaPagamentoCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("categoria")}
+                  />
+                  <DropdownFieldSeplag
+                    name="cargo"
+                    control={control}
+                    label="Cargo"
+                    cols="12 12 4"
+                    options={folhaPagamentoCargoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("cargo")}
+                  />
+                  <DropdownFieldSeplag
+                    name="grupoEleitosPadrao"
+                    control={control}
+                    label="Grupo de eleitos padrão"
+                    cols="12 12 4"
+                    options={folhaPagamentoGrupoEleitosOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("grupoEleitosPadrao")}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Configurações Padrão</h3>
+                <div className="grid prototype-category-form-fields">
+                  <TextFieldSeplag
+                    name="vigenciaInicial"
+                    control={control}
+                    label="Vigência inicial"
+                    placeholder="DD/MM/AAAA"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("vigenciaInicial")}
+                  />
+                  <TextFieldSeplag
+                    name="vigenciaFinal"
+                    control={control}
+                    label="Vigência final"
+                    placeholder="DD/MM/AAAA"
+                    cols="12 12 3"
+                    getFormErrorMessage={() => getFormErrorMessage("vigenciaFinal")}
+                  />
+                  <NumberFieldSeplag
+                    name="totalMesesAdiantarPadrao"
+                    control={control}
+                    label="Meses a adiantar"
+                    cols="12 12 3"
+                    required
+                    min={0}
+                    getFormErrorMessage={() => getFormErrorMessage("totalMesesAdiantarPadrao")}
+                  />
+                  <NumberFieldSeplag
+                    name="totalMesesRetroagirPadrao"
+                    control={control}
+                    label="Meses a retroagir"
+                    cols="12 12 3"
+                    required
+                    min={0}
+                    getFormErrorMessage={() => getFormErrorMessage("totalMesesRetroagirPadrao")}
+                  />
+                  <DropdownFieldSeplag
+                    name="permiteRetroacao"
+                    control={control}
+                    label="Permite retroação?"
+                    cols="12 12 3"
+                    options={[
+                      { label: "Sim", value: "S" },
+                      { label: "Não", value: "N" },
+                    ]}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("permiteRetroacao")}
+                  />
+                  <DropdownFieldSeplag
+                    name="herdarConfiguracaoCompetenciaAnterior"
+                    control={control}
+                    label="Herdar competência anterior?"
+                    cols="12 12 3"
+                    options={[
+                      { label: "Sim", value: "S" },
+                      { label: "Não", value: "N" },
+                    ]}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("herdarConfiguracaoCompetenciaAnterior")
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Rubricas e Relatórios</h3>
+                <div className="grid prototype-category-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="rubricasAssociadas"
+                    control={control}
+                    label="Rubricas associadas"
+                    cols="12 12 6"
+                    options={grupoFolhaRubricaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} rubricas selecionadas"
+                    getFormErrorMessage={() => getFormErrorMessage("rubricasAssociadas")}
+                  />
+                  <MultiSelectFieldSeplag
+                    name="relatoriosDisponiveis"
+                    control={control}
+                    label="Relatórios disponíveis"
+                    cols="12 12 6"
+                    options={grupoFolhaRelatorioOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} relatórios selecionados"
+                    getFormErrorMessage={() => getFormErrorMessage("relatoriosDisponiveis")}
+                  />
+                  <TextAreaFieldSeplag
+                    name="ordemProcessamento"
+                    control={control}
+                    label="Ordem de processamento"
+                    cols="12"
+                    rows={3}
+                    maxLength={500}
+                    getFormErrorMessage={() => getFormErrorMessage("ordemProcessamento")}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(GRUPOS_FOLHA_BASE_PATH)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaCompetenciasPage() {
+  const navigate = useNavigate();
+  const [competencias, setCompetencias] = useState<FolhaCompetenciaRow[]>(() =>
+    folhaPagamentoService.listarCompetencias(),
+  );
+  const [modalCadastroAberto, setModalCadastroAberto] = useState(false);
+  const [competenciaParaFechar, setCompetenciaParaFechar] =
+    useState<FolhaCompetenciaRow | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [formFeedback, setFormFeedback] = useState("");
+  const { control, reset, watch } = useForm<FolhaCompetenciaFiltroForm>({
+    defaultValues: {
+      competencia: "",
+      situacao: "",
+    },
+  });
+  const {
+    control: formControl,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<FolhaCompetenciaForm>({
+    defaultValues: {
+      codigo: "",
+      nome: "",
+      competencia: "",
+      mesAnoReferencia: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "ATIVA",
+      observacao: "",
+    },
+  });
+
+  const normalizeMesAno = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
+    return cleanValue;
+  };
+
+  const formatMesAno = (value: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
+  };
+
+  const isMesAnoValido = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const match =
+      cleanValue.match(/^(\d{4})-(\d{2})$/) ??
+      cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+
+    const mes = cleanValue.includes("-") ? Number(match[2]) : Number(match[1]);
+    return mes >= 1 && mes <= 12;
+  };
+
+  const parseDataBr = (value?: string) => {
+    const match = value?.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return null;
+
+    const day = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const year = Number(match[3]);
+    const date = new Date(year, month, day);
+
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  };
+
+  const formatDataBr = (date: Date) =>
+    date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+  const getProximaCompetencia = (competencia: FolhaCompetenciaRow) => {
+    const [ano, mes] = competencia.competencia.split("-").map(Number);
+    const proximoMes = new Date(ano, mes, 1);
+    const dataInicio = new Date(proximoMes.getFullYear(), proximoMes.getMonth(), 1);
+    const dataFim = new Date(proximoMes.getFullYear(), proximoMes.getMonth() + 1, 0);
+    const competenciaIso = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, "0")}`;
+
+    return {
+      competencia: competenciaIso,
+      dataInicio: formatDataBr(dataInicio),
+      dataFim: formatDataBr(dataFim),
+    };
+  };
+
+  const filtros = watch();
+  const competenciaFiltro = normalizeMesAno(filtros.competencia);
+  const competenciasFiltradas = competencias.filter((competencia) => {
+    const atendeCompetencia =
+      !competenciaFiltro || competencia.competencia === competenciaFiltro;
+    const atendeSituacao =
+      !filtros.situacao || competencia.situacao === filtros.situacao;
+
+    return atendeCompetencia && atendeSituacao;
+  });
+
+  const competenciasResults = {
+    ...createResults(competenciasFiltradas),
+    totalPages: Math.max(1, Math.ceil(competenciasFiltradas.length / 10)),
+    totalRecords: competenciasFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+
+  const renderCompetenciaSituacaoBadge = (
+    situacao: FolhaCompetenciaSituacao,
+  ) => <BadgeSeplag {...folhaCompetenciaSituacaoMeta[situacao]} size="md" />;
+
+  const getFormErrorMessage = (name: keyof FolhaCompetenciaForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+
+  const abrirCadastroCompetencia = () => {
+    setFormFeedback("");
+    resetForm({
+      codigo: "",
+      nome: "",
+      competencia: "",
+      mesAnoReferencia: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "ATIVA",
+      observacao: "",
+    });
+    setModalCadastroAberto(true);
+  };
+
+  const salvarCompetencia = (data: FolhaCompetenciaForm) => {
+    const competencia = normalizeMesAno(data.competencia);
+    const dataInicio = data.dataInicio?.trim() ?? "";
+    const dataFim = data.dataFim?.trim() ?? "";
+    const dataInicioDate = parseDataBr(dataInicio);
+    const dataFimDate = parseDataBr(dataFim);
+
+    if (!competencia || !dataInicio || !dataFim) {
+      setFormFeedback("Preencha competência, data início e data fim.");
+      return;
+    }
+
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
+      return;
+    }
+
+    if (!dataInicioDate || !dataFimDate) {
+      setFormFeedback("Informe data início e data fim no formato DD/MM/AAAA.");
+      return;
+    }
+
+    if (dataInicioDate > dataFimDate) {
+      setFormFeedback("Data início não pode ser maior que data fim.");
+      return;
+    }
+
+    const duplicada = competencias.some((item) => item.competencia === competencia);
+
+    if (duplicada) {
+      setFormFeedback("Já existe competência cadastrada para este mês/ano.");
+      return;
+    }
+
+    if (competencias.some((item) => item.situacao === "ATIVA")) {
+      setFormFeedback("Já existe uma competência ativa. Feche a competência atual antes de abrir outra.");
+      return;
+    }
+
+    const concorrente = competencias.some((item) => {
+      const inicioExistente = parseDataBr(item.dataInicio);
+      const fimExistente = parseDataBr(item.dataFim);
+      if (!inicioExistente || !fimExistente) return false;
+
+      return dataInicioDate <= fimExistente && dataFimDate >= inicioExistente;
+    });
+
+    if (concorrente) {
+      setFormFeedback("O período informado concorre com uma competência já cadastrada.");
+      return;
+    }
+
+    const novaCompetencia = folhaPagamentoService.criarCompetencia({
+      ...data,
+      codigo: `COMP-${competencia}`,
+      nome: `Competência ${formatMesAno(competencia)}`,
+      competencia,
+      mesAnoReferencia: competencia,
+      dataInicio,
+      dataFim,
+      situacao: "ATIVA",
+    });
+
+    setCompetencias((current) => [novaCompetencia, ...current]);
+    setModalCadastroAberto(false);
+    setFeedback("Competência cadastrada com sucesso.");
+  };
+
+  const fecharCompetencia = () => {
+    if (!competenciaParaFechar) return;
+
+    const proximaCompetencia = getProximaCompetencia(competenciaParaFechar);
+    const competenciaExistente = competencias.find(
+      (competencia) =>
+        competencia.competencia === proximaCompetencia.competencia,
+    );
+
+    setCompetencias((current) => {
+      const currentFechadas = current.map((competencia) =>
+        competencia.id === competenciaParaFechar.id
+          ? { ...competencia, situacao: "FECHADA" as FolhaCompetenciaSituacao }
+          : competencia,
+      );
+
+      if (competenciaExistente) {
+        return currentFechadas.map((competencia) =>
+          competencia.id === competenciaExistente.id
+            ? { ...competencia, situacao: "ATIVA" as FolhaCompetenciaSituacao }
+            : competencia,
+        );
+      }
+
+      const novaCompetencia: FolhaCompetenciaRow = {
+        id: Math.max(...current.map((competencia) => competencia.id), 0) + 1,
+        codigo: `COMP-${proximaCompetencia.competencia}`,
+        nome: `Competência ${formatMesAno(proximaCompetencia.competencia)}`,
+        competencia: proximaCompetencia.competencia,
+        mesAnoReferencia: proximaCompetencia.competencia,
+        dataInicio: proximaCompetencia.dataInicio,
+        dataFim: proximaCompetencia.dataFim,
+        situacao: "ATIVA",
+        observacao: "Competência aberta automaticamente após fechamento da competência anterior.",
+        totalFolhas: 0,
+        createdAt: "01/06/2026 09:00",
+      };
+
+      return [novaCompetencia, ...currentFechadas];
+    });
+
+    setFeedback("Competência fechada com sucesso. A competência do próximo mês foi aberta automaticamente.");
+    setCompetenciaParaFechar(null);
+  };
+
+  const competenciaColumns: ColumnMetaSeplag<FolhaCompetenciaRow>[] = [
+    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
+    { field: "dataInicio", header: "Data início" },
+    { field: "dataFim", header: "Data fim" },
+    { header: "Situação", body: (row) => renderCompetenciaSituacaoBadge(row.situacao) },
+  ];
+
+  const renderAcoesCompetencia = (row: FolhaCompetenciaRow) => (
+    <div className="prototype-row-actions">
+      {row.situacao === "ATIVA" ? (
+        <BotaoIconSeplag
+          type="button"
+          icon="pi pi-lock"
+          tooltip="Fechar competência"
+          onClick={() => setCompetenciaParaFechar(row)}
+        />
+      ) : null}
+    </div>
+  );
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Configuração de Competência"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
+            <TextFieldSeplag
+              name="competencia"
+              control={control}
+              label="Competência"
+              placeholder="MM/AAAA"
+              cols="12 6 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 4"
+              options={folhaCompetenciaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    competencia: "",
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-actions">
+            <BotaoSeplag
+              type="button"
+              label="Nova Competência"
+              icon="pi pi-plus"
+              onClick={abrirCadastroCompetencia}
+            />
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={competenciasResults}
+              rows={10}
+              rowsPerPage={[10, 20, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={competenciaColumns}
+              hasEventoAcao
+              renderBotoes={renderAcoesCompetencia}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalCadastroAberto}
+          titulo="Cadastrar - Competência da Folha"
+          fechar={() => setModalCadastroAberto(false)}
+          labelAcao="Salvar"
+          iconAcao="pi pi-save"
+          funcAcao={handleSubmit(salvarCompetencia)}
+          tamanho="760px"
+        >
+          <div className="col-12 prototype-folha-pagamento-form">
+            {formFeedback ? (
+              <div className="prototype-validation-panel">{formFeedback}</div>
+            ) : null}
+            <div className="grid prototype-category-form-fields">
+              <TextFieldSeplag
+                name="competencia"
+                control={formControl}
+                label="Competência"
+                placeholder="MM/AAAA"
+                cols="12 12 4"
+                required
+                rules={{
+                  validate: (value) =>
+                    isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                }}
+                getFormErrorMessage={() => getFormErrorMessage("competencia")}
+              />
+              <TextFieldSeplag
+                name="dataInicio"
+                control={formControl}
+                label="Data início"
+                placeholder="DD/MM/AAAA"
+                cols="12 12 4"
+                required
+                getFormErrorMessage={() => getFormErrorMessage("dataInicio")}
+              />
+              <TextFieldSeplag
+                name="dataFim"
+                control={formControl}
+                label="Data fim"
+                placeholder="DD/MM/AAAA"
+                cols="12 12 4"
+                required
+                getFormErrorMessage={() => getFormErrorMessage("dataFim")}
+              />
+              <TextAreaFieldSeplag
+                name="observacao"
+                control={formControl}
+                label="Observação"
+                cols="12"
+                rows={3}
+                maxLength={500}
+                getFormErrorMessage={() => getFormErrorMessage("observacao")}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={Boolean(competenciaParaFechar)}
+          titulo="Fechar Competência"
+          fechar={() => setCompetenciaParaFechar(null)}
+          labelFechar="Cancelar"
+          iconFechar="pi pi-times"
+          labelAcao="Confirmar fechamento"
+          iconAcao="pi pi-lock"
+          funcAcao={fecharCompetencia}
+          tamanho="780px"
+        >
+          <div className="col-12 prototype-folha-pagamento-form prototype-fechar-competencia-modal">
+            <div className="prototype-validation-panel prototype-fechar-competencia-alert">
+              Ao confirmar, a competência atual será fechada e uma nova competência será aberta automaticamente para o próximo mês.
+            </div>
+            {competenciaParaFechar ? (
+              <div className="prototype-fechar-competencia-summary">
+                <div>
+                  <span>Competência atual</span>
+                  <strong>{formatMesAno(competenciaParaFechar.competencia)}</strong>
+                  <p>{competenciaParaFechar.dataInicio} a {competenciaParaFechar.dataFim}</p>
+                </div>
+                <div>
+                  <span>Próxima competência</span>
+                  <strong>{formatMesAno(getProximaCompetencia(competenciaParaFechar).competencia)}</strong>
+                  <p>
+                    {getProximaCompetencia(competenciaParaFechar).dataInicio} a{" "}
+                    {getProximaCompetencia(competenciaParaFechar).dataFim}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaPagamentoFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [formFeedback, setFormFeedback] = useState("");
+  const [accordionAberto, setAccordionAberto] = useState({
+    dados: true,
+    abrangencia: true,
+    parametros: true,
+    observacao: true,
+  });
+  const competenciasFolha = folhaPagamentoService.listarCompetencias();
+  const folhaEdicaoId = id ? Number(id) : undefined;
+  const folhaEdicao = useMemo(
+    () =>
+      folhaEdicaoId && Number.isFinite(folhaEdicaoId)
+        ? folhaPagamentoService.buscarFolhaPorId(folhaEdicaoId)
+        : undefined,
+    [folhaEdicaoId],
+  );
+  const isFolhaEdicao = Boolean(id && folhaEdicao);
+  const situacoesComVersionamento: FolhaPagamentoSituacao[] = [
+    "PROCESSO_COM_SUCESSO",
+    "PROCESSO_COM_ERRO",
+    "PROCESSO_COM_FALHAS",
+  ];
+  const folhaPermiteEdicaoDireta =
+    folhaEdicao?.situacao === "RASCUNHO" || folhaEdicao?.situacao === "ABERTO";
+  const folhaPermiteVersionamento = folhaEdicao
+    ? situacoesComVersionamento.includes(folhaEdicao.situacao)
+    : false;
+  const folhaBloqueadaParaAlteracao = Boolean(
+    isFolhaEdicao && !folhaPermiteEdicaoDireta && !folhaPermiteVersionamento,
+  );
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
+      grupoFolhaId: 0,
       nome: "",
       numero: "",
       mesAnoReferencia: "",
@@ -8884,12 +10014,17 @@ export function PrototiposFolhaPagamentoFormPage() {
       totalMesesRetroagir: 0,
     },
   });
-
   const normalizeMesAno = (value?: string) => {
     const cleanValue = value?.trim() ?? "";
     const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
     if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
     return cleanValue;
+  };
+
+  const formatMesAno = (value?: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
   };
 
   const isMesAnoValido = (value?: string) => {
@@ -8904,6 +10039,87 @@ export function PrototiposFolhaPagamentoFormPage() {
   };
 
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+  const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
+    Boolean(
+      data.orgaos?.length ||
+        data.regimeJuridico ||
+        data.categoria ||
+        data.cargo ||
+        data.grupoEleitos,
+    );
+  const competenciaVigente = competenciasFolha.find(
+    (competencia) => competencia.situacao === "ATIVA",
+  );
+  const competenciaDigitada = watch("competencia");
+  const competenciaNormalizada = normalizeMesAno(competenciaDigitada);
+  const competenciaValida = isMesAnoValido(competenciaDigitada);
+  const competenciaCadastrada = competenciaValida
+    ? competenciasFolha.find(
+        (competencia) => competencia.competencia === competenciaNormalizada,
+      )
+    : undefined;
+  const deveExibirAvisoCompetencia =
+    Boolean(competenciaDigitada?.trim()) && competenciaValida;
+  const formTitle = isFolhaEdicao
+    ? folhaPermiteVersionamento
+      ? "Versionar - Folha de Pagamento"
+      : "Alterar - Folha de Pagamento"
+    : "Cadastrar - Folha de Pagamento";
+
+  useEffect(() => {
+    if (!folhaEdicao) return;
+
+    reset({
+      competenciaId: folhaEdicao.competenciaId,
+      grupoFolhaId: folhaEdicao.grupoFolhaId,
+      nome: folhaEdicao.nome,
+      numero: folhaEdicao.numero,
+      mesAnoReferencia: formatMesAno(folhaEdicao.mesAnoReferencia),
+      competencia: formatMesAno(folhaEdicao.competencia),
+      observacao: folhaEdicao.observacao,
+      orgaos: folhaEdicao.orgaos,
+      regimeJuridico: folhaEdicao.regimeJuridico,
+      categoria: folhaEdicao.categoria,
+      cargo: folhaEdicao.cargo,
+      grupoEleitos: folhaEdicao.grupoEleitos,
+      totalMesesAdiantar: folhaEdicao.totalMesesAdiantar,
+      totalMesesRetroagir: folhaEdicao.totalMesesRetroagir,
+    });
+  }, [folhaEdicao, reset]);
+
+  const toggleAccordionFolha = (key: keyof typeof accordionAberto) => {
+    setAccordionAberto((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  };
+
+  const renderAccordionFolha = (
+    key: keyof typeof accordionAberto,
+    title: string,
+    children: ReactNode,
+  ) => (
+    <section className="prototype-folha-form-accordion-item">
+      <button
+        type="button"
+        className="prototype-folha-form-accordion-header"
+        onClick={() => toggleAccordionFolha(key)}
+      >
+        <span>{title}</span>
+        <i
+          className={`pi pi-chevron-down prototype-folha-form-accordion-chevron ${
+            accordionAberto[key]
+              ? "prototype-folha-form-accordion-chevron--open"
+              : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+      {accordionAberto[key] ? (
+        <div className="prototype-folha-form-accordion-content">{children}</div>
+      ) : null}
+    </section>
+  );
 
   const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
     const message = errors[name]?.message;
@@ -8919,21 +10135,14 @@ export function PrototiposFolhaPagamentoFormPage() {
       return { tab: "dados", message: "Número da folha é obrigatório." };
     }
 
-    if (!isTextoPreenchido(data.mesAnoReferencia)) {
-      return {
-        tab: "dados",
-        message: "Mês/ano de referência é obrigatório.",
-      };
-    }
-
     if (!isTextoPreenchido(data.competencia)) {
       return { tab: "dados", message: "Competência é obrigatória." };
     }
 
-    if (!data.orgaos?.length) {
+    if (!temAbrangenciaFolha(data)) {
       return {
         tab: "abrangencia",
-        message: "Informe ao menos um órgão para a abrangência da folha.",
+        message: "Informe ao menos um critério de abrangência da folha.",
       };
     }
 
@@ -8960,7 +10169,17 @@ export function PrototiposFolhaPagamentoFormPage() {
     return null;
   };
 
-  const salvarFolha = (data: FolhaPagamentoForm) => {
+  const salvarFolha = (
+    data: FolhaPagamentoForm,
+    situacao: FolhaPagamentoSituacao,
+  ) => {
+    if (folhaBloqueadaParaAlteracao) {
+      setFormFeedback(
+        "Não é possível alterar ou versionar folha aguardando processamento, em processamento ou cancelada.",
+      );
+      return;
+    }
+
     const validacaoObrigatorios = validarObrigatoriosFolha(data);
 
     if (validacaoObrigatorios) {
@@ -8971,13 +10190,13 @@ export function PrototiposFolhaPagamentoFormPage() {
     const orgaos = data.orgaos ?? [];
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
-    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
     const competencia = normalizeMesAno(data.competencia);
+    const mesAnoReferencia = competencia;
     const nome = data.nome?.trim() ?? "";
     const numero = data.numero?.trim() ?? "";
 
-    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
-      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
       return;
     }
 
@@ -8986,20 +10205,32 @@ export function PrototiposFolhaPagamentoFormPage() {
       return;
     }
 
-    const folhaDuplicada = folhaPagamentoService.listarFolhas().some((folha) => (
-      folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
-      folha.mesAnoReferencia === mesAnoReferencia &&
-      folha.competencia === competencia &&
-      folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
-        orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
-    ));
+    const folhaDuplicada = folhaPagamentoService.listarFolhas().some((folha) => {
+      if (isFolhaEdicao && folha.id === folhaEdicao?.id) return false;
+      if (
+        folhaPermiteVersionamento &&
+        folhaEdicao &&
+        folha.numero.trim().toLowerCase() === folhaEdicao.numero.trim().toLowerCase() &&
+        folha.competencia === folhaEdicao.competencia
+      ) {
+        return false;
+      }
+
+      return (
+        folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
+        folha.mesAnoReferencia === mesAnoReferencia &&
+        folha.competencia === competencia &&
+        folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
+          orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
+      );
+    });
 
     if (folhaDuplicada) {
       setFormFeedback("Já existe folha cadastrada para a combinação de número, referência, competência e órgão(s).");
       return;
     }
 
-    folhaPagamentoService.criarFolha({
+    const payload = {
       ...data,
       nome,
       numero,
@@ -9008,7 +10239,15 @@ export function PrototiposFolhaPagamentoFormPage() {
       orgaos,
       totalMesesAdiantar,
       totalMesesRetroagir,
-    });
+      situacao,
+    };
+
+    if (isFolhaEdicao && folhaEdicao && folhaPermiteEdicaoDireta) {
+      folhaPagamentoService.atualizarFolha(folhaEdicao.id, payload);
+    } else {
+      folhaPagamentoService.criarFolha(payload);
+    }
+
     navigate(FOLHA_PAGAMENTO_BASE_PATH);
   };
 
@@ -9024,29 +10263,42 @@ export function PrototiposFolhaPagamentoFormPage() {
       ambienteSistema="Teste"
       menuItems={menuFolha}
     >
-      <form onSubmit={handleSubmit(salvarFolha, handleFolhaFormInvalido)}>
+      <form
+        onSubmit={handleSubmit(
+          (data) => salvarFolha(data, "RASCUNHO"),
+          handleFolhaFormInvalido,
+        )}
+      >
         <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
           <CardSeplag
-            title="Cadastrar - Folha de Pagamento"
+            title={formTitle}
             cols="12"
             cardHeaderClassNames="prototype-regime-card"
+            actions={
+              <div className="prototype-competencia-vigente">
+                Competência vigente:{" "}
+                <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+              </div>
+            }
           >
             <div className="col-12 prototype-folha-pagamento-form">
               {formFeedback ? (
                 <div className="prototype-validation-panel">{formFeedback}</div>
               ) : null}
+              {folhaPermiteVersionamento ? (
+                <div className="prototype-validation-panel prototype-validation-panel--info">
+                  Esta folha já foi processada. Ao salvar, o sistema cria uma nova versão para preservar o histórico da versão anterior.
+                </div>
+              ) : null}
+              {folhaBloqueadaParaAlteracao ? (
+                <div className="prototype-validation-panel">
+                  Esta folha não pode ser alterada nem versionada na situação atual.
+                </div>
+              ) : null}
 
-              <section className="prototype-folha-form-section">
-                <h3>Dados da Folha</h3>
-                <div className="grid prototype-category-form-fields">
-                  <TextFieldSeplag
-                    name="nome"
-                    control={control}
-                    label="Nome da folha"
-                    cols="12 12 6"
-                    required
-                    getFormErrorMessage={() => getFormErrorMessage("nome")}
-                  />
+              <div className="prototype-folha-form-accordion">
+                {renderAccordionFolha("dados", "Dados da Folha", (
+                  <div className="grid prototype-category-form-fields">
                   <TextFieldSeplag
                     name="numero"
                     control={control}
@@ -9056,19 +10308,12 @@ export function PrototiposFolhaPagamentoFormPage() {
                     getFormErrorMessage={() => getFormErrorMessage("numero")}
                   />
                   <TextFieldSeplag
-                    name="mesAnoReferencia"
+                    name="nome"
                     control={control}
-                    label="Mês/ano de referência"
-                    placeholder="MM/AAAA"
-                    cols="12 12 3"
+                    label="Nome da folha"
+                    cols="12 12 6"
                     required
-                    rules={{
-                      validate: (value) =>
-                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
-                    }}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("mesAnoReferencia")
-                    }
+                    getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
                   <TextFieldSeplag
                     name="competencia"
@@ -9085,29 +10330,31 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("competencia")
                     }
                   />
-                  <TextAreaFieldSeplag
-                    name="observacao"
-                    control={control}
-                    label="Observação"
-                    cols="12"
-                    rows={4}
-                    maxLength={500}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("observacao")
-                    }
-                  />
-                </div>
-              </section>
+                  {deveExibirAvisoCompetencia ? (
+                    <div
+                      className={`col-12 prototype-competencia-aviso ${
+                        competenciaCadastrada
+                          ? competenciaCadastrada.situacao === "ATIVA"
+                            ? "prototype-competencia-aviso--ok"
+                            : "prototype-competencia-aviso--closed"
+                          : "prototype-competencia-aviso--warning"
+                      }`}
+                    >
+                      {competenciaCadastrada
+                        ? `Competência: ${formatMesAno(competenciaCadastrada.competencia)} está ${folhaCompetenciaSituacaoMeta[competenciaCadastrada.situacao].label.toLowerCase()}.`
+                        : "A competência informada ainda não está cadastrada. A folha ficará aguardando a abertura dessa competência para processamento."}
+                    </div>
+                  ) : null}
+                  </div>
+                ))}
 
-              <section className="prototype-folha-form-section">
-                <h3>Abrangência</h3>
-                <div className="grid prototype-category-form-fields">
+                {renderAccordionFolha("abrangencia", "Abrangência", (
+                  <div className="grid prototype-category-form-fields">
                   <MultiSelectFieldSeplag
                     name="orgaos"
                     control={control}
                     label="Órgãos"
                     cols="12 12 6"
-                    required
                     options={folhaPagamentoOrgaoOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -9160,12 +10407,11 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("grupoEleitos")
                     }
                   />
-                </div>
-              </section>
+                  </div>
+                ))}
 
-              <section className="prototype-folha-form-section">
-                <h3>Parâmetros de Cálculo</h3>
-                <div className="grid prototype-category-form-fields">
+                {renderAccordionFolha("parametros", "Parâmetros de Cálculo", (
+                  <div className="grid prototype-category-form-fields">
                   <NumberFieldSeplag
                     name="totalMesesAdiantar"
                     control={control}
@@ -9188,15 +10434,51 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("totalMesesRetroagir")
                     }
                   />
-                </div>
-              </section>
+                  </div>
+                ))}
+
+                {renderAccordionFolha("observacao", "Observação", (
+                  <div className="grid prototype-category-form-fields">
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("observacao")
+                    }
+                  />
+                  </div>
+                ))}
+              </div>
 
               <div className="prototype-category-form-footer">
                 <BotaoVoltarSeplag
                   type="button"
                   onClick={() => navigate(FOLHA_PAGAMENTO_BASE_PATH)}
                 />
-                <BotaoSalvarSeplag type="submit" />
+                <BotaoSalvarSeplag
+                  type="button"
+                  label="Salvar Rascunho"
+                  onClick={handleSubmit(
+                    (data) => salvarFolha(data, "RASCUNHO"),
+                    handleFolhaFormInvalido,
+                  )}
+                />
+                <BotaoSeplag
+                  type="button"
+                  variant="save"
+                  label="Publicar"
+                  icon="pi pi-send"
+                  iconPos="left"
+                  raised
+                  onClick={handleSubmit(
+                    (data) => salvarFolha(data, "ABERTO"),
+                    handleFolhaFormInvalido,
+                  )}
+                />
               </div>
             </div>
           </CardSeplag>
@@ -9240,31 +10522,7 @@ export function PrototiposFolhaPagamentoLogPage() {
 
   const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
     const meta = folhaPagamentoSituacaoMeta[situacao];
-    const label =
-      situacao === "PROCESSADA_COM_ALERTA"
-        ? "Processada\ncom alerta"
-        : situacao === "PROCESSADA_COM_ERRO"
-          ? "Processada\ncom erro"
-          : meta.label;
-
-    return (
-      <BadgeSeplag
-        {...meta}
-        label={label}
-        size="md"
-        customStyle={
-          situacao === "PROCESSADA_COM_ALERTA" ||
-          situacao === "PROCESSADA_COM_ERRO"
-            ? {
-                whiteSpace: "pre-line",
-                lineHeight: 1.12,
-                textAlign: "center",
-                paddingInline: 12,
-              }
-            : undefined
-        }
-      />
-    );
+    return <BadgeSeplag {...meta} size="md" />;
   };
 
   const renderExecucaoSituacaoBadge = (
@@ -9363,9 +10621,8 @@ export function PrototiposFolhaPagamentoLogPage() {
                   <p>{folhaSelecionada?.nome ?? "-"}</p>
                 </div>
                 <div>
-                  <span>Referência</span>
-                  <strong>{formatMesAno(folhaSelecionada?.mesAnoReferencia)}</strong>
-                  <p>Competência {formatMesAno(folhaSelecionada?.competencia)}</p>
+                  <span>Competência</span>
+                  <strong>{formatMesAno(folhaSelecionada?.competencia)}</strong>
                 </div>
                 <div>
                   <span>Situação da folha</span>
@@ -9569,6 +10826,9 @@ export function PrototiposFolhaPagamentoPage() {
   const [execucoes, setExecucoes] = useState<FolhaPagamentoExecucaoRow[]>(
     () => folhaPagamentoService.listarExecucoes(),
   );
+  const [folhasExpandidas, setFolhasExpandidas] = useState<Record<string, boolean>>(
+    {},
+  );
   const [pessoaLogs] = useState<FolhaPagamentoPessoaLogRow[]>(() =>
     folhaPagamentoService.listarPessoaLogs(),
   );
@@ -9605,6 +10865,8 @@ export function PrototiposFolhaPagamentoPage() {
     formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
+      competenciaId: 0,
+      grupoFolhaId: 0,
       nome: "",
       numero: "",
       mesAnoReferencia: "",
@@ -9619,6 +10881,11 @@ export function PrototiposFolhaPagamentoPage() {
       totalMesesRetroagir: 0,
     },
   });
+  const gruposFolha = gruposCalculoMock;
+  const getGrupoFolhaNome = (grupoFolhaId?: number) => {
+    const grupo = gruposFolha.find((item) => item.id === grupoFolhaId);
+    return grupo ? grupo.grupo : "-";
+  };
   const {
     control: logControl,
     reset: resetLog,
@@ -9655,22 +10922,18 @@ export function PrototiposFolhaPagamentoPage() {
   const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
   const termoBusca =
     termoBuscaDigitado.length >= 3 ? termoBuscaDigitado : "";
-  const mesAnoReferenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
+  const competenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
   const folhasFiltradas = folhas.filter((folha) => {
     const atendeTermo =
       !termoBusca ||
       folha.numero.toLowerCase().includes(termoBusca) ||
       folha.nome.toLowerCase().includes(termoBusca);
-    const atendeOrgao =
-      !filtros.orgaos?.length ||
-      filtros.orgaos.some((orgao) => folha.orgaos.includes(orgao));
-    const atendeMes =
-      !mesAnoReferenciaFiltro ||
-      folha.mesAnoReferencia === mesAnoReferenciaFiltro;
+    const atendeCompetencia =
+      !competenciaFiltro || folha.competencia === competenciaFiltro;
     const atendeSituacao =
       !filtros.situacao || folha.situacao === filtros.situacao;
 
-    return atendeTermo && atendeOrgao && atendeMes && atendeSituacao;
+    return atendeTermo && atendeCompetencia && atendeSituacao;
   });
 
   const folhaResults = {
@@ -9681,33 +10944,45 @@ export function PrototiposFolhaPagamentoPage() {
     sizePage: 10,
   };
 
+  const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
+    `${folha.numero}|${folha.competencia}`;
+
+  const folhasAgrupadas = Array.from(
+    folhasFiltradas.reduce((map, folha) => {
+      const key = getFolhaVersaoKey(folha);
+      const grupo = map.get(key) ?? [];
+      grupo.push(folha);
+      map.set(key, grupo);
+      return map;
+    }, new Map<string, FolhaPagamentoRow[]>()),
+  ).map(([key, versoes]) => {
+    const versoesOrdenadas = [...versoes].sort((a, b) => b.id - a.id);
+    return {
+      key,
+      folhaAtual: versoesOrdenadas[0],
+      versoes: versoesOrdenadas,
+    };
+  });
+
+  const toggleFolhaVersoes = (key: string) => {
+    setFolhasExpandidas((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  };
+
+  const getFolhaVersaoLabel = (
+    folha: FolhaPagamentoRow,
+    versoes: FolhaPagamentoRow[],
+  ) => {
+    const versoesAsc = [...versoes].sort((a, b) => a.id - b.id);
+    const index = versoesAsc.findIndex((versao) => versao.id === folha.id);
+    return `V${index + 1}`;
+  };
+
   const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
     const meta = folhaPagamentoSituacaoMeta[situacao];
-    const label =
-      situacao === "PROCESSADA_COM_ALERTA"
-        ? "Processada\ncom alerta"
-        : situacao === "PROCESSADA_COM_ERRO"
-          ? "Processada\ncom erro"
-          : meta.label;
-
-    return (
-      <BadgeSeplag
-        {...meta}
-        label={label}
-        size="md"
-        customStyle={
-          situacao === "PROCESSADA_COM_ALERTA" ||
-          situacao === "PROCESSADA_COM_ERRO"
-            ? {
-                whiteSpace: "pre-line",
-                lineHeight: 1.12,
-                textAlign: "center",
-                paddingInline: 12,
-              }
-            : undefined
-        }
-      />
-    );
+    return <BadgeSeplag {...meta} size="md" />;
   };
 
   const renderExecucaoSituacaoBadge = (
@@ -9736,19 +11011,36 @@ export function PrototiposFolhaPagamentoPage() {
     const [ano, mes] = value.split("-");
     return mes && ano ? `${mes}/${ano}` : value;
   };
+  const competenciaVigente = folhaPagamentoService
+    .listarCompetencias()
+    .find((competencia) => competencia.situacao === "ATIVA");
 
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+  const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
+    Boolean(
+      data.orgaos?.length ||
+        data.regimeJuridico ||
+        data.categoria ||
+        data.cargo ||
+        data.grupoEleitos,
+    );
 
   const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTO";
+
+  const folhaPodeEditarOuVersionar = (folha: FolhaPagamentoRow) =>
+    folhaPodeEditar(folha) ||
+    folha.situacao === "PROCESSO_COM_SUCESSO" ||
+    folha.situacao === "PROCESSO_COM_ERRO" ||
+    folha.situacao === "PROCESSO_COM_FALHAS";
 
   const folhaPodeProcessar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTO";
 
   const getMensagemBloqueioEdicao = (folha: FolhaPagamentoRow) =>
-    folhaPodeEditar(folha)
+    folhaPodeEditarOuVersionar(folha)
       ? ""
-      : "Não é possível editar uma folha em fila, em processamento, processada, bloqueada ou cancelada.";
+      : "Não é possível editar ou versionar uma folha aguardando processamento, em processamento ou cancelada.";
 
   const getMensagemBloqueioProcessamento = (folha: FolhaPagamentoRow) =>
     folhaPodeProcessar(folha)
@@ -9770,13 +11062,6 @@ export function PrototiposFolhaPagamentoPage() {
       };
     }
 
-    if (!isTextoPreenchido(data.mesAnoReferencia)) {
-      return {
-        tab: "dados",
-        message: "Mês/ano de referência é obrigatório.",
-      };
-    }
-
     if (!isTextoPreenchido(data.competencia)) {
       return {
         tab: "dados",
@@ -9784,10 +11069,10 @@ export function PrototiposFolhaPagamentoPage() {
       };
     }
 
-    if (!data.orgaos?.length) {
+    if (!temAbrangenciaFolha(data)) {
       return {
         tab: "abrangencia",
-        message: "Informe ao menos um órgão para a abrangência da folha.",
+        message: "Informe ao menos um critério de abrangência da folha.",
       };
     }
 
@@ -9820,14 +11105,11 @@ export function PrototiposFolhaPagamentoPage() {
     if (bloqueioSituacao) return bloqueioSituacao;
     if (!isTextoPreenchido(folha.nome)) return "Nome da folha é obrigatório.";
     if (!isTextoPreenchido(folha.numero)) return "Número da folha é obrigatório.";
-    if (!isMesAnoValido(folha.mesAnoReferencia)) {
-      return "Mês/ano de referência é obrigatório e deve estar no formato MM/AAAA.";
-    }
     if (!isMesAnoValido(folha.competencia)) {
       return "Competência é obrigatória e deve estar no formato MM/AAAA.";
     }
-    if (!folha.orgaos.length) {
-      return "Informe ao menos um órgão antes de processar a folha.";
+    if (!temAbrangenciaFolha(folha)) {
+      return "Informe ao menos um critério de abrangência antes de processar a folha.";
     }
     if (folha.totalMesesAdiantar < 0 || folha.totalMesesRetroagir < 0) {
       return "Total de meses a adiantar e retroagir não pode ser menor que zero.";
@@ -9853,25 +11135,7 @@ export function PrototiposFolhaPagamentoPage() {
     }
 
     setFeedback("");
-    setFormFeedback("");
-    setFolhaSelecionada(folha);
-    setFormMode("edit");
-    setActiveTab("dados");
-    resetForm({
-      nome: folha.nome,
-      numero: folha.numero,
-      mesAnoReferencia: formatMesAno(folha.mesAnoReferencia),
-      competencia: formatMesAno(folha.competencia),
-      observacao: folha.observacao,
-      orgaos: folha.orgaos,
-      regimeJuridico: folha.regimeJuridico,
-      categoria: folha.categoria,
-      cargo: folha.cargo,
-      grupoEleitos: folha.grupoEleitos,
-      totalMesesAdiantar: folha.totalMesesAdiantar,
-      totalMesesRetroagir: folha.totalMesesRetroagir,
-    });
-    setModalFormularioAberto(true);
+    navigate(`${FOLHA_PAGAMENTO_BASE_PATH}/${folha.id}/editar`);
   };
 
   const abrirDetalheFolha = (folha: FolhaPagamentoRow) => {
@@ -9891,13 +11155,13 @@ export function PrototiposFolhaPagamentoPage() {
 
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
-    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
     const competencia = normalizeMesAno(data.competencia);
+    const mesAnoReferencia = competencia;
     const nome = data.nome?.trim() ?? "";
     const numero = data.numero?.trim() ?? "";
 
-    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
-      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
       setActiveTab("dados");
       return;
     }
@@ -9942,6 +11206,8 @@ export function PrototiposFolhaPagamentoPage() {
           folha.id === folhaSelecionada.id
             ? {
                 ...folha,
+                competenciaId: data.competenciaId ?? folha.competenciaId,
+                grupoFolhaId: data.grupoFolhaId ?? folha.grupoFolhaId,
                 nome,
                 numero,
                 mesAnoReferencia,
@@ -9973,6 +11239,8 @@ export function PrototiposFolhaPagamentoPage() {
       setFolhas((current) => [
         {
           id: Math.max(...current.map((folha) => folha.id), 0) + 1,
+          competenciaId: data.competenciaId ?? 0,
+          grupoFolhaId: data.grupoFolhaId ?? 0,
           nome,
           numero,
           mesAnoReferencia,
@@ -10012,7 +11280,7 @@ export function PrototiposFolhaPagamentoPage() {
     const novaExecucao: FolhaPagamentoExecucaoRow = {
       id: Math.max(...execucoes.map((execucao) => execucao.id), 1000) + 1,
       folhaPagamentoId: folha.id,
-      situacao: "EM_FILA",
+      situacao: "AGUARDANDO_PROCESSAMENTO",
       dataHoraInicio: "28/05/2026 10:00",
       dataHoraFim: "-",
       usuarioResponsavel: "ROBERTO JUNIOR",
@@ -10029,7 +11297,7 @@ export function PrototiposFolhaPagamentoPage() {
         item.id === folha.id
           ? {
               ...item,
-              situacao: "EM_FILA",
+              situacao: "AGUARDANDO_PROCESSAMENTO",
               ultimaExecucao: "28/05/2026 10:00",
             }
           : item,
@@ -10047,14 +11315,8 @@ export function PrototiposFolhaPagamentoPage() {
     { field: "numero", header: "Número da folha" },
     { field: "nome", header: "Nome da folha" },
     { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
-    { header: "Mês/ano ref.", body: (row) => formatMesAno(row.mesAnoReferencia) },
     { header: "Competência", body: (row) => formatMesAno(row.competencia) },
     { header: "Situação", body: (row) => renderFolhaSituacaoBadge(row.situacao) },
-    { field: "totalPessoas", header: "Total pessoas" },
-    { field: "totalSucesso", header: "Sucesso" },
-    { field: "totalAlerta", header: "Alerta" },
-    { field: "totalErro", header: "Erro" },
-    { field: "ultimaExecucao", header: "Última execução" },
   ];
 
   const execucoesFolha = folhaSelecionada
@@ -10146,11 +11408,13 @@ export function PrototiposFolhaPagamentoPage() {
         type="button"
         tooltip={
           folhaPodeEditar(folha)
-            ? "Editar"
-            : "Edição bloqueada pela situação da folha"
+            ? "Versionar"
+            : folhaPodeEditarOuVersionar(folha)
+              ? "Versionar"
+              : "Edição/versionamento bloqueado pela situação da folha"
         }
-        icon="pi pi-pencil"
-        disabled={!folhaPodeEditar(folha)}
+        icon="pi pi-copy"
+        disabled={!folhaPodeEditarOuVersionar(folha)}
         onClick={() => abrirEditarFolha(folha)}
       />
       <BotaoIconSeplag
@@ -10180,7 +11444,6 @@ export function PrototiposFolhaPagamentoPage() {
     const dadosFields: Array<keyof FolhaPagamentoForm> = [
       "nome",
       "numero",
-      "mesAnoReferencia",
       "competencia",
     ];
     const abrangenciaFields: Array<keyof FolhaPagamentoForm> = [
@@ -10213,6 +11476,12 @@ export function PrototiposFolhaPagamentoPage() {
           title="Folha de Pagamento"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <div className="prototype-competencia-vigente">
+              Competência vigente:{" "}
+              <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+            </div>
+          }
         >
           {feedback ? (
             <div className="prototype-validation-panel">{feedback}</div>
@@ -10226,30 +11495,19 @@ export function PrototiposFolhaPagamentoPage() {
               cols="12 12 4"
               getFormErrorMessage={() => null}
             />
-            <MultiSelectFieldSeplag
-              name="orgaos"
-              control={control}
-              label="Órgãos"
-              cols="12 12 3"
-              options={folhaPagamentoOrgaoOptions}
-              optionLabel="label"
-              optionValue="value"
-              selectedItemsLabel="{0} órgãos selecionados"
-              getFormErrorMessage={() => null}
-            />
             <TextFieldSeplag
               name="mesAnoReferencia"
               control={control}
-              label="Mês/ano de referência"
+              label="Competência"
               placeholder="MM/AAAA"
-              cols="12 6 2"
+              cols="12 6 3"
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
               name="situacao"
               control={control}
               label="Situação"
-              cols="12 6 2"
+              cols="12 6 3"
               options={folhaPagamentoSituacaoOptions}
               optionLabel="label"
               optionValue="value"
@@ -10263,7 +11521,6 @@ export function PrototiposFolhaPagamentoPage() {
                 onClick={() =>
                   reset({
                     termo: "",
-                    orgaos: [],
                     mesAnoReferencia: "",
                     situacao: "",
                   })
@@ -10282,20 +11539,127 @@ export function PrototiposFolhaPagamentoPage() {
           </div>
 
           <div className="col-12 prototype-folha-pagamento-table">
-            <TablePaginadoSeplag
-              dataKey="id"
-              data={folhaResults}
-              rows={10}
-              rowsPerPage={[10, 20, 50]}
-              paginator
-              lazy={false}
-              selectionMode={null}
-              columns={folhaColumns}
-              hasEventoAcao
-              handleView={abrirDetalheFolha}
-              renderBotoes={renderAcoesFolha}
-              handleOnPageChange={() => {}}
-            />
+            <div className="prototype-folha-versoes-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Número da folha</th>
+                    <th>Nome da folha</th>
+                    <th>Competência</th>
+                    <th className="prototype-folha-versoes-expand-heading" aria-label="Expandir versões" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {folhasAgrupadas.map(({ key, folhaAtual, versoes }) => {
+                    const isOpen = Boolean(folhasExpandidas[key]);
+                    return (
+                      <Fragment key={key}>
+                        <tr>
+                          <td>{folhaAtual.numero}</td>
+                          <td>{folhaAtual.nome}</td>
+                          <td>{formatMesAno(folhaAtual.competencia)}</td>
+                          <td className="prototype-folha-versoes-expand-cell">
+                            <button
+                              type="button"
+                              className="prototype-folha-versoes-toggle"
+                              onClick={() => toggleFolhaVersoes(key)}
+                              aria-label={
+                                isOpen
+                                  ? "Recolher versões da folha"
+                                  : "Expandir versões da folha"
+                              }
+                            >
+                              <i
+                                className={`pi pi-chevron-down ${
+                                  isOpen ? "is-open" : ""
+                                }`}
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </td>
+                        </tr>
+                        {isOpen ? (
+                          <tr className="prototype-folha-versoes-expanded-row">
+                            <td colSpan={4}>
+                              <div className="prototype-folha-versoes-panel">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Versão</th>
+                                      <th>Número</th>
+                                      <th>Nome</th>
+                                      <th>Competência</th>
+                                      <th>Órgão(s)</th>
+                                      <th>Situação</th>
+                                      <th>Ações</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {versoes.map((versao) => (
+                                      <tr key={versao.id}>
+                                        <td>
+                                          <strong>
+                                            {getFolhaVersaoLabel(versao, versoes)}
+                                          </strong>
+                                          {versao.id === folhaAtual.id ? (
+                                            <span className="prototype-folha-versoes-current">
+                                              Atual
+                                            </span>
+                                          ) : null}
+                                        </td>
+                                        <td>{versao.numero}</td>
+                                        <td>{versao.nome}</td>
+                                        <td>{formatMesAno(versao.competencia)}</td>
+                                        <td>{versao.orgaos.join(", ")}</td>
+                                        <td>{renderFolhaSituacaoBadge(versao.situacao)}</td>
+                                        <td>
+                                          <div className="prototype-folha-versoes-actions">
+                                            <BotaoIconSeplag
+                                              type="button"
+                                              tooltip="Detalhar"
+                                              icon="pi pi-eye"
+                                              onClick={() => abrirDetalheFolha(versao)}
+                                            />
+                                            {renderAcoesFolha(versao)}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {!folhasAgrupadas.length ? (
+                <div className="prototype-empty-content">
+                  Nenhuma folha encontrada para os filtros informados.
+                </div>
+              ) : null}
+
+              <div className="prototype-folha-versoes-pagination">
+                <button type="button" disabled aria-label="Primeira página">
+                  <i className="pi pi-angle-double-left" aria-hidden="true" />
+                </button>
+                <button type="button" disabled aria-label="Página anterior">
+                  <i className="pi pi-angle-left" aria-hidden="true" />
+                </button>
+                <span>1</span>
+                <button type="button" disabled aria-label="Próxima página">
+                  <i className="pi pi-angle-right" aria-hidden="true" />
+                </button>
+                <button type="button" disabled aria-label="Última página">
+                  <i className="pi pi-angle-double-right" aria-hidden="true" />
+                </button>
+                <span className="prototype-folha-versoes-page-size">10</span>
+              </div>
+            </div>
           </div>
         </CardSeplag>
 
@@ -10321,6 +11685,23 @@ export function PrototiposFolhaPagamentoPage() {
 
             {activeTab === "dados" && (
               <div className="grid prototype-category-form-fields">
+                <DropdownFieldSeplag
+                  name="grupoFolhaId"
+                  control={formControl}
+                  label="Grupo de cálculo origem"
+                  cols="12 12 6"
+                  required
+                  options={[
+                    { label: "Selecione...", value: 0 },
+                    ...gruposFolha.map((grupo) => ({
+                      label: `${grupo.codigo} - ${grupo.grupo}`,
+                      value: grupo.id,
+                    })),
+                  ]}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => getFormErrorMessage("grupoFolhaId")}
+                />
                 <TextFieldSeplag
                   name="nome"
                   control={formControl}
@@ -10336,21 +11717,6 @@ export function PrototiposFolhaPagamentoPage() {
                   cols="12 12 3"
                   required
                   getFormErrorMessage={() => getFormErrorMessage("numero")}
-                />
-                <TextFieldSeplag
-                  name="mesAnoReferencia"
-                  control={formControl}
-                  label="Mês/ano de referência"
-                  placeholder="MM/AAAA"
-                  cols="12 12 3"
-                  required
-                  rules={{
-                    validate: (value) =>
-                      isMesAnoValido(value) || "Informe no formato MM/AAAA.",
-                  }}
-                  getFormErrorMessage={() =>
-                    getFormErrorMessage("mesAnoReferencia")
-                  }
                 />
                 <TextFieldSeplag
                   name="competencia"
@@ -10384,7 +11750,6 @@ export function PrototiposFolhaPagamentoPage() {
                   control={formControl}
                   label="Órgãos"
                   cols="12 12 6"
-                  required
                   options={folhaPagamentoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10478,8 +11843,8 @@ export function PrototiposFolhaPagamentoPage() {
             <div className="col-12 prototype-catalogo-view-content">
               <p><strong>Número:</strong> {folhaSelecionada.numero}</p>
               <p><strong>Nome:</strong> {folhaSelecionada.nome}</p>
+              <p><strong>Grupo de cálculo origem:</strong> {getGrupoFolhaNome(folhaSelecionada.grupoFolhaId)}</p>
               <p><strong>Órgão(s):</strong> {folhaSelecionada.orgaos.join(", ")}</p>
-              <p><strong>Mês/ano de referência:</strong> {formatMesAno(folhaSelecionada.mesAnoReferencia)}</p>
               <p><strong>Competência:</strong> {formatMesAno(folhaSelecionada.competencia)}</p>
               <p><strong>Situação:</strong> {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}</p>
               <p><strong>Regime jurídico:</strong> {folhaSelecionada.regimeJuridico || "Todos"}</p>
@@ -10509,9 +11874,8 @@ export function PrototiposFolhaPagamentoPage() {
                   <p>{folhaSelecionada.nome}</p>
                 </div>
                 <div>
-                  <span>Referência</span>
-                  <strong>{formatMesAno(folhaSelecionada.mesAnoReferencia)}</strong>
-                  <p>Competência {formatMesAno(folhaSelecionada.competencia)}</p>
+                  <span>Competência</span>
+                  <strong>{formatMesAno(folhaSelecionada.competencia)}</strong>
                 </div>
                 <div>
                   <span>Situação atual</span>
@@ -10943,6 +12307,16 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
+  const amanha = getAmanhaDate();
+  const dataInicioV2 = formatDatePtBr(amanha);
+  const versoesGrupoAtual = grupo ? gruposCalculoVersoesMock[grupo.id] ?? [grupo] : [];
+  const grupoEstaPublicado =
+    Boolean(grupo) && grupo?.situacao !== STATUS_OPERACIONAL_VIGENCIA.AGENDADO;
+  const modoVersionamento = Boolean(isEdit && grupoEstaPublicado);
+  const versaoEmEdicao = modoVersionamento
+    ? versoesGrupoAtual.length + 1
+    : Math.max(versoesGrupoAtual.length, 1);
+  const [publicacaoConcluida, setPublicacaoConcluida] = useState(false);
   const [rubricasGerenciadas, setRubricasGerenciadas] = useState<GrupoCalculoRubricaGerenciada[]>(
     () =>
       isEdit
@@ -10954,9 +12328,22 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   );
   const [rubricaDragIndex, setRubricaDragIndex] = useState<number | null>(null);
   const [modalRubricasAberto, setModalRubricasAberto] = useState(false);
+  const [modalPublicacaoAberto, setModalPublicacaoAberto] = useState(false);
+  const [rubricaTermoBusca, setRubricaTermoBusca] = useState("");
   const [rubricasSelecionadasParaAdicionar, setRubricasSelecionadasParaAdicionar] =
     useState<number[]>([]);
-  const ultimaAbrangenciaKeyRef = useRef("");
+  const [credenciaisPublicacao, setCredenciaisPublicacao] = useState({
+    usuario: "",
+    senha: "",
+  });
+  const [dataInicioPublicacao, setDataInicioPublicacao] = useState(dataInicioV2);
+  const [publicacaoFeedback, setPublicacaoFeedback] = useState("");
+  const formularioBloqueado = publicacaoConcluida;
+  const credenciaisPublicacaoValidas = Boolean(
+    credenciaisPublicacao.usuario.trim() &&
+      credenciaisPublicacao.senha.trim() &&
+      dataInicioPublicacao.trim(),
+  );
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
@@ -10964,11 +12351,11 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       descricao: grupo
         ? `Configuração de cálculo para ${grupo.grupo.toLowerCase()}.`
         : "",
-      situacao: mapGrupoCalculoSituacao(grupo?.situacao),
+      situacao: modoVersionamento || grupoEstaPublicado ? SITUACAO_VIGENCIA.ATIVO : "RASCUNHO",
       dataAtivacao:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO
-          ? "01/06/2026"
-          : "08/05/2026",
+        modoVersionamento
+          ? dataInicioV2
+          : "",
       dataEncerramento:
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.ENCERRADO ||
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
@@ -10996,7 +12383,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       abrangenciaRegimeJuridico: "",
       abrangenciaTipoVinculo: "",
       abrangenciaInstituicao: "",
-      abrangenciaHerdarDe: "nenhum",
+      abrangenciaHerdarDe: grupo?.herdaDe && grupo.herdaDe !== "-" ? grupo.herdaDe : "nenhum",
       abrangenciaOrgao: "",
     },
   });
@@ -11021,13 +12408,20 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   };
 
   const handleRemoverRubricaGerenciada = (idRubrica: number) => {
-    setRubricasGerenciadas((current) =>
-      current.filter((rubrica) => rubrica.id !== idRubrica),
-    );
+    setRubricasGerenciadas((current) => {
+      const rubricaRemovida = current.find((rubrica) => rubrica.id === idRubrica);
+      if (!rubricaRemovida) return current;
+
+      return [
+        ...current.filter((rubrica) => rubrica.id !== idRubrica),
+        { ...rubricaRemovida, excluida: true },
+      ];
+    });
   };
 
   const handleAbrirModalAdicionarRubricas = () => {
     setRubricasSelecionadasParaAdicionar([]);
+    setRubricaTermoBusca("");
     setModalRubricasAberto(true);
   };
 
@@ -11053,115 +12447,130 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           origem: "manual" as const,
         }));
 
-      return [...current, ...novasRubricas];
+      const rubricasReativadas = current.map((rubrica) =>
+        rubricasSelecionadasParaAdicionar.includes(rubrica.id)
+          ? { ...rubrica, excluida: false, origem: "manual" as const }
+          : rubrica,
+      );
+
+      return [...rubricasReativadas, ...novasRubricas];
     });
     setModalRubricasAberto(false);
+    setRubricaTermoBusca("");
     setRubricasSelecionadasParaAdicionar([]);
   };
 
-  const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
-  const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
-  const abrangenciaInstituicao = watch("abrangenciaInstituicao");
-  const abrangenciaOrgao = watch("abrangenciaOrgao");
-  const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
-  const podeGerenciarRubricas = Boolean(
-    abrangenciaRegimeJuridico && abrangenciaTipoVinculo,
-  );
-  const abrangenciaKey = [
-    abrangenciaRegimeJuridico,
-    abrangenciaTipoVinculo,
-    abrangenciaInstituicao,
-    abrangenciaOrgao,
-    abrangenciaHerdarDe,
-  ].join("|");
+  const handleAbrirModalPublicacao = () => {
+    setCredenciaisPublicacao({ usuario: "", senha: "" });
+    setDataInicioPublicacao(dataInicioV2);
+    setPublicacaoFeedback("");
+    setModalPublicacaoAberto(true);
+  };
 
-  useEffect(() => {
-    if (ultimaAbrangenciaKeyRef.current === abrangenciaKey) return;
-
-    ultimaAbrangenciaKeyRef.current = abrangenciaKey;
-
-    if (!podeGerenciarRubricas) {
-      if (!isEdit) setRubricasGerenciadas([]);
+  const handleConfirmarPublicacao = () => {
+    if (!credenciaisPublicacaoValidas) {
+      setPublicacaoFeedback("Informe Data Início, usuário e senha para publicar o grupo de cálculo.");
       return;
     }
 
-    const codigosRubricas = getRubricasGrupoCalculoPorAbrangencia({
-      regimeJuridico: abrangenciaRegimeJuridico,
-      tipoVinculo: abrangenciaTipoVinculo,
-      instituicao: abrangenciaInstituicao,
-      orgao: abrangenciaOrgao,
-      herdarDe: abrangenciaHerdarDe,
-    });
+    setValue("situacao", SITUACAO_VIGENCIA.ATIVO);
+    setValue("dataAtivacao", dataInicioPublicacao);
+    setPublicacaoConcluida(true);
+    setModalPublicacaoAberto(false);
+    setPublicacaoFeedback("");
+  };
 
-    setRubricasGerenciadas(
-      catalogoRubricasMock
-        .filter((rubrica) => codigosRubricas.includes(rubrica.codigo))
+  const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
+  useEffect(() => {
+    if (!abrangenciaHerdarDe || abrangenciaHerdarDe === "nenhum") return;
+
+    const codigosRubricasHerdadas =
+      grupoCalculoRubricasPorFiltro[`herdar:${abrangenciaHerdarDe}`] ?? [];
+
+    if (!codigosRubricasHerdadas.length) return;
+
+    setRubricasGerenciadas((current) => {
+      const idsAtuais = new Set(current.map((rubrica) => rubrica.id));
+      const rubricasHerdadas = catalogoRubricasMock
+        .filter(
+          (rubrica) =>
+            codigosRubricasHerdadas.includes(rubrica.codigo) &&
+            !idsAtuais.has(rubrica.id),
+        )
         .map((rubrica) => ({
           ...rubrica,
           origem: "filtro" as const,
-        })),
-    );
-  }, [
-    abrangenciaHerdarDe,
-    abrangenciaInstituicao,
-    abrangenciaKey,
-    abrangenciaOrgao,
-    abrangenciaRegimeJuridico,
-    abrangenciaTipoVinculo,
-    isEdit,
-    podeGerenciarRubricas,
-  ]);
+        }));
 
-  const rubricasDisponiveisParaAdicionar = catalogoRubricasMock.filter(
-    (rubrica) =>
-      !rubricasGerenciadas.some(
-        (rubricaGerenciada) => rubricaGerenciada.id === rubrica.id,
-      ),
-  );
+      const rubricasReativadas = current.map((rubrica) =>
+        codigosRubricasHerdadas.includes(rubrica.codigo)
+          ? { ...rubrica, excluida: false }
+          : rubrica,
+      );
+
+      return [...rubricasReativadas, ...rubricasHerdadas];
+    });
+  }, [abrangenciaHerdarDe]);
+
+  const rubricaTermoNormalizado = rubricaTermoBusca.trim().toLowerCase();
+  const rubricasParaAdicionar = catalogoRubricasMock.filter((rubrica) => {
+    if (!rubricaTermoNormalizado) return true;
+
+    return (
+      rubrica.codigo.toLowerCase().includes(rubricaTermoNormalizado) ||
+      rubrica.nomeRubrica.toLowerCase().includes(rubricaTermoNormalizado) ||
+      rubrica.naturezaVerba.toLowerCase().includes(rubricaTermoNormalizado)
+    );
+  });
+  const rubricasAtivasNoGrupo = rubricasGerenciadas.filter(
+    (rubrica) => !rubrica.excluida,
+  ).length;
 
   const renderGrupoCalculoContent = () => (
     <div className="grid prototype-category-form-fields prototype-grupo-calculo-form-fields">
+          {(modoVersionamento || publicacaoConcluida) && (
+            <div className="col-12">
+              <div className="prototype-grupo-calculo-version-alert">
+                <i className="pi pi-info-circle" aria-hidden="true" />
+                <span>
+                  {publicacaoConcluida
+                    ? modoVersionamento
+                      ? `Versão V${versaoEmEdicao} publicada como ativa. A versão anterior foi marcada como inativa e esta edição foi bloqueada.`
+                      : "Versão V1 publicada como ativa. A edição desta versão foi bloqueada; novas alterações devem ser feitas por versionamento."
+                    : `Este grupo já foi publicado. Você está criando a versão V${versaoEmEdicao}; a Data Início foi sugerida como ${dataInicioV2} e deve ser uma data futura.`}
+                </span>
+              </div>
+            </div>
+          )}
           <TextFieldSeplag
             name="nome"
             control={control}
             label="Nome do Grupo"
             cols="12 12 12"
             required
+            disabled={formularioBloqueado}
             getFormErrorMessage={() => null}
           />
-          <TextAreaFieldSeplag
-            name="descricao"
-            control={control}
-            label="Descrição"
-            cols="12 12 12"
-            maxLength={500}
-            getFormErrorMessage={() => null}
-          />
-          <div className="col-12 prototype-grupo-calculo-vigencia">
-            <SituacaoVigenciaSeplag<GrupoCalculoForm>
-              control={control}
-              setValue={setValue}
-              rotuloDataAtivacao="Início da Vigência"
-              cols={{
-                situacao: "12 12 3",
-                dataAtivacao: "12 12 3",
-                statusOperacional: "col-12 md:col-4 lg:col-4",
-                dataEncerramento: "12 12 3",
-                motivoEncerramento: "12",
-                dataExtincao: "12 12 3",
-                motivoExtincao: "12",
-              }}
-              getFormErrorMessage={() => null}
-            />
-          </div>
+          {modoVersionamento && (
+            <div className="col-12 prototype-grupo-calculo-vigencia">
+              <DateFieldSeplag
+                name="dataAtivacao"
+                control={control}
+                label="Data Início"
+                cols="12 12 3"
+                required
+                disabled={formularioBloqueado}
+                minDate={amanha}
+                getFormErrorMessage={() => null}
+              />
+            </div>
+          )}
 
           <div className="col-12 prototype-grupo-calculo-rubricas-section">
             <div className="prototype-grupo-calculo-abrangencia">
               <div className="prototype-grupo-calculo-section-heading">
                 <strong>Abrangência</strong>
-                {!podeGerenciarRubricas && (
-                  <span>Preencha os filtros para carregar as rubricas</span>
-                )}
+                <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
               </div>
               <div className="grid prototype-category-form-fields">
                 <DropdownFieldSeplag
@@ -11170,6 +12579,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   label="Regime Jurídico"
                   cols="12 12 3"
                   required
+                  disabled={formularioBloqueado}
                   options={grupoCalculoRegimeJuridicoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -11181,6 +12591,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   label="Tipo de Vínculo"
                   cols="12 12 3"
                   required
+                  disabled={formularioBloqueado}
                   options={grupoCalculoTipoVinculoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -11191,6 +12602,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Instituição"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoInstituicaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -11201,6 +12613,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Órgão"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -11211,6 +12624,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Herdar De"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoSuperiorOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -11223,23 +12637,28 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               <div className="prototype-grupo-calculo-rubricas-header">
                 <div>
                   <strong>Gerenciar Rubricas</strong>
-                  {!podeGerenciarRubricas && (
-                    <span>Preencha os filtros acima para carregar as rubricas</span>
-                  )}
+                  <span>
+                    {rubricasAtivasNoGrupo} rubrica(s) ativa(s) no grupo.
+                    Rubricas excluídas permanecem opacas para histórico.
+                  </span>
                 </div>
-                {podeGerenciarRubricas && (
-                  <BotaoSeplag
-                    type="button"
-                    label="Adicionar Rubrica"
-                    icon="pi pi-plus"
-                    className="prototype-grupo-calculo-add-rubrica-btn"
-                    onClick={handleAbrirModalAdicionarRubricas}
-                  />
-                )}
+                <BotaoSeplag
+                  type="button"
+                  label="Adicionar Rubrica"
+                  icon="pi pi-plus"
+                  className="prototype-grupo-calculo-add-rubrica-btn"
+                  disabled={formularioBloqueado}
+                  onClick={handleAbrirModalAdicionarRubricas}
+                />
               </div>
 
-              {podeGerenciarRubricas ? (
-                <div className="prototype-grupo-calculo-rubricas-list">
+              <div className="prototype-grupo-calculo-rubricas-legend">
+                <span><i className="prototype-legend-dot prototype-legend-dot--manual" />Manual</span>
+                <span><i className="prototype-legend-dot prototype-legend-dot--inherited" />Herdada</span>
+                <span><i className="prototype-legend-dot prototype-legend-dot--excluded" />Excluída/desmarcada</span>
+              </div>
+
+              <div className="prototype-grupo-calculo-rubricas-list">
                 <div className="prototype-grupo-calculo-rubricas-list-head">
                   <span aria-label="Ordenar" />
                   <span>#</span>
@@ -11253,20 +12672,29 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   rubricasGerenciadas.map((rubrica, index) => {
                   const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                   const tipoRubricaBadge = getGrupoCalculoRubricaTipoBadge(tipoRubrica);
-                  const rubricaBloqueada = rubrica.origem === "filtro";
-                  const rubricaFiltradaApagada =
-                    rubricaBloqueada && !rubrica.reordenada;
+                  const rubricaExcluida = Boolean(rubrica.excluida);
+                  const rubricaHerdada = rubrica.origem === "filtro";
+                  const rubricaManual = rubrica.origem === "manual";
+                  const posicaoRubrica = rubricaExcluida
+                    ? ""
+                    : rubricasGerenciadas
+                        .slice(0, index + 1)
+                        .filter((item) => !item.excluida).length;
 
                   return (
                     <div
                       key={rubrica.id}
                       className={`prototype-grupo-calculo-rubrica-row${
-                        rubricaFiltradaApagada ? " is-filtered" : ""
+                        rubricaExcluida ? " is-excluded" : ""
+                      }${rubricaHerdada && !rubricaExcluida ? " is-inherited" : ""
+                      }${rubricaManual && !rubricaExcluida ? " is-manual" : ""
                       }`}
-                      draggable
+                      draggable={!rubricaExcluida && !formularioBloqueado}
                       onDragStart={() => setRubricaDragIndex(index)}
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={() => {
+                        if (formularioBloqueado) return;
+                        if (rubricaExcluida) return;
                         if (rubricaDragIndex === null) return;
                         handleMoverRubricaGerenciada(rubricaDragIndex, index);
                         setRubricaDragIndex(null);
@@ -11281,7 +12709,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         <i className="pi pi-bars" aria-hidden="true" />
                       </button>
-                      <span>{index + 1}</span>
+                      <span>{posicaoRubrica}</span>
                       <code>{rubrica.codigo}</code>
                       <strong>{rubrica.nomeRubrica}</strong>
                       <span
@@ -11294,15 +12722,24 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         {tipoRubrica}
                       </span>
-                      {rubricaBloqueada ? (
+                      {rubricaExcluida ? (
                         <button
                           type="button"
-                          className="prototype-grupo-calculo-lock-rubrica-btn"
-                          title="Rubrica carregada pelos filtros"
-                          aria-label={`${rubrica.nomeRubrica} carregada pelos filtros`}
-                          disabled
+                          className="prototype-grupo-calculo-restore-rubrica-btn"
+                          title="Restaurar rubrica"
+                          aria-label={`Restaurar ${rubrica.nomeRubrica}`}
+                          disabled={formularioBloqueado}
+                          onClick={() =>
+                            setRubricasGerenciadas((current) =>
+                              current.map((item) =>
+                                item.id === rubrica.id
+                                  ? { ...item, excluida: false }
+                                  : item,
+                              ),
+                            )
+                          }
                         >
-                          <i className="pi pi-lock" aria-hidden="true" />
+                          <i className="pi pi-undo" aria-hidden="true" />
                         </button>
                       ) : (
                         <button
@@ -11310,6 +12747,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                           className="prototype-grupo-calculo-remove-rubrica-btn"
                           title="Remover rubrica"
                           aria-label={`Remover ${rubrica.nomeRubrica}`}
+                          disabled={formularioBloqueado}
                           onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
                         >
                           <i className="pi pi-trash" aria-hidden="true" />
@@ -11323,16 +12761,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                     Nenhuma rubrica adicionada.
                   </div>
                 )}
-                </div>
-              ) : (
-                <div className="prototype-grupo-calculo-rubricas-empty">
-                  <i className="pi pi-exclamation-circle" aria-hidden="true" />
-                  <span>
-                    Selecione o Regime Jurídico e Tipo de Vínculo para carregar
-                    as rubricas
-                  </span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
     </div>
@@ -11347,7 +12776,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupos de Cálculo de Folha`}
+            title={`${isEdit ? (modoVersionamento ? "Versionar" : "Alterar") : "Cadastrar"} - Grupos de Cálculo de Folha`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
@@ -11359,23 +12788,122 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   type="button"
                   onClick={() => navigate("/prototipos/folha/grupos-calculo")}
                 />
-                <BotaoSalvarSeplag
-                  type="submit"
-                  label="Salvar Rascunho"
-                />
-                <BotaoSalvarSeplag
-                  type="button"
-                  label="Publicar"
-                  icon="pi pi-send"
-                  onClick={() => {}}
-                />
+                {!publicacaoConcluida && (
+                  <>
+                    {!modoVersionamento && (
+                      <BotaoSalvarSeplag
+                        type="submit"
+                        label="Salvar Rascunho"
+                      />
+                    )}
+                    <BotaoSalvarSeplag
+                      type="button"
+                      label={modoVersionamento ? `Publicar V${versaoEmEdicao}` : "Publicar"}
+                      icon="pi pi-send"
+                      onClick={handleAbrirModalPublicacao}
+                    />
+                  </>
+                )}
               </div>
             </div>
 
             <ModalSeplag
+              visible={modalPublicacaoAberto}
+              titulo={modoVersionamento ? `Publicar Versão V${versaoEmEdicao}` : "Publicar Grupo de Cálculo"}
+              tamanho="520px"
+              labelFechar="Cancelar"
+              customFooter={
+                <div className="prototype-grupo-calculo-publicacao-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    label="Cancelar"
+                    onClick={() => {
+                      setModalPublicacaoAberto(false);
+                      setPublicacaoFeedback("");
+                    }}
+                  />
+                  <BotaoSalvarSeplag
+                    type="button"
+                    label="Publicar"
+                    icon="pi pi-send"
+                    disabled={!credenciaisPublicacaoValidas}
+                    onClick={handleConfirmarPublicacao}
+                  />
+                </div>
+              }
+              fechar={() => {
+                setModalPublicacaoAberto(false);
+                setPublicacaoFeedback("");
+              }}
+            >
+              <div className="col-12 prototype-grupo-calculo-publicacao-modal">
+                {publicacaoFeedback ? (
+                  <div className="prototype-validation-panel">{publicacaoFeedback}</div>
+                ) : null}
+
+                <div className="prototype-grupo-calculo-publicacao-alerta">
+                  <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+                  <span>
+                    {modoVersionamento
+                      ? `Ao publicar a V${versaoEmEdicao}, ela passará a ser a versão ativa e a versão anterior será marcada como inativa. A nova versão ficará bloqueada para edição.`
+                      : "Ao publicar este grupo de cálculo, a versão V1 será criada como ativa e ficará bloqueada para edição. Alterações futuras deverão ser feitas por meio de uma nova versão."}
+                  </span>
+                </div>
+
+                <label>
+                  <span>Data Início</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="date"
+                    value={dataInicioPublicacao.split("/").reverse().join("-")}
+                    min={dataInicioV2.split("/").reverse().join("-")}
+                    onChange={(event) => {
+                      const [ano, mes, dia] = event.target.value.split("-");
+                      setDataInicioPublicacao(
+                        ano && mes && dia ? `${dia}/${mes}/${ano}` : "",
+                      );
+                    }}
+                  />
+                </label>
+
+                <label>
+                  <span>Usuário</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="text"
+                    value={credenciaisPublicacao.usuario}
+                    onChange={(event) =>
+                      setCredenciaisPublicacao((current) => ({
+                        ...current,
+                        usuario: event.target.value,
+                      }))
+                    }
+                    autoComplete="username"
+                  />
+                </label>
+
+                <label>
+                  <span>Senha</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="password"
+                    value={credenciaisPublicacao.senha}
+                    onChange={(event) =>
+                      setCredenciaisPublicacao((current) => ({
+                        ...current,
+                        senha: event.target.value,
+                      }))
+                    }
+                    autoComplete="current-password"
+                  />
+                </label>
+              </div>
+            </ModalSeplag>
+
+            <ModalSeplag
               visible={modalRubricasAberto}
               titulo="Adicionar Rubrica"
-              tamanho="720px"
+              tamanho="980px"
               labelFechar="Cancelar"
               labelAcao="Adicionar"
               iconAcao="pi pi-plus"
@@ -11386,23 +12914,45 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               }}
             >
               <div className="col-12 prototype-grupo-calculo-modal-rubricas">
-                {rubricasDisponiveisParaAdicionar.length > 0 ? (
-                  rubricasDisponiveisParaAdicionar.map((rubrica) => {
+                <div className="prototype-grupo-calculo-modal-search">
+                  <span className="p-input-icon-left">
+                    <i className="pi pi-search" aria-hidden="true" />
+                    <input
+                      className="p-inputtext p-component"
+                      type="search"
+                      placeholder="Consultar por código, nome ou tipo da rubrica"
+                      value={rubricaTermoBusca}
+                      onChange={(event) => setRubricaTermoBusca(event.target.value)}
+                    />
+                  </span>
+                </div>
+
+                {rubricasParaAdicionar.length > 0 ? (
+                  rubricasParaAdicionar.map((rubrica) => {
                     const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                     const tipoRubricaBadge =
                       getGrupoCalculoRubricaTipoBadge(tipoRubrica);
+                    const rubricaNoGrupo = rubricasGerenciadas.find(
+                      (item) => item.id === rubrica.id,
+                    );
+                    const rubricaAtivaNoGrupo = Boolean(
+                      rubricaNoGrupo && !rubricaNoGrupo.excluida,
+                    );
                     const checked = rubricasSelecionadasParaAdicionar.includes(
                       rubrica.id,
-                    );
+                    ) || rubricaAtivaNoGrupo;
 
                     return (
                       <label
-                        className="prototype-grupo-calculo-modal-rubrica-item"
+                        className={`prototype-grupo-calculo-modal-rubrica-item${
+                          rubricaAtivaNoGrupo ? " is-added" : ""
+                        }`}
                         key={rubrica.id}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={rubricaAtivaNoGrupo}
                           onChange={() =>
                             handleToggleRubricaParaAdicionar(rubrica.id)
                           }
@@ -11421,12 +12971,17 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                         >
                           {tipoRubrica}
                         </span>
+                        {rubricaAtivaNoGrupo ? (
+                          <small>Já adicionada</small>
+                        ) : rubricaNoGrupo?.excluida ? (
+                          <small>Excluída do grupo</small>
+                        ) : null}
                       </label>
                     );
                   })
                 ) : (
                   <div className="prototype-grupo-calculo-modal-empty">
-                    Todas as rubricas disponíveis já foram adicionadas.
+                    Nenhuma rubrica encontrada para a consulta informada.
                   </div>
                 )}
               </div>

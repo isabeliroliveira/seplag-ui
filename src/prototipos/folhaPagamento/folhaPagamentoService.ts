@@ -1,17 +1,196 @@
 import type {
+  CreateFolhaCompetenciaRequest,
   CreateFolhaPagamentoRequest,
+  CreateGrupoFolhaRequest,
   ExecutarFolhaPagamentoRequest,
+  FolhaCompetenciaRow,
   FolhaPagamentoExecucaoRow,
   FolhaPagamentoPessoaLogRow,
   FolhaPagamentoRow,
   FolhaPagamentoRubricaLogRow,
+  GrupoFolhaRow,
+  GrupoFolhaVersaoRow,
   UpdateFolhaPagamentoRequest,
+  UpdateGrupoFolhaRequest,
 } from "./types";
+
+const gruposFolhaMock: GrupoFolhaRow[] = [
+  {
+    id: 1,
+    codigo: "GF-NORMAL-AD",
+    nome: "Folha Normal - Administração Direta",
+    descricao: "Configuração base para folha mensal dos órgãos da administração direta.",
+    tipoFolha: "NORMAL",
+    orgaos: ["SEPLAG", "MTI", "SAD"],
+    regimeJuridico: "Estatutário Civil",
+    categoria: "Área Meio",
+    cargo: "",
+    grupoEleitosPadrao: "",
+    situacao: "VIGENTE",
+    vigenciaInicial: "01/01/2026",
+    vigenciaFinal: "",
+    totalMesesAdiantarPadrao: 0,
+    totalMesesRetroagirPadrao: 1,
+    permiteRetroacao: "S",
+    herdarConfiguracaoCompetenciaAnterior: "S",
+    rubricasAssociadas: ["1001 - SALÁRIO BÁSICO", "1003 - DÉCIMO TERCEIRO"],
+    ordemProcessamento: "Proventos fixos, vantagens, descontos legais.",
+    relatoriosDisponiveis: ["Resumo financeiro", "Divergências por servidor"],
+    versaoVigente: "V3",
+    ultimaAlteracao: "15/05/2026 10:12",
+    responsavel: "ROBERTO JUNIOR",
+  },
+  {
+    id: 2,
+    codigo: "GF-EDUCACAO",
+    nome: "Folha Educação",
+    descricao: "Configuração base para profissionais da educação.",
+    tipoFolha: "NORMAL",
+    orgaos: ["SEDUC"],
+    regimeJuridico: "Estatutário Civil",
+    categoria: "Profissionais da Educação",
+    cargo: "Professor da Educação Básica",
+    grupoEleitosPadrao: "",
+    situacao: "VIGENTE",
+    vigenciaInicial: "01/02/2026",
+    vigenciaFinal: "",
+    totalMesesAdiantarPadrao: 0,
+    totalMesesRetroagirPadrao: 0,
+    permiteRetroacao: "S",
+    herdarConfiguracaoCompetenciaAnterior: "S",
+    rubricasAssociadas: ["1001 - SALÁRIO BÁSICO"],
+    ordemProcessamento: "Rubricas de cargo, adicionais, descontos.",
+    relatoriosDisponiveis: ["Resumo financeiro", "Alertas de jornada"],
+    versaoVigente: "V2",
+    ultimaAlteracao: "08/05/2026 16:40",
+    responsavel: "ROBERTO JUNIOR",
+  },
+  {
+    id: 3,
+    codigo: "GF-COMPLEMENTAR",
+    nome: "Folha Complementar",
+    descricao: "Configuração usada para pagamentos complementares e correções.",
+    tipoFolha: "COMPLEMENTAR",
+    orgaos: ["SEPLAG"],
+    regimeJuridico: "",
+    categoria: "",
+    cargo: "",
+    grupoEleitosPadrao: "PESSOA FÍSICA",
+    situacao: "RASCUNHO",
+    vigenciaInicial: "01/06/2026",
+    vigenciaFinal: "",
+    totalMesesAdiantarPadrao: 0,
+    totalMesesRetroagirPadrao: 3,
+    permiteRetroacao: "S",
+    herdarConfiguracaoCompetenciaAnterior: "N",
+    rubricasAssociadas: ["1002 - ADICIONAL NOTURNO"],
+    ordemProcessamento: "Somente rubricas autorizadas no processo complementar.",
+    relatoriosDisponiveis: ["Divergências por servidor"],
+    versaoVigente: "V1",
+    ultimaAlteracao: "28/05/2026 11:05",
+    responsavel: "ROBERTO JUNIOR",
+  },
+];
+
+const gruposFolhaVersoesMock: GrupoFolhaVersaoRow[] = [
+  {
+    id: 101,
+    grupoFolhaId: 1,
+    versao: "V3",
+    vigenciaInicial: "01/05/2026",
+    vigenciaFinal: "",
+    alteracao: "Inclusão de relatório de divergências por servidor.",
+    motivo: "Apoiar conferência setorial.",
+    usuarioResponsavel: "ROBERTO JUNIOR",
+    dataHora: "15/05/2026 10:12",
+    situacao: "VIGENTE",
+  },
+  {
+    id: 102,
+    grupoFolhaId: 1,
+    versao: "V2",
+    vigenciaInicial: "01/03/2026",
+    vigenciaFinal: "30/04/2026",
+    alteracao: "Ajuste na ordem de processamento.",
+    motivo: "Adequação de descontos legais.",
+    usuarioResponsavel: "ROBERTO JUNIOR",
+    dataHora: "01/03/2026 09:30",
+    situacao: "ENCERRADO",
+  },
+  {
+    id: 201,
+    grupoFolhaId: 2,
+    versao: "V2",
+    vigenciaInicial: "01/05/2026",
+    vigenciaFinal: "",
+    alteracao: "Atualização de filtros para professores da educação básica.",
+    motivo: "Padronização da abrangência.",
+    usuarioResponsavel: "ROBERTO JUNIOR",
+    dataHora: "08/05/2026 16:40",
+    situacao: "VIGENTE",
+  },
+  {
+    id: 301,
+    grupoFolhaId: 3,
+    versao: "V1",
+    vigenciaInicial: "01/06/2026",
+    vigenciaFinal: "",
+    alteracao: "Criação inicial do grupo complementar.",
+    motivo: "Configuração em elaboração.",
+    usuarioResponsavel: "ROBERTO JUNIOR",
+    dataHora: "28/05/2026 11:05",
+    situacao: "RASCUNHO",
+  },
+];
+
+const competenciasFolhaMock: FolhaCompetenciaRow[] = [
+  {
+    id: 1,
+    codigo: "COMP-2026-05",
+    nome: "Competência Maio/2026",
+    competencia: "2026-05",
+    mesAnoReferencia: "2026-05",
+    dataInicio: "01/05/2026",
+    dataFim: "31/05/2026",
+    situacao: "ATIVA",
+    observacao: "Competência aberta para processamento mensal.",
+    totalFolhas: 3,
+    createdAt: "20/05/2026 08:30",
+  },
+  {
+    id: 2,
+    codigo: "COMP-2026-04",
+    nome: "Competência Abril/2026",
+    competencia: "2026-04",
+    mesAnoReferencia: "2026-04",
+    dataInicio: "01/04/2026",
+    dataFim: "30/04/2026",
+    situacao: "FECHADA",
+    observacao: "Competência encerrada após conferência.",
+    totalFolhas: 1,
+    createdAt: "18/04/2026 09:10",
+  },
+  {
+    id: 3,
+    codigo: "COMP-2026-03",
+    nome: "Competência Março/2026",
+    competencia: "2026-03",
+    mesAnoReferencia: "2026-03",
+    dataInicio: "01/03/2026",
+    dataFim: "31/03/2026",
+    situacao: "FECHADA",
+    observacao: "Competência com execução finalizada com inconsistências.",
+    totalFolhas: 1,
+    createdAt: "15/03/2026 10:00",
+  },
+];
 
 const folhasPagamentoMock: FolhaPagamentoRow[] = [
   {
     id: 1,
-    numero: "2026-05-NORMAL",
+    competenciaId: 1,
+    grupoFolhaId: 1,
+    numero: "1",
     nome: "Folha Normal Maio/2026",
     mesAnoReferencia: "2026-05",
     competencia: "2026-05",
@@ -23,7 +202,7 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
     grupoEleitos: "",
     totalMesesAdiantar: 0,
     totalMesesRetroagir: 1,
-    situacao: "ABERTA",
+    situacao: "ABERTO",
     totalPessoas: 842,
     totalSucesso: 0,
     totalAlerta: 0,
@@ -32,7 +211,9 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
   },
   {
     id: 2,
-    numero: "2026-05-EDU",
+    competenciaId: 1,
+    grupoFolhaId: 2,
+    numero: "2",
     nome: "Folha Educação Maio/2026",
     mesAnoReferencia: "2026-05",
     competencia: "2026-05",
@@ -53,7 +234,9 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
   },
   {
     id: 3,
-    numero: "2026-04-SAUDE",
+    competenciaId: 2,
+    grupoFolhaId: 1,
+    numero: "3",
     nome: "Folha Saúde Abril/2026",
     mesAnoReferencia: "2026-04",
     competencia: "2026-04",
@@ -65,7 +248,7 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
     grupoEleitos: "Grupo Teste",
     totalMesesAdiantar: 0,
     totalMesesRetroagir: 2,
-    situacao: "PROCESSADA_COM_ALERTA",
+    situacao: "PROCESSO_COM_FALHAS",
     totalPessoas: 3120,
     totalSucesso: 3058,
     totalAlerta: 62,
@@ -74,7 +257,9 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
   },
   {
     id: 4,
-    numero: "2026-05-RASC",
+    competenciaId: 1,
+    grupoFolhaId: 3,
+    numero: "4",
     nome: "Folha Complementar Maio/2026",
     mesAnoReferencia: "2026-05",
     competencia: "2026-05",
@@ -95,7 +280,9 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
   },
   {
     id: 5,
-    numero: "2026-03-ERRO",
+    competenciaId: 3,
+    grupoFolhaId: 3,
+    numero: "5",
     nome: "Folha Especial Março/2026",
     mesAnoReferencia: "2026-03",
     competencia: "2026-03",
@@ -107,7 +294,7 @@ const folhasPagamentoMock: FolhaPagamentoRow[] = [
     grupoEleitos: "",
     totalMesesAdiantar: 0,
     totalMesesRetroagir: 3,
-    situacao: "PROCESSADA_COM_ERRO",
+    situacao: "PROCESSO_COM_ERRO",
     totalPessoas: 460,
     totalSucesso: 430,
     totalAlerta: 11,
@@ -290,10 +477,131 @@ const folhasPagamentoRubricaLogsMock: FolhaPagamentoRubricaLogRow[] = [
 ];
 
 export const folhaPagamentoMockRepository = {
+  listarGruposFolha: (): GrupoFolhaRow[] => structuredClone(gruposFolhaMock),
+  criarGrupoFolha: (request: CreateGrupoFolhaRequest): GrupoFolhaRow => {
+    const novoGrupo: GrupoFolhaRow = {
+      id: Math.max(...gruposFolhaMock.map((grupo) => grupo.id), 0) + 1,
+      codigo: request.codigo ?? "",
+      nome: request.nome ?? "",
+      descricao: request.descricao ?? "",
+      tipoFolha: request.tipoFolha ?? "NORMAL",
+      orgaos: request.orgaos ?? [],
+      regimeJuridico: request.regimeJuridico ?? "",
+      categoria: request.categoria ?? "",
+      cargo: request.cargo ?? "",
+      grupoEleitosPadrao: request.grupoEleitosPadrao ?? "",
+      situacao: request.situacao ?? "RASCUNHO",
+      vigenciaInicial: request.vigenciaInicial ?? "",
+      vigenciaFinal: request.vigenciaFinal ?? "",
+      totalMesesAdiantarPadrao: request.totalMesesAdiantarPadrao ?? 0,
+      totalMesesRetroagirPadrao: request.totalMesesRetroagirPadrao ?? 0,
+      permiteRetroacao: request.permiteRetroacao ?? "S",
+      herdarConfiguracaoCompetenciaAnterior:
+        request.herdarConfiguracaoCompetenciaAnterior ?? "S",
+      rubricasAssociadas: request.rubricasAssociadas ?? [],
+      ordemProcessamento: request.ordemProcessamento ?? "",
+      relatoriosDisponiveis: request.relatoriosDisponiveis ?? [],
+      versaoVigente: "V1",
+      ultimaAlteracao: "01/06/2026 09:00",
+      responsavel: "ROBERTO JUNIOR",
+    };
+
+    gruposFolhaMock.unshift(novoGrupo);
+    gruposFolhaVersoesMock.unshift({
+      id: Math.max(...gruposFolhaVersoesMock.map((versao) => versao.id), 0) + 1,
+      grupoFolhaId: novoGrupo.id,
+      versao: "V1",
+      vigenciaInicial: novoGrupo.vigenciaInicial,
+      vigenciaFinal: novoGrupo.vigenciaFinal,
+      alteracao: "Criação inicial do grupo de folha.",
+      motivo: "Cadastro inicial.",
+      usuarioResponsavel: "ROBERTO JUNIOR",
+      dataHora: novoGrupo.ultimaAlteracao,
+      situacao: novoGrupo.situacao,
+    });
+
+    return structuredClone(novoGrupo);
+  },
+  atualizarGrupoFolha: (
+    id: number,
+    request: UpdateGrupoFolhaRequest,
+  ): GrupoFolhaRow | undefined => {
+    const index = gruposFolhaMock.findIndex((grupo) => grupo.id === id);
+    if (index < 0) return undefined;
+
+    gruposFolhaMock[index] = {
+      ...gruposFolhaMock[index],
+      ...request,
+      codigo: request.codigo ?? gruposFolhaMock[index].codigo,
+      nome: request.nome ?? gruposFolhaMock[index].nome,
+      descricao: request.descricao ?? "",
+      tipoFolha: request.tipoFolha ?? gruposFolhaMock[index].tipoFolha,
+      orgaos: request.orgaos ?? gruposFolhaMock[index].orgaos,
+      regimeJuridico: request.regimeJuridico ?? "",
+      categoria: request.categoria ?? "",
+      cargo: request.cargo ?? "",
+      grupoEleitosPadrao: request.grupoEleitosPadrao ?? "",
+      situacao: request.situacao ?? gruposFolhaMock[index].situacao,
+      vigenciaInicial:
+        request.vigenciaInicial ?? gruposFolhaMock[index].vigenciaInicial,
+      vigenciaFinal: request.vigenciaFinal ?? "",
+      totalMesesAdiantarPadrao:
+        request.totalMesesAdiantarPadrao ??
+        gruposFolhaMock[index].totalMesesAdiantarPadrao,
+      totalMesesRetroagirPadrao:
+        request.totalMesesRetroagirPadrao ??
+        gruposFolhaMock[index].totalMesesRetroagirPadrao,
+      permiteRetroacao:
+        request.permiteRetroacao ?? gruposFolhaMock[index].permiteRetroacao,
+      herdarConfiguracaoCompetenciaAnterior:
+        request.herdarConfiguracaoCompetenciaAnterior ??
+        gruposFolhaMock[index].herdarConfiguracaoCompetenciaAnterior,
+      rubricasAssociadas:
+        request.rubricasAssociadas ?? gruposFolhaMock[index].rubricasAssociadas,
+      ordemProcessamento: request.ordemProcessamento ?? "",
+      relatoriosDisponiveis:
+        request.relatoriosDisponiveis ??
+        gruposFolhaMock[index].relatoriosDisponiveis,
+      ultimaAlteracao: "01/06/2026 09:30",
+      responsavel: "ROBERTO JUNIOR",
+    };
+
+    return structuredClone(gruposFolhaMock[index]);
+  },
+  listarVersoesGrupoFolha: (grupoFolhaId: number): GrupoFolhaVersaoRow[] =>
+    structuredClone(
+      gruposFolhaVersoesMock.filter(
+        (versao) => versao.grupoFolhaId === grupoFolhaId,
+      ),
+    ),
+  listarCompetencias: (): FolhaCompetenciaRow[] =>
+    structuredClone(competenciasFolhaMock),
+  criarCompetencia: (
+    request: CreateFolhaCompetenciaRequest,
+  ): FolhaCompetenciaRow => {
+    const novaCompetencia: FolhaCompetenciaRow = {
+      id: Math.max(...competenciasFolhaMock.map((competencia) => competencia.id), 0) + 1,
+      codigo: request.codigo ?? "",
+      nome: request.nome ?? "",
+      competencia: request.competencia ?? "",
+      mesAnoReferencia: request.mesAnoReferencia ?? "",
+      dataInicio: request.dataInicio ?? "",
+      dataFim: request.dataFim ?? "",
+      situacao: request.situacao ?? "ATIVA",
+      observacao: request.observacao ?? "",
+      totalFolhas: 0,
+      createdAt: "01/06/2026 09:00",
+    };
+
+    competenciasFolhaMock.unshift(novaCompetencia);
+    return structuredClone(novaCompetencia);
+  },
   listarFolhas: (): FolhaPagamentoRow[] => structuredClone(folhasPagamentoMock),
   criarFolha: (request: CreateFolhaPagamentoRequest): FolhaPagamentoRow => {
     const novaFolha: FolhaPagamentoRow = {
       id: Math.max(...folhasPagamentoMock.map((folha) => folha.id), 0) + 1,
+      competenciaId: request.competenciaId ?? 0,
+      grupoFolhaId: request.grupoFolhaId ?? 0,
       nome: request.nome ?? "",
       numero: request.numero ?? "",
       mesAnoReferencia: request.mesAnoReferencia ?? "",
@@ -306,7 +614,7 @@ export const folhaPagamentoMockRepository = {
       grupoEleitos: request.grupoEleitos ?? "",
       totalMesesAdiantar: request.totalMesesAdiantar ?? 0,
       totalMesesRetroagir: request.totalMesesRetroagir ?? 0,
-      situacao: "RASCUNHO",
+      situacao: request.situacao ?? "RASCUNHO",
       totalPessoas: 0,
       totalSucesso: 0,
       totalAlerta: 0,
@@ -315,6 +623,12 @@ export const folhaPagamentoMockRepository = {
     };
 
     folhasPagamentoMock.unshift(novaFolha);
+    const competenciaIndex = competenciasFolhaMock.findIndex(
+      (competencia) => competencia.id === novaFolha.competenciaId,
+    );
+    if (competenciaIndex >= 0) {
+      competenciasFolhaMock[competenciaIndex].totalFolhas += 1;
+    }
     return structuredClone(novaFolha);
   },
   atualizarFolha: (
@@ -327,11 +641,15 @@ export const folhaPagamentoMockRepository = {
     folhasPagamentoMock[index] = {
       ...folhasPagamentoMock[index],
       ...request,
+      competenciaId:
+        request.competenciaId ?? folhasPagamentoMock[index].competenciaId,
+      grupoFolhaId: request.grupoFolhaId ?? folhasPagamentoMock[index].grupoFolhaId,
       nome: request.nome ?? folhasPagamentoMock[index].nome,
       numero: request.numero ?? folhasPagamentoMock[index].numero,
       mesAnoReferencia:
         request.mesAnoReferencia ?? folhasPagamentoMock[index].mesAnoReferencia,
       competencia: request.competencia ?? folhasPagamentoMock[index].competencia,
+      situacao: request.situacao ?? folhasPagamentoMock[index].situacao,
       observacao: request.observacao ?? "",
       orgaos: request.orgaos ?? folhasPagamentoMock[index].orgaos,
       regimeJuridico: request.regimeJuridico ?? "",
@@ -357,6 +675,29 @@ export const folhaPagamentoMockRepository = {
 };
 
 export const folhaPagamentoService = {
+  // TODO backend: GET /grupos-folha
+  listarGruposFolha: folhaPagamentoMockRepository.listarGruposFolha,
+  // TODO backend: GET /grupos-folha/{id}
+  buscarGrupoFolhaPorId: (id: number) =>
+    folhaPagamentoMockRepository
+      .listarGruposFolha()
+      .find((grupo) => grupo.id === id),
+  // TODO backend: POST /grupos-folha
+  criarGrupoFolha: folhaPagamentoMockRepository.criarGrupoFolha,
+  // TODO backend: PUT /grupos-folha/{id}
+  atualizarGrupoFolha: folhaPagamentoMockRepository.atualizarGrupoFolha,
+  // TODO backend: GET /grupos-folha/{id}/versoes
+  listarVersoesGrupoFolha:
+    folhaPagamentoMockRepository.listarVersoesGrupoFolha,
+  // TODO backend: GET /folhas-competencias
+  listarCompetencias: folhaPagamentoMockRepository.listarCompetencias,
+  // TODO backend: GET /folhas-competencias/{id}
+  buscarCompetenciaPorId: (id: number) =>
+    folhaPagamentoMockRepository
+      .listarCompetencias()
+      .find((competencia) => competencia.id === id),
+  // TODO backend: POST /folhas-competencias
+  criarCompetencia: folhaPagamentoMockRepository.criarCompetencia,
   // TODO backend: GET /folhas-pagamento
   listarFolhas: folhaPagamentoMockRepository.listarFolhas,
   // TODO backend: GET /folhas-pagamento/{id}

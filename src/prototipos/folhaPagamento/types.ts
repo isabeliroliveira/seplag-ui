@@ -1,13 +1,16 @@
 export type FolhaPagamentoSituacao =
   | "RASCUNHO"
-  | "ABERTA"
-  | "EM_FILA"
+  | "ABERTO"
+  | "AGUARDANDO_PROCESSAMENTO"
   | "EM_PROCESSAMENTO"
-  | "PROCESSADA"
-  | "PROCESSADA_COM_ALERTA"
-  | "PROCESSADA_COM_ERRO"
-  | "BLOQUEADA"
+  | "PROCESSO_COM_SUCESSO"
+  | "PROCESSO_COM_ERRO"
+  | "PROCESSO_COM_FALHAS"
   | "CANCELADA";
+
+export type FolhaCompetenciaSituacao =
+  | "ATIVA"
+  | "FECHADA";
 
 export type FolhaPagamentoExecucaoSituacao =
   | "EM_FILA"
@@ -32,6 +35,70 @@ export type FolhaPagamentoRubricaLogSituacao =
   | "ERRO"
   | "NAO_PROCESSADA";
 
+export type GrupoFolhaSituacao =
+  | "RASCUNHO"
+  | "VIGENTE"
+  | "INATIVO"
+  | "ENCERRADO"
+  | "CANCELADO";
+
+export type GrupoFolhaTipo =
+  | "NORMAL"
+  | "COMPLEMENTAR"
+  | "DECIMO_TERCEIRO"
+  | "FERIAS"
+  | "RESCISAO"
+  | "PENSIONISTAS";
+
+export interface GrupoFolhaFiltroForm {
+  termo?: string;
+  tipoFolha?: GrupoFolhaTipo | "";
+  orgaos?: string[];
+  situacao?: GrupoFolhaSituacao | "";
+}
+
+export interface GrupoFolhaForm {
+  codigo?: string;
+  nome?: string;
+  descricao?: string;
+  tipoFolha?: GrupoFolhaTipo | "";
+  orgaos?: string[];
+  regimeJuridico?: string;
+  categoria?: string;
+  cargo?: string;
+  grupoEleitosPadrao?: string;
+  situacao?: GrupoFolhaSituacao;
+  vigenciaInicial?: string;
+  vigenciaFinal?: string;
+  totalMesesAdiantarPadrao?: number;
+  totalMesesRetroagirPadrao?: number;
+  permiteRetroacao?: "S" | "N";
+  herdarConfiguracaoCompetenciaAnterior?: "S" | "N";
+  rubricasAssociadas?: string[];
+  ordemProcessamento?: string;
+  relatoriosDisponiveis?: string[];
+}
+
+export interface GrupoFolhaRow extends Required<GrupoFolhaForm> {
+  id: number;
+  versaoVigente: string;
+  ultimaAlteracao: string;
+  responsavel: string;
+}
+
+export interface GrupoFolhaVersaoRow {
+  id: number;
+  grupoFolhaId: number;
+  versao: string;
+  vigenciaInicial: string;
+  vigenciaFinal: string;
+  alteracao: string;
+  motivo: string;
+  usuarioResponsavel: string;
+  dataHora: string;
+  situacao: GrupoFolhaSituacao;
+}
+
 export interface FolhaPagamentoFiltroForm {
   termo?: string;
   orgaos?: string[];
@@ -39,7 +106,31 @@ export interface FolhaPagamentoFiltroForm {
   situacao?: FolhaPagamentoSituacao | "";
 }
 
+export interface FolhaCompetenciaFiltroForm {
+  competencia?: string;
+  situacao?: FolhaCompetenciaSituacao | "";
+}
+
+export interface FolhaCompetenciaForm {
+  codigo?: string;
+  nome?: string;
+  competencia?: string;
+  mesAnoReferencia?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  situacao?: FolhaCompetenciaSituacao;
+  observacao?: string;
+}
+
+export interface FolhaCompetenciaRow extends Required<FolhaCompetenciaForm> {
+  id: number;
+  totalFolhas: number;
+  createdAt: string;
+}
+
 export interface FolhaPagamentoForm {
+  competenciaId?: number;
+  grupoFolhaId?: number;
   nome?: string;
   numero?: string;
   mesAnoReferencia?: string;
@@ -115,8 +206,15 @@ export interface FolhaPagamentoRubricaLogRow {
   mensagem: string;
 }
 
-export type CreateFolhaPagamentoRequest = FolhaPagamentoForm;
-export type UpdateFolhaPagamentoRequest = FolhaPagamentoForm;
+export type CreateFolhaPagamentoRequest = FolhaPagamentoForm & {
+  situacao?: FolhaPagamentoSituacao;
+};
+export type UpdateFolhaPagamentoRequest = FolhaPagamentoForm & {
+  situacao?: FolhaPagamentoSituacao;
+};
+export type CreateFolhaCompetenciaRequest = FolhaCompetenciaForm;
+export type CreateGrupoFolhaRequest = GrupoFolhaForm;
+export type UpdateGrupoFolhaRequest = GrupoFolhaForm;
 
 export interface ExecutarFolhaPagamentoRequest {
   folhaPagamentoId: number;
