@@ -36,6 +36,15 @@ export type FolhaPagamentoRubricaLogSituacao =
   | "ERRO"
   | "NAO_PROCESSADA";
 
+export type SolicitacaoAjusteFolhaSituacao =
+  | "NOVA"
+  | "EM_CORRECAO"
+  | "CORRIGIDO"
+  | "DEVOLVIDO"
+  | "CONCLUIDO";
+
+export type SolicitacaoAjusteFolhaPerfil = "CONFORMIDADE" | "FOLHA";
+
 export type GrupoFolhaSituacao =
   | "RASCUNHO"
   | "VIGENTE"
@@ -105,6 +114,13 @@ export interface FolhaPagamentoFiltroForm {
   orgaos?: string[];
   mesAnoReferencia?: string;
   situacao?: FolhaPagamentoSituacao | "";
+}
+
+export interface SolicitacaoAjusteFolhaFiltroForm {
+  termoFolha?: string;
+  competencias?: string[];
+  matriculaCpf?: string;
+  situacoes?: SolicitacaoAjusteFolhaSituacao[];
 }
 
 export interface FolhaCompetenciaFiltroForm {
@@ -205,6 +221,31 @@ export interface FolhaPagamentoRubricaLogRow {
   valorCalculado: string;
   situacao: FolhaPagamentoRubricaLogSituacao;
   mensagem: string;
+}
+
+export interface SolicitacaoAjusteFolhaHistoricoRow {
+  id: number;
+  solicitacaoId: number;
+  dataHora: string;
+  situacaoDestino: SolicitacaoAjusteFolhaSituacao;
+  operador: string;
+  descricao: string;
+}
+
+export interface SolicitacaoAjusteFolhaRow {
+  id: number;
+  numeroFolha: string;
+  nomeFolha: string;
+  competencia: string;
+  matriculaCpf: string;
+  grupoEleitos: string;
+  solicitante: string;
+  responsavelCorrecao: string;
+  dataCriacao: string;
+  dataFechamento: string;
+  situacao: SolicitacaoAjusteFolhaSituacao;
+  motivoAbertura: string;
+  motivoDevolucao?: string;
 }
 
 export type CreateFolhaPagamentoRequest = FolhaPagamentoForm & {

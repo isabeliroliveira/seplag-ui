@@ -8,6 +8,8 @@ import type {
   FolhaPagamentoPessoaLogRow,
   FolhaPagamentoRow,
   FolhaPagamentoRubricaLogRow,
+  SolicitacaoAjusteFolhaHistoricoRow,
+  SolicitacaoAjusteFolhaRow,
   GrupoFolhaRow,
   GrupoFolhaVersaoRow,
   UpdateFolhaPagamentoRequest,
@@ -584,6 +586,280 @@ const folhasPagamentoRubricaLogsMock: FolhaPagamentoRubricaLogRow[] = [
   },
 ];
 
+const solicitacoesAjusteFolhaMock: SolicitacaoAjusteFolhaRow[] = [
+  {
+    id: 1,
+    numeroFolha: "001",
+    nomeFolha: "FOLHA NORMAL - SEPLAG",
+    competencia: "05/2026",
+    matriculaCpf: "107845",
+    grupoEleitos: "-",
+    solicitante: "Ana Paula Ribeiro",
+    responsavelCorrecao: "-",
+    dataCriacao: "18/05/2026",
+    dataFechamento: "-",
+    situacao: "NOVA",
+    motivoAbertura: "Diferença identificada no cálculo de adicional noturno do servidor.",
+  },
+  {
+    id: 2,
+    numeroFolha: "002",
+    nomeFolha: "FOLHA NORMAL - SEDUC",
+    competencia: "05/2026",
+    matriculaCpf: "-",
+    grupoEleitos: "SERVIDORES COMISSIONADOS",
+    solicitante: "Carla Mendes",
+    responsavelCorrecao: "João Silva",
+    dataCriacao: "18/05/2026",
+    dataFechamento: "-",
+    situacao: "EM_CORRECAO",
+    motivoAbertura: "Revisar parametrização de rubrica para servidores comissionados.",
+  },
+  {
+    id: 3,
+    numeroFolha: "003",
+    nomeFolha: "FOLHA COMPLEMENTAR - SES",
+    competencia: "05/2026",
+    matriculaCpf: "254896",
+    grupoEleitos: "-",
+    solicitante: "Ana Paula Ribeiro",
+    responsavelCorrecao: "Roberto Alves",
+    dataCriacao: "17/05/2026",
+    dataFechamento: "-",
+    situacao: "CORRIGIDO",
+    motivoAbertura: "Diferença identificada no cálculo de adicional noturno do servidor.",
+  },
+  {
+    id: 4,
+    numeroFolha: "004",
+    nomeFolha: "FOLHA RESCISÓRIA - SEFAZ",
+    competencia: "04/2026",
+    matriculaCpf: "-",
+    grupoEleitos: "SERVIDORES CONTRATADOS",
+    solicitante: "Marcos Lima",
+    responsavelCorrecao: "Júlia Costa",
+    dataCriacao: "10/05/2026",
+    dataFechamento: "-",
+    situacao: "DEVOLVIDO",
+    motivoAbertura: "Conferência apontou divergência no cálculo rescisório.",
+    motivoDevolucao: "Correção não contemplou todos os vínculos temporários indicados.",
+  },
+  {
+    id: 5,
+    numeroFolha: "005",
+    nomeFolha: "FOLHA NORMAL - PGE",
+    competencia: "04/2026",
+    matriculaCpf: "369741",
+    grupoEleitos: "-",
+    solicitante: "Carla Mendes",
+    responsavelCorrecao: "João Silva",
+    dataCriacao: "05/05/2026",
+    dataFechamento: "08/05/2026",
+    situacao: "CONCLUIDO",
+    motivoAbertura: "Adequação de desconto legal solicitada pela conformidade.",
+  },
+  {
+    id: 6,
+    numeroFolha: "006",
+    nomeFolha: "FOLHA NORMAL - MTI",
+    competencia: "05/2026",
+    matriculaCpf: "778899",
+    grupoEleitos: "-",
+    solicitante: "Marcos Lima",
+    responsavelCorrecao: "-",
+    dataCriacao: "19/05/2026",
+    dataFechamento: "-",
+    situacao: "NOVA",
+    motivoAbertura: "Validar reflexo de gratificação funcional na competência vigente.",
+  },
+  {
+    id: 7,
+    numeroFolha: "007",
+    nomeFolha: "FOLHA EDUCAÇÃO - SEDUC",
+    competencia: "03/2026",
+    matriculaCpf: "445566",
+    grupoEleitos: "-",
+    solicitante: "Ana Paula Ribeiro",
+    responsavelCorrecao: "João Silva",
+    dataCriacao: "12/03/2026",
+    dataFechamento: "15/03/2026",
+    situacao: "CONCLUIDO",
+    motivoAbertura: "Revisão de jornada docente apontada na conformidade.",
+  },
+  {
+    id: 8,
+    numeroFolha: "008",
+    nomeFolha: "FOLHA COMPLEMENTAR - SEPLAG",
+    competencia: "04/2026",
+    matriculaCpf: "-",
+    grupoEleitos: "PESSOA FÍSICA",
+    solicitante: "Carla Mendes",
+    responsavelCorrecao: "Roberto Alves",
+    dataCriacao: "28/04/2026",
+    dataFechamento: "-",
+    situacao: "CORRIGIDO",
+    motivoAbertura: "Ajuste complementar pendente de aceite final.",
+  },
+  {
+    id: 9,
+    numeroFolha: "009",
+    nomeFolha: "FOLHA NORMAL - SES",
+    competencia: "03/2026",
+    matriculaCpf: "102938",
+    grupoEleitos: "-",
+    solicitante: "Marcos Lima",
+    responsavelCorrecao: "Júlia Costa",
+    dataCriacao: "20/03/2026",
+    dataFechamento: "-",
+    situacao: "EM_CORRECAO",
+    motivoAbertura: "Verificar inconsistência entre rubrica calculada e apontamento.",
+  },
+  {
+    id: 10,
+    numeroFolha: "010",
+    nomeFolha: "FOLHA NORMAL - SAD",
+    competencia: "05/2026",
+    matriculaCpf: "-",
+    grupoEleitos: "SERVIDORES CONTRATADOS",
+    solicitante: "Ana Paula Ribeiro",
+    responsavelCorrecao: "Roberto Alves",
+    dataCriacao: "22/05/2026",
+    dataFechamento: "-",
+    situacao: "DEVOLVIDO",
+    motivoAbertura: "Divergência de retroativo para contratos temporários.",
+    motivoDevolucao: "Necessário revisar o período retroativo informado.",
+  },
+];
+
+const solicitacoesAjusteFolhaHistoricoMock: SolicitacaoAjusteFolhaHistoricoRow[] = [
+  {
+    id: 101,
+    solicitacaoId: 1,
+    situacaoDestino: "NOVA",
+    dataHora: "18/05/2026 09:42",
+    operador: "Ana Paula Ribeiro",
+    descricao:
+      "Solicitação aberta pela Conformidade após divergência no cálculo de adicional noturno. Matrícula 107845 vinculada à Folha Normal - SEPLAG.",
+  },
+  {
+    id: 201,
+    solicitacaoId: 2,
+    situacaoDestino: "NOVA",
+    dataHora: "18/05/2026 10:15",
+    operador: "Carla Mendes",
+    descricao:
+      "Solicitação aberta para revisão do grupo SERVIDORES COMISSIONADOS na competência 05/2026.",
+  },
+  {
+    id: 202,
+    solicitacaoId: 2,
+    situacaoDestino: "EM_CORRECAO",
+    dataHora: "18/05/2026 10:47",
+    operador: "João Silva",
+    descricao:
+      "Atendimento iniciado pela Folha de Pagamento. Responsável validará parametrização das rubricas variáveis antes do reprocessamento externo.",
+  },
+  {
+    id: 301,
+    solicitacaoId: 3,
+    situacaoDestino: "NOVA",
+    dataHora: "17/05/2026 14:20",
+    operador: "Ana Paula Ribeiro",
+    descricao:
+      "Diferença identificada no cálculo de adicional noturno do servidor 254896. Evidência registrada pela conferência da Conformidade.",
+  },
+  {
+    id: 302,
+    solicitacaoId: 3,
+    situacaoDestino: "EM_CORRECAO",
+    dataHora: "17/05/2026 15:08",
+    operador: "Roberto Alves",
+    descricao:
+      "Correção assumida pela equipe de Folha de Pagamento. Operador vinculado como responsável pela solicitação.",
+  },
+  {
+    id: 303,
+    solicitacaoId: 3,
+    situacaoDestino: "CORRIGIDO",
+    dataHora: "18/05/2026 09:30",
+    operador: "Roberto Alves",
+    descricao:
+      "Ajuste realizado no módulo externo de processamento e disponibilizado para validação da Conformidade. Rubrica revisada: adicional noturno.",
+  },
+  {
+    id: 401,
+    solicitacaoId: 4,
+    situacaoDestino: "NOVA",
+    dataHora: "10/05/2026 08:55",
+    operador: "Marcos Lima",
+    descricao:
+      "Solicitação aberta após conferência da Folha Rescisória - SEFAZ. Grupo SERVIDORES CONTRATADOS apresentou diferença no cálculo rescisório.",
+  },
+  {
+    id: 402,
+    solicitacaoId: 4,
+    situacaoDestino: "EM_CORRECAO",
+    dataHora: "10/05/2026 09:20",
+    operador: "Júlia Costa",
+    descricao:
+      "Correção iniciada pela Folha de Pagamento com análise dos vínculos temporários impactados.",
+  },
+  {
+    id: 403,
+    solicitacaoId: 4,
+    situacaoDestino: "CORRIGIDO",
+    dataHora: "10/05/2026 15:35",
+    operador: "Júlia Costa",
+    descricao:
+      "Ajuste aplicado e encaminhado para nova validação da Conformidade.",
+  },
+  {
+    id: 404,
+    solicitacaoId: 4,
+    situacaoDestino: "DEVOLVIDO",
+    dataHora: "11/05/2026 08:10",
+    operador: "Marcos Lima",
+    descricao:
+      "Correção devolvida: nem todos os vínculos temporários indicados foram contemplados. Necessário revisar a abrangência do grupo.",
+  },
+  {
+    id: 501,
+    solicitacaoId: 5,
+    situacaoDestino: "NOVA",
+    dataHora: "05/05/2026 11:10",
+    operador: "Carla Mendes",
+    descricao:
+      "Solicitação aberta para adequação de desconto legal da matrícula 369741 na Folha Normal - PGE.",
+  },
+  {
+    id: 502,
+    solicitacaoId: 5,
+    situacaoDestino: "EM_CORRECAO",
+    dataHora: "05/05/2026 13:22",
+    operador: "João Silva",
+    descricao:
+      "Folha assumiu a correção e conferiu integração com os dados cadastrais do servidor.",
+  },
+  {
+    id: 503,
+    solicitacaoId: 5,
+    situacaoDestino: "CORRIGIDO",
+    dataHora: "08/05/2026 15:40",
+    operador: "João Silva",
+    descricao:
+      "Desconto legal recalculado e disponibilizado para aceite final.",
+  },
+  {
+    id: 504,
+    solicitacaoId: 5,
+    situacaoDestino: "CONCLUIDO",
+    dataHora: "08/05/2026 16:38",
+    operador: "Carla Mendes",
+    descricao:
+      "Conformidade validou o ajuste realizado. Solicitação concluída e bloqueada para alterações.",
+  },
+];
+
 export const folhaPagamentoMockRepository = {
   listarGruposFolha: (): GrupoFolhaRow[] => structuredClone(gruposFolhaMock),
   criarGrupoFolha: (request: CreateGrupoFolhaRequest): GrupoFolhaRow => {
@@ -780,6 +1056,31 @@ export const folhaPagamentoMockRepository = {
     structuredClone(folhasPagamentoPessoaLogsMock),
   listarRubricaLogs: (): FolhaPagamentoRubricaLogRow[] =>
     structuredClone(folhasPagamentoRubricaLogsMock),
+  listarSolicitacoesAjusteFolha: (): SolicitacaoAjusteFolhaRow[] =>
+    structuredClone(solicitacoesAjusteFolhaMock),
+  atualizarSolicitacaoAjusteFolha: (
+    solicitacao: SolicitacaoAjusteFolhaRow,
+  ): SolicitacaoAjusteFolhaRow | undefined => {
+    const index = solicitacoesAjusteFolhaMock.findIndex(
+      (item) => item.id === solicitacao.id,
+    );
+    if (index < 0) return undefined;
+
+    solicitacoesAjusteFolhaMock[index] = { ...solicitacao };
+    return structuredClone(solicitacoesAjusteFolhaMock[index]);
+  },
+  excluirSolicitacaoAjusteFolha: (id: number) => {
+    const index = solicitacoesAjusteFolhaMock.findIndex((item) => item.id === id);
+    if (index >= 0) solicitacoesAjusteFolhaMock.splice(index, 1);
+  },
+  listarHistoricoSolicitacaoAjusteFolha: (
+    solicitacaoId: number,
+  ): SolicitacaoAjusteFolhaHistoricoRow[] =>
+    structuredClone(
+      solicitacoesAjusteFolhaHistoricoMock.filter(
+        (item) => item.solicitacaoId === solicitacaoId,
+      ),
+    ),
 };
 
 export const folhaPagamentoService = {
@@ -825,4 +1126,16 @@ export const folhaPagamentoService = {
   listarPessoaLogs: folhaPagamentoMockRepository.listarPessoaLogs,
   // TODO backend: GET /folhas-pagamento/execucoes/{execucaoId}/log/{pessoaLogId}/rubricas
   listarRubricaLogs: folhaPagamentoMockRepository.listarRubricaLogs,
+  // TODO backend: GET /solicitacoes-ajustes-folha
+  listarSolicitacoesAjusteFolha:
+    folhaPagamentoMockRepository.listarSolicitacoesAjusteFolha,
+  // TODO backend: PUT /solicitacoes-ajustes-folha/{id}
+  atualizarSolicitacaoAjusteFolha:
+    folhaPagamentoMockRepository.atualizarSolicitacaoAjusteFolha,
+  // TODO backend: DELETE /solicitacoes-ajustes-folha/{id}
+  excluirSolicitacaoAjusteFolha:
+    folhaPagamentoMockRepository.excluirSolicitacaoAjusteFolha,
+  // TODO backend: GET /solicitacoes-ajustes-folha/{id}/historico
+  listarHistoricoSolicitacaoAjusteFolha:
+    folhaPagamentoMockRepository.listarHistoricoSolicitacaoAjusteFolha,
 };

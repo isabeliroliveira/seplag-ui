@@ -71,6 +71,11 @@ import type {
   FolhaPagamentoRubricaLogRow,
   FolhaPagamentoRubricaLogSituacao,
   FolhaPagamentoSituacao,
+  SolicitacaoAjusteFolhaFiltroForm,
+  SolicitacaoAjusteFolhaHistoricoRow,
+  SolicitacaoAjusteFolhaPerfil,
+  SolicitacaoAjusteFolhaRow,
+  SolicitacaoAjusteFolhaSituacao,
   GrupoFolhaFiltroForm,
   GrupoFolhaForm,
   GrupoFolhaRow,
@@ -86,6 +91,8 @@ const FOLHA_PAGAMENTO_BASE_PATH =
   "/prototipos/folha/processamento/folha-pagamento";
 const FOLHA_COMPETENCIAS_BASE_PATH =
   "/prototipos/folha/processamento/competencias";
+const FOLHA_SOLICITACOES_AJUSTES_BASE_PATH =
+  "/prototipos/folha/processamento/solicitacoes-ajustes";
 const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
@@ -320,6 +327,13 @@ const menuFolha: IMenuSeplag[] = [
         label: "Folha de Pagamento",
         icon: "pi pi-circle-on",
         to: FOLHA_PAGAMENTO_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
+      {
+        label: "Solicitações de Ajustes da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_SOLICITACOES_AJUSTES_BASE_PATH,
         visibleOnMenu: true,
         visibleOnRouter: true,
       },
@@ -2520,6 +2534,21 @@ const getControleVagasValidacaoVagaNumerada = (
   };
 };
 
+const renderVagaNumeradaStatusBadge = (
+  status: ControleVagasVagaNumeradaSituacao,
+) => {
+  const badgeClass = {
+    Disponível: "prototype-badge prototype-badge--success",
+    Ocupada: "prototype-badge prototype-badge--info",
+    Reservada: "prototype-badge prototype-badge--warning",
+    Bloqueada: "prototype-badge prototype-badge--danger",
+    Agendada: "prototype-badge prototype-badge--secondary",
+    Extinta: "prototype-badge prototype-badge--light",
+  }[status];
+
+  return <span className={badgeClass}>{status}</span>;
+};
+
 const getControleVagasDistribuicaoDaVaga = (
   vaga?: ControleVagasVagaNumeradaRow,
 ) => {
@@ -2578,23 +2607,13 @@ const controleVagasModuleItems = [
     description: "Define quais cargos e funções controlam vagas e quais critérios serão validados.",
     path: "/prototipos/sigep/controle-vagas/configuracao",
     icon: "pi pi-sliders-h",
-    status: "Etapa 01",
   },
   {
     id: "quadro-autorizado",
     title: "Quadro Autorizado",
-    description: "Cadastra o quantitativo autorizado de vagas por cargo ou função.",
+    description: "Cadastra o quantitativo autorizado, distribuições e reservas por cargo ou função.",
     path: "/prototipos/sigep/controle-vagas/quadro-autorizado",
     icon: "pi pi-table",
-    status: "Etapa 02",
-  },
-  {
-    id: "vagas-numeradas",
-    title: "Vagas Numeradas",
-    description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
-    path: "/prototipos/sigep/controle-vagas/vagas-numeradas",
-    icon: "pi pi-hashtag",
-    status: "Etapa 06",
   },
   {
     id: "saldo",
@@ -2602,7 +2621,13 @@ const controleVagasModuleItems = [
     description: "Exibe vagas autorizadas, ocupadas, reservadas e disponíveis por referência.",
     path: "/prototipos/sigep/controle-vagas/consulta-saldo",
     icon: "pi pi-chart-bar",
-    status: "Etapa 05",
+  },
+  {
+    id: "vagas-numeradas",
+    title: "Vagas Numeradas",
+    description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
+    path: "/prototipos/sigep/controle-vagas/vagas-numeradas",
+    icon: "pi pi-hashtag",
   },
   {
     id: "integracao",
@@ -2610,7 +2635,6 @@ const controleVagasModuleItems = [
     description: "Simula validação, ocupação, liberação e registro de eventos funcionais.",
     path: "/prototipos/sigep/controle-vagas/integracao",
     icon: "pi pi-sync",
-    status: "Etapa 07",
   },
   {
     id: "historico",
@@ -2618,7 +2642,6 @@ const controleVagasModuleItems = [
     description: "Consulta a linha do tempo de ocupações, reservas, liberações e alterações.",
     path: "/prototipos/sigep/controle-vagas/historico",
     icon: "pi pi-history",
-    status: "Etapa 08",
   },
 ];
 
@@ -2700,6 +2723,34 @@ const folhaPagamentoSituacaoMeta: Record<
   PROCESSO_COM_ERRO: { label: "Processado com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
   PROCESSO_COM_FALHAS: { label: "Processado com falhas", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
   CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const solicitacaoAjusteFolhaSituacaoOptions: {
+  label: string;
+  value: SolicitacaoAjusteFolhaSituacao;
+}[] = [
+  { label: "NOVA", value: "NOVA" },
+  { label: "EM CORREÇÃO", value: "EM_CORRECAO" },
+  { label: "CORRIGIDO", value: "CORRIGIDO" },
+  { label: "DEVOLVIDO", value: "DEVOLVIDO" },
+  { label: "CONCLUÍDO", value: "CONCLUIDO" },
+];
+
+const solicitacaoAjusteFolhaCompetenciaOptions = [
+  { label: "05/2026", value: "05/2026" },
+  { label: "04/2026", value: "04/2026" },
+  { label: "03/2026", value: "03/2026" },
+];
+
+const solicitacaoAjusteFolhaSituacaoMeta: Record<
+  SolicitacaoAjusteFolhaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  NOVA: { label: "NOVA", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
+  EM_CORRECAO: { label: "EM CORREÇÃO", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  CORRIGIDO: { label: "CORRIGIDO", color: "#334e9f", bg: "#e8edff", border: "#e8edff" },
+  DEVOLVIDO: { label: "DEVOLVIDO", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  CONCLUIDO: { label: "CONCLUÍDO", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
 };
 
 const folhaCompetenciaSituacaoMeta: Record<
@@ -4277,7 +4328,6 @@ export function PrototiposControleVagasPage() {
                     <i className={item.icon} />
                   </div>
                   <div className="prototype-module-card-body">
-                    <span>{item.status}</span>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
                   </div>
@@ -4469,6 +4519,15 @@ export function PrototiposControleVagasConfiguracaoPage() {
               }
               handleInativar={() => {}}
               handleOnPageChange={() => {}}
+            />
+          </div>
+
+          <div className="prototype-form-actions">
+            <BotaoVoltarSeplag
+              type="button"
+              label="Voltar"
+              icon="pi pi-arrow-left"
+              onClick={() => navigate("/prototipos/sigep/controle-vagas")}
             />
           </div>
         </CardSeplag>
@@ -12371,6 +12430,629 @@ export function PrototiposFolhaPagamentoPage() {
                   Nenhuma rubrica registrada para esta pessoa nesta execução.
                 </div>
               )}
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaSolicitacoesAjustesPage() {
+  const navigate = useNavigate();
+  const [perfil, setPerfil] =
+    useState<SolicitacaoAjusteFolhaPerfil>("CONFORMIDADE");
+  const [solicitacoes, setSolicitacoes] = useState<
+    SolicitacaoAjusteFolhaRow[]
+  >(() => folhaPagamentoService.listarSolicitacoesAjusteFolha());
+  const [solicitacaoSelecionada, setSolicitacaoSelecionada] =
+    useState<SolicitacaoAjusteFolhaRow | null>(null);
+  const [modalVisualizarAberto, setModalVisualizarAberto] = useState(false);
+  const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false);
+  const [modalDevolverAberto, setModalDevolverAberto] = useState(false);
+  const [modalConcluirAberto, setModalConcluirAberto] = useState(false);
+  const [modalIniciarAberto, setModalIniciarAberto] = useState(false);
+  const [modalFinalizarAberto, setModalFinalizarAberto] = useState(false);
+  const [motivoDevolucao, setMotivoDevolucao] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const { control, reset, watch } =
+    useForm<SolicitacaoAjusteFolhaFiltroForm>({
+      defaultValues: {
+        termoFolha: "",
+        competencias: [],
+        matriculaCpf: "",
+        situacoes: [],
+      },
+    });
+
+  const filtros = watch();
+  const usuarioAtual =
+    perfil === "CONFORMIDADE"
+      ? "Maria de Souza - Conformidade"
+      : "João Silva - Folha de Pagamento";
+
+  const termoFolha =
+    (filtros.termoFolha?.trim().length ?? 0) >= 3
+      ? filtros.termoFolha?.trim().toLowerCase() ?? ""
+      : "";
+  const termoPessoa =
+    (filtros.matriculaCpf?.trim().length ?? 0) >= 3
+      ? filtros.matriculaCpf?.trim().toLowerCase() ?? ""
+      : "";
+
+  const solicitacoesFiltradas = solicitacoes
+    .filter((solicitacao) => {
+      const atendeFolha =
+        !termoFolha ||
+        solicitacao.numeroFolha.toLowerCase().includes(termoFolha) ||
+        solicitacao.nomeFolha.toLowerCase().includes(termoFolha);
+      const atendeCompetencia =
+        !filtros.competencias?.length ||
+        filtros.competencias.includes(solicitacao.competencia);
+      const atendePessoa =
+        !termoPessoa ||
+        solicitacao.matriculaCpf.toLowerCase().includes(termoPessoa);
+      const atendeSituacao =
+        !filtros.situacoes?.length ||
+        filtros.situacoes.includes(solicitacao.situacao);
+
+      return atendeFolha && atendeCompetencia && atendePessoa && atendeSituacao;
+    })
+    .sort((a, b) => Number(a.numeroFolha) - Number(b.numeroFolha));
+
+  const solicitacaoResults = {
+    ...createResults(solicitacoesFiltradas),
+    totalPages: Math.max(1, Math.ceil(solicitacoesFiltradas.length / 10)),
+    totalRecords: solicitacoesFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+
+  const historicoSelecionado: SolicitacaoAjusteFolhaHistoricoRow[] =
+    solicitacaoSelecionada
+      ? folhaPagamentoService.listarHistoricoSolicitacaoAjusteFolha(
+          solicitacaoSelecionada.id,
+        )
+      : [];
+
+  const historicoParaExibir =
+    historicoSelecionado.length || !solicitacaoSelecionada
+      ? historicoSelecionado
+      : [
+          {
+            id: solicitacaoSelecionada.id * 100,
+            solicitacaoId: solicitacaoSelecionada.id,
+            situacaoDestino: "NOVA" as SolicitacaoAjusteFolhaSituacao,
+            dataHora: solicitacaoSelecionada.dataCriacao,
+            operador: solicitacaoSelecionada.solicitante,
+            descricao: solicitacaoSelecionada.motivoAbertura,
+          },
+        ];
+
+  const renderSolicitacaoSituacaoBadge = (
+    situacao: SolicitacaoAjusteFolhaSituacao,
+  ) => <BadgeSeplag {...solicitacaoAjusteFolhaSituacaoMeta[situacao]} size="md" />;
+
+  const atualizarSolicitacao = (
+    solicitacao: SolicitacaoAjusteFolhaRow,
+    mensagem: string,
+  ) => {
+    folhaPagamentoService.atualizarSolicitacaoAjusteFolha(solicitacao);
+    setSolicitacoes((current) =>
+      current.map((item) => (item.id === solicitacao.id ? solicitacao : item)),
+    );
+    setFeedback(mensagem);
+  };
+
+  const abrirVisualizar = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    setSolicitacaoSelecionada(solicitacao);
+    setModalVisualizarAberto(true);
+  };
+
+  const abrirHistorico = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    setSolicitacaoSelecionada(solicitacao);
+    setModalHistoricoAberto(true);
+  };
+
+  const confirmarExclusaoSolicitacao = () => {
+    if (!solicitacaoSelecionada) return;
+    if (perfil !== "CONFORMIDADE") {
+      setModalExcluirAberto(false);
+      setFeedback("Ação indisponível para o perfil Folha de Pagamento.");
+      return;
+    }
+
+    folhaPagamentoService.excluirSolicitacaoAjusteFolha(
+      solicitacaoSelecionada.id,
+    );
+    setSolicitacoes((current) =>
+      current.filter((item) => item.id !== solicitacaoSelecionada.id),
+    );
+    setModalExcluirAberto(false);
+    setFeedback("Registro deletado com sucesso!");
+  };
+
+  const confirmarInicioCorrecao = () => {
+    if (!solicitacaoSelecionada) return;
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "EM_CORRECAO",
+        responsavelCorrecao: "João Silva",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalIniciarAberto(false);
+  };
+
+  const confirmarFinalizacaoCorrecao = () => {
+    if (!solicitacaoSelecionada) return;
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "CORRIGIDO",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalFinalizarAberto(false);
+  };
+
+  const confirmarDevolucao = () => {
+    if (!solicitacaoSelecionada || !motivoDevolucao.trim()) {
+      setFeedback("Campo obrigatório");
+      return;
+    }
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "DEVOLVIDO",
+        motivoDevolucao: motivoDevolucao.trim(),
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setMotivoDevolucao("");
+    setModalDevolverAberto(false);
+  };
+
+  const confirmarConclusao = () => {
+    if (!solicitacaoSelecionada) return;
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "CONCLUIDO",
+        dataFechamento: "03/06/2026",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalConcluirAberto(false);
+  };
+
+  const renderAcoesSolicitacao = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    const isConformidade = perfil === "CONFORMIDADE";
+    const isFolhaPagamento = perfil === "FOLHA";
+    const podeEditarExcluir =
+      isConformidade && solicitacao.situacao === "NOVA";
+    const podeDevolverConcluir =
+      isConformidade && solicitacao.situacao === "CORRIGIDO";
+    const podeIniciar =
+      isFolhaPagamento &&
+      (solicitacao.situacao === "NOVA" ||
+        solicitacao.situacao === "DEVOLVIDO");
+    const podeFinalizar =
+      isFolhaPagamento && solicitacao.situacao === "EM_CORRECAO";
+
+    return (
+      <>
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Visualizar"
+          icon="pi pi-eye"
+          onClick={() => abrirVisualizar(solicitacao)}
+        />
+        {podeEditarExcluir ? (
+          <BotaoIconSeplag
+            severity="warning"
+            type="button"
+            tooltip="Editar"
+            icon="pi pi-pencil"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setFeedback("Edição disponível apenas como fluxo de cadastro nesta US.");
+            }}
+          />
+        ) : null}
+        {podeEditarExcluir ? (
+          <BotaoIconSeplag
+            severity="danger"
+            type="button"
+            tooltip="Excluir"
+            icon="pi pi-trash"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalExcluirAberto(true);
+            }}
+          />
+        ) : null}
+        {podeIniciar ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Iniciar Correção"
+            icon="pi pi-play"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalIniciarAberto(true);
+            }}
+          />
+        ) : null}
+        {podeFinalizar ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Finalizar Correção"
+            icon="pi pi-check-circle"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalFinalizarAberto(true);
+            }}
+          />
+        ) : null}
+        {podeDevolverConcluir ? (
+          <BotaoIconSeplag
+            severity="danger"
+            type="button"
+            tooltip="Devolver Solicitação"
+            icon="pi pi-replay"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setMotivoDevolucao("");
+              setModalDevolverAberto(true);
+            }}
+          />
+        ) : null}
+        {podeDevolverConcluir ? (
+          <BotaoIconSeplag
+            severity="success"
+            type="button"
+            tooltip="Concluir Solicitação"
+            icon="pi pi-verified"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalConcluirAberto(true);
+            }}
+          />
+        ) : null}
+        <BotaoIconSeplag
+          severity="secondary"
+          type="button"
+          tooltip="Histórico"
+          icon="pi pi-history"
+          onClick={() => abrirHistorico(solicitacao)}
+        />
+      </>
+    );
+  };
+
+  const solicitacaoColumns: ColumnMetaSeplag<SolicitacaoAjusteFolhaRow>[] = [
+    { field: "numeroFolha", header: "Número da Folha" },
+    { field: "nomeFolha", header: "Nome da Folha" },
+    { field: "competencia", header: "Competência" },
+    {
+      header: "Matrícula/CPF ou\nGrupo de Eleitos",
+      body: (row) =>
+        row.matriculaCpf && row.matriculaCpf !== "-"
+          ? row.matriculaCpf
+          : row.grupoEleitos,
+    },
+    { field: "solicitante", header: "Solicitante" },
+    { field: "dataCriacao", header: "Data de\nCriação" },
+    { field: "dataFechamento", header: "Data de\nFechamento" },
+    {
+      header: "Situação",
+      body: (row) => renderSolicitacaoSituacaoBadge(row.situacao),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-solicitacoes-ajustes-page">
+        <div className="prototype-solicitacoes-ajustes-header">
+          <div>
+            <span className="prototype-breadcrumb">
+              Folha de Pagamento &gt; Solicitações de Ajustes da Folha
+            </span>
+            <h1>Solicitações de Ajustes da Folha de Pagamento</h1>
+            <p>
+              Acompanhe e gerencie as solicitações de correção identificadas
+              durante a conformidade da folha.
+            </p>
+          </div>
+          <div className="prototype-solicitacoes-ajustes-user">
+            <label>
+              Perfil da variação
+              <select
+                value={perfil}
+                onChange={(event) =>
+                  setPerfil(event.target.value as SolicitacaoAjusteFolhaPerfil)
+                }
+              >
+                <option value="CONFORMIDADE">
+                  Maria de Souza - Conformidade
+                </option>
+                <option value="FOLHA">
+                  João Silva - Folha de Pagamento
+                </option>
+              </select>
+            </label>
+            <span>{usuarioAtual}</span>
+          </div>
+        </div>
+
+        {feedback ? (
+          <div className="prototype-validation-panel">{feedback}</div>
+        ) : null}
+
+        <CardSeplag
+          title="Filtros de Consulta"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters prototype-solicitacoes-ajustes-filters">
+            <TextFieldSeplag
+              name="termoFolha"
+              control={control}
+              label="Número da Folha ou Nome da Folha"
+              placeholder="Digite o número ou nome da folha"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="competencias"
+              control={control}
+              label="Competência"
+              placeholder="Selecione a competência"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaCompetenciaOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} competências selecionadas"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="matriculaCpf"
+              control={control}
+              label="Matrícula ou CPF"
+              placeholder="Digite a matrícula ou CPF"
+              cols="12 12 3"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="situacoes"
+              control={control}
+              label="Situação"
+              placeholder="Selecione a situação"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} situações selecionadas"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termoFolha: "",
+                    competencias: [],
+                    matriculaCpf: "",
+                    situacoes: [],
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="col-12 prototype-solicitacoes-ajustes-hint">
+            Os campos textuais sugerem resultados a partir de 3 caracteres. A
+            filtragem é aplicada automaticamente.
+          </div>
+        </CardSeplag>
+
+        <CardSeplag
+          title="Solicitações Registradas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <div className="prototype-solicitacoes-ajustes-card-actions">
+              <span>{solicitacoesFiltradas.length} registros encontrados</span>
+              <BotaoSeplag
+                type="button"
+                label="Nova Solicitação"
+                icon="pi pi-plus"
+                style={{ color: "#ffffff" }}
+                hasPermission={perfil === "CONFORMIDADE"}
+                onClick={() =>
+                  setFeedback("Fluxo de cadastro relatado em US específica.")
+                }
+              />
+            </div>
+          }
+        >
+          <div className="col-12 prototype-folha-pagamento-table prototype-solicitacoes-ajustes-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={solicitacaoResults}
+              rows={10}
+              rowsPerPage={[5, 10, 25, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={solicitacaoColumns}
+              hasEventoAcao
+              renderBotoes={renderAcoesSolicitacao}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <div className="prototype-form-actions">
+          <BotaoVoltarSeplag
+            type="button"
+            label="Voltar"
+            icon="pi pi-arrow-left"
+            onClick={() => navigate("/prototipos/folha")}
+          />
+        </div>
+
+        <ModalSeplag
+          visible={modalVisualizarAberto}
+          titulo="Visualizar Solicitação"
+          fechar={() => setModalVisualizarAberto(false)}
+          tamanho="860px"
+          hideFooter
+        >
+          {solicitacaoSelecionada ? (
+            <div className="col-12 prototype-catalogo-view-content">
+              <p><strong>Número da Folha:</strong> {solicitacaoSelecionada.numeroFolha}</p>
+              <p><strong>Nome da Folha:</strong> {solicitacaoSelecionada.nomeFolha}</p>
+              <p><strong>Competência:</strong> {solicitacaoSelecionada.competencia}</p>
+              <p><strong>Matrícula ou CPF:</strong> {solicitacaoSelecionada.matriculaCpf}</p>
+              <p><strong>Grupo de Eleitos:</strong> {solicitacaoSelecionada.grupoEleitos}</p>
+              <p><strong>Solicitante:</strong> {solicitacaoSelecionada.solicitante}</p>
+              <p><strong>Responsável:</strong> {solicitacaoSelecionada.responsavelCorrecao}</p>
+              <p><strong>Situação:</strong> {renderSolicitacaoSituacaoBadge(solicitacaoSelecionada.situacao)}</p>
+              <p><strong>Motivo da abertura:</strong> {solicitacaoSelecionada.motivoAbertura}</p>
+              <p><strong>Motivo da devolução:</strong> {solicitacaoSelecionada.motivoDevolucao ?? "-"}</p>
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalExcluirAberto}
+          titulo="Excluir Solicitação"
+          fechar={() => setModalExcluirAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Excluir"
+          iconAcao="pi pi-trash"
+          funcAcao={confirmarExclusaoSolicitacao}
+          tamanho="520px"
+        >
+          <p className="col-12">Deseja realmente excluir o registro selecionado?</p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalDevolverAberto}
+          titulo="Devolver Solicitação"
+          fechar={() => setModalDevolverAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Devolução"
+          iconAcao="pi pi-replay"
+          funcAcao={confirmarDevolucao}
+          tamanho="760px"
+        >
+          <div className="col-12 prototype-solicitacoes-ajustes-modal-text">
+            Informe o motivo pelo qual a correção deverá retornar para a equipe
+            de Folha de Pagamento.
+          </div>
+          <div className="col-12">
+            <label className="prototype-solicitacoes-ajustes-textarea-label">
+              Motivo da Devolução
+            </label>
+            <textarea
+              className="prototype-solicitacoes-ajustes-textarea"
+              value={motivoDevolucao}
+              placeholder="Descreva o motivo da devolução e as orientações para correção."
+              onChange={(event) => setMotivoDevolucao(event.target.value)}
+            />
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalConcluirAberto}
+          titulo="Concluir Solicitação"
+          fechar={() => setModalConcluirAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Conclusão"
+          iconAcao="pi pi-verified"
+          funcAcao={confirmarConclusao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Confirma a conclusão desta solicitação de ajuste? Após a conclusão,
+            o registro ficará disponível apenas para visualização.
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalIniciarAberto}
+          titulo="Iniciar Correção"
+          fechar={() => setModalIniciarAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Início"
+          iconAcao="pi pi-play"
+          funcAcao={confirmarInicioCorrecao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Ao confirmar, você será registrado como responsável pela correção
+            desta solicitação.
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalFinalizarAberto}
+          titulo="Finalizar Correção"
+          fechar={() => setModalFinalizarAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar"
+          iconAcao="pi pi-check-circle"
+          funcAcao={confirmarFinalizacaoCorrecao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Confirma a finalização da correção desta solicitação?
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalHistoricoAberto}
+          titulo="Histórico da Solicitação"
+          fechar={() => setModalHistoricoAberto(false)}
+          tamanho="900px"
+          hideFooter
+        >
+          {solicitacaoSelecionada ? (
+            <div className="col-12 prototype-solicitacoes-ajustes-history">
+              <p className="prototype-solicitacoes-ajustes-history-subtitle">
+                Folha {solicitacaoSelecionada.numeroFolha} -{" "}
+                {solicitacaoSelecionada.nomeFolha} | Competência{" "}
+                {solicitacaoSelecionada.competencia}
+              </p>
+              <div className="prototype-solicitacoes-ajustes-timeline">
+                {historicoParaExibir.map((item) => (
+                  <div
+                    key={item.id}
+                    className="prototype-solicitacoes-ajustes-timeline-item"
+                  >
+                    <div className="prototype-solicitacoes-ajustes-timeline-dot" />
+                    <div>
+                      {renderSolicitacaoSituacaoBadge(item.situacaoDestino)}
+                      <strong>Data/Hora: {item.dataHora}</strong>
+                      <span>Operador: {item.operador}</span>
+                      <p>{item.descricao}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
         </ModalSeplag>

@@ -40,6 +40,7 @@ import {
   PrototiposFolhaPagamentoFormPage,
   PrototiposFolhaPagamentoLogPage,
   PrototiposFolhaPagamentoPage,
+  PrototiposFolhaSolicitacoesAjustesPage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
   PrototiposFolhaCatalogoRubricaViewPage,
@@ -416,6 +417,10 @@ function App() {
       <Route
         path="/prototipos/folha/processamento/folha-pagamento"
         element={<PrototiposFolhaPagamentoPage />}
+      />
+      <Route
+        path="/prototipos/folha/processamento/solicitacoes-ajustes"
+        element={<PrototiposFolhaSolicitacoesAjustesPage />}
       />
       <Route
         path="/prototipos/folha/processamento/folha-pagamento/novo"
