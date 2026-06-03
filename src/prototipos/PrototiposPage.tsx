@@ -9601,13 +9601,12 @@ export function PrototiposFolhaCompetenciasPage() {
     const [ano, mes] = competencia.competencia.split("-").map(Number);
     const proximoMes = new Date(ano, mes, 1);
     const dataInicio = new Date(proximoMes.getFullYear(), proximoMes.getMonth(), 1);
-    const dataFim = new Date(proximoMes.getFullYear(), proximoMes.getMonth() + 1, 0);
     const competenciaIso = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, "0")}`;
 
     return {
       competencia: competenciaIso,
       dataInicio: formatDataBr(dataInicio),
-      dataFim: formatDataBr(dataFim),
+      dataFim: "",
     };
   };
 
@@ -9621,11 +9620,6 @@ export function PrototiposFolhaCompetenciasPage() {
 
     if (!dataInicio) return fallback;
 
-    const dataFim = new Date(
-      dataInicio.getFullYear(),
-      dataInicio.getMonth() + 1,
-      0,
-    );
     const competenciaIso = `${dataInicio.getFullYear()}-${String(
       dataInicio.getMonth() + 1,
     ).padStart(2, "0")}`;
@@ -9633,8 +9627,25 @@ export function PrototiposFolhaCompetenciasPage() {
     return {
       competencia: competenciaIso,
       dataInicio: formatDataBr(dataInicio),
-      dataFim: formatDataBr(dataFim),
+      dataFim: "",
     };
+  };
+
+  const getDataFimCompetenciaFechada = (dataInicioProxima: string) => {
+    const dataInicio = parseDataBr(dataInicioProxima);
+    if (!dataInicio) return "";
+
+    const dataFimAtual = new Date(dataInicio);
+    dataFimAtual.setDate(dataFimAtual.getDate() - 1);
+
+    return formatDataBr(dataFimAtual);
+  };
+
+  const maskDataBr = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
   };
 
   const filtros = watch();
@@ -9753,6 +9764,9 @@ export function PrototiposFolhaCompetenciasPage() {
 
     const proximaCompetencia =
       getProximaCompetenciaPorDataInicio(competenciaParaFechar);
+    const dataFimCompetenciaFechada =
+      getDataFimCompetenciaFechada(proximaCompetencia.dataInicio) ||
+      competenciaParaFechar.dataFim;
     const competenciaExistente = competencias.find(
       (competencia) =>
         competencia.competencia === proximaCompetencia.competencia,
@@ -9761,14 +9775,23 @@ export function PrototiposFolhaCompetenciasPage() {
     setCompetencias((current) => {
       const currentFechadas = current.map((competencia) =>
         competencia.id === competenciaParaFechar.id
-          ? { ...competencia, situacao: "FECHADA" as FolhaCompetenciaSituacao }
+          ? {
+              ...competencia,
+              dataFim: dataFimCompetenciaFechada,
+              situacao: "FECHADA" as FolhaCompetenciaSituacao,
+            }
           : competencia,
       );
 
       if (competenciaExistente) {
         return currentFechadas.map((competencia) =>
           competencia.id === competenciaExistente.id
-            ? { ...competencia, situacao: "ATIVA" as FolhaCompetenciaSituacao }
+            ? {
+                ...competencia,
+                dataInicio: proximaCompetencia.dataInicio,
+                dataFim: "",
+                situacao: "ATIVA" as FolhaCompetenciaSituacao,
+              }
             : competencia,
         );
       }
@@ -9780,7 +9803,7 @@ export function PrototiposFolhaCompetenciasPage() {
         competencia: proximaCompetencia.competencia,
         mesAnoReferencia: proximaCompetencia.competencia,
         dataInicio: proximaCompetencia.dataInicio,
-        dataFim: proximaCompetencia.dataFim,
+        dataFim: "",
         situacao: "ATIVA",
         observacao: "Competência aberta automaticamente após fechamento da competência anterior.",
         totalFolhas: 0,
@@ -9995,22 +10018,18 @@ export function PrototiposFolhaCompetenciasPage() {
                       value={dataInicioProximaCompetencia}
                       placeholder="DD/MM/AAAA"
                       onChange={(event) =>
-                        setDataInicioProximaCompetencia(event.target.value)
+                        setDataInicioProximaCompetencia(
+                          maskDataBr(event.target.value),
+                        )
                       }
                     />
                   </label>
-                  <p>
-                    Data fim automática:{" "}
-                    {
-                      getProximaCompetenciaPorDataInicio(competenciaParaFechar)
-                        .dataFim
-                    }
-                  </p>
                 </div>
               </div>
             ) : null}
           </div>
         </ModalSeplag>
+
       </div>
     </PrototypeSystemPage>
   );
@@ -10884,12 +10903,6 @@ export function PrototiposFolhaPagamentoPage() {
   const [execucoes, setExecucoes] = useState<FolhaPagamentoExecucaoRow[]>(
     () => folhaPagamentoService.listarExecucoes(),
   );
-  const [folhasExpandidas, setFolhasExpandidas] = useState<Record<string, boolean>>(
-    {},
-  );
-  const [folhaVersaoBusca, setFolhaVersaoBusca] = useState("");
-  const [folhaSituacaoProcessamentoFiltro, setFolhaSituacaoProcessamentoFiltro] =
-    useState<FolhaPagamentoSituacao | "">("");
   const [pessoaLogs] = useState<FolhaPagamentoPessoaLogRow[]>(() =>
     folhaPagamentoService.listarPessoaLogs(),
   );
@@ -10997,18 +11010,10 @@ export function PrototiposFolhaPagamentoPage() {
     return atendeTermo && atendeCompetencia && atendeSituacao;
   });
 
-  const folhaResults = {
-    ...createResults(folhasFiltradas),
-    totalPages: Math.max(1, Math.ceil(folhasFiltradas.length / 10)),
-    totalRecords: folhasFiltradas.length,
-    size: 10,
-    sizePage: 10,
-  };
-
   const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
     `${folha.numero}|${folha.competencia}`;
 
-  const folhasAgrupadas = Array.from(
+  const folhasPrincipais = Array.from(
     folhasFiltradas.reduce((map, folha) => {
       const key = getFolhaVersaoKey(folha);
       const grupo = map.get(key) ?? [];
@@ -11016,33 +11021,17 @@ export function PrototiposFolhaPagamentoPage() {
       map.set(key, grupo);
       return map;
     }, new Map<string, FolhaPagamentoRow[]>()),
-  ).map(([key, versoes]) => {
+  ).map(([, versoes]) => {
     const versoesOrdenadas = [...versoes].sort((a, b) => b.id - a.id);
-    return {
-      key,
-      folhaAtual: versoesOrdenadas[0],
-      versoes: versoesOrdenadas,
-    };
+    return versoesOrdenadas[0];
   });
 
-  const toggleFolhaVersoes = (key: string) => {
-    setFolhasExpandidas((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
-  };
-
-  const getFolhaVersaoLabel = (
-    folha: FolhaPagamentoRow,
-    versoes: FolhaPagamentoRow[],
-  ) => {
-    if (folha.situacao === "RASCUNHO") return "-";
-
-    const versoesAsc = [...versoes].sort((a, b) => a.id - b.id);
-    const index = versoesAsc
-      .filter((versao) => versao.situacao !== "RASCUNHO")
-      .findIndex((versao) => versao.id === folha.id);
-    return `V${index + 1}`;
+  const folhaResults = {
+    ...createResults(folhasPrincipais),
+    totalPages: Math.max(1, Math.ceil(folhasPrincipais.length / 10)),
+    totalRecords: folhasPrincipais.length,
+    size: 10,
+    sizePage: 10,
   };
 
   const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
@@ -11075,16 +11064,6 @@ export function PrototiposFolhaPagamentoPage() {
     if (!value) return "-";
     const [ano, mes] = value.split("-");
     return mes && ano ? `${mes}/${ano}` : value;
-  };
-
-  const getFolhaDataCriacao = (folha: FolhaPagamentoRow) => {
-    const [ano, mes] = folha.competencia.split("-");
-    return mes && ano ? `01/${mes}/${ano}` : "-";
-  };
-
-  const getFolhaDataFim = (folha: FolhaPagamentoRow) => {
-    if (!folha.ultimaExecucao || folha.ultimaExecucao === "-") return "-";
-    return folha.ultimaExecucao.split(" ")[0] ?? "-";
   };
 
   const competenciaVigente = folhaPagamentoService
@@ -11390,11 +11369,13 @@ export function PrototiposFolhaPagamentoPage() {
   };
 
   const folhaColumns: ColumnMetaSeplag<FolhaPagamentoRow>[] = [
-    { field: "numero", header: "Número da folha" },
-    { field: "nome", header: "Nome da folha" },
-    { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
-    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
-    { header: "Situação", body: (row) => renderFolhaSituacaoBadge(row.situacao) },
+    { field: "numero", header: "Número" },
+    { field: "nome", header: "Nome" },
+    { header: "Órgão", body: (row) => row.orgaos.join(", ") || "-" },
+    {
+      header: "Situação processamento",
+      body: (row) => renderFolhaSituacaoBadge(row.situacao),
+    },
   ];
 
   const execucoesFolha = folhaSelecionada
@@ -11528,6 +11509,12 @@ export function PrototiposFolhaPagamentoPage() {
 
   const renderAcoesFolha = (folha: FolhaPagamentoRow) => (
     <>
+      <BotaoIconSeplag
+        type="button"
+        tooltip="Detalhar"
+        icon="pi pi-eye"
+        onClick={() => abrirDetalheFolha(folha)}
+      />
       <BotaoIconSeplag
         severity="warning"
         type="button"
@@ -11666,170 +11653,19 @@ export function PrototiposFolhaPagamentoPage() {
           </div>
 
           <div className="col-12 prototype-folha-pagamento-table">
-            <div className="prototype-folha-versoes-table">
-              {folhasAgrupadas.map(({ key, folhaAtual, versoes }) => {
-                const isOpen = Boolean(folhasExpandidas[key]);
-                const versaoBusca = folhaVersaoBusca.trim().toLowerCase();
-                const versoesFiltradas = versoes.filter((versao) => {
-                  const atendeVersao =
-                    !versaoBusca ||
-                    getFolhaVersaoLabel(versao, versoes)
-                      .toLowerCase()
-                      .includes(versaoBusca) ||
-                    versao.numero.toLowerCase().includes(versaoBusca) ||
-                    versao.nome.toLowerCase().includes(versaoBusca);
-                  const atendeSituacao =
-                    !folhaSituacaoProcessamentoFiltro ||
-                    versao.situacao === folhaSituacaoProcessamentoFiltro;
-
-                  return atendeVersao && atendeSituacao;
-                });
-
-                return (
-                  <section className="prototype-folha-accordion-item" key={key}>
-                    <button
-                      type="button"
-                      className="prototype-folha-accordion-header"
-                      onClick={() => toggleFolhaVersoes(key)}
-                    >
-                      <span>
-                        {folhaAtual.numero} - {folhaAtual.nome}{" "}
-                        {formatMesAno(folhaAtual.competencia)}
-                      </span>
-                      <i
-                        className={`pi pi-chevron-down ${
-                          isOpen ? "is-open" : ""
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
-
-                    {isOpen ? (
-                      <div className="prototype-folha-versoes-panel">
-                        <div className="prototype-folha-versoes-inline-filters">
-                          <label>
-                            <span>Versão</span>
-                            <div className="prototype-folha-versoes-search">
-                              <input
-                                type="text"
-                                value={folhaVersaoBusca}
-                                placeholder="Digite para buscar"
-                                onChange={(event) =>
-                                  setFolhaVersaoBusca(event.target.value)
-                                }
-                              />
-                              <i className="pi pi-search" aria-hidden="true" />
-                            </div>
-                          </label>
-                          <label>
-                            <span>Situação do processamento</span>
-                            <select
-                              value={folhaSituacaoProcessamentoFiltro}
-                              onChange={(event) =>
-                                setFolhaSituacaoProcessamentoFiltro(
-                                  event.target.value as FolhaPagamentoSituacao | "",
-                                )
-                              }
-                            >
-                              {folhaPagamentoSituacaoOptions.map((option) => (
-                                <option key={option.value || "todas"} value={option.value}>
-                                  {option.label === "Todas"
-                                    ? "Digite para buscar"
-                                    : option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <BotaoLimparFiltroSeplag
-                            type="button"
-                            label="Limpar"
-                            icon="pi pi-refresh"
-                            onClick={() => {
-                              setFolhaVersaoBusca("");
-                              setFolhaSituacaoProcessamentoFiltro("");
-                            }}
-                          />
-                        </div>
-
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Versões</th>
-                              <th>Órgãos</th>
-                              <th>Situação do Processamento</th>
-                              <th>Data de Criação</th>
-                              <th>Data fim</th>
-                              <th>Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {versoesFiltradas.map((versao) => (
-                              <tr key={versao.id}>
-                                <td>
-                                  <strong>
-                                    {getFolhaVersaoLabel(versao, versoes)}
-                                  </strong>
-                                  {versao.id === folhaAtual.id &&
-                                  versao.situacao !== "RASCUNHO" ? (
-                                    <span className="prototype-folha-versoes-current">
-                                      Atual
-                                    </span>
-                                  ) : null}
-                                </td>
-                                <td>{versao.orgaos.join(", ")}</td>
-                                <td>{renderFolhaSituacaoBadge(versao.situacao)}</td>
-                                <td>{getFolhaDataCriacao(versao)}</td>
-                                <td>{getFolhaDataFim(versao)}</td>
-                                <td>
-                                  <div className="prototype-folha-versoes-actions">
-                                    <BotaoIconSeplag
-                                      type="button"
-                                      tooltip="Detalhar"
-                                      icon="pi pi-eye"
-                                      onClick={() => abrirDetalheFolha(versao)}
-                                    />
-                                    {renderAcoesFolha(versao)}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-
-                        {!versoesFiltradas.length ? (
-                          <div className="prototype-empty-content">
-                            Nenhuma versão encontrada para os filtros informados.
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </section>
-                );
-              })}
-
-              {!folhasAgrupadas.length ? (
-                <div className="prototype-empty-content">
-                  Nenhuma folha encontrada para os filtros informados.
-                </div>
-              ) : null}
-
-              <div className="prototype-folha-versoes-pagination">
-                <button type="button" disabled aria-label="Primeira página">
-                  <i className="pi pi-angle-double-left" aria-hidden="true" />
-                </button>
-                <button type="button" disabled aria-label="Página anterior">
-                  <i className="pi pi-angle-left" aria-hidden="true" />
-                </button>
-                <span>1</span>
-                <button type="button" disabled aria-label="Próxima página">
-                  <i className="pi pi-angle-right" aria-hidden="true" />
-                </button>
-                <button type="button" disabled aria-label="Última página">
-                  <i className="pi pi-angle-double-right" aria-hidden="true" />
-                </button>
-                <span className="prototype-folha-versoes-page-size">10</span>
-              </div>
-            </div>
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={folhaResults}
+              rows={10}
+              rowsPerPage={[10, 20, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={folhaColumns}
+              hasEventoAcao
+              renderBotoes={renderAcoesFolha}
+              handleOnPageChange={() => {}}
+            />
           </div>
         </CardSeplag>
 
@@ -12046,10 +11882,6 @@ export function PrototiposFolhaPagamentoPage() {
                 <div>
                   <span>Competência</span>
                   <strong>{formatMesAno(folhaSelecionada.competencia)}</strong>
-                </div>
-                <div>
-                  <span>Situação atual</span>
-                  {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}
                 </div>
                 <div>
                   <span>Histórico do processamento</span>

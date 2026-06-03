@@ -10,6 +10,7 @@ export type FolhaPagamentoSituacao =
 
 export type FolhaCompetenciaSituacao =
   | "ATIVA"
+  | "PLANEJADA"
   | "FECHADA";
 
 export type FolhaPagamentoExecucaoSituacao =
