@@ -10127,6 +10127,12 @@ export function PrototiposFolhaPagamentoFormPage() {
   const competenciaVigente = competenciasFolha.find(
     (competencia) => competencia.situacao === "ATIVA",
   );
+  const competenciaOptions = competenciasFolha.map((competencia) => ({
+    label: `${formatMesAno(competencia.competencia)} - ${
+      folhaCompetenciaSituacaoMeta[competencia.situacao].label
+    }`,
+    value: competencia.competencia,
+  }));
   const competenciaDigitada = watch("competencia");
   const competenciaNormalizada = normalizeMesAno(competenciaDigitada);
   const competenciaValida = isMesAnoValido(competenciaDigitada);
@@ -10152,7 +10158,7 @@ export function PrototiposFolhaPagamentoFormPage() {
       nome: folhaEdicao.nome,
       numero: folhaEdicao.numero,
       mesAnoReferencia: formatMesAno(folhaEdicao.mesAnoReferencia),
-      competencia: formatMesAno(folhaEdicao.competencia),
+      competencia: folhaEdicao.competencia,
       observacao: folhaEdicao.observacao,
       orgaos: folhaEdicao.orgaos,
       regimeJuridico: folhaEdicao.regimeJuridico,
@@ -10392,16 +10398,18 @@ export function PrototiposFolhaPagamentoFormPage() {
                     required
                     getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
-                  <TextFieldSeplag
+                  <DropdownFieldSeplag
                     name="competencia"
                     control={control}
                     label="Competência"
-                    placeholder="MM/AAAA"
                     cols="12 12 3"
+                    options={competenciaOptions}
+                    optionLabel="label"
+                    optionValue="value"
                     required
                     rules={{
                       validate: (value) =>
-                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                        Boolean(value) || "Selecione uma competência.",
                     }}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("competencia")
@@ -10419,7 +10427,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     >
                       {competenciaCadastrada
                         ? `Competência: ${formatMesAno(competenciaCadastrada.competencia)} está ${folhaCompetenciaSituacaoMeta[competenciaCadastrada.situacao].label.toLowerCase()}.`
-                        : "A competência informada ainda não está cadastrada. A folha ficará aguardando a abertura dessa competência para processamento."}
+                        : ""}
                     </div>
                   ) : null}
                   </div>
