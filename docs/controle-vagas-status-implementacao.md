@@ -2,43 +2,43 @@
 
 ## 1. O que e a funcionalidade de Controle de Vagas
 
-A funcionalidade de **Controle de Vagas** tem como objetivo controlar, validar e acompanhar a quantidade de vagas autorizadas para cargos e funcoes dentro do SIGEP.
+A funcionalidade de **Controle de Vagas** controla, valida e acompanha vagas autorizadas para cargos e funcoes dentro do SIGEP.
 
-Ela funciona como uma camada de controle antes da ocupacao de uma vaga por um vinculo funcional. Em vez de permitir que uma pessoa seja vinculada a qualquer cargo ou funcao sem validacao estruturada, o sistema passa a verificar se existe uma configuracao de controle, se ha quadro autorizado, se existe saldo disponivel, se a vaga esta distribuida para o orgao/setor correto e, futuramente, se existe uma vaga numerada ou reserva associada.
+Ela funciona como uma camada anterior aos processos funcionais. Antes de uma pessoa ocupar uma vaga, o sistema passa a verificar se existe configuracao de controle, quadro autorizado, distribuicao, reserva, saldo disponivel e, quando aplicavel, vaga numerada.
 
 Em termos simples, o modulo responde perguntas como:
 
 - Este cargo ou funcao controla vaga?
 - Existe quantidade autorizada para este cargo ou funcao?
 - O orgao ou setor possui saldo?
-- Ha vagas ocupadas, reservadas ou disponiveis?
+- Quantas vagas estao ocupadas, reservadas ou disponiveis?
 - Esta vaga pode ser ocupada agora?
 - Quem ocupou esta vaga anteriormente?
-- Qual evento funcional gerou a ocupacao, liberacao ou alteracao do saldo?
+- Qual evento funcional gerou ocupacao, liberacao ou alteracao de saldo?
 
 ## 2. Por que essa funcionalidade existe
 
 O Controle de Vagas existe para dar rastreabilidade, seguranca e consistencia ao processo de provimento, movimentacao e ocupacao de cargos/funcoes.
 
-Sem esse controle, o sistema pode ter dificuldade para responder se uma nomeacao, designacao, remocao, cessao, vacancia ou outro evento funcional respeita o quantitativo autorizado. Isso gera risco de inconsistencia entre vagas autorizadas, vagas ocupadas e vagas disponiveis.
+Sem esse controle, o sistema pode permitir inconsistencias entre vagas autorizadas, vagas distribuidas, vagas reservadas e vagas ocupadas. Isso afeta nomeacoes, designacoes, movimentacoes, vacancias, exoneracoes e demais eventos funcionais.
 
 Com essa funcionalidade, o SIGEP passa a ter uma base organizada para:
 
 - Configurar quais cargos/funcoes controlam vagas.
-- Definir os criterios usados para validar compatibilidade.
-- Cadastrar o quadro autorizado de vagas.
+- Definir criterios de compatibilidade.
+- Cadastrar o quadro autorizado.
 - Distribuir vagas por orgao/setor.
 - Reservar vagas para processos futuros.
 - Consultar saldo em uma data de referencia.
-- Controlar vagas numeradas quando necessario.
-- Manter historico completo de ocupacao e movimentacao.
-- Integrar a validacao de vaga com eventos funcionais.
+- Controlar vagas numeradas.
+- Manter historico de ocupacao e movimentacao.
+- Simular integracao com eventos funcionais.
 
-## 3. Estrutura planejada do modulo
+## 3. Estrutura do modulo
 
-O modulo foi organizado em etapas para evitar uma tela grande demais e para permitir evolucao controlada do prototipo.
+O modulo foi organizado em etapas para evitar uma tela grande demais e permitir evolucao controlada do prototipo.
 
-As etapas planejadas sao:
+Etapas:
 
 1. Configuracao de Controle de Vagas.
 2. Quadro Autorizado de Vagas.
@@ -46,231 +46,118 @@ As etapas planejadas sao:
 4. Reserva de Vagas.
 5. Consulta de Saldo de Vagas.
 6. Vagas Numeradas.
-7. Historico/Ocupacao de Vagas.
-8. Integracao com Ingresso/Eventos Funcionais.
+7. Integracao com Ingresso/Eventos Funcionais.
+8. Historico/Ocupacao de Vagas.
 
-Observacao: a etapa de integracao deve ficar por ultimo, porque depende das regras e estruturas das etapas anteriores.
-
-## 4. O que ja foi implementado
+## 4. Status atual
 
 ### 4.1. Hub Controle de Vagas
 
-Foi criada a entrada principal do modulo em:
+Implementado.
+
+Entrada principal:
 
 `Cadastro > Cargo e Concurso > Controle de Vagas`
 
-Ao clicar em Controle de Vagas, o sistema exibe uma pagina de hub com cards para as areas do modulo.
+Rota:
 
-Cards planejados/exibidos:
+`/prototipos/sigep/controle-vagas`
+
+O hub exibe cards funcionais para:
 
 - Configuracao.
 - Quadro Autorizado.
 - Vagas Numeradas.
 - Consulta de Saldo.
+- Integracao Funcional.
 - Historico/Ocupacao.
-
-Atualmente os cards funcionais sao:
-
-- Configuracao.
-- Quadro Autorizado.
-
-Os demais permanecem como etapas futuras.
 
 ### 4.2. Etapa 01 - Configuracao de Controle de Vagas
 
-Esta etapa foi implementada.
+Implementada.
 
 Objetivo:
 
-Permitir configurar se determinado cargo ou funcao controla vaga e quais criterios serao usados para validar a compatibilidade antes da ocupacao.
+Configurar se determinado cargo ou funcao controla vaga e quais criterios serao usados para validar compatibilidade antes da ocupacao.
 
-Rotas criadas:
+Rotas:
 
 - `/prototipos/sigep/controle-vagas/configuracao`
 - `/prototipos/sigep/controle-vagas/configuracao/novo`
 - `/prototipos/sigep/controle-vagas/configuracao/:id/editar`
 
-Foi implementada uma listagem com:
+Entregue:
 
-- Filtros.
-- Botao Adicionar.
-- Tabela com dados mockados.
-- Badges de situacao.
-- Acoes de visualizar/editar.
-
-Foi implementada tela de cadastro/edicao com abas:
-
-- Detalhes.
-- Criterios de Compatibilidade.
-- Historico.
-
-Na aba Detalhes, foram criados campos principais da configuracao, como:
-
-- Tipo.
-- Codigo.
-- Cargo/Funcao.
-- Controla Vaga.
-- Tipo de Controle.
-- Data Inicio.
-- Permite saldo negativo.
-- Justificativa para saldo negativo.
-- Observacao.
-
-Regra implementada:
-
-Quando o campo **Controla Vaga** estiver como **Nao**, os campos dependentes ficam desabilitados. Isso evita que o usuario configure tipo de controle, vigencia ou criterios quando o cargo/funcao nao deve controlar vaga.
-
-Na aba Criterios de Compatibilidade, foram implementados criterios mockados:
-
-- Cargo/Funcao.
-- Regime Juridico.
-- Tipo de Vinculo.
-- Orgao/Setor.
-- Setores subordinados.
-- Localidade.
-- Especialidade.
-- Jornada.
-
-Regra implementada:
-
-- Cargo/Funcao fica sempre marcado e bloqueado.
-- Setores subordinados depende de Orgao/Setor.
-- Quando Controla Vaga = Nao, os criterios ficam desabilitados.
-
-Na aba Historico, foi criada uma tabela somente leitura com eventos mockados.
-
-Validacao realizada:
-
-- `npm run type-check`
-- `npm run build`
+- Listagem com filtros, botao Adicionar, tabela mockada, badges de situacao e acoes.
+- Cadastro/edicao com abas Detalhes, Criterios de Compatibilidade e Historico.
+- Regra visual: quando **Controla Vaga = Nao**, campos dependentes ficam desabilitados.
+- Criterios mockados: Cargo/Funcao, Regime Juridico, Tipo de Vinculo, Orgao/Setor, Setores subordinados, Localidade, Especialidade e Jornada.
+- Regra: Cargo/Funcao fica sempre marcado e bloqueado.
+- Regra: Setores subordinados depende de Orgao/Setor.
+- Historico mockado somente leitura.
 
 ### 4.3. Etapa 02 - Quadro Autorizado de Vagas
 
-Esta etapa foi implementada em primeira versao.
+Implementada.
 
 Objetivo:
 
-Cadastrar o quantitativo autorizado de vagas para um cargo ou funcao, vinculado a orgao/setor, situacao, vigencia e documentos legais.
+Cadastrar o quantitativo autorizado de vagas para cargo ou funcao, vinculado a orgao/setor, situacao, vigencia e documentos legais.
 
-Rotas criadas:
+Rotas:
 
 - `/prototipos/sigep/controle-vagas/quadro-autorizado`
 - `/prototipos/sigep/controle-vagas/quadro-autorizado/novo`
 - `/prototipos/sigep/controle-vagas/quadro-autorizado/:id/editar`
 
-Foi criada listagem com:
+Entregue:
 
-- Filtros por cargo/funcao, orgao/setor, tipo e situacao.
-- Botao Adicionar.
-- Tabela mockada.
-- Colunas de quantidade autorizada, ocupada, reservada e disponivel.
-- Badge de situacao.
-- Acoes de visualizar/editar.
-
-Foi criada tela de cadastro/edicao com abas:
-
-- Dados Gerais.
-- Distribuicoes.
-- Reservas.
-- Historico.
-
-Na aba Dados Gerais, foram implementados:
-
-- Codigo.
-- Tipo.
-- Cargo/Funcao.
-- Orgao/Setor.
-- Quantidade Autorizada.
-- Processo SEI.
-- Observacao.
-- Componente de Situacao/Vigencia.
-- Componente de Documentos Vinculados.
-
-Componentes reaproveitados:
-
-- `SituacaoVigenciaSeplag`.
-- `DocumentosLegaisAssociadosSeplag`.
-
-As abas Distribuicoes e Reservas foram inicialmente preparadas como espacos futuros.
-
-Na aba Historico, foi criada tabela mockada somente leitura.
-
-Validacao realizada:
-
-- `npm run type-check`
-- `npm run build`
+- Listagem com filtros por cargo/funcao, orgao/setor, tipo e situacao.
+- Tabela com quantidade autorizada, ocupada, reservada e disponivel.
+- Cadastro/edicao com Dados Gerais.
+- Abas funcionais para Distribuicoes, Reservas e Historico.
+- Reuso do componente `SituacaoVigenciaSeplag`.
+- Reuso do componente `DocumentosLegaisAssociadosSeplag`.
 
 ### 4.4. Etapa 03 - Distribuicao de Vagas
 
-Esta etapa foi implementada dentro da aba **Distribuicoes** do Quadro Autorizado.
+Implementada dentro do Quadro Autorizado.
 
 Objetivo:
 
-Permitir distribuir a quantidade autorizada do quadro entre orgaos/setores, controlando o quanto ja foi distribuido, ocupado, reservado e ainda disponivel.
+Distribuir a quantidade autorizada entre orgaos/setores e controlar o saldo por distribuicao.
 
-Foi implementado:
+Entregue:
 
 - Resumo do quadro.
 - Tabela de distribuicoes.
-- Formulario de nova distribuicao.
-- Calculos mockados de saldo.
+- Formulario para nova distribuicao.
+- Calculo mockado de autorizado, distribuido, nao distribuido, ocupado, reservado e disponivel.
+- Remocao de distribuicao com recomposicao do saldo.
 
-Resumo exibido:
+Regra simulada:
 
-- Autorizado.
-- Distribuido.
-- Nao distribuido.
-- Ocupado.
-- Reservado.
-- Disponivel.
+`disponivel = distribuido - ocupado - reservado`
 
-Formulario de nova distribuicao:
+### 4.5. Etapa 04 - Reserva de Vagas
 
-- Orgao/Setor.
-- Quantidade Distribuida.
-- Observacao.
-- Botao Adicionar.
-
-Tabela de distribuicoes:
-
-- Orgao/Setor.
-- Distribuido.
-- Ocupado.
-- Reservado.
-- Disponivel.
-- Situacao.
-- Acoes.
-
-Regras simuladas:
-
-- Ao adicionar uma distribuicao, o total distribuido aumenta.
-- O saldo nao distribuido e recalculado.
-- O saldo disponivel considera: distribuido - ocupado - reservado.
-- Ao remover uma distribuicao, o saldo volta para nao distribuido.
-
-Validacao realizada:
-
-- `npm run type-check`
-- `npm run build`
-
-## 5. O que falta implementar
-
-### 5.1. Etapa 04 - Reserva de Vagas
+Implementada dentro do Quadro Autorizado.
 
 Objetivo:
 
-Permitir reservar vagas para processos futuros, impedindo que o saldo reservado seja consumido por outras ocupacoes.
+Reservar vagas para processos futuros, impedindo que o saldo reservado seja consumido por outras ocupacoes.
 
-O que falta:
+Entregue:
 
-- Implementar aba Reservas dentro do Quadro Autorizado.
-- Criar formulario de reserva.
-- Criar tipos de reserva.
-- Mostrar impacto da reserva no saldo.
-- Criar tabela de reservas.
-- Criar acoes: editar, cancelar e encerrar.
+- Aba Reservas.
+- Formulario de reserva.
+- Tipos de reserva mockados.
+- Tabela de reservas.
+- Acoes de editar, cancelar e encerrar.
+- Impacto da reserva no saldo do quadro e da distribuicao.
+- Mocks com reservas ativas, canceladas e encerradas.
 
-Campos esperados:
+Campos:
 
 - Tipo de reserva.
 - Orgao/Setor.
@@ -281,127 +168,161 @@ Campos esperados:
 - Situacao.
 - Observacao.
 
-### 5.2. Etapa 05 - Consulta de Saldo de Vagas
+### 4.6. Etapa 05 - Consulta de Saldo de Vagas
+
+Implementada.
 
 Objetivo:
 
-Criar uma tela consultiva para visualizar o saldo de vagas em uma data de referencia.
+Consultar o saldo de vagas em uma data de referencia, considerando quadro autorizado, distribuicoes, reservas e ocupacoes.
 
-O que falta:
+Rota:
 
-- Criar rota propria no hub.
-- Criar filtro obrigatorio por data de referencia.
-- Criar filtros por cargo/funcao, orgao/setor, tipo e situacao.
-- Criar cards de resumo.
-- Criar abas ou secoes:
-  - Por Quadro.
-  - Por Distribuicao.
-  - Reservadas.
-  - Ocupadas.
-  - Disponiveis.
-- Usar mocks derivados das etapas anteriores.
+`/prototipos/sigep/controle-vagas/consulta-saldo`
 
-Resumo esperado:
+Entregue:
+
+- Tela consultiva propria no hub.
+- Filtros por data de referencia, cargo/funcao, orgao/setor, tipo e situacao.
+- Cards de resumo.
+- Abas/secoes de consulta por quadro e por distribuicao.
+- Mocks derivados das etapas anteriores.
+- Calculo atualizado usando reservas ativas.
+
+Resumo exibido:
 
 - Total autorizado.
 - Total distribuido.
+- Total nao distribuido.
 - Total ocupado.
 - Total reservado.
 - Total disponivel.
-- Total nao distribuido.
 
-### 5.3. Etapa 06 - Vagas Numeradas
+### 4.7. Etapa 06 - Vagas Numeradas
 
-Objetivo:
-
-Controlar vagas individualizadas por numero/codigo proprio, permitindo rastrear exatamente qual vaga esta ocupada, reservada, bloqueada ou disponivel.
-
-O que falta:
-
-- Criar tela de consulta.
-- Criar cadastro/edicao.
-- Criar situacoes da vaga:
-  - Disponivel.
-  - Ocupada.
-  - Reservada.
-  - Bloqueada.
-  - Agendada.
-  - Extinta.
-- Criar aba de ocupacao atual.
-- Criar historico mockado da vaga.
-
-Essa etapa sera importante para cenarios em que o controle apenas quantitativo nao e suficiente.
-
-### 5.4. Etapa 08 - Historico/Ocupacao de Vagas
+Implementada.
 
 Objetivo:
 
-Criar uma tela consultiva para rastrear toda a linha do tempo da vaga, desde criacao, distribuicao, reserva, ocupacao, liberacao e encerramento.
+Controlar vagas individualizadas por numero/codigo proprio, permitindo rastrear qual vaga esta disponivel, ocupada, reservada, bloqueada, agendada ou extinta.
 
-O que falta:
+Rotas:
 
-- Criar rota propria no hub.
-- Criar filtros por:
-  - Periodo.
-  - Cargo/Funcao.
-  - Vaga.
-  - Pessoa.
-  - Vinculo.
-  - Evento.
-  - Usuario.
-- Criar listagem em formato de linha do tempo.
-- Criar detalhe do evento.
-- Criar visao de ocupacoes.
+- `/prototipos/sigep/controle-vagas/vagas-numeradas`
+- `/prototipos/sigep/controle-vagas/vagas-numeradas/novo`
+- `/prototipos/sigep/controle-vagas/vagas-numeradas/:id/editar`
 
-Eventos esperados:
+Entregue:
 
-- Criacao de quadro autorizado.
-- Distribuicao de vaga.
-- Reserva de vaga.
-- Ocupacao.
-- Liberacao.
-- Cancelamento de reserva.
-- Encerramento.
-- Extincao.
+- Tela de consulta.
+- Cadastro/edicao.
+- Vinculo com quadro autorizado.
+- Situacoes da vaga: Disponivel, Ocupada, Reservada, Bloqueada, Agendada e Extinta.
+- Aba/area de ocupacao atual.
+- Historico mockado da vaga.
+- Validacao visual de compatibilidade com quadro, distribuicao e reserva.
 
-### 5.5. Etapa 07 - Integracao com Ingresso/Eventos Funcionais
+### 4.8. Etapa 07 - Integracao com Ingresso/Eventos Funcionais
+
+Implementada como simulacao.
 
 Objetivo:
 
 Simular como o Controle de Vagas sera consumido por processos funcionais, como ingresso, nomeacao, designacao, vacancia, exoneracao ou movimentacao.
 
-Esta etapa deve ficar por ultimo porque depende das anteriores.
+Rota:
 
-O que falta:
+`/prototipos/sigep/controle-vagas/integracao`
 
-- Simular servico de validacao de vaga.
-- Simular ocupacao/liberacao de vaga.
-- Integrar com saldo mockado.
-- Integrar com historico mockado.
-- Definir mensagens de bloqueio ou alerta.
-- Somente depois avaliar backend real ou eventos funcionais reais.
+Entregue:
 
-Exemplos de validacao futura:
+- Card no hub Controle de Vagas.
+- Tela de simulacao de evento funcional.
+- Selecao de vaga numerada.
+- Dados simulados de pessoa, CPF e tipo de vinculo.
+- Acao **Validar Saldo**.
+- Acao **Ocupar Vaga**.
+- Acao **Liberar Vaga**.
+- Bloqueio quando nao ha saldo disponivel.
+- Bloqueio quando a vaga esta ocupada, bloqueada, extinta, agendada ou sem distribuicao compatavel.
+- Recalculo local de saldo apos ocupacao/liberacao.
+- Registro de eventos em historico local da simulacao.
 
-- Nao permitir ocupar vaga se nao houver saldo.
-- Nao permitir ocupar vaga encerrada/extinta.
-- Consumir reserva quando a ocupacao estiver vinculada a uma reserva.
-- Liberar saldo quando houver vacancia.
-- Registrar historico automatico.
+Exemplo mockado para teste de bloqueio:
 
-## 6. Ordem recomendada daqui para frente
+- `GG-001`: vaga vinculada a distribuicao sem saldo disponivel.
 
-A ordem recomendada de continuidade e:
+### 4.9. Etapa 08 - Historico/Ocupacao de Vagas
 
-1. Implementar Etapa 04 - Reserva.
-2. Implementar Etapa 05 - Consulta de Saldo.
-3. Implementar Etapa 06 - Vagas Numeradas.
-4. Implementar Etapa 08 - Historico/Ocupacao.
-5. Implementar Etapa 07 - Integracao.
+Implementada.
 
-Motivo:
+Objetivo:
 
-A reserva depende do quadro e das distribuicoes. A consulta de saldo depende do quadro, distribuicoes e reservas. Vagas numeradas usam o saldo e a distribuicao como base. Historico precisa consolidar eventos de todas as etapas. Integracao deve vir por ultimo porque representa o consumo final das regras por outros fluxos do sistema.
+Consultar a linha do tempo de ocupacoes, liberacoes, bloqueios, extincoes e demais eventos de vaga.
+
+Rota:
+
+`/prototipos/sigep/controle-vagas/historico`
+
+Entregue:
+
+- Tela consultiva propria no hub.
+- Filtros mockados por periodo, cargo/funcao, vaga, evento, pessoa/vinculo e usuario.
+- Cards de resumo.
+- Tabela de eventos.
+- Eventos mockados de ocupacao, ativacao, bloqueio, extincao e designacao.
+
+## 5. Regras funcionais ja simuladas
+
+### 5.1. Reserva impactando saldo
+
+Implementado.
+
+Reservas ativas sao consideradas no calculo do saldo disponivel da distribuicao.
+
+Regra:
+
+`disponivel = quantidade distribuida - vagas ocupadas - reservas ativas`
+
+### 5.2. Vaga numerada respeitando quadro/distribuicao/reserva
+
+Implementado como validacao visual e regra de integracao.
+
+A vaga numerada verifica:
+
+- Se possui quadro autorizado.
+- Se o cargo/funcao da vaga e compativel com o quadro.
+- Se existe distribuicao para o orgao/setor da vaga.
+- Se vaga reservada possui reserva ativa correspondente.
+
+### 5.3. Consulta de saldo refletindo alteracoes mockadas
+
+Implementado.
+
+A Consulta de Saldo usa os mocks de quadro, distribuicoes e reservas ativas para calcular os totais. A tela de Integracao tambem recalcula saldo localmente ao ocupar ou liberar uma vaga.
+
+### 5.4. Integracao bloqueando operacao sem saldo
+
+Implementado.
+
+Ao tentar ocupar uma vaga sem saldo disponivel, a tela de Integracao registra evento bloqueado e nao altera a situacao da vaga.
+
+## 6. O que ainda falta
+
+O modulo esta prototipado, mas ainda faltam evolucoes para transformar a simulacao em fluxo real.
+
+Pendencias principais:
+
+- Integrar com backend real.
+- Persistir configuracoes, quadros, distribuicoes, reservas, vagas e historicos.
+- Consolidar historico real entre todas as etapas.
+- Fazer a Consulta de Saldo consumir dados persistidos.
+- Fazer eventos funcionais reais consumirem o servico de validacao de vagas.
+- Definir regras finais de concorrencia para impedir duas ocupacoes simultaneas do mesmo saldo.
+- Definir comportamento real para consumo de reserva.
+- Definir mensagens oficiais de erro, alerta e sucesso.
+- Criar testes automatizados de regra de saldo.
+- Validar perfis de acesso e permissoes.
 
 ## 7. Rotas atuais para teste
 
@@ -433,13 +354,41 @@ Quadro Autorizado - Editar mock:
 
 `http://localhost:5173/#/prototipos/sigep/controle-vagas/quadro-autorizado/1/editar`
 
-## 8. Observacoes tecnicas
+Consulta de Saldo:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/consulta-saldo`
+
+Vagas Numeradas - Listagem:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/vagas-numeradas`
+
+Vagas Numeradas - Novo:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/vagas-numeradas/novo`
+
+Vagas Numeradas - Editar mock:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/vagas-numeradas/1/editar`
+
+Integracao Funcional:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/integracao`
+
+Historico/Ocupacao:
+
+`http://localhost:5173/#/prototipos/sigep/controle-vagas/historico`
+
+## 8. Arquivos principais
 
 Arquivos principais alterados:
 
 - `src/App.tsx`
 - `src/prototipos/PrototiposPage.tsx`
 - `src/prototipos/prototipos.css`
+
+Documento de status:
+
+- `docs/controle-vagas-status-implementacao.md`
 
 Componentes reaproveitados:
 
@@ -458,19 +407,17 @@ Componentes reaproveitados:
 - `SituacaoVigenciaSeplag`
 - `DocumentosLegaisAssociadosSeplag`
 
-Base de dados atual:
+## 9. Validacoes executadas
 
-Tudo esta usando dados mockados no frontend. Ainda nao existe integracao com backend real.
-
-Validacoes executadas nas etapas implementadas:
+Validacoes executadas durante a implementacao:
 
 - `npm run type-check`
 - `npm run build`
 
-## 9. Resumo executivo
+## 10. Resumo executivo
 
-O Controle de Vagas esta sendo estruturado como um modulo para garantir que cargos e funcoes so sejam ocupados quando houver regra, quadro autorizado e saldo disponivel.
+O Controle de Vagas ja possui prototipo navegavel para configuracao, quadro autorizado, distribuicao, reserva, consulta de saldo, vagas numeradas, integracao funcional e historico/ocupacao.
 
-Ja existe um fluxo inicial navegavel com configuracao, quadro autorizado e distribuicao. O prototipo ja mostra a logica principal de controle: configurar, autorizar, distribuir e calcular saldos.
+O prototipo demonstra a regra central do modulo: cargos e funcoes so devem ser ocupados quando houver configuracao, quadro autorizado, distribuicao e saldo disponivel.
 
-As proximas entregas devem completar reserva, consulta de saldo, vagas numeradas, historico consolidado e integracao com eventos funcionais.
+A proxima fase nao e mais criar as telas basicas, mas sim consolidar regras, persistencia, integracao real com eventos funcionais e testes automatizados.

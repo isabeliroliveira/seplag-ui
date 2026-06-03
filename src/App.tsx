@@ -24,6 +24,7 @@ import {
   PrototiposControleVagasVagasNumeradasPage,
   PrototiposControleVagasVagasNumeradasFormPage,
   PrototiposControleVagasHistoricoPage,
+  PrototiposControleVagasIntegracaoPage,
   PrototiposDocumentosVinculadosPage,
   PrototiposEstruturaOrganizacionalPage,
   PrototiposSituacaoVigenciaPage,
@@ -318,6 +319,10 @@ function App() {
       <Route
         path="/prototipos/sigep/controle-vagas/historico"
         element={<PrototiposControleVagasHistoricoPage />}
+      />
+      <Route
+        path="/prototipos/sigep/controle-vagas/integracao"
+        element={<PrototiposControleVagasIntegracaoPage />}
       />
       <Route
         path="/prototipos/sigep/categoria"

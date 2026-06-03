@@ -957,6 +957,22 @@ interface ControleVagasVagaNumeradaFiltroForm {
   situacao?: ControleVagasVagaNumeradaSituacao | "";
 }
 
+interface ControleVagasIntegracaoForm {
+  vagaNumero?: string;
+  pessoa?: string;
+  cpf?: string;
+  tipoVinculo?: string;
+}
+
+interface ControleVagasIntegracaoEventoRow {
+  id: number;
+  dataHora: string;
+  evento: string;
+  vagaNumero: string;
+  resultado: "Sucesso" | "Bloqueado" | "Alerta";
+  detalhe: string;
+}
+
 interface GrupoEleitosFiltroForm {
   termo?: string;
   situacao?: StatusOperacionalVigenciaSeplag | "";
@@ -2116,6 +2132,18 @@ const controleVagasDistribuicoesMock: ControleVagasDistribuicaoRow[] = [
 
 const controleVagasReservasMock: ControleVagasReservaRow[] = [
   {
+    id: 10,
+    quadroId: 1,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    quantidade: 3,
+    motivo: "Reserva estratégica para recomposição de equipe.",
+    dataInicio: "01/06/2026",
+    dataFim: "30/11/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa derivada do quadro autorizado.",
+  },
+  {
     id: 1,
     quadroId: 1,
     tipoReserva: "Processo Seletivo",
@@ -2128,6 +2156,18 @@ const controleVagasReservasMock: ControleVagasReservaRow[] = [
     observacao: "Reserva planejada para o processo seletivo deste semestre.",
   },
   {
+    id: 11,
+    quadroId: 1,
+    tipoReserva: "Retenção",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Carreiras",
+    quantidade: 1,
+    motivo: "Reserva para retenção de vaga durante movimentação de carreira.",
+    dataInicio: "01/07/2026",
+    dataFim: "30/09/2026",
+    situacao: "Ativa",
+    observacao: "Mantém o saldo reservado para movimentação interna.",
+  },
+  {
     id: 2,
     quadroId: 1,
     tipoReserva: "Reposição",
@@ -2138,6 +2178,54 @@ const controleVagasReservasMock: ControleVagasReservaRow[] = [
     dataFim: "15/10/2026",
     situacao: "Cancelada",
     observacao: "Reserva cancelada após revisão de necessidades.",
+  },
+  {
+    id: 12,
+    quadroId: 2,
+    tipoReserva: "Processo Seletivo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    quantidade: 2,
+    motivo: "Reserva para ingresso regional.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa vinculada à distribuição regional norte.",
+  },
+  {
+    id: 13,
+    quadroId: 2,
+    tipoReserva: "Reposição",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Sul",
+    quantidade: 1,
+    motivo: "Reserva para reposição regional.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa vinculada à distribuição regional sul.",
+  },
+  {
+    id: 14,
+    quadroId: 3,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "PGE-MT / Procuradoria Administrativa",
+    quantidade: 1,
+    motivo: "Reserva para substituição de coordenação administrativa.",
+    dataInicio: "15/06/2026",
+    dataFim: "15/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa para função administrativa.",
+  },
+  {
+    id: 15,
+    quadroId: 3,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "PGE-MT / Procuradoria Judicial",
+    quantidade: 1,
+    motivo: "Reserva para substituição de coordenação judicial.",
+    dataInicio: "15/06/2026",
+    dataFim: "15/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa para função judicial.",
   },
 ];
 
@@ -2246,6 +2334,16 @@ const controleVagasVagaNumeradaMock: ControleVagasVagaNumeradaRow[] = [
     dataAtivacao: "01/03/2025",
     observacao: "Vaga em disponibilidade.",
   },
+  {
+    id: 9,
+    numero: "GG-001",
+    quadroId: 4,
+    cargoFuncao: "Gestor Governamental",
+    orgaoSetor: "SEPLAG-MT / Unidades Extintas",
+    situacao: "Disponível",
+    dataAtivacao: "01/01/2025",
+    observacao: "Vaga usada para demonstrar bloqueio por ausência de saldo.",
+  },
 ];
 
 const controleVagasVagaNumeradaHistoricoMock: Array<{
@@ -2298,6 +2396,181 @@ const controleVagasVagaNumeradaHistoricoMock: Array<{
   },
 ];
 
+const getControleVagasReservasAtivas = (
+  quadroId: number,
+  orgaoSetor?: string,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) =>
+  reservas.filter(
+    (reserva) =>
+      reserva.quadroId === quadroId &&
+      reserva.situacao === "Ativa" &&
+      (!orgaoSetor || reserva.orgaoSetor === orgaoSetor),
+  );
+
+const getControleVagasReservadoDistribuicao = (
+  distribuicao: ControleVagasDistribuicaoRow,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) => {
+  const reservasAtivas = getControleVagasReservasAtivas(
+    distribuicao.quadroId,
+    distribuicao.orgaoSetor,
+    reservas,
+  );
+
+  if (reservasAtivas.length === 0) {
+    return distribuicao.vagasReservadas;
+  }
+
+  return reservasAtivas.reduce((total, reserva) => total + reserva.quantidade, 0);
+};
+
+const getControleVagasDisponivelDistribuicao = (
+  distribuicao: ControleVagasDistribuicaoRow,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) =>
+  Math.max(
+    distribuicao.quantidadeDistribuida -
+      distribuicao.vagasOcupadas -
+      getControleVagasReservadoDistribuicao(distribuicao, reservas),
+    0,
+  );
+
+const getControleVagasResumoQuadro = (
+  quadro: ControleVagasQuadroAutorizadoRow,
+  distribuicoes: ControleVagasDistribuicaoRow[] = controleVagasDistribuicoesMock,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+): ControleVagasConsultaSaldoResumo => {
+  const distribuicoesDoQuadro = distribuicoes.filter(
+    (distribuicao) => distribuicao.quadroId === quadro.id,
+  );
+  const totalDistribuido = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) => sum + distribuicao.quantidadeDistribuida,
+    0,
+  );
+  const totalOcupado = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) => sum + distribuicao.vagasOcupadas,
+    0,
+  );
+  const totalReservado = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) =>
+      sum + getControleVagasReservadoDistribuicao(distribuicao, reservas),
+    0,
+  );
+
+  return {
+    quadroId: quadro.id,
+    codigo: quadro.codigo,
+    cargoFuncao: quadro.cargoFuncao,
+    orgaoSetor: quadro.orgaoSetor,
+    tipo: quadro.tipo,
+    autorizado: quadro.quantidadeAutorizada,
+    distribuido: totalDistribuido,
+    naoDistribuido: Math.max(quadro.quantidadeAutorizada - totalDistribuido, 0),
+    ocupado: totalOcupado,
+    reservado: totalReservado,
+    disponivel: Math.max(totalDistribuido - totalOcupado - totalReservado, 0),
+    situacao: quadro.situacao,
+  };
+};
+
+const getControleVagasValidacaoVagaNumerada = (
+  vaga: ControleVagasVagaNumeradaRow,
+) => {
+  const quadro = controleVagasQuadroAutorizadoMock.find(
+    (item) => item.id === vaga.quadroId,
+  );
+  const distribuicao = controleVagasDistribuicoesMock.find(
+    (item) =>
+      item.quadroId === vaga.quadroId && item.orgaoSetor === vaga.orgaoSetor,
+  );
+
+  if (!quadro) {
+    return { label: "Sem quadro", className: "prototype-badge prototype-badge--danger" };
+  }
+
+  if (quadro.cargoFuncao !== vaga.cargoFuncao) {
+    return { label: "Cargo divergente", className: "prototype-badge prototype-badge--warning" };
+  }
+
+  if (!distribuicao) {
+    return {
+      label: "Sem distribuição",
+      className: "prototype-badge prototype-badge--warning",
+    };
+  }
+
+  if (vaga.situacao === "Reservada") {
+    const reservasAtivas = getControleVagasReservasAtivas(
+      vaga.quadroId,
+      vaga.orgaoSetor,
+    );
+
+    if (reservasAtivas.length === 0) {
+      return {
+        label: "Sem reserva ativa",
+        className: "prototype-badge prototype-badge--warning",
+      };
+    }
+  }
+
+  return {
+    label: "Compatível",
+    className: "prototype-badge prototype-badge--success",
+  };
+};
+
+const getControleVagasDistribuicaoDaVaga = (
+  vaga?: ControleVagasVagaNumeradaRow,
+) => {
+  if (!vaga) {
+    return undefined;
+  }
+
+  return controleVagasDistribuicoesMock.find(
+    (distribuicao) =>
+      distribuicao.quadroId === vaga.quadroId &&
+      distribuicao.orgaoSetor === vaga.orgaoSetor,
+  );
+};
+
+const getControleVagasSaldoDistribuicaoSimulado = (
+  distribuicao?: ControleVagasDistribuicaoRow,
+  vagas: ControleVagasVagaNumeradaRow[] = controleVagasVagaNumeradaMock,
+) => {
+  if (!distribuicao) {
+    return {
+      autorizado: 0,
+      ocupado: 0,
+      reservado: 0,
+      disponivel: 0,
+    };
+  }
+
+  const ocupadasOriginais = controleVagasVagaNumeradaMock.filter(
+    (vaga) =>
+      vaga.quadroId === distribuicao.quadroId &&
+      vaga.orgaoSetor === distribuicao.orgaoSetor &&
+      vaga.situacao === "Ocupada",
+  ).length;
+  const ocupadasAtuais = vagas.filter(
+    (vaga) =>
+      vaga.quadroId === distribuicao.quadroId &&
+      vaga.orgaoSetor === distribuicao.orgaoSetor &&
+      vaga.situacao === "Ocupada",
+  ).length;
+  const ocupado =
+    distribuicao.vagasOcupadas + ocupadasAtuais - ocupadasOriginais;
+  const reservado = getControleVagasReservadoDistribuicao(distribuicao);
+
+  return {
+    autorizado: distribuicao.quantidadeDistribuida,
+    ocupado,
+    reservado,
+    disponivel: Math.max(distribuicao.quantidadeDistribuida - ocupado - reservado, 0),
+  };
+};
+
 const controleVagasModuleItems = [
   {
     id: "configuracao",
@@ -2330,6 +2603,14 @@ const controleVagasModuleItems = [
     path: "/prototipos/sigep/controle-vagas/consulta-saldo",
     icon: "pi pi-chart-bar",
     status: "Etapa 05",
+  },
+  {
+    id: "integracao",
+    title: "Integração Funcional",
+    description: "Simula validação, ocupação, liberação e registro de eventos funcionais.",
+    path: "/prototipos/sigep/controle-vagas/integracao",
+    icon: "pi pi-sync",
+    status: "Etapa 07",
   },
   {
     id: "historico",
@@ -4430,18 +4711,13 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
     0,
   );
   const totalReservado = distribuicoes.reduce(
-    (total, distribuicao) => total + distribuicao.vagasReservadas,
+    (total, distribuicao) =>
+      total + getControleVagasReservadoDistribuicao(distribuicao, reservas),
     0,
   );
   const totalDisponivel = distribuicoes.reduce(
     (total, distribuicao) =>
-      total +
-      Math.max(
-        distribuicao.quantidadeDistribuida -
-          distribuicao.vagasOcupadas -
-          distribuicao.vagasReservadas,
-        0,
-      ),
+      total + getControleVagasDisponivelDistribuicao(distribuicao, reservas),
     0,
   );
   const totalNaoDistribuido = Math.max(quantidadeAutorizada - totalDistribuido, 0);
@@ -4455,7 +4731,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
   const totalReservasEncerradas = reservas
     .filter((reserva) => reserva.situacao === "Encerrada")
     .reduce((total, reserva) => total + reserva.quantidade, 0);
-  const disponivelAposReservas = Math.max(totalDisponivel - totalReservasAtivas, 0);
+  const disponivelAposReservas = totalDisponivel;
 
   const syncReservaComDistribuicao = (
     reserva: ControleVagasReservaRow,
@@ -4825,11 +5101,13 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                     <tbody>
                       {distribuicoes.length > 0 ? (
                         distribuicoes.map((distribuicao) => {
-                          const disponivel = Math.max(
-                            distribuicao.quantidadeDistribuida -
-                              distribuicao.vagasOcupadas -
-                              distribuicao.vagasReservadas,
-                            0,
+                          const reservado = getControleVagasReservadoDistribuicao(
+                            distribuicao,
+                            reservas,
+                          );
+                          const disponivel = getControleVagasDisponivelDistribuicao(
+                            distribuicao,
+                            reservas,
                           );
 
                           return (
@@ -4840,7 +5118,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                               </td>
                               <td>{distribuicao.quantidadeDistribuida}</td>
                               <td>{distribuicao.vagasOcupadas}</td>
-                              <td>{distribuicao.vagasReservadas}</td>
+                              <td>{reservado}</td>
                               <td>{disponivel}</td>
                               <td>{renderGrupoCalculoStatusBadge(distribuicao.situacao)}</td>
                               <td>
@@ -4878,15 +5156,16 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
 
             {activeTab === "reservas" && (
               <div className="prototype-controle-vagas-reservas">
-                <div className="prototype-controle-vagas-section-title">
-                  <h3>Reservas</h3>
-                  <p>
-                    Controle as reservas de vagas que impactam o saldo antes da
-                    ocupação definitiva.
-                  </p>
+                <div className="prototype-controle-vagas-section-title prototype-controle-vagas-section-title--split">
+                  <div>
+                    <h3>Reservas</h3>
+                    <p>
+                      Controle as reservas que impactam o saldo antes da ocupação definitiva.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="prototype-controle-vagas-quadro-summary">
+                <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
                   <div>
                     <span>Reservas Ativas</span>
                     <strong>{totalReservasAtivas}</strong>
@@ -4984,7 +5263,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                       <BotaoSeplag
                         type="button"
                         label={editingReservaId ? "Salvar Reserva" : "Adicionar Reserva"}
-                        icon="pi pi-save"
+                        icon={editingReservaId ? "pi pi-save" : "pi pi-plus"}
                         onClick={handleAdicionarReserva}
                       />
                     </div>
@@ -5023,12 +5302,14 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                                 <BotaoIconSeplag
                                   type="button"
                                   icon="pi pi-pencil"
+                                  title="Editar reserva"
                                   onClick={() => handleEditarReserva(reserva)}
                                 />
                                 <BotaoIconSeplag
                                   type="button"
                                   icon="pi pi-times"
                                   severity="warning"
+                                  title="Cancelar reserva"
                                   onClick={() =>
                                     handleAlterarSituacaoReserva(reserva.id, "Cancelada")
                                   }
@@ -5037,6 +5318,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                                   type="button"
                                   icon="pi pi-check"
                                   severity="success"
+                                  title="Encerrar reserva"
                                   onClick={() =>
                                     handleAlterarSituacaoReserva(reserva.id, "Encerrada")
                                   }
@@ -5123,49 +5405,20 @@ export function PrototiposControleVagasConsultaSaldoPage() {
       situacao: "",
     },
   });
+  const filtros = watch();
+  const dataReferenciaSelecionada = filtros.dataReferencia ?? dataReferencia;
 
-  // Calcular resumo geral com base na data de referência
-  const quadrosComResumo: ControleVagasConsultaSaldoResumo[] = controleVagasQuadroAutorizadoMock.map(
-    (quadro) => {
-      const distribuicoesDoQuadro = controleVagasDistribuicoesMock.filter(
-        (d) => d.quadroId === quadro.id,
-      );
-      const reservasDoQuadro = controleVagasReservasMock.filter(
-        (r) => r.quadroId === quadro.id && r.situacao === "Ativa",
-      );
+  const quadrosComResumo: ControleVagasConsultaSaldoResumo[] =
+    controleVagasQuadroAutorizadoMock
+      .map((quadro) => getControleVagasResumoQuadro(quadro))
+      .filter((quadro) => {
+        const cargoOk = !filtros.cargoFuncao || quadro.cargoFuncao === filtros.cargoFuncao;
+        const orgaoOk = !filtros.orgaoSetor || quadro.orgaoSetor === filtros.orgaoSetor;
+        const tipoOk = !filtros.tipo || quadro.tipo === filtros.tipo;
+        const situacaoOk = !filtros.situacao || quadro.situacao === filtros.situacao;
 
-      const totalDistribuido = distribuicoesDoQuadro.reduce(
-        (sum, d) => sum + d.quantidadeDistribuida,
-        0,
-      );
-      const totalOcupado = distribuicoesDoQuadro.reduce(
-        (sum, d) => sum + d.vagasOcupadas,
-        0,
-      );
-      const totalReservado = distribuicoesDoQuadro.reduce(
-        (sum, d) => sum + d.vagasReservadas,
-        0,
-      );
-
-      const naoDistribuido = Math.max(quadro.quantidadeAutorizada - totalDistribuido, 0);
-      const disponivel = Math.max(totalDistribuido - totalOcupado - totalReservado, 0);
-
-      return {
-        quadroId: quadro.id,
-        codigo: quadro.codigo,
-        cargoFuncao: quadro.cargoFuncao,
-        orgaoSetor: quadro.orgaoSetor,
-        tipo: quadro.tipo,
-        autorizado: quadro.quantidadeAutorizada,
-        distribuido: totalDistribuido,
-        naoDistribuido,
-        ocupado: totalOcupado,
-        reservado: totalReservado,
-        disponivel,
-        situacao: quadro.situacao,
-      };
-    },
-  );
+        return cargoOk && orgaoOk && tipoOk && situacaoOk;
+      });
 
   const totalAutorizado = quadrosComResumo.reduce((sum, q) => sum + q.autorizado, 0);
   const totalDistribuido = quadrosComResumo.reduce((sum, q) => sum + q.distribuido, 0);
@@ -5173,6 +5426,10 @@ export function PrototiposControleVagasConsultaSaldoPage() {
   const totalOcupado = quadrosComResumo.reduce((sum, q) => sum + q.ocupado, 0);
   const totalReservado = quadrosComResumo.reduce((sum, q) => sum + q.reservado, 0);
   const totalDisponivel = quadrosComResumo.reduce((sum, q) => sum + q.disponivel, 0);
+  const distribuicoesFiltradasConsulta = controleVagasDistribuicoesMock.filter(
+    (dist) =>
+      quadrosComResumo.some((quadro) => quadro.quadroId === dist.quadroId),
+  );
 
   const handleLimparFiltros = () => {
     reset({
@@ -5194,7 +5451,7 @@ export function PrototiposControleVagasConsultaSaldoPage() {
     });
 
     return (
-      <div className="prototype-table-wrapper">
+      <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
         <table className="prototype-simple-table">
           <thead>
             <tr>
@@ -5255,12 +5512,12 @@ export function PrototiposControleVagasConsultaSaldoPage() {
             <div className="prototype-controle-vagas-section-title">
               <h3>Filtros de Consulta</h3>
               <p>
-                Selecione a data de referência e filtros adicionais para visualizar o saldo
-                de vagas.
+                Saldos calculados para {dataReferenciaSelecionada}, considerando
+                distribuições, reservas ativas e vagas ocupadas.
               </p>
             </div>
 
-            <div className="grid prototype-controle-vagas-filtros">
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
               <DateFieldSeplag
                 name="dataReferencia"
                 control={control}
@@ -5323,12 +5580,12 @@ export function PrototiposControleVagasConsultaSaldoPage() {
               </div>
             </div>
 
-            <div className="prototype-controle-vagas-quadro-summary">
-              <div>
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--saldo">
+              <div className="is-primary">
                 <span>Autorizado</span>
                 <strong>{totalAutorizado}</strong>
               </div>
-              <div>
+              <div className="is-info">
                 <span>Distribuído</span>
                 <strong>{totalDistribuido}</strong>
               </div>
@@ -5340,11 +5597,11 @@ export function PrototiposControleVagasConsultaSaldoPage() {
                 <span>Ocupado</span>
                 <strong>{totalOcupado}</strong>
               </div>
-              <div>
+              <div className="is-warning">
                 <span>Reservado</span>
                 <strong>{totalReservado}</strong>
               </div>
-              <div>
+              <div className="is-success">
                 <span>Disponível</span>
                 <strong>{totalDisponivel}</strong>
               </div>
@@ -5359,7 +5616,7 @@ export function PrototiposControleVagasConsultaSaldoPage() {
               />
 
               {activeTab === "por-quadro" && (
-                <div className="prototype-table-wrapper">
+                <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
                   <table className="prototype-simple-table">
                     <thead>
                       <tr>
@@ -5402,7 +5659,7 @@ export function PrototiposControleVagasConsultaSaldoPage() {
               )}
 
               {activeTab === "por-distribuicao" && (
-                <div className="prototype-table-wrapper">
+                <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
                   <table className="prototype-simple-table">
                     <thead>
                       <tr>
@@ -5415,16 +5672,16 @@ export function PrototiposControleVagasConsultaSaldoPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {controleVagasDistribuicoesMock.length > 0 ? (
-                        controleVagasDistribuicoesMock.map((dist) => {
+                      {distribuicoesFiltradasConsulta.length > 0 ? (
+                        distribuicoesFiltradasConsulta.map((dist) => {
                           const quadro = controleVagasQuadroAutorizadoMock.find(
                             (q) => q.id === dist.quadroId,
                           );
-                          const disponivel = Math.max(
-                            dist.quantidadeDistribuida -
-                              dist.vagasOcupadas -
-                              dist.vagasReservadas,
-                            0,
+                          const reservado = getControleVagasReservadoDistribuicao(
+                            dist,
+                          );
+                          const disponivel = getControleVagasDisponivelDistribuicao(
+                            dist,
                           );
 
                           return (
@@ -5433,7 +5690,7 @@ export function PrototiposControleVagasConsultaSaldoPage() {
                               <td>{quadro?.cargoFuncao}</td>
                               <td>{dist.quantidadeDistribuida}</td>
                               <td>{dist.vagasOcupadas}</td>
-                              <td>{dist.vagasReservadas}</td>
+                              <td>{reservado}</td>
                               <td>
                                 <strong>{disponivel}</strong>
                               </td>
@@ -13642,6 +13899,17 @@ export function PrototiposControleVagasVagasNumeradasPage() {
     navigate(`/prototipos/sigep/controle-vagas/vagas-numeradas/${vaga.id}/editar`);
   };
 
+  const totalVagasNumeradas = controleVagasVagaNumeradaMock.length;
+  const totalDisponiveis = controleVagasVagaNumeradaMock.filter(
+    (vaga) => vaga.situacao === "Disponível",
+  ).length;
+  const totalOcupadas = controleVagasVagaNumeradaMock.filter(
+    (vaga) => vaga.situacao === "Ocupada",
+  ).length;
+  const totalRestritas = controleVagasVagaNumeradaMock.filter((vaga) =>
+    ["Reservada", "Bloqueada"].includes(vaga.situacao),
+  ).length;
+
   return (
     <PrototypeSystemPage
       nomeSistema="GESTÃO DE PESSOAS"
@@ -13655,7 +13923,13 @@ export function PrototiposControleVagasVagasNumeradasPage() {
           cardHeaderClassNames="prototype-regime-card"
         >
           <div className="prototype-controle-vagas-list">
-            <div className="prototype-controle-vagas-list-header">
+            <div className="prototype-controle-vagas-section-title prototype-controle-vagas-section-title--split">
+              <div>
+                <h3>Consulta de Vagas Numeradas</h3>
+                <p>
+                  Acompanhe vagas individualizadas por número, ocupação atual e situação.
+                </p>
+              </div>
               <BotaoSeplag
                 type="button"
                 label="Adicionar Vaga Numerada"
@@ -13666,7 +13940,26 @@ export function PrototiposControleVagasVagasNumeradasPage() {
               />
             </div>
 
-            <div className="prototype-table-wrapper">
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Total</span>
+                <strong>{totalVagasNumeradas}</strong>
+              </div>
+              <div className="is-success">
+                <span>Disponíveis</span>
+                <strong>{totalDisponiveis}</strong>
+              </div>
+              <div className="is-info">
+                <span>Ocupadas</span>
+                <strong>{totalOcupadas}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Reservadas/Bloqueadas</span>
+                <strong>{totalRestritas}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-vagas-table">
               <table className="prototype-simple-table">
                 <thead>
                   <tr>
@@ -13674,35 +13967,64 @@ export function PrototiposControleVagasVagasNumeradasPage() {
                     <th>Cargo/Função</th>
                     <th>Órgão/Setor</th>
                     <th>Ocupante Atual</th>
+                    <th>Ativação</th>
                     <th>Situação</th>
+                    <th>Controle</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {controleVagasVagasNumeradasMock.map((vaga) => (
-                    <tr key={vaga.id}>
-                      <td>
-                        <strong>{vaga.codigo}</strong>
-                      </td>
-                      <td>{vaga.cargoFuncao}</td>
-                      <td>{vaga.orgaoSetor}</td>
-                      <td>{vaga.ocupanteAtual}</td>
-                      <td>
-                        <span className={`prototype-badge prototype-badge--${vaga.situacao.toLowerCase()}`}>
-                          {vaga.situacao}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="prototype-controle-vagas-row-actions">
-                          <BotaoIconSeplag
-                            type="button"
-                            icon="pi pi-eye"
-                            onClick={() => handleEditar(vaga)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {controleVagasVagaNumeradaMock.map((vaga) => {
+                    const validacao = getControleVagasValidacaoVagaNumerada(vaga);
+
+                    return (
+                      <tr key={vaga.id}>
+                        <td>
+                          <strong>{vaga.numero}</strong>
+                        </td>
+                        <td>
+                          {vaga.cargoFuncao}
+                          <small>
+                            {
+                              controleVagasQuadroAutorizadoMock.find(
+                                (quadro) => quadro.id === vaga.quadroId,
+                              )?.codigo
+                            }
+                          </small>
+                        </td>
+                        <td>{vaga.orgaoSetor}</td>
+                        <td>
+                          {vaga.ocupacao?.pessoa ?? "-"}
+                          {vaga.ocupacao?.tipoVinculo && (
+                            <small>{vaga.ocupacao.tipoVinculo}</small>
+                          )}
+                        </td>
+                        <td>{vaga.dataAtivacao}</td>
+                        <td>{renderVagaNumeradaStatusBadge(vaga.situacao)}</td>
+                        <td>
+                          <span className={validacao.className}>
+                            {validacao.label}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="prototype-controle-vagas-row-actions">
+                            <BotaoIconSeplag
+                              type="button"
+                              icon="pi pi-eye"
+                              title="Visualizar vaga"
+                              onClick={() => handleEditar(vaga)}
+                            />
+                            <BotaoIconSeplag
+                              type="button"
+                              icon="pi pi-pencil"
+                              title="Editar vaga"
+                              onClick={() => handleEditar(vaga)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -13725,7 +14047,7 @@ export function PrototiposControleVagasVagasNumeradasPage() {
 export function PrototiposControleVagasVagasNumeradasFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const vaga = controleVagasVagasNumeradasMock.find(
+  const vaga = controleVagasVagaNumeradaMock.find(
     (item) => String(item.id) === id,
   );
   const isEditing = Boolean(id);
@@ -13733,11 +14055,15 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
 
   const { control } = useForm<ControleVagasVagaNumeradaForm>({
     defaultValues: {
-      codigo: vaga?.codigo ?? "",
+      numero: vaga?.numero ?? "",
+      quadroId: vaga?.quadroId,
       cargoFuncao: vaga?.cargoFuncao ?? "",
       orgaoSetor: vaga?.orgaoSetor ?? "",
       situacao: vaga?.situacao ?? "Disponível",
-      observacao: "",
+      dataAtivacao: vaga?.dataAtivacao ?? "01/06/2026",
+      dataDesativacao: vaga?.dataDesativacao ?? "",
+      motivo: vaga?.motivo ?? "",
+      observacao: vaga?.observacao ?? "",
     },
   });
 
@@ -13764,11 +14090,25 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
             {activeTab === "detalhes" && (
               <div className="grid prototype-controle-vagas-form-section">
                 <TextFieldSeplag
-                  name="codigo"
+                  name="numero"
                   control={control}
                   label="Código da Vaga"
-                  cols="12 12 4"
+                  cols="12 12 3"
                   placeholder="Ex.: VA-001"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="quadroId"
+                  control={control}
+                  label="Quadro Autorizado"
+                  cols="12 12 3"
+                  options={controleVagasQuadroAutorizadoMock.map((quadro) => ({
+                    label: `${quadro.codigo} - ${quadro.cargoFuncao}`,
+                    value: quadro.id,
+                  }))}
+                  optionLabel="label"
+                  optionValue="value"
                   required
                   getFormErrorMessage={() => null}
                 />
@@ -13776,7 +14116,7 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                   name="cargoFuncao"
                   control={control}
                   label="Cargo/Função"
-                  cols="12 12 4"
+                  cols="12 12 3"
                   options={controleVagasCargoFuncaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -13787,7 +14127,7 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                   name="orgaoSetor"
                   control={control}
                   label="Órgão/Setor"
-                  cols="12 12 4"
+                  cols="12 12 3"
                   options={controleVagasOrgaoSetorOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -13803,6 +14143,29 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                   optionLabel="label"
                   optionValue="value"
                   required
+                  getFormErrorMessage={() => null}
+                />
+                <DateFieldSeplag
+                  name="dataAtivacao"
+                  control={control}
+                  label="Data de Ativação"
+                  cols="12 12 4"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DateFieldSeplag
+                  name="dataDesativacao"
+                  control={control}
+                  label="Data de Desativação"
+                  cols="12 12 4"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="motivo"
+                  control={control}
+                  label="Motivo"
+                  cols="12"
+                  placeholder="Motivo de bloqueio, reserva, desativação ou extinção"
                   getFormErrorMessage={() => null}
                 />
                 <TextAreaFieldSeplag
@@ -13823,15 +14186,22 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                   <p>Dados do servidor que está ocupando esta vaga atualmente.</p>
                 </div>
                 {vaga?.situacao === "Ocupada" ? (
-                  <div className="grid prototype-controle-vagas-form-section">
-                    <div className="col-12 md:col-6 lg:col-4">
-                      <strong>Servidor:</strong> {vaga.ocupanteAtual}
+                  <div className="prototype-controle-vagas-ocupacao-card">
+                    <div>
+                      <span>Servidor</span>
+                      <strong>{vaga.ocupacao?.pessoa}</strong>
                     </div>
-                    <div className="col-12 md:col-6 lg:col-4">
-                      <strong>Matrícula:</strong> 123456
+                    <div>
+                      <span>CPF</span>
+                      <strong>{vaga.ocupacao?.cpf}</strong>
                     </div>
-                    <div className="col-12 md:col-6 lg:col-4">
-                      <strong>Data de Ingresso:</strong> 01/01/2020
+                    <div>
+                      <span>Tipo de vínculo</span>
+                      <strong>{vaga.ocupacao?.tipoVinculo}</strong>
+                    </div>
+                    <div>
+                      <span>Data de ocupação</span>
+                      <strong>{vaga.ocupacao?.dataOcupacao}</strong>
                     </div>
                   </div>
                 ) : (
@@ -13859,7 +14229,7 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {controleVagasHistoricoMock.filter(h => h.vagaNumero === vaga?.codigo).map((item) => (
+                      {controleVagasVagaNumeradaHistoricoMock.filter(h => h.vagaNumero === vaga?.numero).map((item) => (
                         <tr key={item.id}>
                           <td>{item.dataHora}</td>
                           <td>{item.evento}</td>
@@ -13867,7 +14237,7 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
                           <td>{item.detalhe}</td>
                         </tr>
                       ))}
-                      {controleVagasHistoricoMock.filter(h => h.vagaNumero === vaga?.codigo).length === 0 && (
+                      {controleVagasVagaNumeradaHistoricoMock.filter(h => h.vagaNumero === vaga?.numero).length === 0 && (
                         <tr>
                           <td colSpan={4} className="prototype-empty-table-cell">Nenhum histórico encontrado.</td>
                         </tr>
@@ -13896,9 +14266,395 @@ export function PrototiposControleVagasVagasNumeradasFormPage() {
   );
 }
 
+export function PrototiposControleVagasIntegracaoPage() {
+  const navigate = useNavigate();
+  const { control, watch } = useForm<ControleVagasIntegracaoForm>({
+    defaultValues: {
+      vagaNumero: "VA-002",
+      pessoa: "ANA PAULA COSTA",
+      cpf: "456.789.123-00",
+      tipoVinculo: "Efetivo",
+    },
+  });
+  const [vagasSimuladas, setVagasSimuladas] = useState<
+    ControleVagasVagaNumeradaRow[]
+  >(controleVagasVagaNumeradaMock);
+  const [eventosIntegracao, setEventosIntegracao] = useState<
+    ControleVagasIntegracaoEventoRow[]
+  >([]);
+  const [resultadoIntegracao, setResultadoIntegracao] = useState<{
+    tipo: ControleVagasIntegracaoEventoRow["resultado"];
+    texto: string;
+  }>({
+    tipo: "Alerta",
+    texto: "Selecione uma vaga e execute uma ação para simular a integração.",
+  });
+
+  const valores = watch();
+  const vagaSelecionada = vagasSimuladas.find(
+    (vaga) => vaga.numero === valores.vagaNumero,
+  );
+  const quadroSelecionado = controleVagasQuadroAutorizadoMock.find(
+    (quadro) => quadro.id === vagaSelecionada?.quadroId,
+  );
+  const distribuicaoSelecionada =
+    getControleVagasDistribuicaoDaVaga(vagaSelecionada);
+  const saldoSelecionado = getControleVagasSaldoDistribuicaoSimulado(
+    distribuicaoSelecionada,
+    vagasSimuladas,
+  );
+
+  const registrarEventoIntegracao = (
+    evento: string,
+    resultado: ControleVagasIntegracaoEventoRow["resultado"],
+    detalhe: string,
+  ) => {
+    const dataHora = new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Cuiaba",
+    }).format(new Date());
+
+    setEventosIntegracao((eventos) => [
+      {
+        id: Date.now(),
+        dataHora,
+        evento,
+        vagaNumero: vagaSelecionada?.numero ?? "-",
+        resultado,
+        detalhe,
+      },
+      ...eventos,
+    ]);
+    setResultadoIntegracao({ tipo: resultado, texto: detalhe });
+  };
+
+  const validarOcupacao = () => {
+    if (!vagaSelecionada) {
+      return "Selecione uma vaga numerada para validar a operação.";
+    }
+
+    if (!quadroSelecionado) {
+      return "Operação bloqueada: a vaga selecionada não possui quadro autorizado vinculado.";
+    }
+
+    if (!distribuicaoSelecionada) {
+      return "Operação bloqueada: a vaga não possui distribuição compatível.";
+    }
+
+    if (saldoSelecionado.disponivel <= 0) {
+      return "Operação bloqueada: não há saldo disponível para a distribuição da vaga.";
+    }
+
+    if (quadroSelecionado.situacao !== STATUS_OPERACIONAL_VIGENCIA.ATIVO) {
+      return "Operação bloqueada: o quadro autorizado não está ativo.";
+    }
+
+    if (["Bloqueada", "Extinta", "Agendada"].includes(vagaSelecionada.situacao)) {
+      return `Operação bloqueada: a vaga está ${vagaSelecionada.situacao.toLowerCase()}.`;
+    }
+
+    if (vagaSelecionada.situacao === "Ocupada") {
+      return "Operação bloqueada: a vaga já está ocupada.";
+    }
+
+    if (
+      vagaSelecionada.situacao === "Reservada" &&
+      getControleVagasReservasAtivas(
+        vagaSelecionada.quadroId,
+        vagaSelecionada.orgaoSetor,
+      ).length === 0
+    ) {
+      return "Operação bloqueada: a vaga reservada não possui reserva ativa.";
+    }
+
+    return "";
+  };
+
+  const handleValidarSaldo = () => {
+    if (!vagaSelecionada || !distribuicaoSelecionada) {
+      registrarEventoIntegracao(
+        "Validação de saldo",
+        "Bloqueado",
+        "Não foi possível validar o saldo porque a vaga não possui distribuição compatível.",
+      );
+      return;
+    }
+
+    const mensagemBloqueio = validarOcupacao();
+    registrarEventoIntegracao(
+      "Validação de saldo",
+      mensagemBloqueio ? "Bloqueado" : "Sucesso",
+      mensagemBloqueio ||
+        `Saldo validado: ${saldoSelecionado.disponivel} vaga(s) disponível(is) para ${distribuicaoSelecionada.orgaoSetor}.`,
+    );
+  };
+
+  const handleOcuparVaga = () => {
+    const mensagemBloqueio = validarOcupacao();
+
+    if (mensagemBloqueio || !vagaSelecionada) {
+      registrarEventoIntegracao(
+        "Ocupação bloqueada",
+        "Bloqueado",
+        mensagemBloqueio || "Operação bloqueada por inconsistência da vaga.",
+      );
+      return;
+    }
+
+    setVagasSimuladas((vagas) =>
+      vagas.map((vaga) =>
+        vaga.numero === vagaSelecionada.numero
+          ? {
+              ...vaga,
+              situacao: "Ocupada",
+              ocupacao: {
+                id: Date.now(),
+                pessoa: valores.pessoa || "Pessoa não informada",
+                cpf: valores.cpf || "-",
+                cargoFuncao: vaga.cargoFuncao,
+                dataOcupacao: "03/06/2026",
+                tipoVinculo: valores.tipoVinculo || "Não informado",
+                nomeVinculo: "Ingresso funcional simulado",
+                observacao: "Ocupação gerada pela integração mockada.",
+              },
+              observacao: "Vaga ocupada pela integração com ingresso funcional.",
+            }
+          : vaga,
+      ),
+    );
+    registrarEventoIntegracao(
+      "Ocupação de vaga",
+      "Sucesso",
+      `Vaga ${vagaSelecionada.numero} ocupada por ${valores.pessoa || "pessoa não informada"}. Evento funcional registrado no histórico simulado.`,
+    );
+  };
+
+  const handleLiberarVaga = () => {
+    if (!vagaSelecionada) {
+      registrarEventoIntegracao(
+        "Liberação bloqueada",
+        "Bloqueado",
+        "Selecione uma vaga numerada para liberar.",
+      );
+      return;
+    }
+
+    if (vagaSelecionada.situacao !== "Ocupada") {
+      registrarEventoIntegracao(
+        "Liberação bloqueada",
+        "Bloqueado",
+        "Operação bloqueada: somente vagas ocupadas podem ser liberadas.",
+      );
+      return;
+    }
+
+    setVagasSimuladas((vagas) =>
+      vagas.map((vaga) =>
+        vaga.numero === vagaSelecionada.numero
+          ? {
+              ...vaga,
+              situacao: "Disponível",
+              ocupacao: undefined,
+              observacao: "Vaga liberada pela integração com evento funcional.",
+            }
+          : vaga,
+      ),
+    );
+    registrarEventoIntegracao(
+      "Liberação de vaga",
+      "Sucesso",
+      `Vaga ${vagaSelecionada.numero} liberada. Saldo da distribuição foi recomposto no mock.`,
+    );
+  };
+
+  const resultadoClassName =
+    resultadoIntegracao.tipo === "Sucesso"
+      ? "is-success"
+      : resultadoIntegracao.tipo === "Bloqueado"
+        ? "is-danger"
+        : "is-warning";
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Integração com Ingresso e Eventos Funcionais"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-integracao-page">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Simulação de Integração</h3>
+              <p>
+                Valide saldo, ocupe ou libere vagas e registre eventos funcionais em memória.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
+              <DropdownFieldSeplag
+                name="vagaNumero"
+                control={control}
+                label="Vaga Numerada"
+                cols="12 12 3"
+                options={vagasSimuladas.map((vaga) => ({
+                  label: `${vaga.numero} - ${vaga.cargoFuncao}`,
+                  value: vaga.numero,
+                }))}
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="pessoa"
+                control={control}
+                label="Pessoa"
+                cols="12 12 3"
+                placeholder="Nome da pessoa"
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="cpf"
+                control={control}
+                label="CPF"
+                cols="12 12 3"
+                placeholder="000.000.000-00"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="tipoVinculo"
+                control={control}
+                label="Tipo de Vínculo"
+                cols="12 12 3"
+                options={[
+                  { label: "Efetivo", value: "Efetivo" },
+                  { label: "Designado", value: "Designado" },
+                  { label: "Comissionado", value: "Comissionado" },
+                  { label: "Contrato Temporário", value: "Contrato Temporário" },
+                ]}
+                getFormErrorMessage={() => null}
+              />
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Vaga selecionada</span>
+                <strong>{vagaSelecionada?.numero ?? "-"}</strong>
+              </div>
+              <div className="is-info">
+                <span>Situação atual</span>
+                <strong>{vagaSelecionada?.situacao ?? "-"}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Saldo disponível</span>
+                <strong>{saldoSelecionado.disponivel}</strong>
+              </div>
+              <div className="is-success">
+                <span>Ocupadas na distribuição</span>
+                <strong>{saldoSelecionado.ocupado}</strong>
+              </div>
+            </div>
+
+            <div className={`prototype-controle-vagas-integracao-result ${resultadoClassName}`}>
+              {resultadoIntegracao.texto}
+            </div>
+
+            <div className="prototype-controle-vagas-integracao-actions">
+              <BotaoSeplag
+                type="button"
+                label="Validar Saldo"
+                icon="pi pi-check-circle"
+                onClick={handleValidarSaldo}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Ocupar Vaga"
+                icon="pi pi-user-plus"
+                onClick={handleOcuparVaga}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Liberar Vaga"
+                icon="pi pi-user-minus"
+                onClick={handleLiberarVaga}
+              />
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-integracao-table">
+              <table className="prototype-simple-table">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Evento</th>
+                    <th>Vaga</th>
+                    <th>Resultado</th>
+                    <th>Detalhe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eventosIntegracao.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="prototype-empty-table-cell">
+                        Nenhum evento simulado.
+                      </td>
+                    </tr>
+                  ) : (
+                    eventosIntegracao.map((evento) => (
+                      <tr key={evento.id}>
+                        <td>{evento.dataHora}</td>
+                        <td>{evento.evento}</td>
+                        <td>{evento.vagaNumero}</td>
+                        <td>
+                          <span
+                            className={`prototype-badge ${
+                              evento.resultado === "Sucesso"
+                                ? "prototype-badge--success"
+                                : evento.resultado === "Bloqueado"
+                                  ? "prototype-badge--danger"
+                                  : "prototype-badge--warning"
+                            }`}
+                          >
+                            {evento.resultado}
+                          </span>
+                        </td>
+                        <td>{evento.detalhe}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+              />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposControleVagasHistoricoPage() {
   const navigate = useNavigate();
   const { control } = useForm();
+  const totalEventosHistorico = controleVagasVagaNumeradaHistoricoMock.length;
+  const totalOcupacoesHistorico = controleVagasVagaNumeradaHistoricoMock.filter(
+    (item) => ["Ocupação", "Designação"].includes(item.evento),
+  ).length;
+  const totalEventosRestritivos = controleVagasVagaNumeradaHistoricoMock.filter(
+    (item) => ["Bloqueio", "Extinção"].includes(item.evento),
+  ).length;
 
   return (
     <PrototypeSystemPage
@@ -13913,7 +14669,14 @@ export function PrototiposControleVagasHistoricoPage() {
           cardHeaderClassNames="prototype-regime-card"
         >
           <div className="prototype-controle-vagas-historico-page">
-            <div className="grid prototype-controle-vagas-filtros">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Filtros de Histórico</h3>
+              <p>
+                Consulte eventos de ocupação, liberação, bloqueio e alterações de vagas.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
               <DropdownFieldSeplag
                 name="periodo"
                 control={control}
@@ -13946,13 +14709,44 @@ export function PrototiposControleVagasHistoricoPage() {
                 options={[{ label: 'Todos', value: '' }, { label: 'Ocupação', value: 'ocupacao' }, { label: 'Reserva', value: 'reserva' }]}
                 getFormErrorMessage={() => null}
               />
+              <TextFieldSeplag
+                name="pessoa"
+                control={control}
+                label="Pessoa/Vínculo"
+                cols="12 12 3"
+                placeholder="Nome, CPF ou vínculo"
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="usuario"
+                control={control}
+                label="Usuário"
+                cols="12 12 3"
+                placeholder="Responsável pelo evento"
+                getFormErrorMessage={() => null}
+              />
             </div>
-            <div className="prototype-form-actions" style={{ marginBottom: '20px' }}>
+            <div className="prototype-controle-vagas-filter-actions">
               <BotaoSeplag type="button" label="Filtrar" icon="pi pi-filter" />
               <BotaoLimparFiltroSeplag onClick={() => {}} />
             </div>
 
-            <div className="prototype-table-wrapper">
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Eventos</span>
+                <strong>{totalEventosHistorico}</strong>
+              </div>
+              <div className="is-info">
+                <span>Ocupações</span>
+                <strong>{totalOcupacoesHistorico}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Restritivos</span>
+                <strong>{totalEventosRestritivos}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-historico-table">
               <table className="prototype-simple-table">
                 <thead>
                   <tr>
@@ -13964,11 +14758,15 @@ export function PrototiposControleVagasHistoricoPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {controleVagasHistoricoMock.map((item) => (
+                  {controleVagasVagaNumeradaHistoricoMock.map((item) => (
                     <tr key={item.id}>
                       <td>{item.dataHora}</td>
                       <td>{item.vagaNumero || '-'}</td>
-                      <td>{item.evento}</td>
+                      <td>
+                        <span className="prototype-controle-vagas-event-badge">
+                          {item.evento}
+                        </span>
+                      </td>
                       <td>{item.usuario}</td>
                       <td>{item.detalhe}</td>
                     </tr>
@@ -13977,7 +14775,7 @@ export function PrototiposControleVagasHistoricoPage() {
               </table>
             </div>
 
-            <div className="prototype-form-actions" style={{ marginTop: '20px' }}>
+            <div className="prototype-form-actions">
               <BotaoVoltarSeplag
                 type="button"
                 label="Voltar"
