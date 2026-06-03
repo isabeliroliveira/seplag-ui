@@ -12669,6 +12669,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           ) : null}
           {podeFinalizar ? (
             <BotaoIconSeplag
+              severity="success"
               type="button"
               tooltip="Finalizar Correção"
               icon="pi pi-check-circle"
@@ -12937,6 +12938,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
         >
           <div className="col-12 prototype-folha-pagamento-table prototype-solicitacoes-ajustes-table">
             <TablePaginadoSeplag
+              key={`solicitacoes-ajustes-${perfil}`}
               dataKey="id"
               data={solicitacaoResults}
               rows={10}
