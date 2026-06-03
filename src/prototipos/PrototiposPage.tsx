@@ -12620,6 +12620,11 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
 
   const confirmarConclusao = () => {
     if (!solicitacaoSelecionada) return;
+    if (perfil !== "CONFORMIDADE") {
+      setModalConcluirAberto(false);
+      setFeedback("Ação indisponível para o perfil Folha de Pagamento.");
+      return;
+    }
 
     atualizarSolicitacao(
       {
@@ -12635,16 +12640,59 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
   const renderAcoesSolicitacao = (solicitacao: SolicitacaoAjusteFolhaRow) => {
     const isConformidade = perfil === "CONFORMIDADE";
     const isFolhaPagamento = perfil === "FOLHA";
-    const podeEditarExcluir =
-      isConformidade && solicitacao.situacao === "NOVA";
-    const podeDevolverConcluir =
-      isConformidade && solicitacao.situacao === "CORRIGIDO";
     const podeIniciar =
       isFolhaPagamento &&
       (solicitacao.situacao === "NOVA" ||
         solicitacao.situacao === "DEVOLVIDO");
     const podeFinalizar =
       isFolhaPagamento && solicitacao.situacao === "EM_CORRECAO";
+
+    if (isFolhaPagamento) {
+      return (
+        <>
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Visualizar"
+            icon="pi pi-eye"
+            onClick={() => abrirVisualizar(solicitacao)}
+          />
+          {podeIniciar ? (
+            <BotaoIconSeplag
+              type="button"
+              tooltip="Iniciar Correção"
+              icon="pi pi-play"
+              onClick={() => {
+                setSolicitacaoSelecionada(solicitacao);
+                setModalIniciarAberto(true);
+              }}
+            />
+          ) : null}
+          {podeFinalizar ? (
+            <BotaoIconSeplag
+              type="button"
+              tooltip="Finalizar Correção"
+              icon="pi pi-check-circle"
+              onClick={() => {
+                setSolicitacaoSelecionada(solicitacao);
+                setModalFinalizarAberto(true);
+              }}
+            />
+          ) : null}
+          <BotaoIconSeplag
+            severity="secondary"
+            type="button"
+            tooltip="Histórico"
+            icon="pi pi-history"
+            onClick={() => abrirHistorico(solicitacao)}
+          />
+        </>
+      );
+    }
+
+    const podeEditarExcluir =
+      isConformidade && solicitacao.situacao === "NOVA";
+    const podeDevolverConcluir =
+      isConformidade && solicitacao.situacao === "CORRIGIDO";
 
     return (
       <>
