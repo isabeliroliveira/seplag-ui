@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
@@ -21,6 +21,7 @@ import {
   DateFieldSeplag,
   CheckboxFieldSeplag,
   DropdownFieldSeplag,
+  MaskFieldSeplag,
   MultiSelectFieldSeplag,
   NumberFieldSeplag,
   SwitchFieldSeplag,
@@ -58,6 +59,10 @@ import { folhaPagamentoService } from "./folhaPagamento/folhaPagamentoService";
 import type {
   FolhaPagamentoExecucaoRow,
   FolhaPagamentoExecucaoSituacao,
+  FolhaCompetenciaFiltroForm,
+  FolhaCompetenciaForm,
+  FolhaCompetenciaRow,
+  FolhaCompetenciaSituacao,
   FolhaPagamentoFiltroForm,
   FolhaPagamentoForm,
   FolhaPagamentoPessoaLogFiltroForm,
@@ -67,6 +72,17 @@ import type {
   FolhaPagamentoRubricaLogRow,
   FolhaPagamentoRubricaLogSituacao,
   FolhaPagamentoSituacao,
+  SolicitacaoAjusteFolhaFiltroForm,
+  SolicitacaoAjusteFolhaHistoricoRow,
+  SolicitacaoAjusteFolhaPerfil,
+  SolicitacaoAjusteFolhaRow,
+  SolicitacaoAjusteFolhaSituacao,
+  GrupoFolhaFiltroForm,
+  GrupoFolhaForm,
+  GrupoFolhaRow,
+  GrupoFolhaSituacao,
+  GrupoFolhaTipo,
+  GrupoFolhaVersaoRow,
 } from "./folhaPagamento/types";
 
 const SIGEP_BASE_PATH = "/prototipos/sigep";
@@ -74,9 +90,22 @@ const SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH =
   "/prototipos/sigep/cargo-concurso-teste";
 const FOLHA_PAGAMENTO_BASE_PATH =
   "/prototipos/folha/processamento/folha-pagamento";
+const FOLHA_COMPETENCIAS_BASE_PATH =
+  "/prototipos/folha/processamento/competencias";
+const FOLHA_SOLICITACOES_AJUSTES_BASE_PATH =
+  "/prototipos/folha/processamento/solicitacoes-ajustes";
+const FOLHA_TABELAS_REFERENCIA_BASE_PATH =
+  "/prototipos/folha/tabelas-referencia";
+const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
   `${FOLHA_PAGAMENTO_BASE_PATH}/execucoes/${execucaoId}/log`;
+const getFolhaTabelaReferenciaNovaVigenciaPath = (tabelaId: number) =>
+  `${FOLHA_TABELAS_REFERENCIA_BASE_PATH}/${tabelaId}/vigencias/novo`;
+const getFolhaTabelaReferenciaEditarVigenciaPath = (
+  tabelaId: number,
+  vigenciaId: number,
+) => `${FOLHA_TABELAS_REFERENCIA_BASE_PATH}/${tabelaId}/vigencias/${vigenciaId}/editar`;
 
 interface CargoConcursoRouteProps {
   routePrefix?: string;
@@ -284,6 +313,13 @@ const menuFolha: IMenuSeplag[] = [
         visibleOnRouter: true,
       },
       { label: "Parâmetros de Folha", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+      {
+        label: "Tabelas de Referência",
+        icon: "pi pi-circle-on",
+        to: FOLHA_TABELAS_REFERENCIA_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
       { label: "Pensão Alimentícia", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão Especial", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão por Morte", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
@@ -297,9 +333,23 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnRouter: true,
     items: [
       {
+        label: "Competências da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_COMPETENCIAS_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
+      {
         label: "Folha de Pagamento",
         icon: "pi pi-circle-on",
         to: FOLHA_PAGAMENTO_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
+      {
+        label: "Solicitações de Ajustes da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_SOLICITACOES_AJUSTES_BASE_PATH,
         visibleOnMenu: true,
         visibleOnRouter: true,
       },
@@ -836,6 +886,123 @@ interface ControleVagasDistribuicaoForm {
   observacao?: string;
 }
 
+interface ControleVagasReservaForm {
+  tipoReserva?: string;
+  orgaoSetor?: string;
+  quantidade?: number;
+  motivo?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  situacao?: ControleVagasReservaStatus;
+  observacao?: string;
+}
+
+interface ControleVagasReservaRow {
+  id: number;
+  quadroId: number;
+  tipoReserva: string;
+  orgaoSetor: string;
+  quantidade: number;
+  motivo: string;
+  dataInicio: string;
+  dataFim?: string;
+  situacao: ControleVagasReservaStatus;
+  observacao: string;
+}
+
+type ControleVagasReservaStatus = "Ativa" | "Cancelada" | "Encerrada";
+
+interface ControleVagasConsultaSaldoFiltroForm {
+  dataReferencia?: string;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  tipo?: "" | "Cargo" | "Função";
+  situacao?: StatusOperacionalVigenciaSeplag | "";
+}
+
+interface ControleVagasConsultaSaldoResumo {
+  quadroId: number;
+  codigo: string;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  tipo: "Cargo" | "Função";
+  autorizado: number;
+  distribuido: number;
+  naoDistribuido: number;
+  ocupado: number;
+  reservado: number;
+  disponivel: number;
+  situacao: StatusOperacionalVigenciaSeplag;
+}
+
+type ControleVagasVagaNumeradaSituacao =
+  | "Disponível"
+  | "Ocupada"
+  | "Reservada"
+  | "Bloqueada"
+  | "Agendada"
+  | "Extinta";
+
+interface ControleVagasVagaNumeradaOcupacao {
+  id: number;
+  pessoa: string;
+  cpf: string;
+  cargoFuncao: string;
+  dataOcupacao: string;
+  tipoVinculo: string;
+  nomeVinculo: string;
+  observacao?: string;
+}
+
+interface ControleVagasVagaNumeradaForm {
+  numero?: string;
+  quadroId?: number;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  situacao?: ControleVagasVagaNumeradaSituacao;
+  dataAtivacao?: string;
+  dataDesativacao?: string;
+  motivo?: string;
+  observacao?: string;
+}
+
+interface ControleVagasVagaNumeradaRow {
+  id: number;
+  numero: string;
+  quadroId: number;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  situacao: ControleVagasVagaNumeradaSituacao;
+  dataAtivacao: string;
+  dataDesativacao?: string;
+  motivo?: string;
+  ocupacao?: ControleVagasVagaNumeradaOcupacao;
+  observacao: string;
+}
+
+interface ControleVagasVagaNumeradaFiltroForm {
+  numero?: string;
+  cargoFuncao?: string;
+  orgaoSetor?: string;
+  situacao?: ControleVagasVagaNumeradaSituacao | "";
+}
+
+interface ControleVagasIntegracaoForm {
+  vagaNumero?: string;
+  pessoa?: string;
+  cpf?: string;
+  tipoVinculo?: string;
+}
+
+interface ControleVagasIntegracaoEventoRow {
+  id: number;
+  dataHora: string;
+  evento: string;
+  vagaNumero: string;
+  resultado: "Sucesso" | "Bloqueado" | "Alerta";
+  detalhe: string;
+}
+
 interface GrupoEleitosFiltroForm {
   termo?: string;
   situacao?: StatusOperacionalVigenciaSeplag | "";
@@ -850,7 +1017,7 @@ interface GrupoCalculoFiltroForm {
 interface GrupoCalculoForm {
   nome?: string;
   descricao?: string;
-  situacao?: SituacaoVigenciaValueSeplag["situacao"];
+  situacao?: SituacaoVigenciaValueSeplag["situacao"] | "RASCUNHO";
   dataAtivacao?: string;
   dataEncerramento?: string;
   motivoEncerramento?: string;
@@ -1042,6 +1209,7 @@ interface RubricaRow {
 interface GrupoCalculoRubricaGerenciada extends RubricaRow {
   origem: "filtro" | "manual";
   reordenada?: boolean;
+  excluida?: boolean;
 }
 
 interface GrupoEleitoParticipanteRow {
@@ -1823,6 +1991,68 @@ const controleVagasQuadroAutorizadoMock: ControleVagasQuadroAutorizadoRow[] = [
   },
 ];
 
+
+export interface ControleVagasVagaNumeradaRow {
+  id: number;
+  codigo: string;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  ocupanteAtual: string;
+  situacao: string;
+}
+
+const controleVagasVagasNumeradasMock: ControleVagasVagaNumeradaRow[] = [
+  {
+    id: 1,
+    codigo: "VA-001",
+    cargoFuncao: "ANALISTA DE TI",
+    orgaoSetor: "SEPLAG / STI",
+    ocupanteAtual: "JOÃO DA SILVA",
+    situacao: "Ocupada",
+  },
+  {
+    id: 2,
+    codigo: "VA-002",
+    cargoFuncao: "ANALISTA DE TI",
+    orgaoSetor: "SEPLAG / STI",
+    ocupanteAtual: "-",
+    situacao: "Disponível",
+  },
+  {
+    id: 3,
+    codigo: "VA-003",
+    cargoFuncao: "TÉCNICO ADMINISTRATIVO",
+    orgaoSetor: "SEDUC",
+    ocupanteAtual: "-",
+    situacao: "Reservada",
+  },
+  {
+    id: 4,
+    codigo: "VA-004",
+    cargoFuncao: "ASSESSOR JURÍDICO",
+    orgaoSetor: "PGE",
+    ocupanteAtual: "-",
+    situacao: "Bloqueada",
+  },
+];
+
+export interface ControleVagasVagaNumeradaForm {
+  codigo: string;
+  cargoFuncao: string;
+  orgaoSetor: string;
+  situacao: string;
+  observacao: string;
+}
+
+const controleVagasVagaNumeradaSituacaoOptions = [
+  { label: "Disponível", value: "Disponível" },
+  { label: "Ocupada", value: "Ocupada" },
+  { label: "Reservada", value: "Reservada" },
+  { label: "Bloqueada", value: "Bloqueada" },
+  { label: "Agendada", value: "Agendada" },
+  { label: "Extinta", value: "Extinta" },
+];
+
 const controleVagasQuadroHistoricoMock: ControleVagasQuadroHistoricoRow[] = [
   {
     id: 1,
@@ -1930,6 +2160,462 @@ const controleVagasDistribuicoesMock: ControleVagasDistribuicaoRow[] = [
   },
 ];
 
+const controleVagasReservasMock: ControleVagasReservaRow[] = [
+  {
+    id: 10,
+    quadroId: 1,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    quantidade: 3,
+    motivo: "Reserva estratégica para recomposição de equipe.",
+    dataInicio: "01/06/2026",
+    dataFim: "30/11/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa derivada do quadro autorizado.",
+  },
+  {
+    id: 1,
+    quadroId: 1,
+    tipoReserva: "Processo Seletivo",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Provimento",
+    quantidade: 2,
+    motivo: "Reserva de vagas para reposição de vencimentos.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva planejada para o processo seletivo deste semestre.",
+  },
+  {
+    id: 11,
+    quadroId: 1,
+    tipoReserva: "Retenção",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Carreiras",
+    quantidade: 1,
+    motivo: "Reserva para retenção de vaga durante movimentação de carreira.",
+    dataInicio: "01/07/2026",
+    dataFim: "30/09/2026",
+    situacao: "Ativa",
+    observacao: "Mantém o saldo reservado para movimentação interna.",
+  },
+  {
+    id: 2,
+    quadroId: 1,
+    tipoReserva: "Reposição",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Carreiras",
+    quantidade: 1,
+    motivo: "Reserva para movimentação interna programada.",
+    dataInicio: "15/07/2026",
+    dataFim: "15/10/2026",
+    situacao: "Cancelada",
+    observacao: "Reserva cancelada após revisão de necessidades.",
+  },
+  {
+    id: 12,
+    quadroId: 2,
+    tipoReserva: "Processo Seletivo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    quantidade: 2,
+    motivo: "Reserva para ingresso regional.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa vinculada à distribuição regional norte.",
+  },
+  {
+    id: 13,
+    quadroId: 2,
+    tipoReserva: "Reposição",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Sul",
+    quantidade: 1,
+    motivo: "Reserva para reposição regional.",
+    dataInicio: "01/07/2026",
+    dataFim: "31/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa vinculada à distribuição regional sul.",
+  },
+  {
+    id: 14,
+    quadroId: 3,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "PGE-MT / Procuradoria Administrativa",
+    quantidade: 1,
+    motivo: "Reserva para substituição de coordenação administrativa.",
+    dataInicio: "15/06/2026",
+    dataFim: "15/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa para função administrativa.",
+  },
+  {
+    id: 15,
+    quadroId: 3,
+    tipoReserva: "Reserva Estratégica",
+    orgaoSetor: "PGE-MT / Procuradoria Judicial",
+    quantidade: 1,
+    motivo: "Reserva para substituição de coordenação judicial.",
+    dataInicio: "15/06/2026",
+    dataFim: "15/12/2026",
+    situacao: "Ativa",
+    observacao: "Reserva ativa para função judicial.",
+  },
+];
+
+const controleVagasVagaNumeradaMock: ControleVagasVagaNumeradaRow[] = [
+  {
+    id: 1,
+    numero: "VA-001",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Ocupada",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga ocupada via processo seletivo.",
+    ocupacao: {
+      id: 1,
+      pessoa: "ROBERTO JÚNIOR SILVA",
+      cpf: "123.456.789-00",
+      cargoFuncao: "Analista Administrativo",
+      dataOcupacao: "15/02/2025",
+      tipoVinculo: "Efetivo",
+      nomeVinculo: "Servidor Público",
+      observacao: "Nomeado por concurso público.",
+    },
+  },
+  {
+    id: 2,
+    numero: "VA-002",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Disponível",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga disponível para ocupação.",
+  },
+  {
+    id: 3,
+    numero: "VA-003",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Reservada",
+    dataAtivacao: "01/02/2025",
+    observacao: "Vaga reservada para processo seletivo.",
+  },
+  {
+    id: 4,
+    numero: "VA-004",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Bloqueada",
+    dataAtivacao: "01/02/2025",
+    dataDesativacao: "29/05/2026",
+    motivo: "Bloqueio temporário para reestruturação.",
+    observacao: "Bloqueada por decisão gerencial.",
+  },
+  {
+    id: 5,
+    numero: "VA-005",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Coordenadoria de Provimento",
+    situacao: "Agendada",
+    dataAtivacao: "15/06/2026",
+    observacao: "Vaga agendada para ativação futuro.",
+  },
+  {
+    id: 6,
+    numero: "VA-006",
+    quadroId: 1,
+    cargoFuncao: "Analista Administrativo",
+    orgaoSetor: "SEPLAG-MT / Superintendência de Gestão de Pessoas",
+    situacao: "Extinta",
+    dataAtivacao: "01/01/2023",
+    dataDesativacao: "31/12/2025",
+    motivo: "Eliminação por reestruturação.",
+    observacao: "Vaga extinta conforme reorganização.",
+  },
+  {
+    id: 7,
+    numero: "AA-001",
+    quadroId: 2,
+    cargoFuncao: "Técnico Administrativo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    situacao: "Ocupada",
+    dataAtivacao: "01/03/2025",
+    observacao: "Técnico designado temporariamente.",
+    ocupacao: {
+      id: 2,
+      pessoa: "MARIA DOS SANTOS",
+      cpf: "987.654.321-00",
+      cargoFuncao: "Técnico Administrativo",
+      dataOcupacao: "10/03/2025",
+      tipoVinculo: "Designado",
+      nomeVinculo: "Designação",
+      observacao: "Designada para funções de coordenação.",
+    },
+  },
+  {
+    id: 8,
+    numero: "AA-002",
+    quadroId: 2,
+    cargoFuncao: "Técnico Administrativo",
+    orgaoSetor: "SEDUC-MT / Diretoria Regional Norte",
+    situacao: "Disponível",
+    dataAtivacao: "01/03/2025",
+    observacao: "Vaga em disponibilidade.",
+  },
+  {
+    id: 9,
+    numero: "GG-001",
+    quadroId: 4,
+    cargoFuncao: "Gestor Governamental",
+    orgaoSetor: "SEPLAG-MT / Unidades Extintas",
+    situacao: "Disponível",
+    dataAtivacao: "01/01/2025",
+    observacao: "Vaga usada para demonstrar bloqueio por ausência de saldo.",
+  },
+];
+
+const controleVagasVagaNumeradaHistoricoMock: Array<{
+  id: number;
+  vagaNumero: string;
+  dataHora: string;
+  evento: string;
+  usuario: string;
+  detalhe: string;
+}> = [
+  {
+    id: 1,
+    vagaNumero: "VA-001",
+    dataHora: "15/02/2025 10:30",
+    evento: "Ocupação",
+    usuario: "SISTEMA",
+    detalhe: "Vaga ocupada por ROBERTO JÚNIOR SILVA conforme processo seletivo.",
+  },
+  {
+    id: 2,
+    vagaNumero: "VA-001",
+    dataHora: "01/02/2025 09:15",
+    evento: "Ativação",
+    usuario: "GESTOR VAGAS",
+    detalhe: "Vaga ativada no sistema para controle.",
+  },
+  {
+    id: 3,
+    vagaNumero: "VA-004",
+    dataHora: "29/05/2026 14:22",
+    evento: "Bloqueio",
+    usuario: "GESTOR VAGAS",
+    detalhe: "Bloqueio temporário para reestruturação de setores.",
+  },
+  {
+    id: 4,
+    vagaNumero: "VA-006",
+    dataHora: "31/12/2025 23:59",
+    evento: "Extinção",
+    usuario: "SISTEMA",
+    detalhe: "Vaga extinta conforme decisão de reorganização.",
+  },
+  {
+    id: 5,
+    vagaNumero: "AA-001",
+    dataHora: "10/03/2025 11:45",
+    evento: "Designação",
+    usuario: "SISTEMA",
+    detalhe: "Designação de MARIA DOS SANTOS para a vaga.",
+  },
+];
+
+const getControleVagasReservasAtivas = (
+  quadroId: number,
+  orgaoSetor?: string,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) =>
+  reservas.filter(
+    (reserva) =>
+      reserva.quadroId === quadroId &&
+      reserva.situacao === "Ativa" &&
+      (!orgaoSetor || reserva.orgaoSetor === orgaoSetor),
+  );
+
+const getControleVagasReservadoDistribuicao = (
+  distribuicao: ControleVagasDistribuicaoRow,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) => {
+  const reservasAtivas = getControleVagasReservasAtivas(
+    distribuicao.quadroId,
+    distribuicao.orgaoSetor,
+    reservas,
+  );
+
+  if (reservasAtivas.length === 0) {
+    return distribuicao.vagasReservadas;
+  }
+
+  return reservasAtivas.reduce((total, reserva) => total + reserva.quantidade, 0);
+};
+
+const getControleVagasDisponivelDistribuicao = (
+  distribuicao: ControleVagasDistribuicaoRow,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+) =>
+  Math.max(
+    distribuicao.quantidadeDistribuida -
+      distribuicao.vagasOcupadas -
+      getControleVagasReservadoDistribuicao(distribuicao, reservas),
+    0,
+  );
+
+const getControleVagasResumoQuadro = (
+  quadro: ControleVagasQuadroAutorizadoRow,
+  distribuicoes: ControleVagasDistribuicaoRow[] = controleVagasDistribuicoesMock,
+  reservas: ControleVagasReservaRow[] = controleVagasReservasMock,
+): ControleVagasConsultaSaldoResumo => {
+  const distribuicoesDoQuadro = distribuicoes.filter(
+    (distribuicao) => distribuicao.quadroId === quadro.id,
+  );
+  const totalDistribuido = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) => sum + distribuicao.quantidadeDistribuida,
+    0,
+  );
+  const totalOcupado = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) => sum + distribuicao.vagasOcupadas,
+    0,
+  );
+  const totalReservado = distribuicoesDoQuadro.reduce(
+    (sum, distribuicao) =>
+      sum + getControleVagasReservadoDistribuicao(distribuicao, reservas),
+    0,
+  );
+
+  return {
+    quadroId: quadro.id,
+    codigo: quadro.codigo,
+    cargoFuncao: quadro.cargoFuncao,
+    orgaoSetor: quadro.orgaoSetor,
+    tipo: quadro.tipo,
+    autorizado: quadro.quantidadeAutorizada,
+    distribuido: totalDistribuido,
+    naoDistribuido: Math.max(quadro.quantidadeAutorizada - totalDistribuido, 0),
+    ocupado: totalOcupado,
+    reservado: totalReservado,
+    disponivel: Math.max(totalDistribuido - totalOcupado - totalReservado, 0),
+    situacao: quadro.situacao,
+  };
+};
+
+const getControleVagasValidacaoVagaNumerada = (
+  vaga: ControleVagasVagaNumeradaRow,
+) => {
+  const quadro = controleVagasQuadroAutorizadoMock.find(
+    (item) => item.id === vaga.quadroId,
+  );
+  const distribuicao = controleVagasDistribuicoesMock.find(
+    (item) =>
+      item.quadroId === vaga.quadroId && item.orgaoSetor === vaga.orgaoSetor,
+  );
+
+  if (!quadro) {
+    return { label: "Sem quadro", className: "prototype-badge prototype-badge--danger" };
+  }
+
+  if (quadro.cargoFuncao !== vaga.cargoFuncao) {
+    return { label: "Cargo divergente", className: "prototype-badge prototype-badge--warning" };
+  }
+
+  if (!distribuicao) {
+    return {
+      label: "Sem distribuição",
+      className: "prototype-badge prototype-badge--warning",
+    };
+  }
+
+  if (vaga.situacao === "Reservada") {
+    const reservasAtivas = getControleVagasReservasAtivas(
+      vaga.quadroId,
+      vaga.orgaoSetor,
+    );
+
+    if (reservasAtivas.length === 0) {
+      return {
+        label: "Sem reserva ativa",
+        className: "prototype-badge prototype-badge--warning",
+      };
+    }
+  }
+
+  return {
+    label: "Compatível",
+    className: "prototype-badge prototype-badge--success",
+  };
+};
+
+const renderVagaNumeradaStatusBadge = (
+  status: ControleVagasVagaNumeradaSituacao,
+) => {
+  const badgeClass = {
+    Disponível: "prototype-badge prototype-badge--success",
+    Ocupada: "prototype-badge prototype-badge--info",
+    Reservada: "prototype-badge prototype-badge--warning",
+    Bloqueada: "prototype-badge prototype-badge--danger",
+    Agendada: "prototype-badge prototype-badge--secondary",
+    Extinta: "prototype-badge prototype-badge--light",
+  }[status];
+
+  return <span className={badgeClass}>{status}</span>;
+};
+
+const getControleVagasDistribuicaoDaVaga = (
+  vaga?: ControleVagasVagaNumeradaRow,
+) => {
+  if (!vaga) {
+    return undefined;
+  }
+
+  return controleVagasDistribuicoesMock.find(
+    (distribuicao) =>
+      distribuicao.quadroId === vaga.quadroId &&
+      distribuicao.orgaoSetor === vaga.orgaoSetor,
+  );
+};
+
+const getControleVagasSaldoDistribuicaoSimulado = (
+  distribuicao?: ControleVagasDistribuicaoRow,
+  vagas: ControleVagasVagaNumeradaRow[] = controleVagasVagaNumeradaMock,
+) => {
+  if (!distribuicao) {
+    return {
+      autorizado: 0,
+      ocupado: 0,
+      reservado: 0,
+      disponivel: 0,
+    };
+  }
+
+  const ocupadasOriginais = controleVagasVagaNumeradaMock.filter(
+    (vaga) =>
+      vaga.quadroId === distribuicao.quadroId &&
+      vaga.orgaoSetor === distribuicao.orgaoSetor &&
+      vaga.situacao === "Ocupada",
+  ).length;
+  const ocupadasAtuais = vagas.filter(
+    (vaga) =>
+      vaga.quadroId === distribuicao.quadroId &&
+      vaga.orgaoSetor === distribuicao.orgaoSetor &&
+      vaga.situacao === "Ocupada",
+  ).length;
+  const ocupado =
+    distribuicao.vagasOcupadas + ocupadasAtuais - ocupadasOriginais;
+  const reservado = getControleVagasReservadoDistribuicao(distribuicao);
+
+  return {
+    autorizado: distribuicao.quantidadeDistribuida,
+    ocupado,
+    reservado,
+    disponivel: Math.max(distribuicao.quantidadeDistribuida - ocupado - reservado, 0),
+  };
+};
+
 const controleVagasModuleItems = [
   {
     id: "configuracao",
@@ -1937,39 +2623,41 @@ const controleVagasModuleItems = [
     description: "Define quais cargos e funções controlam vagas e quais critérios serão validados.",
     path: "/prototipos/sigep/controle-vagas/configuracao",
     icon: "pi pi-sliders-h",
-    status: "Etapa 01",
   },
   {
     id: "quadro-autorizado",
     title: "Quadro Autorizado",
-    description: "Cadastra o quantitativo autorizado de vagas por cargo ou função.",
+    description: "Cadastra o quantitativo autorizado, distribuições e reservas por cargo ou função.",
     path: "/prototipos/sigep/controle-vagas/quadro-autorizado",
     icon: "pi pi-table",
-    status: "Etapa 02",
-  },
-  {
-    id: "vagas-numeradas",
-    title: "Vagas Numeradas",
-    description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
-    path: "",
-    icon: "pi pi-hashtag",
-    status: "Em breve",
   },
   {
     id: "saldo",
     title: "Consulta de Saldo",
     description: "Exibe vagas autorizadas, ocupadas, reservadas e disponíveis por referência.",
-    path: "",
+    path: "/prototipos/sigep/controle-vagas/consulta-saldo",
     icon: "pi pi-chart-bar",
-    status: "Em breve",
+  },
+  {
+    id: "vagas-numeradas",
+    title: "Vagas Numeradas",
+    description: "Controla vagas individualizadas com código próprio e ocupação rastreável.",
+    path: "/prototipos/sigep/controle-vagas/vagas-numeradas",
+    icon: "pi pi-hashtag",
+  },
+  {
+    id: "integracao",
+    title: "Integração Funcional",
+    description: "Simula validação, ocupação, liberação e registro de eventos funcionais.",
+    path: "/prototipos/sigep/controle-vagas/integracao",
+    icon: "pi pi-sync",
   },
   {
     id: "historico",
     title: "Histórico/Ocupação",
     description: "Consulta a linha do tempo de ocupações, reservas, liberações e alterações.",
-    path: "",
+    path: "/prototipos/sigep/controle-vagas/historico",
     icon: "pi pi-history",
-    status: "Em breve",
   },
 ];
 
@@ -1979,29 +2667,363 @@ const folhaPagamentoSituacaoOptions: {
 }[] = [
   { label: "Todas", value: "" },
   { label: "Rascunho", value: "RASCUNHO" },
-  { label: "Aberta", value: "ABERTA" },
-  { label: "Em fila", value: "EM_FILA" },
+  { label: "Aberto", value: "ABERTO" },
+  { label: "Aguardando processamento", value: "AGUARDANDO_PROCESSAMENTO" },
   { label: "Em processamento", value: "EM_PROCESSAMENTO" },
-  { label: "Processada", value: "PROCESSADA" },
-  { label: "Processada com alerta", value: "PROCESSADA_COM_ALERTA" },
-  { label: "Processada com erro", value: "PROCESSADA_COM_ERRO" },
-  { label: "Bloqueada", value: "BLOQUEADA" },
+  { label: "Processado com sucesso", value: "PROCESSO_COM_SUCESSO" },
+  { label: "Processado com erro", value: "PROCESSO_COM_ERRO" },
+  { label: "Processado com falhas", value: "PROCESSO_COM_FALHAS" },
   { label: "Cancelada", value: "CANCELADA" },
 ];
+
+const folhaCompetenciaSituacaoOptions: {
+  label: string;
+  value: FolhaCompetenciaSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Vigente", value: "ATIVA" },
+  { label: "Encerrada", value: "FECHADA" },
+];
+
+const grupoFolhaTipoOptions: { label: string; value: GrupoFolhaTipo | "" }[] = [
+  { label: "Todos", value: "" },
+  { label: "Normal", value: "NORMAL" },
+  { label: "Complementar", value: "COMPLEMENTAR" },
+  { label: "13º salário", value: "DECIMO_TERCEIRO" },
+  { label: "Férias", value: "FERIAS" },
+  { label: "Rescisão", value: "RESCISAO" },
+  { label: "Pensionistas", value: "PENSIONISTAS" },
+];
+
+const grupoFolhaSituacaoOptions: {
+  label: string;
+  value: GrupoFolhaSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Rascunho", value: "RASCUNHO" },
+  { label: "Vigente", value: "VIGENTE" },
+  { label: "Inativo", value: "INATIVO" },
+  { label: "Encerrado", value: "ENCERRADO" },
+  { label: "Cancelado", value: "CANCELADO" },
+];
+
+const grupoFolhaSituacaoMeta: Record<
+  GrupoFolhaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  RASCUNHO: { label: "Rascunho", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
+  VIGENTE: { label: "Vigente", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  INATIVO: { label: "Inativo", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
+  ENCERRADO: { label: "Encerrado", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  CANCELADO: { label: "Cancelado", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const grupoFolhaTipoLabel: Record<GrupoFolhaTipo, string> = {
+  NORMAL: "Normal",
+  COMPLEMENTAR: "Complementar",
+  DECIMO_TERCEIRO: "13º salário",
+  FERIAS: "Férias",
+  RESCISAO: "Rescisão",
+  PENSIONISTAS: "Pensionistas",
+};
 
 const folhaPagamentoSituacaoMeta: Record<
   FolhaPagamentoSituacao,
   { label: string; color: string; bg: string; border: string }
 > = {
   RASCUNHO: { label: "Rascunho", color: "#52616b", bg: "#eef2f6", border: "#eef2f6" },
-  ABERTA: { label: "Aberta", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
-  EM_FILA: { label: "Em fila", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  ABERTO: { label: "Aberto", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
+  AGUARDANDO_PROCESSAMENTO: { label: "Aguardando processamento", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
   EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
-  PROCESSADA: { label: "Processada", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
-  PROCESSADA_COM_ALERTA: { label: "Processada com alerta", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
-  PROCESSADA_COM_ERRO: { label: "Processada com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
-  BLOQUEADA: { label: "Bloqueada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  PROCESSO_COM_SUCESSO: { label: "Processado com sucesso", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  PROCESSO_COM_ERRO: { label: "Processado com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  PROCESSO_COM_FALHAS: { label: "Processado com falhas", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
   CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+};
+
+const solicitacaoAjusteFolhaSituacaoOptions: {
+  label: string;
+  value: SolicitacaoAjusteFolhaSituacao;
+}[] = [
+  { label: "NOVA", value: "NOVA" },
+  { label: "EM CORREÇÃO", value: "EM_CORRECAO" },
+  { label: "CORRIGIDO", value: "CORRIGIDO" },
+  { label: "DEVOLVIDO", value: "DEVOLVIDO" },
+  { label: "CONCLUÍDO", value: "CONCLUIDO" },
+];
+
+const solicitacaoAjusteFolhaCompetenciaOptions = [
+  { label: "05/2026", value: "05/2026" },
+  { label: "04/2026", value: "04/2026" },
+  { label: "03/2026", value: "03/2026" },
+];
+
+const solicitacaoAjusteFolhaGrupoEleitosOptions = [
+  { label: "SERVIDORES COMISSIONADOS", value: "SERVIDORES COMISSIONADOS" },
+  { label: "SERVIDORES CONTRATADOS", value: "SERVIDORES CONTRATADOS" },
+  { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
+];
+
+const solicitacaoAjusteFolhaSituacaoMeta: Record<
+  SolicitacaoAjusteFolhaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  NOVA: { label: "NOVA", color: "#005494", bg: "#e6f0f8", border: "#e6f0f8" },
+  EM_CORRECAO: { label: "EM CORREÇÃO", color: "#8a5a00", bg: "#fff4d6", border: "#fff4d6" },
+  CORRIGIDO: { label: "CORRIGIDO", color: "#334e9f", bg: "#e8edff", border: "#e8edff" },
+  DEVOLVIDO: { label: "DEVOLVIDO", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
+  CONCLUIDO: { label: "CONCLUÍDO", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+};
+
+interface FolhaTabelaReferenciaFiltroForm {
+  tabela?: string;
+}
+
+interface FolhaTabelaReferenciaVigenciaRow {
+  id: number;
+  ano: string;
+  vigencia: ReactNode;
+  situacao: "Ativo" | "Inativo";
+}
+
+interface FolhaTabelaReferenciaRow {
+  id: number;
+  sigla: string;
+  nome: string;
+  vigencias: FolhaTabelaReferenciaVigenciaRow[];
+}
+
+interface FolhaTabelaReferenciaVigenciaForm {
+  descricao: string;
+  anoBase: string;
+  tetoPrevidenciario: string;
+  inicioVigencia: string;
+  fimVigencia: string;
+  observacoes: string;
+}
+
+interface FolhaTabelaReferenciaFaixaRow {
+  id: number;
+  ordem: number;
+  faixaInicial: string;
+  faixaFinal: string;
+  percentual: string;
+  contribuicaoFaixa: string;
+}
+
+interface FolhaTabelaReferenciaNovaFaixaForm {
+  faixaFinal: string;
+  percentual: string;
+}
+
+const folhaTabelasReferenciaMock: FolhaTabelaReferenciaRow[] = [
+  {
+    id: 1,
+    sigla: "INSS",
+    nome: "INSTITUTO NACIONAL DO SEGURO SOCIAL",
+    vigencias: [
+      {
+        id: 101,
+        ano: "2026",
+        vigencia: (
+          <>
+            02/06/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+      {
+        id: 102,
+        ano: "2025",
+        vigencia: "01/06/2026 até 01/06/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 103,
+        ano: "2025",
+        vigencia: "28/05/2026 até 30/05/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 104,
+        ano: "2025",
+        vigencia: "20/05/2026 até 27/05/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 105,
+        ano: "2025",
+        vigencia: "03/02/2026 até 03/02/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 106,
+        ano: "500",
+        vigencia: "04/05/2026 até 06/05/2026",
+        situacao: "Inativo",
+      },
+    ],
+  },
+  {
+    id: 2,
+    sigla: "IRRF",
+    nome: "IMPOSTO DE RENDA RETIDO NA FONTE",
+    vigencias: [
+      {
+        id: 201,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/05/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+      {
+        id: 202,
+        ano: "2025",
+        vigencia: "01/01/2026 até 30/04/2026",
+        situacao: "Inativo",
+      },
+    ],
+  },
+  {
+    id: 3,
+    sigla: "RPPS",
+    nome: "REGIME PRÓPRIO DE PREVIDÊNCIA SOCIAL",
+    vigencias: [
+      {
+        id: 301,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+  {
+    id: 4,
+    sigla: "SALÁRIO MÍNIMO",
+    nome: "",
+    vigencias: [
+      {
+        id: 401,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+  {
+    id: 5,
+    sigla: "SALÁRIO FAMÍLIA",
+    nome: "",
+    vigencias: [
+      {
+        id: 501,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+];
+
+const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
+  {
+    id: 1,
+    ordem: 1,
+    faixaInicial: "R$ 0,01",
+    faixaFinal: "R$ 1.621,00",
+    percentual: "7,5",
+    contribuicaoFaixa: "R$ 121,58",
+  },
+  {
+    id: 2,
+    ordem: 2,
+    faixaInicial: "R$ 1.621,01",
+    faixaFinal: "R$ 2.902,84",
+    percentual: "9",
+    contribuicaoFaixa: "R$ 115,37",
+  },
+  {
+    id: 3,
+    ordem: 3,
+    faixaInicial: "R$ 2.902,85",
+    faixaFinal: "R$ 4.354,27",
+    percentual: "12",
+    contribuicaoFaixa: "R$ 174,17",
+  },
+  {
+    id: 4,
+    ordem: 4,
+    faixaInicial: "R$ 4.354,28",
+    faixaFinal: "R$ 8.475,55",
+    percentual: "14",
+    contribuicaoFaixa: "R$ 576,98",
+  },
+];
+
+const folhaTabelaReferenciaVigenciaTabs: TabItemSeplag[] = [
+  { label: "Dados Gerais", value: "dados-gerais" },
+  { label: "Faixa de Contribuição", value: "faixa-contribuicao" },
+];
+
+const parseMoedaReferencia = (valor: string) => {
+  const normalized = valor
+    .replace(/[R$\s.]/g, "")
+    .replace(",", ".")
+    .trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatMoedaReferencia = (valor: number) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(valor);
+
+const getProximaFaixaInicialReferencia = (
+  faixas: FolhaTabelaReferenciaFaixaRow[],
+) => {
+  const ultimaFaixa = faixas[faixas.length - 1];
+  if (!ultimaFaixa) return "R$ 0,01";
+
+  return formatMoedaReferencia(parseMoedaReferencia(ultimaFaixa.faixaFinal) + 0.01);
+};
+
+const calcularContribuicaoFaixaReferencia = (
+  faixaInicial: string,
+  faixaFinal: string,
+  percentual: string,
+) => {
+  const inicio = parseMoedaReferencia(faixaInicial);
+  const fim = parseMoedaReferencia(faixaFinal);
+  const aliquota = Number(percentual.replace(",", "."));
+  const base = Math.max(fim - Math.max(inicio - 0.01, 0), 0);
+  const contribuicao = base * (Number.isFinite(aliquota) ? aliquota / 100 : 0);
+
+  return formatMoedaReferencia(contribuicao);
+};
+
+const folhaCompetenciaSituacaoMeta: Record<
+  FolhaCompetenciaSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  ATIVA: { label: "Vigente", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  FECHADA: { label: "Encerrada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
 };
 
 const folhaPagamentoExecucaoSituacaoMeta: Record<
@@ -2089,6 +3111,21 @@ const folhaPagamentoGrupoEleitosOptions = [
   { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
   { label: "Grupo Teste", value: "Grupo Teste" },
   { label: "Teste 24/04/2026", value: "Teste 24/04/2026" },
+];
+
+const grupoFolhaRubricaOptions = [
+  { label: "1001 - SALÁRIO BÁSICO", value: "1001 - SALÁRIO BÁSICO" },
+  { label: "1002 - ADICIONAL NOTURNO", value: "1002 - ADICIONAL NOTURNO" },
+  { label: "1003 - DÉCIMO TERCEIRO", value: "1003 - DÉCIMO TERCEIRO" },
+  { label: "1004 - VALE ALIMENTAÇÃO", value: "1004 - VALE ALIMENTAÇÃO" },
+  { label: "1006 - PREVIDÊNCIA RPPS", value: "1006 - PREVIDÊNCIA RPPS" },
+];
+
+const grupoFolhaRelatorioOptions = [
+  { label: "Resumo financeiro", value: "Resumo financeiro" },
+  { label: "Divergências por servidor", value: "Divergências por servidor" },
+  { label: "Alertas de jornada", value: "Alertas de jornada" },
+  { label: "Comparativo entre versões", value: "Comparativo entre versões" },
 ];
 
 const folhaPagamentoTabs: TabItemSeplag<string>[] = [
@@ -2708,6 +3745,21 @@ function getGrupoCalculoRubricaTipoBadge(tipo: string) {
   };
 }
 
+function getAmanhaDate() {
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  amanha.setHours(0, 0, 0, 0);
+  return amanha;
+}
+
+function formatDatePtBr(date: Date) {
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 function getRubricasGrupoCalculoPorAbrangencia({
   regimeJuridico,
   tipoVinculo,
@@ -3029,9 +4081,36 @@ const controleVagasDistribuicaoOrgaoSetorOptions = [
   { label: "CGE-MT / Auditoria Geral", value: "CGE-MT / Auditoria Geral" },
 ];
 
+const controleVagasReservaTipoOptions = [
+  { label: "Reserva por Processo Seletivo", value: "Processo Seletivo" },
+  { label: "Reserva de Reposição", value: "Reposição" },
+  { label: "Reserva de Retenção", value: "Retenção" },
+  { label: "Reserva Estratégica", value: "Estratégica" },
+];
+
+const controleVagasReservaSituacaoOptions = [
+  { label: "Ativa", value: "Ativa" },
+  { label: "Cancelada", value: "Cancelada" },
+  { label: "Encerrada", value: "Encerrada" },
+];
+
 const controleVagasConfiguracaoTabs: TabItemSeplag<string>[] = [
   { label: "Detalhes", value: "detalhes" },
   { label: "Critérios de Compatibilidade", value: "criterios" },
+  { label: "Histórico", value: "historico" },
+];
+
+const controleVagasConsultaSaldoTabs: TabItemSeplag<string>[] = [
+  { label: "Por Quadro", value: "por-quadro" },
+  { label: "Por Distribuição", value: "por-distribuicao" },
+  { label: "Reservadas", value: "reservadas" },
+  { label: "Ocupadas", value: "ocupadas" },
+  { label: "Disponíveis", value: "disponiveis" },
+];
+
+const controleVagasVagaNumeradaTabs: TabItemSeplag<string>[] = [
+  { label: "Detalhes", value: "detalhes" },
+  { label: "Ocupação Atual", value: "ocupacao-atual" },
   { label: "Histórico", value: "historico" },
 ];
 
@@ -3514,7 +4593,6 @@ export function PrototiposControleVagasPage() {
                     <i className={item.icon} />
                   </div>
                   <div className="prototype-module-card-body">
-                    <span>{item.status}</span>
                     <h3>{item.title}</h3>
                     <p>{item.description}</p>
                   </div>
@@ -3708,6 +4786,15 @@ export function PrototiposControleVagasConfiguracaoPage() {
               handleOnPageChange={() => {}}
             />
           </div>
+
+          <div className="prototype-form-actions">
+            <BotaoVoltarSeplag
+              type="button"
+              label="Voltar"
+              icon="pi pi-arrow-left"
+              onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+            />
+          </div>
         </CardSeplag>
       </div>
     </PrototypeSystemPage>
@@ -3881,6 +4968,14 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
           )
         : [],
   );
+  const [reservas, setReservas] = useState<ControleVagasReservaRow[]>(
+    () =>
+      quadro
+        ? controleVagasReservasMock.filter((reserva) => reserva.quadroId === quadro.id)
+        : [],
+  );
+  const [editingReservaId, setEditingReservaId] = useState<number | null>(null);
+
   const { control, setValue, watch } = useForm<ControleVagasQuadroAutorizadoForm>({
     defaultValues: {
       codigo: quadro?.codigo ?? "",
@@ -3898,6 +4993,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
       motivoExtincao: "",
     },
   });
+
   const {
     control: distribuicaoControl,
     getValues: getDistribuicaoValues,
@@ -3909,31 +5005,74 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
       observacao: "",
     },
   });
+
+  const {
+    control: reservaControl,
+    getValues: getReservaValues,
+    reset: resetReserva,
+    setValue: setReservaValue,
+  } = useForm<ControleVagasReservaForm>({
+    defaultValues: {
+      tipoReserva: "Processo Seletivo",
+      orgaoSetor: "",
+      quantidade: undefined,
+      motivo: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "Ativa",
+      observacao: "",
+    },
+  });
+
   const quantidadeAutorizada = Number(watch("quantidadeAutorizada") ?? 0);
   const totalDistribuido = distribuicoes.reduce(
     (total, distribuicao) => total + distribuicao.quantidadeDistribuida,
     0,
   );
+
   const totalOcupado = distribuicoes.reduce(
     (total, distribuicao) => total + distribuicao.vagasOcupadas,
     0,
   );
   const totalReservado = distribuicoes.reduce(
-    (total, distribuicao) => total + distribuicao.vagasReservadas,
+    (total, distribuicao) =>
+      total + getControleVagasReservadoDistribuicao(distribuicao, reservas),
     0,
   );
   const totalDisponivel = distribuicoes.reduce(
     (total, distribuicao) =>
-      total +
-      Math.max(
-        distribuicao.quantidadeDistribuida -
-          distribuicao.vagasOcupadas -
-          distribuicao.vagasReservadas,
-        0,
-      ),
+      total + getControleVagasDisponivelDistribuicao(distribuicao, reservas),
     0,
   );
   const totalNaoDistribuido = Math.max(quantidadeAutorizada - totalDistribuido, 0);
+
+  const totalReservasAtivas = reservas
+    .filter((reserva) => reserva.situacao === "Ativa")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const totalReservasCanceladas = reservas
+    .filter((reserva) => reserva.situacao === "Cancelada")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const totalReservasEncerradas = reservas
+    .filter((reserva) => reserva.situacao === "Encerrada")
+    .reduce((total, reserva) => total + reserva.quantidade, 0);
+  const disponivelAposReservas = totalDisponivel;
+
+  const syncReservaComDistribuicao = (
+    reserva: ControleVagasReservaRow,
+    delta: number,
+  ) => {
+    if (!reserva.orgaoSetor) return;
+
+    setDistribuicoes((current) =>
+      current.map((distribuicao) => {
+        if (distribuicao.orgaoSetor !== reserva.orgaoSetor) return distribuicao;
+        return {
+          ...distribuicao,
+          vagasReservadas: Math.max(distribuicao.vagasReservadas + delta, 0),
+        };
+      }),
+    );
+  };
 
   const handleAdicionarDistribuicao = () => {
     const values = getDistribuicaoValues();
@@ -3965,6 +5104,113 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
     setDistribuicoes((current) =>
       current.filter((distribuicao) => distribuicao.id !== idDistribuicao),
     );
+  };
+
+  const handleAdicionarReserva = () => {
+    const values = getReservaValues();
+    const quantidade = Number(values.quantidade ?? 0);
+
+    if (!values.tipoReserva || !values.orgaoSetor || quantidade <= 0) return;
+
+    const novaReserva: ControleVagasReservaRow = {
+      id: editingReservaId ?? Date.now(),
+      quadroId: quadro?.id ?? 0,
+      tipoReserva: values.tipoReserva,
+      orgaoSetor: values.orgaoSetor,
+      quantidade,
+      motivo: values.motivo ?? "",
+      dataInicio: values.dataInicio ?? "",
+      dataFim: values.dataFim,
+      situacao: values.situacao ?? "Ativa",
+      observacao: values.observacao ?? "",
+    };
+
+    setReservas((current) => {
+      if (editingReservaId) {
+        const reservaAnterior = current.find((item) => item.id === editingReservaId);
+        if (reservaAnterior && reservaAnterior.situacao === "Ativa") {
+          syncReservaComDistribuicao(reservaAnterior, -reservaAnterior.quantidade);
+        }
+
+        const atualizadas = current.map((item) =>
+          item.id === editingReservaId ? novaReserva : item,
+        );
+        if (novaReserva.situacao === "Ativa") {
+          syncReservaComDistribuicao(novaReserva, novaReserva.quantidade);
+        }
+        return atualizadas;
+      }
+
+      if (novaReserva.situacao === "Ativa") {
+        syncReservaComDistribuicao(novaReserva, novaReserva.quantidade);
+      }
+      return [...current, novaReserva];
+    });
+
+    setEditingReservaId(null);
+    resetReserva({
+      tipoReserva: "Processo Seletivo",
+      orgaoSetor: "",
+      quantidade: undefined,
+      motivo: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "Ativa",
+      observacao: "",
+    });
+  };
+
+  const handleEditarReserva = (reserva: ControleVagasReservaRow) => {
+    setEditingReservaId(reserva.id);
+    setReservaValue("tipoReserva", reserva.tipoReserva);
+    setReservaValue("orgaoSetor", reserva.orgaoSetor);
+    setReservaValue("quantidade", reserva.quantidade);
+    setReservaValue("motivo", reserva.motivo);
+    setReservaValue("dataInicio", reserva.dataInicio);
+    setReservaValue("dataFim", reserva.dataFim ?? "");
+    setReservaValue("situacao", reserva.situacao);
+    setReservaValue("observacao", reserva.observacao);
+  };
+
+  const handleAlterarSituacaoReserva = (
+    reservaId: number,
+    situacao: ControleVagasReservaStatus,
+  ) => {
+    setReservas((current) =>
+      current.map((reserva) => {
+        if (reserva.id !== reservaId) return reserva;
+        if (reserva.situacao === "Ativa" && situacao !== "Ativa") {
+          syncReservaComDistribuicao(reserva, -reserva.quantidade);
+        }
+        return {
+          ...reserva,
+          situacao,
+        };
+      }),
+    );
+  };
+
+  const renderReservaStatusBadge = (status: ControleVagasReservaStatus) => {
+    const badgeClass = {
+      Ativa: "prototype-badge prototype-badge--success",
+      Cancelada: "prototype-badge prototype-badge--warning",
+      Encerrada: "prototype-badge prototype-badge--danger",
+    }[status];
+
+    return <span className={badgeClass}>{status}</span>;
+  };
+
+  const renderVagaNumeradaStatusBadge = (status: ControleVagasVagaNumeradaSituacao) => {
+    const badgeClass = {
+      Disponível: "prototype-badge prototype-badge--success",
+      Ocupada: "prototype-badge prototype-badge--info",
+      Reservada: "prototype-badge prototype-badge--warning",
+      Bloqueada: "prototype-badge prototype-badge--danger",
+      Agendada: "prototype-badge prototype-badge--secondary",
+      Extinta: "prototype-badge prototype-badge--light",
+    }[status];
+
+    return <span className={badgeClass}>{status}</span>;
   };
 
   return (
@@ -4131,7 +5377,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                       name="orgaoSetor"
                       control={distribuicaoControl}
                       label="Órgão/Setor"
-                      cols="12 12 5"
+                      cols="12 12 4"
                       options={controleVagasDistribuicaoOrgaoSetorOptions}
                       optionLabel="label"
                       optionValue="value"
@@ -4152,7 +5398,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                       placeholder="Descrição curta"
                       getFormErrorMessage={() => null}
                     />
-                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-1">
+                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-2">
                       <BotaoSeplag
                         type="button"
                         label="Adicionar"
@@ -4179,11 +5425,13 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                     <tbody>
                       {distribuicoes.length > 0 ? (
                         distribuicoes.map((distribuicao) => {
-                          const disponivel = Math.max(
-                            distribuicao.quantidadeDistribuida -
-                              distribuicao.vagasOcupadas -
-                              distribuicao.vagasReservadas,
-                            0,
+                          const reservado = getControleVagasReservadoDistribuicao(
+                            distribuicao,
+                            reservas,
+                          );
+                          const disponivel = getControleVagasDisponivelDistribuicao(
+                            distribuicao,
+                            reservas,
                           );
 
                           return (
@@ -4194,7 +5442,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                               </td>
                               <td>{distribuicao.quantidadeDistribuida}</td>
                               <td>{distribuicao.vagasOcupadas}</td>
-                              <td>{distribuicao.vagasReservadas}</td>
+                              <td>{reservado}</td>
                               <td>{disponivel}</td>
                               <td>{renderGrupoCalculoStatusBadge(distribuicao.situacao)}</td>
                               <td>
@@ -4231,12 +5479,188 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
             )}
 
             {activeTab === "reservas" && (
-              <div className="prototype-controle-vagas-placeholder">
-                <h3>Reservas</h3>
-                <p>
-                  Área preparada para controlar reservas de vagas antes da
-                  ocupação definitiva por vínculo funcional.
-                </p>
+              <div className="prototype-controle-vagas-reservas">
+                <div className="prototype-controle-vagas-section-title prototype-controle-vagas-section-title--split">
+                  <div>
+                    <h3>Reservas</h3>
+                    <p>
+                      Controle as reservas que impactam o saldo antes da ocupação definitiva.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+                  <div>
+                    <span>Reservas Ativas</span>
+                    <strong>{totalReservasAtivas}</strong>
+                  </div>
+                  <div>
+                    <span>Reservas Canceladas</span>
+                    <strong>{totalReservasCanceladas}</strong>
+                  </div>
+                  <div>
+                    <span>Reservas Encerradas</span>
+                    <strong>{totalReservasEncerradas}</strong>
+                  </div>
+                  <div>
+                    <span>Disponível após reservas</span>
+                    <strong>{disponivelAposReservas}</strong>
+                  </div>
+                </div>
+
+                <div className="prototype-controle-vagas-reserva-form">
+                  <div className="prototype-controle-vagas-section-title">
+                    <h3>{editingReservaId ? "Editar Reserva" : "Nova Reserva"}</h3>
+                  </div>
+                  <div className="grid prototype-controle-vagas-form-section">
+                    <DropdownFieldSeplag
+                      name="tipoReserva"
+                      control={reservaControl}
+                      label="Tipo de Reserva"
+                      cols="12 12 4"
+                      options={controleVagasReservaTipoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <DropdownFieldSeplag
+                      name="orgaoSetor"
+                      control={reservaControl}
+                      label="Órgão/Setor"
+                      cols="12 12 4"
+                      options={controleVagasDistribuicaoOrgaoSetorOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <NumberFieldSeplag
+                      name="quantidade"
+                      control={reservaControl}
+                      label="Quantidade"
+                      cols="12 12 2"
+                      required
+                      getFormErrorMessage={() => null}
+                    />
+                    <DropdownFieldSeplag
+                      name="situacao"
+                      control={reservaControl}
+                      label="Situação"
+                      cols="12 12 2"
+                      options={controleVagasReservaSituacaoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextFieldSeplag
+                      name="motivo"
+                      control={reservaControl}
+                      label="Motivo"
+                      cols="12 12 4"
+                      placeholder="Motivo da reserva"
+                      getFormErrorMessage={() => null}
+                    />
+                    <DateFieldSeplag
+                      name="dataInicio"
+                      control={reservaControl}
+                      label="Data Início"
+                      cols="12 12 2"
+                      getFormErrorMessage={() => null}
+                    />
+                    <DateFieldSeplag
+                      name="dataFim"
+                      control={reservaControl}
+                      label="Data Fim"
+                      cols="12 12 2"
+                      getFormErrorMessage={() => null}
+                    />
+                    <TextAreaFieldSeplag
+                      name="observacao"
+                      control={reservaControl}
+                      label="Observação"
+                      cols="12 12 4"
+                      rows={3}
+                      getFormErrorMessage={() => null}
+                    />
+                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-2">
+                      <BotaoSeplag
+                        type="button"
+                        label={editingReservaId ? "Salvar Reserva" : "Adicionar Reserva"}
+                        icon={editingReservaId ? "pi pi-save" : "pi pi-plus"}
+                        onClick={handleAdicionarReserva}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table prototype-controle-vagas-reservas-table">
+                    <thead>
+                      <tr>
+                        <th>Tipo de Reserva</th>
+                        <th>Órgão/Setor</th>
+                        <th>Quantidade</th>
+                        <th>Período</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reservas.length > 0 ? (
+                        reservas.map((reserva) => (
+                          <tr key={reserva.id}>
+                            <td>
+                              <strong>{reserva.tipoReserva}</strong>
+                              <small>{reserva.motivo}</small>
+                            </td>
+                            <td>{reserva.orgaoSetor}</td>
+                            <td>{reserva.quantidade}</td>
+                            <td>
+                              {reserva.dataInicio}
+                              {reserva.dataFim ? ` → ${reserva.dataFim}` : ""}
+                            </td>
+                            <td>{renderReservaStatusBadge(reserva.situacao)}</td>
+                            <td>
+                              <div className="prototype-controle-vagas-row-actions">
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-pencil"
+                                  title="Editar reserva"
+                                  onClick={() => handleEditarReserva(reserva)}
+                                />
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-times"
+                                  severity="warning"
+                                  title="Cancelar reserva"
+                                  onClick={() =>
+                                    handleAlterarSituacaoReserva(reserva.id, "Cancelada")
+                                  }
+                                />
+                                <BotaoIconSeplag
+                                  type="button"
+                                  icon="pi pi-check"
+                                  severity="success"
+                                  title="Encerrar reserva"
+                                  onClick={() =>
+                                    handleAlterarSituacaoReserva(reserva.id, "Encerrada")
+                                  }
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="prototype-empty-table-cell">
+                            Nenhuma reserva cadastrada.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -4284,6 +5708,345 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                 }
               />
               <BotaoSalvarSeplag type="button" label="Salvar" />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasConsultaSaldoPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("por-quadro");
+  const [dataReferencia, setDataReferencia] = useState<string>("29/05/2026");
+  const { control, watch, reset } = useForm<ControleVagasConsultaSaldoFiltroForm>({
+    defaultValues: {
+      dataReferencia: "29/05/2026",
+      cargoFuncao: "",
+      orgaoSetor: "",
+      tipo: "",
+      situacao: "",
+    },
+  });
+  const filtros = watch();
+  const dataReferenciaSelecionada = filtros.dataReferencia ?? dataReferencia;
+
+  const quadrosComResumo: ControleVagasConsultaSaldoResumo[] =
+    controleVagasQuadroAutorizadoMock
+      .map((quadro) => getControleVagasResumoQuadro(quadro))
+      .filter((quadro) => {
+        const cargoOk = !filtros.cargoFuncao || quadro.cargoFuncao === filtros.cargoFuncao;
+        const orgaoOk = !filtros.orgaoSetor || quadro.orgaoSetor === filtros.orgaoSetor;
+        const tipoOk = !filtros.tipo || quadro.tipo === filtros.tipo;
+        const situacaoOk = !filtros.situacao || quadro.situacao === filtros.situacao;
+
+        return cargoOk && orgaoOk && tipoOk && situacaoOk;
+      });
+
+  const totalAutorizado = quadrosComResumo.reduce((sum, q) => sum + q.autorizado, 0);
+  const totalDistribuido = quadrosComResumo.reduce((sum, q) => sum + q.distribuido, 0);
+  const totalNaoDistribuido = quadrosComResumo.reduce((sum, q) => sum + q.naoDistribuido, 0);
+  const totalOcupado = quadrosComResumo.reduce((sum, q) => sum + q.ocupado, 0);
+  const totalReservado = quadrosComResumo.reduce((sum, q) => sum + q.reservado, 0);
+  const totalDisponivel = quadrosComResumo.reduce((sum, q) => sum + q.disponivel, 0);
+  const distribuicoesFiltradasConsulta = controleVagasDistribuicoesMock.filter(
+    (dist) =>
+      quadrosComResumo.some((quadro) => quadro.quadroId === dist.quadroId),
+  );
+
+  const handleLimparFiltros = () => {
+    reset({
+      dataReferencia: "29/05/2026",
+      cargoFuncao: "",
+      orgaoSetor: "",
+      tipo: "",
+      situacao: "",
+    });
+    setDataReferencia("29/05/2026");
+  };
+
+  const renderSaldoAba = (tipo: "ocupadas" | "reservadas" | "disponiveis") => {
+    const dados = quadrosComResumo.filter((q) => {
+      if (tipo === "ocupadas") return q.ocupado > 0;
+      if (tipo === "reservadas") return q.reservado > 0;
+      if (tipo === "disponiveis") return q.disponivel > 0;
+      return true;
+    });
+
+    return (
+      <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
+        <table className="prototype-simple-table">
+          <thead>
+            <tr>
+              <th>Cargo/Função</th>
+              <th>Órgão/Setor</th>
+              {tipo === "ocupadas" && <th>Ocupadas</th>}
+              {tipo === "reservadas" && <th>Reservadas</th>}
+              {tipo === "disponiveis" && <th>Disponíveis</th>}
+              <th>Autorizado</th>
+              <th>Distribuído</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dados.length > 0 ? (
+              dados.map((quadro) => (
+                <tr key={quadro.quadroId}>
+                  <td>{quadro.cargoFuncao}</td>
+                  <td>{quadro.orgaoSetor}</td>
+                  <td>
+                    <strong>
+                      {tipo === "ocupadas"
+                        ? quadro.ocupado
+                        : tipo === "reservadas"
+                          ? quadro.reservado
+                          : quadro.disponivel}
+                    </strong>
+                  </td>
+                  <td>{quadro.autorizado}</td>
+                  <td>{quadro.distribuido}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="prototype-empty-table-cell">
+                  Nenhum dado disponível para esta visualização.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Consulta de Saldo de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-consulta-saldo">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Filtros de Consulta</h3>
+              <p>
+                Saldos calculados para {dataReferenciaSelecionada}, considerando
+                distribuições, reservas ativas e vagas ocupadas.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
+              <DateFieldSeplag
+                name="dataReferencia"
+                control={control}
+                label="Data de Referência"
+                cols="12 6 2"
+                required
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="cargoFuncao"
+                control={control}
+                label="Cargo/Função"
+                cols="12 6 3"
+                options={controleVagasCargoFuncaoOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="orgaoSetor"
+                control={control}
+                label="Órgão/Setor"
+                cols="12 6 3"
+                options={controleVagasOrgaoSetorOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="tipo"
+                control={control}
+                label="Tipo"
+                cols="12 6 2"
+                options={[
+                  { label: "Todos", value: "" },
+                  { label: "Cargo", value: "Cargo" },
+                  { label: "Função", value: "Função" },
+                ]}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="situacao"
+                control={control}
+                label="Situação"
+                cols="12 6 2"
+                options={controleVagasStatusOperacionalOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => null}
+              />
+              <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+                <BotaoLimparFiltroSeplag
+                  type="button"
+                  label="Limpar Filtros"
+                  icon="pi pi-refresh"
+                  onClick={handleLimparFiltros}
+                />
+              </div>
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--saldo">
+              <div className="is-primary">
+                <span>Autorizado</span>
+                <strong>{totalAutorizado}</strong>
+              </div>
+              <div className="is-info">
+                <span>Distribuído</span>
+                <strong>{totalDistribuido}</strong>
+              </div>
+              <div>
+                <span>Não Distribuído</span>
+                <strong>{totalNaoDistribuido}</strong>
+              </div>
+              <div>
+                <span>Ocupado</span>
+                <strong>{totalOcupado}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Reservado</span>
+                <strong>{totalReservado}</strong>
+              </div>
+              <div className="is-success">
+                <span>Disponível</span>
+                <strong>{totalDisponivel}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-controle-vagas-consulta-abas">
+              <TabsSeplag
+                items={controleVagasConsultaSaldoTabs}
+                activeValue={activeTab}
+                onChange={setActiveTab}
+                equalWidth
+              />
+
+              {activeTab === "por-quadro" && (
+                <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Cargo/Função</th>
+                        <th>Órgão/Setor</th>
+                        <th>Autorizado</th>
+                        <th>Distribuído</th>
+                        <th>Ocupado</th>
+                        <th>Reservado</th>
+                        <th>Disponível</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quadrosComResumo.length > 0 ? (
+                        quadrosComResumo.map((quadro) => (
+                          <tr key={quadro.quadroId}>
+                            <td>{quadro.codigo}</td>
+                            <td>{quadro.cargoFuncao}</td>
+                            <td>{quadro.orgaoSetor}</td>
+                            <td>{quadro.autorizado}</td>
+                            <td>{quadro.distribuido}</td>
+                            <td>{quadro.ocupado}</td>
+                            <td>{quadro.reservado}</td>
+                            <td>
+                              <strong>{quadro.disponivel}</strong>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={8} className="prototype-empty-table-cell">
+                            Nenhum quadro autorizado disponível.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === "por-distribuicao" && (
+                <div className="prototype-table-wrapper prototype-controle-vagas-consulta-table">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Órgão/Setor</th>
+                        <th>Cargo/Função</th>
+                        <th>Distribuído</th>
+                        <th>Ocupado</th>
+                        <th>Reservado</th>
+                        <th>Disponível</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {distribuicoesFiltradasConsulta.length > 0 ? (
+                        distribuicoesFiltradasConsulta.map((dist) => {
+                          const quadro = controleVagasQuadroAutorizadoMock.find(
+                            (q) => q.id === dist.quadroId,
+                          );
+                          const reservado = getControleVagasReservadoDistribuicao(
+                            dist,
+                          );
+                          const disponivel = getControleVagasDisponivelDistribuicao(
+                            dist,
+                          );
+
+                          return (
+                            <tr key={dist.id}>
+                              <td>{dist.orgaoSetor}</td>
+                              <td>{quadro?.cargoFuncao}</td>
+                              <td>{dist.quantidadeDistribuida}</td>
+                              <td>{dist.vagasOcupadas}</td>
+                              <td>{reservado}</td>
+                              <td>
+                                <strong>{disponivel}</strong>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="prototype-empty-table-cell">
+                            Nenhuma distribuição disponível.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === "reservadas" && renderSaldoAba("reservadas")}
+
+              {activeTab === "ocupadas" && renderSaldoAba("ocupadas")}
+
+              {activeTab === "disponiveis" && renderSaldoAba("disponiveis")}
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+              />
             </div>
           </div>
         </CardSeplag>
@@ -7778,15 +9541,1819 @@ export function PrototiposFolhaPage() {
   );
 }
 
-export function PrototiposFolhaPagamentoFormPage() {
+export function PrototiposFolhaTabelasReferenciaPage() {
   const navigate = useNavigate();
+  const { control, reset, watch } = useForm<FolhaTabelaReferenciaFiltroForm>({
+    defaultValues: {
+      tabela: "",
+    },
+  });
+  const [linhasExpandidas, setLinhasExpandidas] = useState<number[]>([]);
+  const [filtrosVigencia, setFiltrosVigencia] = useState<
+    Record<number, { ano: string; status: "" | FolhaTabelaReferenciaVigenciaRow["situacao"] }>
+  >({});
+  const [feedback, setFeedback] = useState("");
+  const filtros = watch();
+  const termoTabela = filtros.tabela?.trim().toLowerCase() ?? "";
+
+  const tabelasFiltradas = folhaTabelasReferenciaMock.filter((tabela) => {
+    const descricao = `${tabela.sigla} ${tabela.nome}`.toLowerCase();
+    return !termoTabela || descricao.includes(termoTabela);
+  });
+
+  const toggleTabela = (id: number) => {
+    setLinhasExpandidas((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const renderSituacaoTabelaReferencia = (
+    situacao: FolhaTabelaReferenciaVigenciaRow["situacao"],
+  ) => {
+    const badgeClass =
+      situacao === "Ativo"
+        ? "prototype-badge prototype-badge--success"
+        : "prototype-badge prototype-badge--danger";
+
+    return <span className={badgeClass}>{situacao}</span>;
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-referencia-page">
+        {feedback ? (
+          <div className="prototype-validation-panel">{feedback}</div>
+        ) : null}
+
+        <CardSeplag
+          title="Tabelas de Referência"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="col-12 prototype-folha-referencia-filters">
+            <TextFieldSeplag
+              name="tabela"
+              control={control}
+              label="Tabela"
+              placeholder="Digite para buscar"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() => reset({ tabela: "" })}
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-referencia-list">
+            <div className="prototype-folha-referencia-list-head" />
+            {tabelasFiltradas.length ? (
+              tabelasFiltradas.map((tabela) => {
+                const isExpanded = linhasExpandidas.includes(tabela.id);
+                const filtroVigencia = filtrosVigencia[tabela.id] ?? {
+                  ano: "",
+                  status: "",
+                };
+                const vigenciasFiltradas = tabela.vigencias.filter((vigencia) => {
+                  const atendeAno =
+                    !filtroVigencia.ano.trim() ||
+                    vigencia.ano
+                      .toLowerCase()
+                      .includes(filtroVigencia.ano.trim().toLowerCase());
+                  const atendeStatus =
+                    !filtroVigencia.status ||
+                    vigencia.situacao === filtroVigencia.status;
+
+                  return atendeAno && atendeStatus;
+                });
+                const titulo = tabela.nome
+                  ? `${tabela.sigla}- ${tabela.nome}`
+                  : tabela.sigla;
+
+                return (
+                  <div className="prototype-folha-referencia-row" key={tabela.id}>
+                    <div className="prototype-folha-referencia-row-main">
+                      <strong>{titulo}</strong>
+                      <div className="prototype-folha-referencia-row-actions">
+                        <BotaoSeplag
+                          type="button"
+                          label="Nova Vigência"
+                          icon="pi pi-plus"
+                          onClick={() =>
+                            navigate(getFolhaTabelaReferenciaNovaVigenciaPath(tabela.id))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="prototype-folha-referencia-expand"
+                          aria-label={
+                            isExpanded ? "Recolher vigências" : "Expandir vigências"
+                          }
+                          onClick={() => toggleTabela(tabela.id)}
+                        >
+                          <i
+                            className={`pi ${
+                              isExpanded ? "pi-chevron-up" : "pi-chevron-down"
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded ? (
+                      <div className="prototype-folha-referencia-vigencias">
+                        <div className="prototype-folha-referencia-vigencia-filters">
+                          <label>
+                            <span>Ano</span>
+                            <input
+                              type="text"
+                              placeholder="Digite para buscar"
+                              value={filtroVigencia.ano}
+                              onChange={(event) =>
+                                setFiltrosVigencia((current) => ({
+                                  ...current,
+                                  [tabela.id]: {
+                                    ...filtroVigencia,
+                                    ano: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Status</span>
+                            <select
+                              value={filtroVigencia.status}
+                              onChange={(event) =>
+                                setFiltrosVigencia((current) => ({
+                                  ...current,
+                                  [tabela.id]: {
+                                    ...filtroVigencia,
+                                    status: event.target
+                                      .value as typeof filtroVigencia.status,
+                                  },
+                                }))
+                              }
+                            >
+                              <option value="">Selecione...</option>
+                              <option value="Ativo">Ativo</option>
+                              <option value="Inativo">Inativo</option>
+                            </select>
+                          </label>
+                          <BotaoLimparFiltroSeplag
+                            type="button"
+                            label="Limpar Filtro"
+                            icon="pi pi-refresh"
+                            onClick={() =>
+                              setFiltrosVigencia((current) => ({
+                                ...current,
+                                [tabela.id]: { ano: "", status: "" },
+                              }))
+                            }
+                          />
+                        </div>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Ano</th>
+                              <th>Vigência</th>
+                              <th>Situação</th>
+                              <th>Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vigenciasFiltradas.map((vigencia) => (
+                              <tr key={vigencia.id}>
+                                <td>{vigencia.ano}</td>
+                                <td>{vigencia.vigencia}</td>
+                                <td>{renderSituacaoTabelaReferencia(vigencia.situacao)}</td>
+                                <td>
+                                  <div className="prototype-folha-referencia-actions">
+                                    <BotaoIconSeplag
+                                      type="button"
+                                      tooltip="Visualizar vigência"
+                                      icon="pi pi-eye"
+                                      onClick={() =>
+                                        setFeedback(
+                                          `Visualização da vigência ${vigencia.ano} selecionada.`,
+                                        )
+                                      }
+                                    />
+                                    <BotaoIconSeplag
+                                      severity="warning"
+                                      type="button"
+                                      tooltip="Editar vigência"
+                                      icon="pi pi-pencil"
+                                      onClick={() =>
+                                        navigate(
+                                          getFolhaTabelaReferenciaEditarVigenciaPath(
+                                            tabela.id,
+                                            vigencia.id,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {!vigenciasFiltradas.length ? (
+                              <tr>
+                                <td colSpan={4} className="prototype-empty-table-cell">
+                                  Nenhuma vigência encontrada.
+                                </td>
+                              </tr>
+                            ) : null}
+                          </tbody>
+                        </table>
+                        <div className="prototype-folha-referencia-pagination prototype-folha-referencia-pagination--inner">
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-double-left" aria-hidden="true" />
+                          </button>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-left" aria-hidden="true" />
+                          </button>
+                          <span>1</span>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-right" aria-hidden="true" />
+                          </button>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-double-right" aria-hidden="true" />
+                          </button>
+                          <select
+                            aria-label="Registros por página da vigência"
+                            value="10"
+                            onChange={() => {}}
+                          >
+                            <option value="10">10</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="prototype-folha-referencia-empty">
+                Nenhuma tabela encontrada.
+              </div>
+            )}
+            <div className="prototype-folha-referencia-pagination">
+              <button type="button" disabled>
+                <i className="pi pi-angle-double-left" aria-hidden="true" />
+              </button>
+              <button type="button" disabled>
+                <i className="pi pi-angle-left" aria-hidden="true" />
+              </button>
+              <span>1</span>
+              <button type="button" disabled>
+                <i className="pi pi-angle-right" aria-hidden="true" />
+              </button>
+              <button type="button" disabled>
+                <i className="pi pi-angle-double-right" aria-hidden="true" />
+              </button>
+              <select aria-label="Registros por página" value="10" onChange={() => {}}>
+                <option value="10">10</option>
+              </select>
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
+  const navigate = useNavigate();
+  const { tabelaId, vigenciaId } = useParams();
+  const tabela =
+    folhaTabelasReferenciaMock.find((item) => String(item.id) === tabelaId) ??
+    folhaTabelasReferenciaMock[0];
+  const isEditing = Boolean(vigenciaId);
+  const [activeTab, setActiveTab] = useState("dados-gerais");
+  const [dadosGeraisSalvos, setDadosGeraisSalvos] = useState(isEditing);
+  const [feedback, setFeedback] = useState("");
+  const [faixasVigencia, setFaixasVigencia] =
+    useState<FolhaTabelaReferenciaFaixaRow[]>(() =>
+      isEditing ? folhaTabelaReferenciaFaixasMock : [],
+    );
+  const [novaFaixaForm, setNovaFaixaForm] =
+    useState<FolhaTabelaReferenciaNovaFaixaForm>({
+      faixaFinal: "R$ 0,00",
+      percentual: "",
+    });
+  const [modalNovaFaixaAberto, setModalNovaFaixaAberto] = useState(false);
+  const { control, handleSubmit } = useForm<FolhaTabelaReferenciaVigenciaForm>({
+    defaultValues: {
+      descricao: isEditing ? "testeddd" : "",
+      anoBase: isEditing ? "2026" : "",
+      tetoPrevidenciario: isEditing ? "R$ 8.475,55" : "",
+      inicioVigencia: isEditing ? "02/06/2026" : "",
+      fimVigencia: "",
+      observacoes: "",
+    },
+  });
+  const tabsVigencia = folhaTabelaReferenciaVigenciaTabs.map((tab) =>
+    tab.value === "faixa-contribuicao"
+      ? { ...tab, disabled: !dadosGeraisSalvos }
+      : tab,
+  );
+  const tituloTabela = `TABELA - ${tabela.sigla}${
+    tabela.nome ? ` - ${tabela.nome}` : ""
+  }`;
+  const proximaOrdemFaixa = faixasVigencia.length + 1;
+  const proximaFaixaInicial = getProximaFaixaInicialReferencia(faixasVigencia);
+  const descontoMaximo = faixasVigencia.reduce(
+    (total, faixa) => total + parseMoedaReferencia(faixa.contribuicaoFaixa),
+    0,
+  );
+
+  const abrirModalNovaFaixa = () => {
+    setNovaFaixaForm({ faixaFinal: "R$ 0,00", percentual: "" });
+    setModalNovaFaixaAberto(true);
+  };
+
+  const salvarVigencia = () => {
+    if (activeTab === "dados-gerais" && !dadosGeraisSalvos) {
+      setDadosGeraisSalvos(true);
+      setActiveTab("faixa-contribuicao");
+      setFeedback(
+        "Dados gerais salvos com sucesso. A aba Faixa de Contribuição foi habilitada.",
+      );
+      return;
+    }
+
+    setFeedback("Registro salvo com sucesso!");
+  };
+
+  const salvarNovaFaixa = () => {
+    const faixaFinal = novaFaixaForm.faixaFinal.trim() || "R$ 0,00";
+    const percentual = novaFaixaForm.percentual.trim();
+
+    if (!percentual || parseMoedaReferencia(faixaFinal) <= 0) {
+      setFeedback("Informe Faixa Final e Percentual (%) para adicionar a faixa.");
+      return;
+    }
+
+    setFaixasVigencia((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        ordem: current.length + 1,
+        faixaInicial: getProximaFaixaInicialReferencia(current),
+        faixaFinal,
+        percentual,
+        contribuicaoFaixa: calcularContribuicaoFaixaReferencia(
+          getProximaFaixaInicialReferencia(current),
+          faixaFinal,
+          percentual,
+        ),
+      },
+    ]);
+    setModalNovaFaixaAberto(false);
+    setFeedback("Faixa adicionada com sucesso!");
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={handleSubmit(salvarVigencia)}>
+        <div className="prototype-page-content prototype-page-content--white prototype-folha-referencia-form-page">
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <CardSeplag
+            title={tituloTabela}
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="col-12 prototype-folha-referencia-vigencia-form">
+              <TabsSeplag
+                items={tabsVigencia}
+                activeValue={activeTab}
+                onChange={setActiveTab}
+              />
+
+              <div className="prototype-folha-referencia-vigencia-panel">
+                {activeTab === "dados-gerais" ? (
+                  <>
+                    <div className="prototype-folha-referencia-vigencia-panel-title">
+                      <h3>Dados Gerais</h3>
+                    </div>
+                    <div className="grid prototype-folha-referencia-vigencia-fields">
+                      <TextFieldSeplag
+                        name="descricao"
+                        control={control}
+                        label="Descrição"
+                        required
+                        cols="12 12 8"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="anoBase"
+                        control={control}
+                        label="Ano Base"
+                        required
+                        cols="12 12 4"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="tetoPrevidenciario"
+                        control={control}
+                        label="Teto Previdenciário"
+                        required
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="inicioVigencia"
+                        control={control}
+                        label="Início da Vigência"
+                        required
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="fimVigencia"
+                        control={control}
+                        label="Fim da Vigência"
+                        placeholder="dd/mm/aaaa"
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextAreaFieldSeplag
+                        name="observacoes"
+                        control={control}
+                        label="Observações"
+                        placeholder="Observações..."
+                        cols="12"
+                        rows={4}
+                        maxLength={500}
+                        getFormErrorMessage={() => null}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="prototype-folha-referencia-vigencia-panel-title">
+                      <h3>Faixa de Contribuição</h3>
+                    </div>
+                    <div className="prototype-folha-referencia-calculo-summary">
+                      <div>
+                        <span>Teto Previdenciário</span>
+                        <strong>R$ 8.475,55</strong>
+                      </div>
+                      <div>
+                        <span>Total de Faixas</span>
+                        <strong>{faixasVigencia.length}</strong>
+                      </div>
+                      <div>
+                        <span>Desconto Máximo CLT</span>
+                        <strong>{formatMoedaReferencia(descontoMaximo)}</strong>
+                      </div>
+                    </div>
+                    <div className="prototype-folha-referencia-faixa-toolbar">
+                      <BotaoSeplag
+                        type="button"
+                        label="Adicionar Faixa"
+                        icon="pi pi-plus"
+                        onClick={abrirModalNovaFaixa}
+                      />
+                    </div>
+                    <div className="prototype-folha-referencia-faixa-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Ordem</th>
+                            <th>Faixa Inicial</th>
+                            <th>Faixa Final</th>
+                            <th>Percentual (%)</th>
+                            <th>Contribuição da Faixa</th>
+                            <th>Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {faixasVigencia.map((faixa) => (
+                            <tr key={faixa.id}>
+                              <td>{faixa.ordem}</td>
+                              <td>{faixa.faixaInicial}</td>
+                              <td>{faixa.faixaFinal}</td>
+                              <td>{faixa.percentual}</td>
+                              <td>{faixa.contribuicaoFaixa}</td>
+                              <td>
+                                <div className="prototype-folha-referencia-faixa-actions">
+                                  <button
+                                    type="button"
+                                    aria-label="Visualizar faixa"
+                                    onClick={() =>
+                                      setFeedback(`Faixa ${faixa.ordem} selecionada.`)
+                                    }
+                                  >
+                                    <i className="pi pi-eye" aria-hidden="true" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Abrir ações da faixa"
+                                    onClick={() =>
+                                      setFeedback(
+                                        `Ações da faixa ${faixa.ordem} abertas.`,
+                                      )
+                                    }
+                                  >
+                                    <i className="pi pi-chevron-down" aria-hidden="true" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {!faixasVigencia.length ? (
+                            <tr>
+                              <td colSpan={6} className="prototype-empty-table-cell">
+                                Nenhuma faixa cadastrada.
+                              </td>
+                            </tr>
+                          ) : null}
+                        </tbody>
+                      </table>
+                      <div className="prototype-folha-referencia-pagination prototype-folha-referencia-pagination--inner">
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-double-left" aria-hidden="true" />
+                        </button>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-left" aria-hidden="true" />
+                        </button>
+                        <span>1</span>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-right" aria-hidden="true" />
+                        </button>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-double-right" aria-hidden="true" />
+                        </button>
+                        <select aria-label="Registros por página" value="10" onChange={() => {}}>
+                          <option value="10">10</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="prototype-category-form-footer prototype-folha-referencia-vigencia-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    label="Voltar"
+                    onClick={() => navigate(FOLHA_TABELAS_REFERENCIA_BASE_PATH)}
+                  />
+                  <BotaoSalvarSeplag type="submit" label="Salvar" />
+                </div>
+              </div>
+            </div>
+          </CardSeplag>
+
+          <ModalSeplag
+            visible={modalNovaFaixaAberto}
+            titulo="Nova Faixa"
+            tamanho="calc(100vw - 96px)"
+            fechar={() => setModalNovaFaixaAberto(false)}
+            labelFechar="Cancelar"
+            iconFechar="pi pi-arrow-left"
+            labelAcao="Salvar"
+            iconAcao="pi pi-save"
+            funcAcao={salvarNovaFaixa}
+          >
+            <div className="col-12 prototype-folha-referencia-nova-faixa-modal">
+              <div className="prototype-folha-referencia-nova-faixa-grid">
+                <label>
+                  <span>Ordem</span>
+                  <input type="text" value={proximaOrdemFaixa} readOnly />
+                </label>
+                <label>
+                  <span>Faixa Inicial</span>
+                  <input type="text" value={proximaFaixaInicial} readOnly />
+                </label>
+                <label>
+                  <span>
+                    Faixa Final <strong>*</strong>
+                  </span>
+                  <input
+                    type="text"
+                    value={novaFaixaForm.faixaFinal}
+                    onChange={(event) =>
+                      setNovaFaixaForm((current) => ({
+                        ...current,
+                        faixaFinal: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>
+                    Percentual (%) <strong>*</strong>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Ex.: 14"
+                    value={novaFaixaForm.percentual}
+                    onChange={(event) =>
+                      setNovaFaixaForm((current) => ({
+                        ...current,
+                        percentual: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </ModalSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaGruposFolhaPage() {
+  const navigate = useNavigate();
+  const [grupos] = useState<GrupoFolhaRow[]>(() =>
+    folhaPagamentoService.listarGruposFolha(),
+  );
+  const [grupoSelecionado, setGrupoSelecionado] =
+    useState<GrupoFolhaRow | null>(null);
+  const [modalDetalheAberto, setModalDetalheAberto] = useState(false);
+  const { control, reset, watch } = useForm<GrupoFolhaFiltroForm>({
+    defaultValues: {
+      termo: "",
+      tipoFolha: "",
+      orgaos: [],
+      situacao: "",
+    },
+  });
+  const filtros = watch();
+  const termo = filtros.termo?.trim().toLowerCase() ?? "";
+  const gruposFiltrados = grupos.filter((grupo) => {
+    const atendeTermo =
+      !termo ||
+      grupo.codigo.toLowerCase().includes(termo) ||
+      grupo.nome.toLowerCase().includes(termo);
+    const atendeTipo = !filtros.tipoFolha || grupo.tipoFolha === filtros.tipoFolha;
+    const atendeOrgao =
+      !filtros.orgaos?.length ||
+      filtros.orgaos.some((orgao) => grupo.orgaos.includes(orgao));
+    const atendeSituacao =
+      !filtros.situacao || grupo.situacao === filtros.situacao;
+
+    return atendeTermo && atendeTipo && atendeOrgao && atendeSituacao;
+  });
+  const grupoResults = createResults(gruposFiltrados);
+  const renderGrupoSituacaoBadge = (situacao: GrupoFolhaSituacao) => (
+    <BadgeSeplag {...grupoFolhaSituacaoMeta[situacao]} size="md" />
+  );
+  const grupoColumns: ColumnMetaSeplag<GrupoFolhaRow>[] = [
+    { field: "codigo", header: "Código" },
+    { field: "nome", header: "Nome do grupo" },
+    { header: "Tipo de folha", body: (row) => grupoFolhaTipoLabel[row.tipoFolha] },
+    { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
+    { field: "versaoVigente", header: "Versão vigente" },
+    { field: "vigenciaInicial", header: "Início da vigência" },
+    { header: "Situação", body: (row) => renderGrupoSituacaoBadge(row.situacao) },
+    { field: "ultimaAlteracao", header: "Última alteração" },
+  ];
+  const versoesGrupo = grupoSelecionado
+    ? folhaPagamentoService.listarVersoesGrupoFolha(grupoSelecionado.id)
+    : [];
+  const versoesColumns: ColumnMetaSeplag<GrupoFolhaVersaoRow>[] = [
+    { field: "versao", header: "Versão" },
+    { field: "vigenciaInicial", header: "Vigência inicial" },
+    { field: "vigenciaFinal", header: "Vigência final" },
+    { field: "alteracao", header: "Alteração" },
+    { field: "motivo", header: "Motivo" },
+    { field: "usuarioResponsavel", header: "Usuário" },
+    { field: "dataHora", header: "Data/hora" },
+    { header: "Situação", body: (row) => renderGrupoSituacaoBadge(row.situacao) },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Grupos de Folha"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
+            <TextFieldSeplag
+              name="termo"
+              control={control}
+              label="Pesquisar por código ou nome"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="tipoFolha"
+              control={control}
+              label="Tipo de folha"
+              cols="12 12 2"
+              options={grupoFolhaTipoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="orgaos"
+              control={control}
+              label="Órgãos"
+              cols="12 12 3"
+              options={folhaPagamentoOrgaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} órgãos selecionados"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 12 2"
+              options={grupoFolhaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termo: "",
+                    tipoFolha: "",
+                    orgaos: [],
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-actions">
+            <BotaoSeplag
+              type="button"
+              label="Novo Grupo"
+              icon="pi pi-plus"
+              onClick={() => navigate(`${GRUPOS_FOLHA_BASE_PATH}/novo`)}
+            />
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table">
+            <TablePaginadoSeplag
+              dataKey="id"
+              data={grupoResults}
+              rows={10}
+              rowsPerPage={[10, 20]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={grupoColumns}
+              hasEventoAcao
+              handleView={(grupo) => {
+                setGrupoSelecionado(grupo);
+                setModalDetalheAberto(true);
+              }}
+              handleEdit={(grupo) =>
+                navigate(`${GRUPOS_FOLHA_BASE_PATH}/${grupo.id}/editar`)
+              }
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalDetalheAberto}
+          titulo="Detalhar Grupo de Folha"
+          fechar={() => setModalDetalheAberto(false)}
+          tamanho="1100px"
+          hideFooter
+        >
+          {grupoSelecionado ? (
+            <div className="col-12 prototype-folha-execucoes-modal">
+              <div className="prototype-folha-execucoes-summary">
+                <div>
+                  <span>Código</span>
+                  <strong>{grupoSelecionado.codigo}</strong>
+                  <p>{grupoSelecionado.nome}</p>
+                </div>
+                <div>
+                  <span>Tipo</span>
+                  <strong>{grupoFolhaTipoLabel[grupoSelecionado.tipoFolha]}</strong>
+                  <p>Versão {grupoSelecionado.versaoVigente}</p>
+                </div>
+                <div>
+                  <span>Situação</span>
+                  {renderGrupoSituacaoBadge(grupoSelecionado.situacao)}
+                </div>
+                <div>
+                  <span>Abrangência</span>
+                  <strong>{grupoSelecionado.orgaos.join(", ")}</strong>
+                  <p>{grupoSelecionado.regimeJuridico || "Todos os regimes"}</p>
+                </div>
+              </div>
+
+              <div className="prototype-catalogo-view-content">
+                <p><strong>Descrição:</strong> {grupoSelecionado.descricao || "-"}</p>
+                <p><strong>Categoria:</strong> {grupoSelecionado.categoria || "Todas"}</p>
+                <p><strong>Cargo:</strong> {grupoSelecionado.cargo || "Todos"}</p>
+                <p><strong>Grupo de eleitos padrão:</strong> {grupoSelecionado.grupoEleitosPadrao || "Não informado"}</p>
+                <p><strong>Rubricas associadas:</strong> {grupoSelecionado.rubricasAssociadas.join(", ") || "-"}</p>
+                <p><strong>Ordem de processamento:</strong> {grupoSelecionado.ordemProcessamento || "-"}</p>
+                <p><strong>Relatórios disponíveis:</strong> {grupoSelecionado.relatoriosDisponiveis.join(", ") || "-"}</p>
+              </div>
+
+              <TablePaginadoSeplag
+                dataKey="id"
+                data={createResults(versoesGrupo)}
+                rows={5}
+                rowsPerPage={[5, 10]}
+                paginator
+                lazy={false}
+                selectionMode={null}
+                columns={versoesColumns}
+                handleOnPageChange={() => {}}
+              />
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaGrupoFolhaFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const grupoAtual = isEdit
+    ? folhaPagamentoService.buscarGrupoFolhaPorId(Number(id))
+    : undefined;
   const [formFeedback, setFormFeedback] = useState("");
   const {
     control,
     handleSubmit,
     formState: { errors },
+  } = useForm<GrupoFolhaForm>({
+    defaultValues: {
+      codigo: grupoAtual?.codigo ?? "",
+      nome: grupoAtual?.nome ?? "",
+      descricao: grupoAtual?.descricao ?? "",
+      tipoFolha: grupoAtual?.tipoFolha ?? "NORMAL",
+      orgaos: grupoAtual?.orgaos ?? [],
+      regimeJuridico: grupoAtual?.regimeJuridico ?? "",
+      categoria: grupoAtual?.categoria ?? "",
+      cargo: grupoAtual?.cargo ?? "",
+      grupoEleitosPadrao: grupoAtual?.grupoEleitosPadrao ?? "",
+      situacao: grupoAtual?.situacao ?? "RASCUNHO",
+      vigenciaInicial: grupoAtual?.vigenciaInicial ?? "",
+      vigenciaFinal: grupoAtual?.vigenciaFinal ?? "",
+      totalMesesAdiantarPadrao: grupoAtual?.totalMesesAdiantarPadrao ?? 0,
+      totalMesesRetroagirPadrao: grupoAtual?.totalMesesRetroagirPadrao ?? 0,
+      permiteRetroacao: grupoAtual?.permiteRetroacao ?? "S",
+      herdarConfiguracaoCompetenciaAnterior:
+        grupoAtual?.herdarConfiguracaoCompetenciaAnterior ?? "S",
+      rubricasAssociadas: grupoAtual?.rubricasAssociadas ?? [],
+      ordemProcessamento: grupoAtual?.ordemProcessamento ?? "",
+      relatoriosDisponiveis: grupoAtual?.relatoriosDisponiveis ?? [],
+    },
+  });
+  const getFormErrorMessage = (name: keyof GrupoFolhaForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+  const validarGrupoFolha = (data: GrupoFolhaForm) => {
+    if (!data.codigo?.trim()) return "Código do grupo é obrigatório.";
+    if (!data.nome?.trim()) return "Nome do grupo é obrigatório.";
+    if (!data.tipoFolha) return "Tipo de folha é obrigatório.";
+    if (!data.orgaos?.length) return "Informe ao menos um órgão abrangido.";
+    if (!data.situacao) return "Situação é obrigatória.";
+    if (!data.vigenciaInicial?.trim()) return "Vigência inicial é obrigatória.";
+    if ((data.totalMesesAdiantarPadrao ?? 0) < 0 || (data.totalMesesRetroagirPadrao ?? 0) < 0) {
+      return "Meses a adiantar e retroagir não podem ser negativos.";
+    }
+    return "";
+  };
+  const salvarGrupoFolha = (data: GrupoFolhaForm) => {
+    const mensagem = validarGrupoFolha(data);
+    if (mensagem) {
+      setFormFeedback(mensagem);
+      return;
+    }
+
+    const request: GrupoFolhaForm = {
+      ...data,
+      codigo: data.codigo?.trim(),
+      nome: data.nome?.trim(),
+      descricao: data.descricao?.trim() ?? "",
+      orgaos: data.orgaos ?? [],
+      rubricasAssociadas: data.rubricasAssociadas ?? [],
+      relatoriosDisponiveis: data.relatoriosDisponiveis ?? [],
+      totalMesesAdiantarPadrao: data.totalMesesAdiantarPadrao ?? 0,
+      totalMesesRetroagirPadrao: data.totalMesesRetroagirPadrao ?? 0,
+    };
+
+    if (isEdit && grupoAtual) {
+      folhaPagamentoService.atualizarGrupoFolha(grupoAtual.id, request);
+    } else {
+      folhaPagamentoService.criarGrupoFolha(request);
+    }
+
+    navigate(GRUPOS_FOLHA_BASE_PATH);
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={handleSubmit(salvarGrupoFolha)}>
+        <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+          <CardSeplag
+            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupo de Folha`}
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="col-12 prototype-folha-pagamento-form">
+              {formFeedback ? (
+                <div className="prototype-validation-panel">{formFeedback}</div>
+              ) : null}
+
+              <section className="prototype-folha-form-section">
+                <h3>Dados Gerais</h3>
+                <div className="grid prototype-category-form-fields">
+                  <TextFieldSeplag
+                    name="codigo"
+                    control={control}
+                    label="Código do grupo"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("codigo")}
+                  />
+                  <TextFieldSeplag
+                    name="nome"
+                    control={control}
+                    label="Nome do grupo"
+                    cols="12 12 5"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("nome")}
+                  />
+                  <DropdownFieldSeplag
+                    name="tipoFolha"
+                    control={control}
+                    label="Tipo de folha"
+                    cols="12 12 2"
+                    required
+                    options={grupoFolhaTipoOptions.filter((option) => option.value)}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("tipoFolha")}
+                  />
+                  <DropdownFieldSeplag
+                    name="situacao"
+                    control={control}
+                    label="Situação"
+                    cols="12 12 2"
+                    required
+                    options={grupoFolhaSituacaoOptions.filter((option) => option.value)}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("situacao")}
+                  />
+                  <TextAreaFieldSeplag
+                    name="descricao"
+                    control={control}
+                    label="Descrição"
+                    cols="12"
+                    rows={3}
+                    maxLength={500}
+                    getFormErrorMessage={() => getFormErrorMessage("descricao")}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Abrangência Padrão</h3>
+                <div className="grid prototype-category-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="orgaos"
+                    control={control}
+                    label="Órgãos abrangidos"
+                    cols="12 12 6"
+                    required
+                    options={folhaPagamentoOrgaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} órgãos selecionados"
+                    getFormErrorMessage={() => getFormErrorMessage("orgaos")}
+                  />
+                  <DropdownFieldSeplag
+                    name="regimeJuridico"
+                    control={control}
+                    label="Regime jurídico"
+                    cols="12 12 6"
+                    options={folhaPagamentoRegimeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("regimeJuridico")}
+                  />
+                  <DropdownFieldSeplag
+                    name="categoria"
+                    control={control}
+                    label="Categoria"
+                    cols="12 12 4"
+                    options={folhaPagamentoCategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("categoria")}
+                  />
+                  <DropdownFieldSeplag
+                    name="cargo"
+                    control={control}
+                    label="Cargo"
+                    cols="12 12 4"
+                    options={folhaPagamentoCargoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("cargo")}
+                  />
+                  <DropdownFieldSeplag
+                    name="grupoEleitosPadrao"
+                    control={control}
+                    label="Grupo de eleitos padrão"
+                    cols="12 12 4"
+                    options={folhaPagamentoGrupoEleitosOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("grupoEleitosPadrao")}
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Configurações Padrão</h3>
+                <div className="grid prototype-category-form-fields">
+                  <TextFieldSeplag
+                    name="vigenciaInicial"
+                    control={control}
+                    label="Vigência inicial"
+                    placeholder="DD/MM/AAAA"
+                    cols="12 12 3"
+                    required
+                    getFormErrorMessage={() => getFormErrorMessage("vigenciaInicial")}
+                  />
+                  <TextFieldSeplag
+                    name="vigenciaFinal"
+                    control={control}
+                    label="Vigência final"
+                    placeholder="DD/MM/AAAA"
+                    cols="12 12 3"
+                    getFormErrorMessage={() => getFormErrorMessage("vigenciaFinal")}
+                  />
+                  <NumberFieldSeplag
+                    name="totalMesesAdiantarPadrao"
+                    control={control}
+                    label="Meses a adiantar"
+                    cols="12 12 3"
+                    required
+                    min={0}
+                    getFormErrorMessage={() => getFormErrorMessage("totalMesesAdiantarPadrao")}
+                  />
+                  <NumberFieldSeplag
+                    name="totalMesesRetroagirPadrao"
+                    control={control}
+                    label="Meses a retroagir"
+                    cols="12 12 3"
+                    required
+                    min={0}
+                    getFormErrorMessage={() => getFormErrorMessage("totalMesesRetroagirPadrao")}
+                  />
+                  <DropdownFieldSeplag
+                    name="permiteRetroacao"
+                    control={control}
+                    label="Permite retroação?"
+                    cols="12 12 3"
+                    options={[
+                      { label: "Sim", value: "S" },
+                      { label: "Não", value: "N" },
+                    ]}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() => getFormErrorMessage("permiteRetroacao")}
+                  />
+                  <DropdownFieldSeplag
+                    name="herdarConfiguracaoCompetenciaAnterior"
+                    control={control}
+                    label="Herdar competência anterior?"
+                    cols="12 12 3"
+                    options={[
+                      { label: "Sim", value: "S" },
+                      { label: "Não", value: "N" },
+                    ]}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("herdarConfiguracaoCompetenciaAnterior")
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="prototype-folha-form-section">
+                <h3>Rubricas e Relatórios</h3>
+                <div className="grid prototype-category-form-fields">
+                  <MultiSelectFieldSeplag
+                    name="rubricasAssociadas"
+                    control={control}
+                    label="Rubricas associadas"
+                    cols="12 12 6"
+                    options={grupoFolhaRubricaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} rubricas selecionadas"
+                    getFormErrorMessage={() => getFormErrorMessage("rubricasAssociadas")}
+                  />
+                  <MultiSelectFieldSeplag
+                    name="relatoriosDisponiveis"
+                    control={control}
+                    label="Relatórios disponíveis"
+                    cols="12 12 6"
+                    options={grupoFolhaRelatorioOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} relatórios selecionados"
+                    getFormErrorMessage={() => getFormErrorMessage("relatoriosDisponiveis")}
+                  />
+                  <TextAreaFieldSeplag
+                    name="ordemProcessamento"
+                    control={control}
+                    label="Ordem de processamento"
+                    cols="12"
+                    rows={3}
+                    maxLength={500}
+                    getFormErrorMessage={() => getFormErrorMessage("ordemProcessamento")}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-category-form-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  onClick={() => navigate(GRUPOS_FOLHA_BASE_PATH)}
+                />
+                <BotaoSalvarSeplag type="submit" />
+              </div>
+            </div>
+          </CardSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaCompetenciasPage() {
+  const navigate = useNavigate();
+  const [competencias, setCompetencias] = useState<FolhaCompetenciaRow[]>(() =>
+    folhaPagamentoService.listarCompetencias(),
+  );
+  const [modalCadastroAberto, setModalCadastroAberto] = useState(false);
+  const [competenciaParaFechar, setCompetenciaParaFechar] =
+    useState<FolhaCompetenciaRow | null>(null);
+  const [dataFimCompetenciaAtual, setDataFimCompetenciaAtual] =
+    useState("");
+  const [dataInicioProximaCompetencia, setDataInicioProximaCompetencia] =
+    useState("");
+  const [feedback, setFeedback] = useState("");
+  const [formFeedback, setFormFeedback] = useState("");
+  const { control, reset, watch } = useForm<FolhaCompetenciaFiltroForm>({
+    defaultValues: {
+      competencia: "",
+      situacao: "",
+    },
+  });
+  const {
+    control: formControl,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<FolhaCompetenciaForm>({
+    defaultValues: {
+      codigo: "",
+      nome: "",
+      competencia: "",
+      mesAnoReferencia: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "ATIVA",
+      observacao: "",
+    },
+  });
+
+  const normalizeMesAno = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
+    return cleanValue;
+  };
+
+  const formatMesAno = (value: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
+  };
+
+  const isMesAnoValido = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const match =
+      cleanValue.match(/^(\d{4})-(\d{2})$/) ??
+      cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+
+    const mes = cleanValue.includes("-") ? Number(match[2]) : Number(match[1]);
+    return mes >= 1 && mes <= 12;
+  };
+
+  const parseDataBr = (value?: string) => {
+    const match = value?.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return null;
+
+    const day = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const year = Number(match[3]);
+    const date = new Date(year, month, day);
+
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  };
+
+  const formatDataBr = (date: Date) =>
+    date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+  const getProximaCompetencia = (competencia: FolhaCompetenciaRow) => {
+    const [ano, mes] = competencia.competencia.split("-").map(Number);
+    const proximoMes = new Date(ano, mes, 1);
+    const dataFimAtual = parseDataBr(competencia.dataFim);
+    const dataInicio = dataFimAtual
+      ? new Date(dataFimAtual)
+      : new Date(proximoMes.getFullYear(), proximoMes.getMonth(), 1);
+    if (dataFimAtual) {
+      dataInicio.setDate(dataInicio.getDate() + 1);
+    }
+    return {
+      competencia: `${proximoMes.getFullYear()}-${String(proximoMes.getMonth() + 1).padStart(2, "0")}`,
+      dataInicio: formatDataBr(dataInicio),
+      dataFim: "",
+    };
+  };
+
+  const getProximaCompetenciaPorDataFim = (
+    competencia: FolhaCompetenciaRow,
+  ) => {
+    const fallback = getProximaCompetencia(competencia);
+
+    return {
+      competencia: fallback.competencia,
+      dataInicio: dataInicioProximaCompetencia,
+      dataFim: "",
+    };
+  };
+
+  const getDataSomada = (value: string, dias: number) => {
+    const date = parseDataBr(value);
+    if (!date) return "";
+
+    const novaData = new Date(date);
+    novaData.setDate(novaData.getDate() + dias);
+    return formatDataBr(novaData);
+  };
+
+  const handleDataFimCompetenciaAtualChange = (value: string) => {
+    const masked = maskDataBr(value);
+    setDataFimCompetenciaAtual(masked);
+    setDataInicioProximaCompetencia(
+      masked.length === 10 ? getDataSomada(masked, 1) : "",
+    );
+  };
+
+  const handleDataInicioProximaCompetenciaChange = (value: string) => {
+    const masked = maskDataBr(value);
+    setDataInicioProximaCompetencia(masked);
+    setDataFimCompetenciaAtual(
+      masked.length === 10 ? getDataSomada(masked, -1) : "",
+    );
+  };
+
+  const maskDataBr = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
+  const filtros = watch();
+  const competenciaFiltro = normalizeMesAno(filtros.competencia);
+  const competenciasFiltradas = competencias.filter((competencia) => {
+    const atendeCompetencia =
+      !competenciaFiltro || competencia.competencia === competenciaFiltro;
+    const atendeSituacao =
+      !filtros.situacao || competencia.situacao === filtros.situacao;
+
+    return atendeCompetencia && atendeSituacao;
+  });
+
+  const competenciasResults = {
+    ...createResults(competenciasFiltradas),
+    totalPages: Math.max(1, Math.ceil(competenciasFiltradas.length / 10)),
+    totalRecords: competenciasFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+
+  const renderCompetenciaSituacaoBadge = (
+    situacao: FolhaCompetenciaSituacao,
+  ) => <BadgeSeplag {...folhaCompetenciaSituacaoMeta[situacao]} size="md" />;
+
+  const getFormErrorMessage = (name: keyof FolhaCompetenciaForm) => {
+    const message = errors[name]?.message;
+    return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+
+  const abrirCadastroCompetencia = () => {
+    setFormFeedback("");
+    resetForm({
+      codigo: "",
+      nome: "",
+      competencia: "",
+      mesAnoReferencia: "",
+      dataInicio: "",
+      dataFim: "",
+      situacao: "ATIVA",
+      observacao: "",
+    });
+    setModalCadastroAberto(true);
+  };
+
+  const salvarCompetencia = (data: FolhaCompetenciaForm) => {
+    const competencia = normalizeMesAno(data.competencia);
+    const dataInicio = data.dataInicio?.trim() ?? "";
+    const dataInicioDate = parseDataBr(dataInicio);
+
+    if (!competencia || !dataInicio) {
+      setFormFeedback("Preencha competência e data início.");
+      return;
+    }
+
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
+      return;
+    }
+
+    if (!dataInicioDate) {
+      setFormFeedback("Informe data início no formato DD/MM/AAAA.");
+      return;
+    }
+
+    const duplicada = competencias.some((item) => item.competencia === competencia);
+
+    if (duplicada) {
+      setFormFeedback("Já existe competência cadastrada para este mês/ano.");
+      return;
+    }
+
+    if (competencias.some((item) => item.situacao === "ATIVA")) {
+      setFormFeedback("Já existe uma competência vigente. Encerre a competência atual antes de abrir outra.");
+      return;
+    }
+
+    const concorrente = competencias.some((item) => {
+      const inicioExistente = parseDataBr(item.dataInicio);
+      const fimExistente = parseDataBr(item.dataFim);
+      if (!inicioExistente || !fimExistente) return false;
+
+      return dataInicioDate <= fimExistente;
+    });
+
+    if (concorrente) {
+      setFormFeedback("O período informado concorre com uma competência já cadastrada.");
+      return;
+    }
+
+    const novaCompetencia = folhaPagamentoService.criarCompetencia({
+      ...data,
+      codigo: `COMP-${competencia}`,
+      nome: `Competência ${formatMesAno(competencia)}`,
+      competencia,
+      mesAnoReferencia: competencia,
+      dataInicio,
+      dataFim: "",
+      situacao: "ATIVA",
+    });
+
+    setCompetencias((current) => [novaCompetencia, ...current]);
+    setModalCadastroAberto(false);
+    setFeedback("Salvo com sucesso a Nova Competência!");
+  };
+
+  const fecharCompetencia = () => {
+    if (!competenciaParaFechar) return;
+    const dataFimCompetenciaFechada = dataFimCompetenciaAtual.trim();
+    const dataInicioProxima = dataInicioProximaCompetencia.trim();
+    const dataFimCompetenciaFechadaDate = parseDataBr(dataFimCompetenciaFechada);
+    const dataInicioProximaDate = parseDataBr(dataInicioProxima);
+
+    if (!dataFimCompetenciaFechadaDate) {
+      setFeedback("Informe a data fim da competência atual no formato DD/MM/AAAA.");
+      return;
+    }
+    if (!dataInicioProximaDate) {
+      setFeedback("Informe a data início da próxima competência no formato DD/MM/AAAA.");
+      return;
+    }
+
+    const proximaCompetencia =
+      getProximaCompetenciaPorDataFim(competenciaParaFechar);
+    const competenciaExistente = competencias.find(
+      (competencia) =>
+        competencia.competencia === proximaCompetencia.competencia,
+    );
+
+    setCompetencias((current) => {
+      const currentFechadas = current.map((competencia) =>
+        competencia.id === competenciaParaFechar.id
+          ? {
+              ...competencia,
+              dataFim: dataFimCompetenciaFechada,
+              situacao: "FECHADA" as FolhaCompetenciaSituacao,
+            }
+          : competencia,
+      );
+
+      if (competenciaExistente) {
+        return currentFechadas.map((competencia) =>
+          competencia.id === competenciaExistente.id
+            ? {
+                ...competencia,
+                dataInicio: proximaCompetencia.dataInicio,
+                dataFim: "",
+                situacao: "ATIVA" as FolhaCompetenciaSituacao,
+              }
+            : competencia,
+        );
+      }
+
+      const novaCompetencia: FolhaCompetenciaRow = {
+        id: Math.max(...current.map((competencia) => competencia.id), 0) + 1,
+        codigo: `COMP-${proximaCompetencia.competencia}`,
+        nome: `Competência ${formatMesAno(proximaCompetencia.competencia)}`,
+        competencia: proximaCompetencia.competencia,
+        mesAnoReferencia: proximaCompetencia.competencia,
+        dataInicio: proximaCompetencia.dataInicio,
+        dataFim: "",
+        situacao: "ATIVA",
+        observacao: "Competência aberta automaticamente após fechamento da competência anterior.",
+        totalFolhas: 0,
+        createdAt: "01/06/2026 09:00",
+      };
+
+      return [novaCompetencia, ...currentFechadas];
+    });
+
+    setFeedback("Competência encerrada com sucesso. A competência do próximo mês foi aberta automaticamente.");
+    setCompetenciaParaFechar(null);
+    setDataFimCompetenciaAtual("");
+    setDataInicioProximaCompetencia("");
+  };
+
+  const competenciaColumns: ColumnMetaSeplag<FolhaCompetenciaRow>[] = [
+    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
+    { field: "dataInicio", header: "Data início" },
+    { field: "dataFim", header: "Data fim" },
+    { header: "Situação", body: (row) => renderCompetenciaSituacaoBadge(row.situacao) },
+  ];
+
+  const abrirModalFecharCompetencia = (competencia: FolhaCompetenciaRow) => {
+    setDataFimCompetenciaAtual("");
+    setDataInicioProximaCompetencia("");
+    setCompetenciaParaFechar(competencia);
+  };
+
+  const renderAcoesCompetencia = (row: FolhaCompetenciaRow) => (
+    <div className="prototype-row-actions">
+      {row.situacao === "ATIVA" ? (
+        <BotaoIconSeplag
+          type="button"
+          icon="pi pi-lock"
+          tooltip="Encerrar competência"
+          onClick={() => abrirModalFecharCompetencia(row)}
+        />
+      ) : null}
+    </div>
+  );
+
+  const apagarCompetenciasSimulacao = () => {
+    setCompetencias([]);
+    setCompetenciaParaFechar(null);
+    setDataFimCompetenciaAtual("");
+    setDataInicioProximaCompetencia("");
+    setFeedback("");
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Configuração de Competência"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <BotaoIconSeplag
+              type="button"
+              icon="pi pi-trash"
+              tooltip="Apagar competências cadastradas"
+              severity="danger"
+              onClick={apagarCompetenciasSimulacao}
+            />
+          }
+        >
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
+            <TextFieldSeplag
+              name="competencia"
+              control={control}
+              label="Competência"
+              placeholder="MM/AAAA"
+              cols="12 6 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              cols="12 6 4"
+              options={folhaCompetenciaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    competencia: "",
+                    situacao: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table">
+            {competencias.length === 0 ? (
+              <div className="prototype-competencia-empty-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Competência</th>
+                      <th>Data início</th>
+                      <th>Data fim</th>
+                      <th>Situação</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colSpan={5}>
+                        <BotaoSeplag
+                          type="button"
+                          label="Abertura de Competência"
+                          icon="pi pi-plus"
+                          onClick={abrirCadastroCompetencia}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <TablePaginadoSeplag
+                dataKey="id"
+                data={competenciasResults}
+                rows={10}
+                rowsPerPage={[10, 20, 50]}
+                paginator
+                lazy={false}
+                selectionMode={null}
+                columns={competenciaColumns}
+                hasEventoAcao
+                renderBotoes={renderAcoesCompetencia}
+                handleOnPageChange={() => {}}
+              />
+            )}
+          </div>
+        </CardSeplag>
+
+        <ModalSeplag
+          visible={modalCadastroAberto}
+          titulo="Cadastrar - Competência da Folha"
+          fechar={() => setModalCadastroAberto(false)}
+          labelAcao="Salvar"
+          iconAcao="pi pi-save"
+          funcAcao={handleSubmit(salvarCompetencia)}
+          tamanho="760px"
+        >
+          <div className="col-12 prototype-folha-pagamento-form">
+            {formFeedback ? (
+              <div className="prototype-validation-panel">{formFeedback}</div>
+            ) : null}
+            <div className="grid prototype-category-form-fields">
+              <MaskFieldSeplag
+                name="competencia"
+                control={formControl}
+                label="Competência"
+                mask="99/9999"
+                placeholder="MM/AAAA"
+                cols="12 12 4"
+                required
+                getFormErrorMessage={() => getFormErrorMessage("competencia")}
+              />
+              <MaskFieldSeplag
+                name="dataInicio"
+                control={formControl}
+                label="Data início"
+                mask="99/99/9999"
+                placeholder="DD/MM/AAAA"
+                cols="12 12 4"
+                required
+                getFormErrorMessage={() => getFormErrorMessage("dataInicio")}
+              />
+              <TextAreaFieldSeplag
+                name="observacao"
+                control={formControl}
+                label="Observação"
+                cols="12"
+                rows={3}
+                maxLength={500}
+                getFormErrorMessage={() => getFormErrorMessage("observacao")}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={Boolean(competenciaParaFechar)}
+          titulo="Fechamento da Competência"
+          fechar={() => {
+            setCompetenciaParaFechar(null);
+            setDataFimCompetenciaAtual("");
+          }}
+          labelFechar="Não"
+          iconFechar="pi pi-times"
+          labelAcao="Sim"
+          iconAcao="pi pi-lock"
+          funcAcao={fecharCompetencia}
+          tamanho="780px"
+        >
+          <div className="col-12 prototype-folha-pagamento-form prototype-fechar-competencia-modal">
+            <div className="prototype-validation-panel prototype-fechar-competencia-alert">
+              Tem certeza que deseja encerrar a competência atual?
+            </div>
+            {competenciaParaFechar ? (
+              <div className="prototype-fechar-competencia-summary">
+                <div>
+                  <span>Competência atual</span>
+                  <strong>{formatMesAno(competenciaParaFechar.competencia)}</strong>
+                  <p>Início: {competenciaParaFechar.dataInicio}</p>
+                  <label className="prototype-fechar-competencia-date-field">
+                    Data fim
+                    <input
+                      type="text"
+                      value={dataFimCompetenciaAtual}
+                      placeholder="DD/MM/AAAA"
+                      onChange={(event) =>
+                        handleDataFimCompetenciaAtualChange(event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
+                <div>
+                  <span>Próxima competência</span>
+                  <strong>
+                    {formatMesAno(
+                      getProximaCompetenciaPorDataFim(competenciaParaFechar)
+                        .competencia,
+                    )}
+                  </strong>
+                  <label className="prototype-fechar-competencia-date-field">
+                    Data início
+                    <input
+                      type="text"
+                      value={dataInicioProximaCompetencia}
+                      placeholder="DD/MM/AAAA"
+                      onChange={(event) =>
+                        handleDataInicioProximaCompetenciaChange(
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </ModalSeplag>
+
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaPagamentoFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [formFeedback, setFormFeedback] = useState("");
+  const [accordionAberto, setAccordionAberto] = useState({
+    dados: true,
+    abrangencia: true,
+    parametros: true,
+    observacao: true,
+  });
+  const competenciasFolha = folhaPagamentoService.listarCompetencias();
+  const folhaEdicaoId = id ? Number(id) : undefined;
+  const folhaEdicao = useMemo(
+    () =>
+      folhaEdicaoId && Number.isFinite(folhaEdicaoId)
+        ? folhaPagamentoService.buscarFolhaPorId(folhaEdicaoId)
+        : undefined,
+    [folhaEdicaoId],
+  );
+  const isFolhaEdicao = Boolean(id && folhaEdicao);
+  const situacoesComVersionamento: FolhaPagamentoSituacao[] = [
+    "PROCESSO_COM_SUCESSO",
+    "PROCESSO_COM_ERRO",
+    "PROCESSO_COM_FALHAS",
+  ];
+  const folhaPermiteEdicaoDireta =
+    folhaEdicao?.situacao === "RASCUNHO" || folhaEdicao?.situacao === "ABERTO";
+  const folhaPermiteVersionamento = folhaEdicao
+    ? situacoesComVersionamento.includes(folhaEdicao.situacao)
+    : false;
+  const folhaBloqueadaParaAlteracao = Boolean(
+    isFolhaEdicao && !folhaPermiteEdicaoDireta && !folhaPermiteVersionamento,
+  );
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
+      grupoFolhaId: 0,
       nome: "",
       numero: "",
       mesAnoReferencia: "",
@@ -7801,12 +11368,17 @@ export function PrototiposFolhaPagamentoFormPage() {
       totalMesesRetroagir: 0,
     },
   });
-
   const normalizeMesAno = (value?: string) => {
     const cleanValue = value?.trim() ?? "";
     const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
     if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
     return cleanValue;
+  };
+
+  const formatMesAno = (value?: string) => {
+    if (!value) return "-";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
   };
 
   const isMesAnoValido = (value?: string) => {
@@ -7821,6 +11393,93 @@ export function PrototiposFolhaPagamentoFormPage() {
   };
 
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+  const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
+    Boolean(
+      data.orgaos?.length ||
+        data.regimeJuridico ||
+        data.categoria ||
+        data.cargo ||
+        data.grupoEleitos,
+    );
+  const competenciaVigente = competenciasFolha.find(
+    (competencia) => competencia.situacao === "ATIVA",
+  );
+  const competenciaOptions = competenciasFolha.map((competencia) => ({
+    label: `${formatMesAno(competencia.competencia)} - ${
+      folhaCompetenciaSituacaoMeta[competencia.situacao].label
+    }`,
+    value: competencia.competencia,
+  }));
+  const competenciaDigitada = watch("competencia");
+  const competenciaNormalizada = normalizeMesAno(competenciaDigitada);
+  const competenciaValida = isMesAnoValido(competenciaDigitada);
+  const competenciaCadastrada = competenciaValida
+    ? competenciasFolha.find(
+        (competencia) => competencia.competencia === competenciaNormalizada,
+      )
+    : undefined;
+  const deveExibirAvisoCompetencia =
+    Boolean(competenciaDigitada?.trim()) && competenciaValida;
+  const formTitle = isFolhaEdicao
+    ? folhaPermiteVersionamento
+      ? "Versionar - Folha de Pagamento"
+      : "Alterar - Folha de Pagamento"
+    : "Cadastrar - Folha de Pagamento";
+
+  useEffect(() => {
+    if (!folhaEdicao) return;
+
+    reset({
+      competenciaId: folhaEdicao.competenciaId,
+      grupoFolhaId: folhaEdicao.grupoFolhaId,
+      nome: folhaEdicao.nome,
+      numero: folhaEdicao.numero,
+      mesAnoReferencia: formatMesAno(folhaEdicao.mesAnoReferencia),
+      competencia: folhaEdicao.competencia,
+      observacao: folhaEdicao.observacao,
+      orgaos: folhaEdicao.orgaos,
+      regimeJuridico: folhaEdicao.regimeJuridico,
+      categoria: folhaEdicao.categoria,
+      cargo: folhaEdicao.cargo,
+      grupoEleitos: folhaEdicao.grupoEleitos,
+      totalMesesAdiantar: folhaEdicao.totalMesesAdiantar,
+      totalMesesRetroagir: folhaEdicao.totalMesesRetroagir,
+    });
+  }, [folhaEdicao, reset]);
+
+  const toggleAccordionFolha = (key: keyof typeof accordionAberto) => {
+    setAccordionAberto((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  };
+
+  const renderAccordionFolha = (
+    key: keyof typeof accordionAberto,
+    title: string,
+    children: ReactNode,
+  ) => (
+    <section className="prototype-folha-form-accordion-item">
+      <button
+        type="button"
+        className="prototype-folha-form-accordion-header"
+        onClick={() => toggleAccordionFolha(key)}
+      >
+        <span>{title}</span>
+        <i
+          className={`pi pi-chevron-down prototype-folha-form-accordion-chevron ${
+            accordionAberto[key]
+              ? "prototype-folha-form-accordion-chevron--open"
+              : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+      {accordionAberto[key] ? (
+        <div className="prototype-folha-form-accordion-content">{children}</div>
+      ) : null}
+    </section>
+  );
 
   const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
     const message = errors[name]?.message;
@@ -7836,21 +11495,14 @@ export function PrototiposFolhaPagamentoFormPage() {
       return { tab: "dados", message: "Número da folha é obrigatório." };
     }
 
-    if (!isTextoPreenchido(data.mesAnoReferencia)) {
-      return {
-        tab: "dados",
-        message: "Mês/ano de referência é obrigatório.",
-      };
-    }
-
     if (!isTextoPreenchido(data.competencia)) {
       return { tab: "dados", message: "Competência é obrigatória." };
     }
 
-    if (!data.orgaos?.length) {
+    if (!temAbrangenciaFolha(data)) {
       return {
         tab: "abrangencia",
-        message: "Informe ao menos um órgão para a abrangência da folha.",
+        message: "Informe ao menos um critério de abrangência da folha.",
       };
     }
 
@@ -7877,7 +11529,17 @@ export function PrototiposFolhaPagamentoFormPage() {
     return null;
   };
 
-  const salvarFolha = (data: FolhaPagamentoForm) => {
+  const salvarFolha = (
+    data: FolhaPagamentoForm,
+    situacao: FolhaPagamentoSituacao,
+  ) => {
+    if (folhaBloqueadaParaAlteracao) {
+      setFormFeedback(
+        "Não é possível alterar ou versionar folha aguardando processamento, em processamento ou cancelada.",
+      );
+      return;
+    }
+
     const validacaoObrigatorios = validarObrigatoriosFolha(data);
 
     if (validacaoObrigatorios) {
@@ -7888,13 +11550,13 @@ export function PrototiposFolhaPagamentoFormPage() {
     const orgaos = data.orgaos ?? [];
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
-    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
     const competencia = normalizeMesAno(data.competencia);
+    const mesAnoReferencia = competencia;
     const nome = data.nome?.trim() ?? "";
     const numero = data.numero?.trim() ?? "";
 
-    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
-      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
       return;
     }
 
@@ -7903,20 +11565,32 @@ export function PrototiposFolhaPagamentoFormPage() {
       return;
     }
 
-    const folhaDuplicada = folhaPagamentoService.listarFolhas().some((folha) => (
-      folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
-      folha.mesAnoReferencia === mesAnoReferencia &&
-      folha.competencia === competencia &&
-      folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
-        orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
-    ));
+    const folhaDuplicada = folhaPagamentoService.listarFolhas().some((folha) => {
+      if (isFolhaEdicao && folha.id === folhaEdicao?.id) return false;
+      if (
+        folhaPermiteVersionamento &&
+        folhaEdicao &&
+        folha.numero.trim().toLowerCase() === folhaEdicao.numero.trim().toLowerCase() &&
+        folha.competencia === folhaEdicao.competencia
+      ) {
+        return false;
+      }
+
+      return (
+        folha.numero.trim().toLowerCase() === numero.toLowerCase() &&
+        folha.mesAnoReferencia === mesAnoReferencia &&
+        folha.competencia === competencia &&
+        folha.orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|") ===
+          orgaos.map((orgao) => orgao.toLowerCase()).sort().join("|")
+      );
+    });
 
     if (folhaDuplicada) {
       setFormFeedback("Já existe folha cadastrada para a combinação de número, referência, competência e órgão(s).");
       return;
     }
 
-    folhaPagamentoService.criarFolha({
+    const payload = {
       ...data,
       nome,
       numero,
@@ -7925,7 +11599,15 @@ export function PrototiposFolhaPagamentoFormPage() {
       orgaos,
       totalMesesAdiantar,
       totalMesesRetroagir,
-    });
+      situacao,
+    };
+
+    if (isFolhaEdicao && folhaEdicao && folhaPermiteEdicaoDireta) {
+      folhaPagamentoService.atualizarFolha(folhaEdicao.id, payload);
+    } else {
+      folhaPagamentoService.criarFolha(payload);
+    }
+
     navigate(FOLHA_PAGAMENTO_BASE_PATH);
   };
 
@@ -7941,29 +11623,42 @@ export function PrototiposFolhaPagamentoFormPage() {
       ambienteSistema="Teste"
       menuItems={menuFolha}
     >
-      <form onSubmit={handleSubmit(salvarFolha, handleFolhaFormInvalido)}>
+      <form
+        onSubmit={handleSubmit(
+          (data) => salvarFolha(data, "RASCUNHO"),
+          handleFolhaFormInvalido,
+        )}
+      >
         <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
           <CardSeplag
-            title="Cadastrar - Folha de Pagamento"
+            title={formTitle}
             cols="12"
             cardHeaderClassNames="prototype-regime-card"
+            actions={
+              <div className="prototype-competencia-vigente">
+                Competência vigente:{" "}
+                <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+              </div>
+            }
           >
             <div className="col-12 prototype-folha-pagamento-form">
               {formFeedback ? (
                 <div className="prototype-validation-panel">{formFeedback}</div>
               ) : null}
+              {folhaPermiteVersionamento ? (
+                <div className="prototype-validation-panel prototype-validation-panel--info">
+                  Esta folha já foi processada. Ao salvar, o sistema cria uma nova versão para preservar o histórico da versão anterior.
+                </div>
+              ) : null}
+              {folhaBloqueadaParaAlteracao ? (
+                <div className="prototype-validation-panel">
+                  Esta folha não pode ser alterada nem versionada na situação atual.
+                </div>
+              ) : null}
 
-              <section className="prototype-folha-form-section">
-                <h3>Dados da Folha</h3>
-                <div className="grid prototype-category-form-fields">
-                  <TextFieldSeplag
-                    name="nome"
-                    control={control}
-                    label="Nome da folha"
-                    cols="12 12 6"
-                    required
-                    getFormErrorMessage={() => getFormErrorMessage("nome")}
-                  />
+              <div className="prototype-folha-form-accordion">
+                {renderAccordionFolha("dados", "Dados da Folha", (
+                  <div className="grid prototype-category-form-fields">
                   <TextFieldSeplag
                     name="numero"
                     control={control}
@@ -7973,58 +11668,55 @@ export function PrototiposFolhaPagamentoFormPage() {
                     getFormErrorMessage={() => getFormErrorMessage("numero")}
                   />
                   <TextFieldSeplag
-                    name="mesAnoReferencia"
+                    name="nome"
                     control={control}
-                    label="Mês/ano de referência"
-                    placeholder="MM/AAAA"
-                    cols="12 12 3"
+                    label="Nome da folha"
+                    cols="12 12 6"
                     required
-                    rules={{
-                      validate: (value) =>
-                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
-                    }}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("mesAnoReferencia")
-                    }
+                    getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
-                  <TextFieldSeplag
+                  <DropdownFieldSeplag
                     name="competencia"
                     control={control}
                     label="Competência"
-                    placeholder="MM/AAAA"
                     cols="12 12 3"
+                    options={competenciaOptions}
+                    optionLabel="label"
+                    optionValue="value"
                     required
                     rules={{
                       validate: (value) =>
-                        isMesAnoValido(value) || "Informe no formato MM/AAAA.",
+                        Boolean(value) || "Selecione uma competência.",
                     }}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("competencia")
                     }
                   />
-                  <TextAreaFieldSeplag
-                    name="observacao"
-                    control={control}
-                    label="Observação"
-                    cols="12"
-                    rows={4}
-                    maxLength={500}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("observacao")
-                    }
-                  />
-                </div>
-              </section>
+                  {deveExibirAvisoCompetencia ? (
+                    <div
+                      className={`col-12 prototype-competencia-aviso ${
+                        competenciaCadastrada
+                          ? competenciaCadastrada.situacao === "ATIVA"
+                            ? "prototype-competencia-aviso--ok"
+                            : "prototype-competencia-aviso--closed"
+                          : "prototype-competencia-aviso--warning"
+                      }`}
+                    >
+                      {competenciaCadastrada
+                        ? `Competência: ${formatMesAno(competenciaCadastrada.competencia)} está ${folhaCompetenciaSituacaoMeta[competenciaCadastrada.situacao].label.toLowerCase()}.`
+                        : ""}
+                    </div>
+                  ) : null}
+                  </div>
+                ))}
 
-              <section className="prototype-folha-form-section">
-                <h3>Abrangência</h3>
-                <div className="grid prototype-category-form-fields">
+                {renderAccordionFolha("abrangencia", "Abrangência", (
+                  <div className="grid prototype-category-form-fields">
                   <MultiSelectFieldSeplag
                     name="orgaos"
                     control={control}
                     label="Órgãos"
                     cols="12 12 6"
-                    required
                     options={folhaPagamentoOrgaoOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -8077,12 +11769,11 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("grupoEleitos")
                     }
                   />
-                </div>
-              </section>
+                  </div>
+                ))}
 
-              <section className="prototype-folha-form-section">
-                <h3>Parâmetros de Cálculo</h3>
-                <div className="grid prototype-category-form-fields">
+                {renderAccordionFolha("parametros", "Parâmetros de Cálculo", (
+                  <div className="grid prototype-category-form-fields">
                   <NumberFieldSeplag
                     name="totalMesesAdiantar"
                     control={control}
@@ -8105,15 +11796,51 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("totalMesesRetroagir")
                     }
                   />
-                </div>
-              </section>
+                  </div>
+                ))}
+
+                {renderAccordionFolha("observacao", "Observação", (
+                  <div className="grid prototype-category-form-fields">
+                  <TextAreaFieldSeplag
+                    name="observacao"
+                    control={control}
+                    label="Observação"
+                    cols="12"
+                    rows={4}
+                    maxLength={500}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("observacao")
+                    }
+                  />
+                  </div>
+                ))}
+              </div>
 
               <div className="prototype-category-form-footer">
                 <BotaoVoltarSeplag
                   type="button"
                   onClick={() => navigate(FOLHA_PAGAMENTO_BASE_PATH)}
                 />
-                <BotaoSalvarSeplag type="submit" />
+                <BotaoSalvarSeplag
+                  type="button"
+                  label="Salvar Rascunho"
+                  onClick={handleSubmit(
+                    (data) => salvarFolha(data, "RASCUNHO"),
+                    handleFolhaFormInvalido,
+                  )}
+                />
+                <BotaoSeplag
+                  type="button"
+                  variant="save"
+                  label="Publicar"
+                  icon="pi pi-send"
+                  iconPos="left"
+                  raised
+                  onClick={handleSubmit(
+                    (data) => salvarFolha(data, "ABERTO"),
+                    handleFolhaFormInvalido,
+                  )}
+                />
               </div>
             </div>
           </CardSeplag>
@@ -8157,31 +11884,7 @@ export function PrototiposFolhaPagamentoLogPage() {
 
   const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
     const meta = folhaPagamentoSituacaoMeta[situacao];
-    const label =
-      situacao === "PROCESSADA_COM_ALERTA"
-        ? "Processada\ncom alerta"
-        : situacao === "PROCESSADA_COM_ERRO"
-          ? "Processada\ncom erro"
-          : meta.label;
-
-    return (
-      <BadgeSeplag
-        {...meta}
-        label={label}
-        size="md"
-        customStyle={
-          situacao === "PROCESSADA_COM_ALERTA" ||
-          situacao === "PROCESSADA_COM_ERRO"
-            ? {
-                whiteSpace: "pre-line",
-                lineHeight: 1.12,
-                textAlign: "center",
-                paddingInline: 12,
-              }
-            : undefined
-        }
-      />
-    );
+    return <BadgeSeplag {...meta} size="md" />;
   };
 
   const renderExecucaoSituacaoBadge = (
@@ -8280,9 +11983,8 @@ export function PrototiposFolhaPagamentoLogPage() {
                   <p>{folhaSelecionada?.nome ?? "-"}</p>
                 </div>
                 <div>
-                  <span>Referência</span>
-                  <strong>{formatMesAno(folhaSelecionada?.mesAnoReferencia)}</strong>
-                  <p>Competência {formatMesAno(folhaSelecionada?.competencia)}</p>
+                  <span>Competência</span>
+                  <strong>{formatMesAno(folhaSelecionada?.competencia)}</strong>
                 </div>
                 <div>
                   <span>Situação da folha</span>
@@ -8522,6 +12224,8 @@ export function PrototiposFolhaPagamentoPage() {
     formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
+      competenciaId: 0,
+      grupoFolhaId: 0,
       nome: "",
       numero: "",
       mesAnoReferencia: "",
@@ -8536,6 +12240,11 @@ export function PrototiposFolhaPagamentoPage() {
       totalMesesRetroagir: 0,
     },
   });
+  const gruposFolha = gruposCalculoMock;
+  const getGrupoFolhaNome = (grupoFolhaId?: number) => {
+    const grupo = gruposFolha.find((item) => item.id === grupoFolhaId);
+    return grupo ? grupo.grupo : "-";
+  };
   const {
     control: logControl,
     reset: resetLog,
@@ -8572,59 +12281,47 @@ export function PrototiposFolhaPagamentoPage() {
   const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
   const termoBusca =
     termoBuscaDigitado.length >= 3 ? termoBuscaDigitado : "";
-  const mesAnoReferenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
+  const competenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
   const folhasFiltradas = folhas.filter((folha) => {
     const atendeTermo =
       !termoBusca ||
       folha.numero.toLowerCase().includes(termoBusca) ||
       folha.nome.toLowerCase().includes(termoBusca);
-    const atendeOrgao =
-      !filtros.orgaos?.length ||
-      filtros.orgaos.some((orgao) => folha.orgaos.includes(orgao));
-    const atendeMes =
-      !mesAnoReferenciaFiltro ||
-      folha.mesAnoReferencia === mesAnoReferenciaFiltro;
+    const atendeCompetencia =
+      !competenciaFiltro || folha.competencia === competenciaFiltro;
     const atendeSituacao =
       !filtros.situacao || folha.situacao === filtros.situacao;
 
-    return atendeTermo && atendeOrgao && atendeMes && atendeSituacao;
+    return atendeTermo && atendeCompetencia && atendeSituacao;
+  });
+
+  const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
+    `${folha.numero}|${folha.competencia}`;
+
+  const folhasPrincipais = Array.from(
+    folhasFiltradas.reduce((map, folha) => {
+      const key = getFolhaVersaoKey(folha);
+      const grupo = map.get(key) ?? [];
+      grupo.push(folha);
+      map.set(key, grupo);
+      return map;
+    }, new Map<string, FolhaPagamentoRow[]>()),
+  ).map(([, versoes]) => {
+    const versoesOrdenadas = [...versoes].sort((a, b) => b.id - a.id);
+    return versoesOrdenadas[0];
   });
 
   const folhaResults = {
-    ...createResults(folhasFiltradas),
-    totalPages: Math.max(1, Math.ceil(folhasFiltradas.length / 10)),
-    totalRecords: folhasFiltradas.length,
+    ...createResults(folhasPrincipais),
+    totalPages: Math.max(1, Math.ceil(folhasPrincipais.length / 10)),
+    totalRecords: folhasPrincipais.length,
     size: 10,
     sizePage: 10,
   };
 
   const renderFolhaSituacaoBadge = (situacao: FolhaPagamentoSituacao) => {
     const meta = folhaPagamentoSituacaoMeta[situacao];
-    const label =
-      situacao === "PROCESSADA_COM_ALERTA"
-        ? "Processada\ncom alerta"
-        : situacao === "PROCESSADA_COM_ERRO"
-          ? "Processada\ncom erro"
-          : meta.label;
-
-    return (
-      <BadgeSeplag
-        {...meta}
-        label={label}
-        size="md"
-        customStyle={
-          situacao === "PROCESSADA_COM_ALERTA" ||
-          situacao === "PROCESSADA_COM_ERRO"
-            ? {
-                whiteSpace: "pre-line",
-                lineHeight: 1.12,
-                textAlign: "center",
-                paddingInline: 12,
-              }
-            : undefined
-        }
-      />
-    );
+    return <BadgeSeplag {...meta} size="md" />;
   };
 
   const renderExecucaoSituacaoBadge = (
@@ -8654,23 +12351,43 @@ export function PrototiposFolhaPagamentoPage() {
     return mes && ano ? `${mes}/${ano}` : value;
   };
 
+  const competenciaVigente = folhaPagamentoService
+    .listarCompetencias()
+    .find((competencia) => competencia.situacao === "ATIVA");
+
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
+  const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
+    Boolean(
+      data.orgaos?.length ||
+        data.regimeJuridico ||
+        data.categoria ||
+        data.cargo ||
+        data.grupoEleitos,
+    );
 
   const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTO";
+
+  const folhaPodeVersionar = (folha: FolhaPagamentoRow) =>
+    folha.situacao === "PROCESSO_COM_SUCESSO" ||
+    folha.situacao === "PROCESSO_COM_ERRO" ||
+    folha.situacao === "PROCESSO_COM_FALHAS";
+
+  const folhaPodeEditarOuVersionar = (folha: FolhaPagamentoRow) =>
+    folhaPodeEditar(folha) || folhaPodeVersionar(folha);
 
   const folhaPodeProcessar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTA";
+    folha.situacao === "ABERTO" || folhaPodeVersionar(folha);
 
   const getMensagemBloqueioEdicao = (folha: FolhaPagamentoRow) =>
-    folhaPodeEditar(folha)
+    folhaPodeEditarOuVersionar(folha)
       ? ""
-      : "Não é possível editar uma folha em fila, em processamento, processada, bloqueada ou cancelada.";
+      : "Não é possível editar ou versionar uma folha aguardando processamento, em processamento ou cancelada.";
 
   const getMensagemBloqueioProcessamento = (folha: FolhaPagamentoRow) =>
     folhaPodeProcessar(folha)
       ? ""
-      : "Só é possível processar folhas em rascunho ou abertas.";
+      : "Só é possível processar ou reprocessar folhas abertas ou já processadas.";
 
   const validarObrigatoriosFolha = (data: FolhaPagamentoForm) => {
     if (!isTextoPreenchido(data.nome)) {
@@ -8687,13 +12404,6 @@ export function PrototiposFolhaPagamentoPage() {
       };
     }
 
-    if (!isTextoPreenchido(data.mesAnoReferencia)) {
-      return {
-        tab: "dados",
-        message: "Mês/ano de referência é obrigatório.",
-      };
-    }
-
     if (!isTextoPreenchido(data.competencia)) {
       return {
         tab: "dados",
@@ -8701,10 +12411,10 @@ export function PrototiposFolhaPagamentoPage() {
       };
     }
 
-    if (!data.orgaos?.length) {
+    if (!temAbrangenciaFolha(data)) {
       return {
         tab: "abrangencia",
-        message: "Informe ao menos um órgão para a abrangência da folha.",
+        message: "Informe ao menos um critério de abrangência da folha.",
       };
     }
 
@@ -8737,14 +12447,11 @@ export function PrototiposFolhaPagamentoPage() {
     if (bloqueioSituacao) return bloqueioSituacao;
     if (!isTextoPreenchido(folha.nome)) return "Nome da folha é obrigatório.";
     if (!isTextoPreenchido(folha.numero)) return "Número da folha é obrigatório.";
-    if (!isMesAnoValido(folha.mesAnoReferencia)) {
-      return "Mês/ano de referência é obrigatório e deve estar no formato MM/AAAA.";
-    }
     if (!isMesAnoValido(folha.competencia)) {
       return "Competência é obrigatória e deve estar no formato MM/AAAA.";
     }
-    if (!folha.orgaos.length) {
-      return "Informe ao menos um órgão antes de processar a folha.";
+    if (!temAbrangenciaFolha(folha)) {
+      return "Informe ao menos um critério de abrangência antes de processar a folha.";
     }
     if (folha.totalMesesAdiantar < 0 || folha.totalMesesRetroagir < 0) {
       return "Total de meses a adiantar e retroagir não pode ser menor que zero.";
@@ -8770,25 +12477,7 @@ export function PrototiposFolhaPagamentoPage() {
     }
 
     setFeedback("");
-    setFormFeedback("");
-    setFolhaSelecionada(folha);
-    setFormMode("edit");
-    setActiveTab("dados");
-    resetForm({
-      nome: folha.nome,
-      numero: folha.numero,
-      mesAnoReferencia: formatMesAno(folha.mesAnoReferencia),
-      competencia: formatMesAno(folha.competencia),
-      observacao: folha.observacao,
-      orgaos: folha.orgaos,
-      regimeJuridico: folha.regimeJuridico,
-      categoria: folha.categoria,
-      cargo: folha.cargo,
-      grupoEleitos: folha.grupoEleitos,
-      totalMesesAdiantar: folha.totalMesesAdiantar,
-      totalMesesRetroagir: folha.totalMesesRetroagir,
-    });
-    setModalFormularioAberto(true);
+    navigate(`${FOLHA_PAGAMENTO_BASE_PATH}/${folha.id}/editar`);
   };
 
   const abrirDetalheFolha = (folha: FolhaPagamentoRow) => {
@@ -8808,13 +12497,13 @@ export function PrototiposFolhaPagamentoPage() {
 
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
-    const mesAnoReferencia = normalizeMesAno(data.mesAnoReferencia);
     const competencia = normalizeMesAno(data.competencia);
+    const mesAnoReferencia = competencia;
     const nome = data.nome?.trim() ?? "";
     const numero = data.numero?.trim() ?? "";
 
-    if (!isMesAnoValido(data.mesAnoReferencia) || !isMesAnoValido(data.competencia)) {
-      setFormFeedback("Informe mês/ano de referência e competência no formato MM/AAAA.");
+    if (!isMesAnoValido(data.competencia)) {
+      setFormFeedback("Informe competência no formato MM/AAAA.");
       setActiveTab("dados");
       return;
     }
@@ -8859,6 +12548,8 @@ export function PrototiposFolhaPagamentoPage() {
           folha.id === folhaSelecionada.id
             ? {
                 ...folha,
+                competenciaId: data.competenciaId ?? folha.competenciaId,
+                grupoFolhaId: data.grupoFolhaId ?? folha.grupoFolhaId,
                 nome,
                 numero,
                 mesAnoReferencia,
@@ -8890,6 +12581,8 @@ export function PrototiposFolhaPagamentoPage() {
       setFolhas((current) => [
         {
           id: Math.max(...current.map((folha) => folha.id), 0) + 1,
+          competenciaId: data.competenciaId ?? 0,
+          grupoFolhaId: data.grupoFolhaId ?? 0,
           nome,
           numero,
           mesAnoReferencia,
@@ -8929,7 +12622,7 @@ export function PrototiposFolhaPagamentoPage() {
     const novaExecucao: FolhaPagamentoExecucaoRow = {
       id: Math.max(...execucoes.map((execucao) => execucao.id), 1000) + 1,
       folhaPagamentoId: folha.id,
-      situacao: "EM_FILA",
+      situacao: "AGUARDANDO_PROCESSAMENTO",
       dataHoraInicio: "28/05/2026 10:00",
       dataHoraFim: "-",
       usuarioResponsavel: "ROBERTO JUNIOR",
@@ -8946,7 +12639,7 @@ export function PrototiposFolhaPagamentoPage() {
         item.id === folha.id
           ? {
               ...item,
-              situacao: "EM_FILA",
+              situacao: "AGUARDANDO_PROCESSAMENTO",
               ultimaExecucao: "28/05/2026 10:00",
             }
           : item,
@@ -8961,17 +12654,13 @@ export function PrototiposFolhaPagamentoPage() {
   };
 
   const folhaColumns: ColumnMetaSeplag<FolhaPagamentoRow>[] = [
-    { field: "numero", header: "Número da folha" },
-    { field: "nome", header: "Nome da folha" },
-    { header: "Órgão(s)", body: (row) => row.orgaos.join(", ") },
-    { header: "Mês/ano ref.", body: (row) => formatMesAno(row.mesAnoReferencia) },
-    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
-    { header: "Situação", body: (row) => renderFolhaSituacaoBadge(row.situacao) },
-    { field: "totalPessoas", header: "Total pessoas" },
-    { field: "totalSucesso", header: "Sucesso" },
-    { field: "totalAlerta", header: "Alerta" },
-    { field: "totalErro", header: "Erro" },
-    { field: "ultimaExecucao", header: "Última execução" },
+    { field: "numero", header: "Número" },
+    { field: "nome", header: "Nome" },
+    { header: "Órgão", body: (row) => row.orgaos.join(", ") || "-" },
+    {
+      header: "Situação processamento",
+      body: (row) => renderFolhaSituacaoBadge(row.situacao),
+    },
   ];
 
   const execucoesFolha = folhaSelecionada
@@ -8980,19 +12669,66 @@ export function PrototiposFolhaPagamentoPage() {
       )
     : [];
   const execucoesResults = createResults(execucoesFolha);
+
+  const renderDataHoraExecucao = (dataHora: string) => {
+    if (!dataHora || dataHora === "-") return "-";
+
+    const [data, hora] = dataHora.split(" ");
+    return (
+      <span className="prototype-folha-execucao-date">
+        <strong>{data}</strong>
+        <small>{hora}</small>
+      </span>
+    );
+  };
+
+  const getTempoExecucaoFolha = (execucao: FolhaPagamentoExecucaoRow) => {
+    if (!execucao.dataHoraInicio || execucao.dataHoraFim === "-") return "-";
+
+    const parseDataHora = (value: string) => {
+      const [data, hora] = value.split(" ");
+      const [dia, mes, ano] = data.split("/").map(Number);
+      const [horas, minutos] = hora.split(":").map(Number);
+      return new Date(ano, mes - 1, dia, horas, minutos);
+    };
+
+    const inicio = parseDataHora(execucao.dataHoraInicio);
+    const fim = parseDataHora(execucao.dataHoraFim);
+    const totalMinutos = Math.max(
+      0,
+      Math.round((fim.getTime() - inicio.getTime()) / 60000),
+    );
+
+    if (totalMinutos < 60) return `${totalMinutos} min`;
+
+    const horas = Math.floor(totalMinutos / 60);
+    const minutos = totalMinutos % 60;
+    return minutos ? `${horas}h ${minutos}min` : `${horas}h`;
+  };
+
   const execucaoColumns: ColumnMetaSeplag<FolhaPagamentoExecucaoRow>[] = [
-    { field: "id", header: "Execução" },
+    { field: "id", header: "Número da execução" },
     {
       header: "Situação",
       body: (row) => renderExecucaoSituacaoBadge(row.situacao),
     },
-    { field: "dataHoraInicio", header: "Início" },
-    { field: "dataHoraFim", header: "Fim" },
-    { field: "usuarioResponsavel", header: "Usuário" },
-    { field: "totalPessoas", header: "Pessoas" },
-    { field: "totalSucesso", header: "Sucesso" },
-    { field: "totalAlerta", header: "Alerta" },
-    { field: "totalErro", header: "Erro" },
+    {
+      header: "Solicitação",
+      body: (row) => renderDataHoraExecucao(row.dataHoraInicio),
+    },
+    {
+      header: "Início",
+      body: (row) => renderDataHoraExecucao(row.dataHoraInicio),
+    },
+    {
+      header: "Término",
+      body: (row) => renderDataHoraExecucao(row.dataHoraFim),
+    },
+    {
+      header: "Tempo",
+      body: (row) => getTempoExecucaoFolha(row),
+    },
+    { field: "usuarioResponsavel", header: "Quem executou" },
   ];
 
   const logFiltros = watchLog();
@@ -9059,22 +12795,32 @@ export function PrototiposFolhaPagamentoPage() {
   const renderAcoesFolha = (folha: FolhaPagamentoRow) => (
     <>
       <BotaoIconSeplag
+        type="button"
+        tooltip="Detalhar"
+        icon="pi pi-eye"
+        onClick={() => abrirDetalheFolha(folha)}
+      />
+      <BotaoIconSeplag
         severity="warning"
         type="button"
         tooltip={
           folhaPodeEditar(folha)
-            ? "Editar"
-            : "Edição bloqueada pela situação da folha"
+            ? "Editar folha"
+            : folhaPodeEditarOuVersionar(folha)
+              ? "Versionar"
+              : "Edição/versionamento bloqueado pela situação da folha"
         }
-        icon="pi pi-pencil"
-        disabled={!folhaPodeEditar(folha)}
+        icon={folhaPodeEditar(folha) ? "pi pi-pencil" : "pi pi-copy"}
+        disabled={!folhaPodeEditarOuVersionar(folha)}
         onClick={() => abrirEditarFolha(folha)}
       />
       <BotaoIconSeplag
         type="button"
         tooltip={
           folhaPodeProcessar(folha)
-            ? "Processar folha"
+            ? folha.situacao === "ABERTO"
+              ? "Processar folha"
+              : "Reprocessar folha"
             : "Processamento indisponível para esta situação"
         }
         icon="pi pi-play"
@@ -9097,7 +12843,6 @@ export function PrototiposFolhaPagamentoPage() {
     const dadosFields: Array<keyof FolhaPagamentoForm> = [
       "nome",
       "numero",
-      "mesAnoReferencia",
       "competencia",
     ];
     const abrangenciaFields: Array<keyof FolhaPagamentoForm> = [
@@ -9130,6 +12875,12 @@ export function PrototiposFolhaPagamentoPage() {
           title="Folha de Pagamento"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <div className="prototype-competencia-vigente">
+              Competência vigente:{" "}
+              <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+            </div>
+          }
         >
           {feedback ? (
             <div className="prototype-validation-panel">{feedback}</div>
@@ -9143,30 +12894,19 @@ export function PrototiposFolhaPagamentoPage() {
               cols="12 12 4"
               getFormErrorMessage={() => null}
             />
-            <MultiSelectFieldSeplag
-              name="orgaos"
-              control={control}
-              label="Órgãos"
-              cols="12 12 3"
-              options={folhaPagamentoOrgaoOptions}
-              optionLabel="label"
-              optionValue="value"
-              selectedItemsLabel="{0} órgãos selecionados"
-              getFormErrorMessage={() => null}
-            />
             <TextFieldSeplag
               name="mesAnoReferencia"
               control={control}
-              label="Mês/ano de referência"
+              label="Competência"
               placeholder="MM/AAAA"
-              cols="12 6 2"
+              cols="12 6 3"
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
               name="situacao"
               control={control}
               label="Situação"
-              cols="12 6 2"
+              cols="12 6 3"
               options={folhaPagamentoSituacaoOptions}
               optionLabel="label"
               optionValue="value"
@@ -9180,7 +12920,6 @@ export function PrototiposFolhaPagamentoPage() {
                 onClick={() =>
                   reset({
                     termo: "",
-                    orgaos: [],
                     mesAnoReferencia: "",
                     situacao: "",
                   })
@@ -9209,7 +12948,6 @@ export function PrototiposFolhaPagamentoPage() {
               selectionMode={null}
               columns={folhaColumns}
               hasEventoAcao
-              handleView={abrirDetalheFolha}
               renderBotoes={renderAcoesFolha}
               handleOnPageChange={() => {}}
             />
@@ -9238,6 +12976,23 @@ export function PrototiposFolhaPagamentoPage() {
 
             {activeTab === "dados" && (
               <div className="grid prototype-category-form-fields">
+                <DropdownFieldSeplag
+                  name="grupoFolhaId"
+                  control={formControl}
+                  label="Grupo de cálculo origem"
+                  cols="12 12 6"
+                  required
+                  options={[
+                    { label: "Selecione...", value: 0 },
+                    ...gruposFolha.map((grupo) => ({
+                      label: `${grupo.codigo} - ${grupo.grupo}`,
+                      value: grupo.id,
+                    })),
+                  ]}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => getFormErrorMessage("grupoFolhaId")}
+                />
                 <TextFieldSeplag
                   name="nome"
                   control={formControl}
@@ -9253,21 +13008,6 @@ export function PrototiposFolhaPagamentoPage() {
                   cols="12 12 3"
                   required
                   getFormErrorMessage={() => getFormErrorMessage("numero")}
-                />
-                <TextFieldSeplag
-                  name="mesAnoReferencia"
-                  control={formControl}
-                  label="Mês/ano de referência"
-                  placeholder="MM/AAAA"
-                  cols="12 12 3"
-                  required
-                  rules={{
-                    validate: (value) =>
-                      isMesAnoValido(value) || "Informe no formato MM/AAAA.",
-                  }}
-                  getFormErrorMessage={() =>
-                    getFormErrorMessage("mesAnoReferencia")
-                  }
                 />
                 <TextFieldSeplag
                   name="competencia"
@@ -9301,7 +13041,6 @@ export function PrototiposFolhaPagamentoPage() {
                   control={formControl}
                   label="Órgãos"
                   cols="12 12 6"
-                  required
                   options={folhaPagamentoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -9395,8 +13134,8 @@ export function PrototiposFolhaPagamentoPage() {
             <div className="col-12 prototype-catalogo-view-content">
               <p><strong>Número:</strong> {folhaSelecionada.numero}</p>
               <p><strong>Nome:</strong> {folhaSelecionada.nome}</p>
+              <p><strong>Grupo de cálculo origem:</strong> {getGrupoFolhaNome(folhaSelecionada.grupoFolhaId)}</p>
               <p><strong>Órgão(s):</strong> {folhaSelecionada.orgaos.join(", ")}</p>
-              <p><strong>Mês/ano de referência:</strong> {formatMesAno(folhaSelecionada.mesAnoReferencia)}</p>
               <p><strong>Competência:</strong> {formatMesAno(folhaSelecionada.competencia)}</p>
               <p><strong>Situação:</strong> {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}</p>
               <p><strong>Regime jurídico:</strong> {folhaSelecionada.regimeJuridico || "Todos"}</p>
@@ -9412,9 +13151,9 @@ export function PrototiposFolhaPagamentoPage() {
 
         <ModalSeplag
           visible={modalExecucoesAberto}
-          titulo="Execuções da Folha de Pagamento"
+          titulo="Histórico do Processamento"
           fechar={() => setModalExecucoesAberto(false)}
-          tamanho="1400px"
+          tamanho="1320px"
           hideFooter
         >
           {folhaSelecionada ? (
@@ -9426,16 +13165,11 @@ export function PrototiposFolhaPagamentoPage() {
                   <p>{folhaSelecionada.nome}</p>
                 </div>
                 <div>
-                  <span>Referência</span>
-                  <strong>{formatMesAno(folhaSelecionada.mesAnoReferencia)}</strong>
-                  <p>Competência {formatMesAno(folhaSelecionada.competencia)}</p>
+                  <span>Competência</span>
+                  <strong>{formatMesAno(folhaSelecionada.competencia)}</strong>
                 </div>
                 <div>
-                  <span>Situação atual</span>
-                  {renderFolhaSituacaoBadge(folhaSelecionada.situacao)}
-                </div>
-                <div>
-                  <span>Histórico</span>
+                  <span>Histórico do processamento</span>
                   <strong>{execucoesFolha.length}</strong>
                   <p>{execucoesFolha.length === 1 ? "execução" : "execuções"}</p>
                 </div>
@@ -9665,6 +13399,694 @@ export function PrototiposFolhaPagamentoPage() {
   );
 }
 
+export function PrototiposFolhaSolicitacoesAjustesPage() {
+  const navigate = useNavigate();
+  const [perfil, setPerfil] =
+    useState<SolicitacaoAjusteFolhaPerfil>("CONFORMIDADE");
+  const [solicitacoes, setSolicitacoes] = useState<
+    SolicitacaoAjusteFolhaRow[]
+  >(() => folhaPagamentoService.listarSolicitacoesAjusteFolha());
+  const [solicitacaoSelecionada, setSolicitacaoSelecionada] =
+    useState<SolicitacaoAjusteFolhaRow | null>(null);
+  const [modalVisualizarAberto, setModalVisualizarAberto] = useState(false);
+  const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false);
+  const [modalDevolverAberto, setModalDevolverAberto] = useState(false);
+  const [modalConcluirAberto, setModalConcluirAberto] = useState(false);
+  const [modalIniciarAberto, setModalIniciarAberto] = useState(false);
+  const [modalFinalizarAberto, setModalFinalizarAberto] = useState(false);
+  const [motivoDevolucao, setMotivoDevolucao] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const { control, reset, watch } =
+    useForm<SolicitacaoAjusteFolhaFiltroForm>({
+      defaultValues: {
+        termoFolha: "",
+        competencias: [],
+        matriculaCpf: "",
+        gruposEleitos: [],
+        situacoes: [],
+      },
+    });
+
+  const filtros = watch();
+  const usuarioAtual =
+    perfil === "CONFORMIDADE"
+      ? "Maria de Souza - Conformidade"
+      : "João Silva - Folha de Pagamento";
+
+  const termoFolha =
+    (filtros.termoFolha?.trim().length ?? 0) >= 3
+      ? filtros.termoFolha?.trim().toLowerCase() ?? ""
+      : "";
+  const termoPessoa =
+    (filtros.matriculaCpf?.trim().length ?? 0) >= 3
+      ? filtros.matriculaCpf?.trim().toLowerCase() ?? ""
+      : "";
+
+  const solicitacoesFiltradas = solicitacoes
+    .filter((solicitacao) => {
+      const atendeFolha =
+        !termoFolha ||
+        solicitacao.numeroFolha.toLowerCase().includes(termoFolha) ||
+        solicitacao.nomeFolha.toLowerCase().includes(termoFolha);
+      const atendeCompetencia =
+        !filtros.competencias?.length ||
+        filtros.competencias.includes(solicitacao.competencia);
+      const atendePessoa =
+        !termoPessoa ||
+        solicitacao.matriculaCpf.toLowerCase().includes(termoPessoa);
+      const atendeGrupoEleitos =
+        !filtros.gruposEleitos?.length ||
+        filtros.gruposEleitos.includes(solicitacao.grupoEleitos);
+      const atendeSituacao =
+        !filtros.situacoes?.length ||
+        filtros.situacoes.includes(solicitacao.situacao);
+
+      return (
+        atendeFolha &&
+        atendeCompetencia &&
+        atendePessoa &&
+        atendeGrupoEleitos &&
+        atendeSituacao
+      );
+    })
+    .sort((a, b) => Number(a.numeroFolha) - Number(b.numeroFolha));
+
+  const solicitacaoResults = {
+    ...createResults(solicitacoesFiltradas),
+    totalPages: Math.max(1, Math.ceil(solicitacoesFiltradas.length / 10)),
+    totalRecords: solicitacoesFiltradas.length,
+    size: 10,
+    sizePage: 10,
+  };
+
+  const historicoSelecionado: SolicitacaoAjusteFolhaHistoricoRow[] =
+    solicitacaoSelecionada
+      ? folhaPagamentoService.listarHistoricoSolicitacaoAjusteFolha(
+          solicitacaoSelecionada.id,
+        )
+      : [];
+
+  const historicoParaExibir =
+    historicoSelecionado.length || !solicitacaoSelecionada
+      ? historicoSelecionado
+      : [
+          {
+            id: solicitacaoSelecionada.id * 100,
+            solicitacaoId: solicitacaoSelecionada.id,
+            situacaoDestino: "NOVA" as SolicitacaoAjusteFolhaSituacao,
+            dataHora: solicitacaoSelecionada.dataCriacao,
+            operador: solicitacaoSelecionada.solicitante,
+            descricao: solicitacaoSelecionada.motivoAbertura,
+          },
+        ];
+
+  const renderSolicitacaoSituacaoBadge = (
+    situacao: SolicitacaoAjusteFolhaSituacao,
+  ) => <BadgeSeplag {...solicitacaoAjusteFolhaSituacaoMeta[situacao]} size="md" />;
+
+  const atualizarSolicitacao = (
+    solicitacao: SolicitacaoAjusteFolhaRow,
+    mensagem: string,
+  ) => {
+    folhaPagamentoService.atualizarSolicitacaoAjusteFolha(solicitacao);
+    setSolicitacoes((current) =>
+      current.map((item) => (item.id === solicitacao.id ? solicitacao : item)),
+    );
+    setFeedback(mensagem);
+  };
+
+  const abrirVisualizar = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    setSolicitacaoSelecionada(solicitacao);
+    setModalVisualizarAberto(true);
+  };
+
+  const abrirHistorico = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    setSolicitacaoSelecionada(solicitacao);
+    setModalHistoricoAberto(true);
+  };
+
+  const confirmarExclusaoSolicitacao = () => {
+    if (!solicitacaoSelecionada) return;
+    if (perfil !== "CONFORMIDADE") {
+      setModalExcluirAberto(false);
+      setFeedback("Ação indisponível para o perfil Folha de Pagamento.");
+      return;
+    }
+
+    folhaPagamentoService.excluirSolicitacaoAjusteFolha(
+      solicitacaoSelecionada.id,
+    );
+    setSolicitacoes((current) =>
+      current.filter((item) => item.id !== solicitacaoSelecionada.id),
+    );
+    setModalExcluirAberto(false);
+    setFeedback("Registro deletado com sucesso!");
+  };
+
+  const confirmarInicioCorrecao = () => {
+    if (!solicitacaoSelecionada) return;
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "EM_CORRECAO",
+        responsavelCorrecao: "João Silva",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalIniciarAberto(false);
+  };
+
+  const confirmarFinalizacaoCorrecao = () => {
+    if (!solicitacaoSelecionada) return;
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "CORRIGIDO",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalFinalizarAberto(false);
+  };
+
+  const confirmarDevolucao = () => {
+    if (!solicitacaoSelecionada || !motivoDevolucao.trim()) {
+      setFeedback("Campo obrigatório");
+      return;
+    }
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "DEVOLVIDO",
+        motivoDevolucao: motivoDevolucao.trim(),
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setMotivoDevolucao("");
+    setModalDevolverAberto(false);
+  };
+
+  const confirmarConclusao = () => {
+    if (!solicitacaoSelecionada) return;
+    if (perfil !== "CONFORMIDADE") {
+      setModalConcluirAberto(false);
+      setFeedback("Ação indisponível para o perfil Folha de Pagamento.");
+      return;
+    }
+
+    atualizarSolicitacao(
+      {
+        ...solicitacaoSelecionada,
+        situacao: "CONCLUIDO",
+        dataFechamento: "03/06/2026",
+      },
+      "Registro atualizado com sucesso!",
+    );
+    setModalConcluirAberto(false);
+  };
+
+  const renderAcoesSolicitacao = (solicitacao: SolicitacaoAjusteFolhaRow) => {
+    const isConformidade = perfil === "CONFORMIDADE";
+    const isFolhaPagamento = perfil === "FOLHA";
+    const podeIniciar =
+      isFolhaPagamento &&
+      (solicitacao.situacao === "NOVA" ||
+        solicitacao.situacao === "DEVOLVIDO");
+    const podeFinalizar =
+      isFolhaPagamento && solicitacao.situacao === "EM_CORRECAO";
+
+    if (isFolhaPagamento) {
+      return (
+        <>
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Visualizar"
+            icon="pi pi-eye"
+            onClick={() => abrirVisualizar(solicitacao)}
+          />
+          {podeIniciar ? (
+            <BotaoIconSeplag
+              type="button"
+              tooltip="Iniciar Correção"
+              icon="pi pi-play"
+              onClick={() => {
+                setSolicitacaoSelecionada(solicitacao);
+                setModalIniciarAberto(true);
+              }}
+            />
+          ) : null}
+          {podeFinalizar ? (
+            <BotaoIconSeplag
+              severity="success"
+              type="button"
+              tooltip="Finalizar Correção"
+              icon="pi pi-check-circle"
+              onClick={() => {
+                setSolicitacaoSelecionada(solicitacao);
+                setModalFinalizarAberto(true);
+              }}
+            />
+          ) : null}
+          <BotaoIconSeplag
+            severity="secondary"
+            type="button"
+            tooltip="Histórico"
+            icon="pi pi-history"
+            onClick={() => abrirHistorico(solicitacao)}
+          />
+        </>
+      );
+    }
+
+    const podeEditarExcluir =
+      isConformidade && solicitacao.situacao === "NOVA";
+    const podeDevolverConcluir =
+      isConformidade && solicitacao.situacao === "CORRIGIDO";
+
+    return (
+      <>
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Visualizar"
+          icon="pi pi-eye"
+          onClick={() => abrirVisualizar(solicitacao)}
+        />
+        {podeEditarExcluir ? (
+          <BotaoIconSeplag
+            severity="warning"
+            type="button"
+            tooltip="Editar"
+            icon="pi pi-pencil"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setFeedback("Edição disponível apenas como fluxo de cadastro nesta US.");
+            }}
+          />
+        ) : null}
+        {podeEditarExcluir ? (
+          <BotaoIconSeplag
+            severity="danger"
+            type="button"
+            tooltip="Excluir"
+            icon="pi pi-trash"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalExcluirAberto(true);
+            }}
+          />
+        ) : null}
+        {podeIniciar ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Iniciar Correção"
+            icon="pi pi-play"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalIniciarAberto(true);
+            }}
+          />
+        ) : null}
+        {podeFinalizar ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Finalizar Correção"
+            icon="pi pi-check-circle"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalFinalizarAberto(true);
+            }}
+          />
+        ) : null}
+        {podeDevolverConcluir ? (
+          <BotaoIconSeplag
+            severity="danger"
+            type="button"
+            tooltip="Devolver Solicitação"
+            icon="pi pi-replay"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setMotivoDevolucao("");
+              setModalDevolverAberto(true);
+            }}
+          />
+        ) : null}
+        {podeDevolverConcluir ? (
+          <BotaoIconSeplag
+            severity="success"
+            type="button"
+            tooltip="Concluir Solicitação"
+            icon="pi pi-verified"
+            onClick={() => {
+              setSolicitacaoSelecionada(solicitacao);
+              setModalConcluirAberto(true);
+            }}
+          />
+        ) : null}
+        <BotaoIconSeplag
+          severity="secondary"
+          type="button"
+          tooltip="Histórico"
+          icon="pi pi-history"
+          onClick={() => abrirHistorico(solicitacao)}
+        />
+      </>
+    );
+  };
+
+  const solicitacaoColumns: ColumnMetaSeplag<SolicitacaoAjusteFolhaRow>[] = [
+    { field: "numeroFolha", header: "Número da Folha" },
+    { field: "nomeFolha", header: "Nome da Folha" },
+    { field: "competencia", header: "Competência" },
+    {
+      header: "Matrícula/CPF ou\nGrupo de Eleitos",
+      body: (row) =>
+        row.matriculaCpf && row.matriculaCpf !== "-"
+          ? row.matriculaCpf
+          : row.grupoEleitos,
+    },
+    { field: "solicitante", header: "Solicitante" },
+    { field: "dataCriacao", header: "Data de\nCriação" },
+    { field: "dataFechamento", header: "Data de\nFechamento" },
+    {
+      header: "Situação",
+      body: (row) => renderSolicitacaoSituacaoBadge(row.situacao),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-solicitacoes-ajustes-page">
+        <div className="prototype-solicitacoes-ajustes-header">
+          <div>
+            <span className="prototype-breadcrumb">
+              Folha de Pagamento &gt; Solicitações de Ajustes da Folha
+            </span>
+            <h1>Solicitações de Ajustes da Folha de Pagamento</h1>
+            <p>
+              Acompanhe e gerencie as solicitações de correção identificadas
+              durante a conformidade da folha.
+            </p>
+          </div>
+          <div className="prototype-solicitacoes-ajustes-user">
+            <label>
+              Perfil da variação
+              <select
+                value={perfil}
+                onChange={(event) =>
+                  setPerfil(event.target.value as SolicitacaoAjusteFolhaPerfil)
+                }
+              >
+                <option value="CONFORMIDADE">
+                  Maria de Souza - Conformidade
+                </option>
+                <option value="FOLHA">
+                  João Silva - Folha de Pagamento
+                </option>
+              </select>
+            </label>
+            <span>{usuarioAtual}</span>
+          </div>
+        </div>
+
+        {feedback ? (
+          <div className="prototype-validation-panel">{feedback}</div>
+        ) : null}
+
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters prototype-solicitacoes-ajustes-filters">
+            <TextFieldSeplag
+              name="termoFolha"
+              control={control}
+              label="Número da Folha ou Nome da Folha"
+              placeholder="Digite o número ou nome da folha"
+              cols="12 12 3"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="competencias"
+              control={control}
+              label="Competência"
+              placeholder="Selecione a competência"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaCompetenciaOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} competências selecionadas"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="gruposEleitos"
+              control={control}
+              label="Grupo de Eleitos"
+              placeholder="Selecione o grupo"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaGrupoEleitosOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} grupos selecionados"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="matriculaCpf"
+              control={control}
+              label="Matrícula ou CPF"
+              placeholder="Digite a matrícula ou CPF"
+              cols="12 12 2"
+              getFormErrorMessage={() => null}
+            />
+            <MultiSelectFieldSeplag
+              name="situacoes"
+              control={control}
+              label="Situação"
+              placeholder="Selecione a situação"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaSituacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} situações selecionadas"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    termoFolha: "",
+                    competencias: [],
+                    matriculaCpf: "",
+                    gruposEleitos: [],
+                    situacoes: [],
+                  })
+                }
+              />
+            </div>
+          </div>
+        </CardSeplag>
+
+        <CardSeplag
+          title="Solicitações Registradas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <div className="prototype-solicitacoes-ajustes-card-actions">
+              <span>{solicitacoesFiltradas.length} registros encontrados</span>
+              <BotaoSeplag
+                type="button"
+                label="Nova Solicitação"
+                icon="pi pi-plus"
+                style={{ color: "#ffffff" }}
+                hasPermission={perfil === "CONFORMIDADE"}
+                onClick={() =>
+                  setFeedback("Fluxo de cadastro relatado em US específica.")
+                }
+              />
+            </div>
+          }
+        >
+          <div className="col-12 prototype-folha-pagamento-table prototype-solicitacoes-ajustes-table">
+            <TablePaginadoSeplag
+              key={`solicitacoes-ajustes-${perfil}`}
+              dataKey="id"
+              data={solicitacaoResults}
+              rows={10}
+              rowsPerPage={[5, 10, 25, 50]}
+              paginator
+              lazy={false}
+              selectionMode={null}
+              columns={solicitacaoColumns}
+              hasEventoAcao
+              renderBotoes={renderAcoesSolicitacao}
+              handleOnPageChange={() => {}}
+            />
+          </div>
+        </CardSeplag>
+
+        <div className="prototype-form-actions">
+          <BotaoVoltarSeplag
+            type="button"
+            label="Voltar"
+            icon="pi pi-arrow-left"
+            onClick={() => navigate("/prototipos/folha")}
+          />
+        </div>
+
+        <ModalSeplag
+          visible={modalVisualizarAberto}
+          titulo="Visualizar Solicitação"
+          fechar={() => setModalVisualizarAberto(false)}
+          tamanho="860px"
+          hideFooter
+        >
+          {solicitacaoSelecionada ? (
+            <div className="col-12 prototype-catalogo-view-content">
+              <p><strong>Número da Folha:</strong> {solicitacaoSelecionada.numeroFolha}</p>
+              <p><strong>Nome da Folha:</strong> {solicitacaoSelecionada.nomeFolha}</p>
+              <p><strong>Competência:</strong> {solicitacaoSelecionada.competencia}</p>
+              <p><strong>Matrícula ou CPF:</strong> {solicitacaoSelecionada.matriculaCpf}</p>
+              <p><strong>Grupo de Eleitos:</strong> {solicitacaoSelecionada.grupoEleitos}</p>
+              <p><strong>Solicitante:</strong> {solicitacaoSelecionada.solicitante}</p>
+              <p><strong>Responsável:</strong> {solicitacaoSelecionada.responsavelCorrecao}</p>
+              <p><strong>Situação:</strong> {renderSolicitacaoSituacaoBadge(solicitacaoSelecionada.situacao)}</p>
+              <p><strong>Motivo da abertura:</strong> {solicitacaoSelecionada.motivoAbertura}</p>
+              <p><strong>Motivo da devolução:</strong> {solicitacaoSelecionada.motivoDevolucao ?? "-"}</p>
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalExcluirAberto}
+          titulo="Excluir Solicitação"
+          fechar={() => setModalExcluirAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Excluir"
+          iconAcao="pi pi-trash"
+          funcAcao={confirmarExclusaoSolicitacao}
+          tamanho="520px"
+        >
+          <p className="col-12">Deseja realmente excluir o registro selecionado?</p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalDevolverAberto}
+          titulo="Devolver Solicitação"
+          fechar={() => setModalDevolverAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Devolução"
+          iconAcao="pi pi-replay"
+          funcAcao={confirmarDevolucao}
+          tamanho="760px"
+        >
+          <div className="col-12 prototype-solicitacoes-ajustes-modal-text">
+            Informe o motivo pelo qual a correção deverá retornar para a equipe
+            de Folha de Pagamento.
+          </div>
+          <div className="col-12">
+            <label className="prototype-solicitacoes-ajustes-textarea-label">
+              Motivo da Devolução
+            </label>
+            <textarea
+              className="prototype-solicitacoes-ajustes-textarea"
+              value={motivoDevolucao}
+              placeholder="Descreva o motivo da devolução e as orientações para correção."
+              onChange={(event) => setMotivoDevolucao(event.target.value)}
+            />
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalConcluirAberto}
+          titulo="Concluir Solicitação"
+          fechar={() => setModalConcluirAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Conclusão"
+          iconAcao="pi pi-verified"
+          funcAcao={confirmarConclusao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Confirma a conclusão desta solicitação de ajuste? Após a conclusão,
+            o registro ficará disponível apenas para visualização.
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalIniciarAberto}
+          titulo="Iniciar Correção"
+          fechar={() => setModalIniciarAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar Início"
+          iconAcao="pi pi-play"
+          funcAcao={confirmarInicioCorrecao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Ao confirmar, você será registrado como responsável pela correção
+            desta solicitação.
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalFinalizarAberto}
+          titulo="Finalizar Correção"
+          fechar={() => setModalFinalizarAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Confirmar"
+          iconAcao="pi pi-check-circle"
+          funcAcao={confirmarFinalizacaoCorrecao}
+          tamanho="620px"
+        >
+          <p className="col-12">
+            Confirma a finalização da correção desta solicitação?
+          </p>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalHistoricoAberto}
+          titulo="Histórico da Solicitação"
+          fechar={() => setModalHistoricoAberto(false)}
+          tamanho="900px"
+          hideFooter
+        >
+          {solicitacaoSelecionada ? (
+            <div className="col-12 prototype-solicitacoes-ajustes-history">
+              <p className="prototype-solicitacoes-ajustes-history-subtitle">
+                Folha {solicitacaoSelecionada.numeroFolha} -{" "}
+                {solicitacaoSelecionada.nomeFolha} | Competência{" "}
+                {solicitacaoSelecionada.competencia}
+              </p>
+              <div className="prototype-solicitacoes-ajustes-timeline">
+                {historicoParaExibir.map((item) => (
+                  <div
+                    key={item.id}
+                    className="prototype-solicitacoes-ajustes-timeline-item"
+                  >
+                    <div className="prototype-solicitacoes-ajustes-timeline-dot" />
+                    <div>
+                      {renderSolicitacaoSituacaoBadge(item.situacaoDestino)}
+                      <strong>Data/Hora: {item.dataHora}</strong>
+                      <span>Operador: {item.operador}</span>
+                      <p>{item.descricao}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposFolhaGruposCalculoPage() {
   const navigate = useNavigate();
   const [expandedGrupoCalculoIds, setExpandedGrupoCalculoIds] = useState<number[]>([]);
@@ -9860,6 +14282,16 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
+  const amanha = getAmanhaDate();
+  const dataInicioV2 = formatDatePtBr(amanha);
+  const versoesGrupoAtual = grupo ? gruposCalculoVersoesMock[grupo.id] ?? [grupo] : [];
+  const grupoEstaPublicado =
+    Boolean(grupo) && grupo?.situacao !== STATUS_OPERACIONAL_VIGENCIA.AGENDADO;
+  const modoVersionamento = Boolean(isEdit && grupoEstaPublicado);
+  const versaoEmEdicao = modoVersionamento
+    ? versoesGrupoAtual.length + 1
+    : Math.max(versoesGrupoAtual.length, 1);
+  const [publicacaoConcluida, setPublicacaoConcluida] = useState(false);
   const [rubricasGerenciadas, setRubricasGerenciadas] = useState<GrupoCalculoRubricaGerenciada[]>(
     () =>
       isEdit
@@ -9871,9 +14303,22 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   );
   const [rubricaDragIndex, setRubricaDragIndex] = useState<number | null>(null);
   const [modalRubricasAberto, setModalRubricasAberto] = useState(false);
+  const [modalPublicacaoAberto, setModalPublicacaoAberto] = useState(false);
+  const [rubricaTermoBusca, setRubricaTermoBusca] = useState("");
   const [rubricasSelecionadasParaAdicionar, setRubricasSelecionadasParaAdicionar] =
     useState<number[]>([]);
-  const ultimaAbrangenciaKeyRef = useRef("");
+  const [credenciaisPublicacao, setCredenciaisPublicacao] = useState({
+    usuario: "",
+    senha: "",
+  });
+  const [dataInicioPublicacao, setDataInicioPublicacao] = useState(dataInicioV2);
+  const [publicacaoFeedback, setPublicacaoFeedback] = useState("");
+  const formularioBloqueado = publicacaoConcluida;
+  const credenciaisPublicacaoValidas = Boolean(
+    credenciaisPublicacao.usuario.trim() &&
+      credenciaisPublicacao.senha.trim() &&
+      dataInicioPublicacao.trim(),
+  );
 
   const { control, setValue, watch } = useForm<GrupoCalculoForm>({
     defaultValues: {
@@ -9881,11 +14326,11 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       descricao: grupo
         ? `Configuração de cálculo para ${grupo.grupo.toLowerCase()}.`
         : "",
-      situacao: mapGrupoCalculoSituacao(grupo?.situacao),
+      situacao: modoVersionamento || grupoEstaPublicado ? SITUACAO_VIGENCIA.ATIVO : "RASCUNHO",
       dataAtivacao:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO
-          ? "01/06/2026"
-          : "08/05/2026",
+        modoVersionamento
+          ? dataInicioV2
+          : "",
       dataEncerramento:
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.ENCERRADO ||
         grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
@@ -9913,7 +14358,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       abrangenciaRegimeJuridico: "",
       abrangenciaTipoVinculo: "",
       abrangenciaInstituicao: "",
-      abrangenciaHerdarDe: "nenhum",
+      abrangenciaHerdarDe: grupo?.herdaDe && grupo.herdaDe !== "-" ? grupo.herdaDe : "nenhum",
       abrangenciaOrgao: "",
     },
   });
@@ -9938,13 +14383,20 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   };
 
   const handleRemoverRubricaGerenciada = (idRubrica: number) => {
-    setRubricasGerenciadas((current) =>
-      current.filter((rubrica) => rubrica.id !== idRubrica),
-    );
+    setRubricasGerenciadas((current) => {
+      const rubricaRemovida = current.find((rubrica) => rubrica.id === idRubrica);
+      if (!rubricaRemovida) return current;
+
+      return [
+        ...current.filter((rubrica) => rubrica.id !== idRubrica),
+        { ...rubricaRemovida, excluida: true },
+      ];
+    });
   };
 
   const handleAbrirModalAdicionarRubricas = () => {
     setRubricasSelecionadasParaAdicionar([]);
+    setRubricaTermoBusca("");
     setModalRubricasAberto(true);
   };
 
@@ -9970,115 +14422,130 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           origem: "manual" as const,
         }));
 
-      return [...current, ...novasRubricas];
+      const rubricasReativadas = current.map((rubrica) =>
+        rubricasSelecionadasParaAdicionar.includes(rubrica.id)
+          ? { ...rubrica, excluida: false, origem: "manual" as const }
+          : rubrica,
+      );
+
+      return [...rubricasReativadas, ...novasRubricas];
     });
     setModalRubricasAberto(false);
+    setRubricaTermoBusca("");
     setRubricasSelecionadasParaAdicionar([]);
   };
 
-  const abrangenciaRegimeJuridico = watch("abrangenciaRegimeJuridico");
-  const abrangenciaTipoVinculo = watch("abrangenciaTipoVinculo");
-  const abrangenciaInstituicao = watch("abrangenciaInstituicao");
-  const abrangenciaOrgao = watch("abrangenciaOrgao");
-  const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
-  const podeGerenciarRubricas = Boolean(
-    abrangenciaRegimeJuridico && abrangenciaTipoVinculo,
-  );
-  const abrangenciaKey = [
-    abrangenciaRegimeJuridico,
-    abrangenciaTipoVinculo,
-    abrangenciaInstituicao,
-    abrangenciaOrgao,
-    abrangenciaHerdarDe,
-  ].join("|");
+  const handleAbrirModalPublicacao = () => {
+    setCredenciaisPublicacao({ usuario: "", senha: "" });
+    setDataInicioPublicacao(dataInicioV2);
+    setPublicacaoFeedback("");
+    setModalPublicacaoAberto(true);
+  };
 
-  useEffect(() => {
-    if (ultimaAbrangenciaKeyRef.current === abrangenciaKey) return;
-
-    ultimaAbrangenciaKeyRef.current = abrangenciaKey;
-
-    if (!podeGerenciarRubricas) {
-      if (!isEdit) setRubricasGerenciadas([]);
+  const handleConfirmarPublicacao = () => {
+    if (!credenciaisPublicacaoValidas) {
+      setPublicacaoFeedback("Informe Data Início, usuário e senha para publicar o grupo de cálculo.");
       return;
     }
 
-    const codigosRubricas = getRubricasGrupoCalculoPorAbrangencia({
-      regimeJuridico: abrangenciaRegimeJuridico,
-      tipoVinculo: abrangenciaTipoVinculo,
-      instituicao: abrangenciaInstituicao,
-      orgao: abrangenciaOrgao,
-      herdarDe: abrangenciaHerdarDe,
-    });
+    setValue("situacao", SITUACAO_VIGENCIA.ATIVO);
+    setValue("dataAtivacao", dataInicioPublicacao);
+    setPublicacaoConcluida(true);
+    setModalPublicacaoAberto(false);
+    setPublicacaoFeedback("");
+  };
 
-    setRubricasGerenciadas(
-      catalogoRubricasMock
-        .filter((rubrica) => codigosRubricas.includes(rubrica.codigo))
+  const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
+  useEffect(() => {
+    if (!abrangenciaHerdarDe || abrangenciaHerdarDe === "nenhum") return;
+
+    const codigosRubricasHerdadas =
+      grupoCalculoRubricasPorFiltro[`herdar:${abrangenciaHerdarDe}`] ?? [];
+
+    if (!codigosRubricasHerdadas.length) return;
+
+    setRubricasGerenciadas((current) => {
+      const idsAtuais = new Set(current.map((rubrica) => rubrica.id));
+      const rubricasHerdadas = catalogoRubricasMock
+        .filter(
+          (rubrica) =>
+            codigosRubricasHerdadas.includes(rubrica.codigo) &&
+            !idsAtuais.has(rubrica.id),
+        )
         .map((rubrica) => ({
           ...rubrica,
           origem: "filtro" as const,
-        })),
-    );
-  }, [
-    abrangenciaHerdarDe,
-    abrangenciaInstituicao,
-    abrangenciaKey,
-    abrangenciaOrgao,
-    abrangenciaRegimeJuridico,
-    abrangenciaTipoVinculo,
-    isEdit,
-    podeGerenciarRubricas,
-  ]);
+        }));
 
-  const rubricasDisponiveisParaAdicionar = catalogoRubricasMock.filter(
-    (rubrica) =>
-      !rubricasGerenciadas.some(
-        (rubricaGerenciada) => rubricaGerenciada.id === rubrica.id,
-      ),
-  );
+      const rubricasReativadas = current.map((rubrica) =>
+        codigosRubricasHerdadas.includes(rubrica.codigo)
+          ? { ...rubrica, excluida: false }
+          : rubrica,
+      );
+
+      return [...rubricasReativadas, ...rubricasHerdadas];
+    });
+  }, [abrangenciaHerdarDe]);
+
+  const rubricaTermoNormalizado = rubricaTermoBusca.trim().toLowerCase();
+  const rubricasParaAdicionar = catalogoRubricasMock.filter((rubrica) => {
+    if (!rubricaTermoNormalizado) return true;
+
+    return (
+      rubrica.codigo.toLowerCase().includes(rubricaTermoNormalizado) ||
+      rubrica.nomeRubrica.toLowerCase().includes(rubricaTermoNormalizado) ||
+      rubrica.naturezaVerba.toLowerCase().includes(rubricaTermoNormalizado)
+    );
+  });
+  const rubricasAtivasNoGrupo = rubricasGerenciadas.filter(
+    (rubrica) => !rubrica.excluida,
+  ).length;
 
   const renderGrupoCalculoContent = () => (
     <div className="grid prototype-category-form-fields prototype-grupo-calculo-form-fields">
+          {(modoVersionamento || publicacaoConcluida) && (
+            <div className="col-12">
+              <div className="prototype-grupo-calculo-version-alert">
+                <i className="pi pi-info-circle" aria-hidden="true" />
+                <span>
+                  {publicacaoConcluida
+                    ? modoVersionamento
+                      ? `Versão V${versaoEmEdicao} publicada como ativa. A versão anterior foi marcada como inativa e esta edição foi bloqueada.`
+                      : "Versão V1 publicada como ativa. A edição desta versão foi bloqueada; novas alterações devem ser feitas por versionamento."
+                    : `Este grupo já foi publicado. Você está criando a versão V${versaoEmEdicao}; a Data Início foi sugerida como ${dataInicioV2} e deve ser uma data futura.`}
+                </span>
+              </div>
+            </div>
+          )}
           <TextFieldSeplag
             name="nome"
             control={control}
             label="Nome do Grupo"
             cols="12 12 12"
             required
+            disabled={formularioBloqueado}
             getFormErrorMessage={() => null}
           />
-          <TextAreaFieldSeplag
-            name="descricao"
-            control={control}
-            label="Descrição"
-            cols="12 12 12"
-            maxLength={500}
-            getFormErrorMessage={() => null}
-          />
-          <div className="col-12 prototype-grupo-calculo-vigencia">
-            <SituacaoVigenciaSeplag<GrupoCalculoForm>
-              control={control}
-              setValue={setValue}
-              rotuloDataAtivacao="Início da Vigência"
-              cols={{
-                situacao: "12 12 3",
-                dataAtivacao: "12 12 3",
-                statusOperacional: "col-12 md:col-4 lg:col-4",
-                dataEncerramento: "12 12 3",
-                motivoEncerramento: "12",
-                dataExtincao: "12 12 3",
-                motivoExtincao: "12",
-              }}
-              getFormErrorMessage={() => null}
-            />
-          </div>
+          {modoVersionamento && (
+            <div className="col-12 prototype-grupo-calculo-vigencia">
+              <DateFieldSeplag
+                name="dataAtivacao"
+                control={control}
+                label="Data Início"
+                cols="12 12 3"
+                required
+                disabled={formularioBloqueado}
+                minDate={amanha}
+                getFormErrorMessage={() => null}
+              />
+            </div>
+          )}
 
           <div className="col-12 prototype-grupo-calculo-rubricas-section">
             <div className="prototype-grupo-calculo-abrangencia">
               <div className="prototype-grupo-calculo-section-heading">
                 <strong>Abrangência</strong>
-                {!podeGerenciarRubricas && (
-                  <span>Preencha os filtros para carregar as rubricas</span>
-                )}
+                <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
               </div>
               <div className="grid prototype-category-form-fields">
                 <DropdownFieldSeplag
@@ -10087,6 +14554,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   label="Regime Jurídico"
                   cols="12 12 3"
                   required
+                  disabled={formularioBloqueado}
                   options={grupoCalculoRegimeJuridicoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10098,6 +14566,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   label="Tipo de Vínculo"
                   cols="12 12 3"
                   required
+                  disabled={formularioBloqueado}
                   options={grupoCalculoTipoVinculoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10108,6 +14577,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Instituição"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoInstituicaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10118,6 +14588,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Órgão"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10128,6 +14599,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   control={control}
                   label="Herdar De"
                   cols="12 12 3"
+                  disabled={formularioBloqueado}
                   options={grupoCalculoSuperiorOptions}
                   optionLabel="label"
                   optionValue="value"
@@ -10140,23 +14612,28 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               <div className="prototype-grupo-calculo-rubricas-header">
                 <div>
                   <strong>Gerenciar Rubricas</strong>
-                  {!podeGerenciarRubricas && (
-                    <span>Preencha os filtros acima para carregar as rubricas</span>
-                  )}
+                  <span>
+                    {rubricasAtivasNoGrupo} rubrica(s) ativa(s) no grupo.
+                    Rubricas excluídas permanecem opacas para histórico.
+                  </span>
                 </div>
-                {podeGerenciarRubricas && (
-                  <BotaoSeplag
-                    type="button"
-                    label="Adicionar Rubrica"
-                    icon="pi pi-plus"
-                    className="prototype-grupo-calculo-add-rubrica-btn"
-                    onClick={handleAbrirModalAdicionarRubricas}
-                  />
-                )}
+                <BotaoSeplag
+                  type="button"
+                  label="Adicionar Rubrica"
+                  icon="pi pi-plus"
+                  className="prototype-grupo-calculo-add-rubrica-btn"
+                  disabled={formularioBloqueado}
+                  onClick={handleAbrirModalAdicionarRubricas}
+                />
               </div>
 
-              {podeGerenciarRubricas ? (
-                <div className="prototype-grupo-calculo-rubricas-list">
+              <div className="prototype-grupo-calculo-rubricas-legend">
+                <span><i className="prototype-legend-dot prototype-legend-dot--manual" />Manual</span>
+                <span><i className="prototype-legend-dot prototype-legend-dot--inherited" />Herdada</span>
+                <span><i className="prototype-legend-dot prototype-legend-dot--excluded" />Excluída/desmarcada</span>
+              </div>
+
+              <div className="prototype-grupo-calculo-rubricas-list">
                 <div className="prototype-grupo-calculo-rubricas-list-head">
                   <span aria-label="Ordenar" />
                   <span>#</span>
@@ -10170,20 +14647,29 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   rubricasGerenciadas.map((rubrica, index) => {
                   const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                   const tipoRubricaBadge = getGrupoCalculoRubricaTipoBadge(tipoRubrica);
-                  const rubricaBloqueada = rubrica.origem === "filtro";
-                  const rubricaFiltradaApagada =
-                    rubricaBloqueada && !rubrica.reordenada;
+                  const rubricaExcluida = Boolean(rubrica.excluida);
+                  const rubricaHerdada = rubrica.origem === "filtro";
+                  const rubricaManual = rubrica.origem === "manual";
+                  const posicaoRubrica = rubricaExcluida
+                    ? ""
+                    : rubricasGerenciadas
+                        .slice(0, index + 1)
+                        .filter((item) => !item.excluida).length;
 
                   return (
                     <div
                       key={rubrica.id}
                       className={`prototype-grupo-calculo-rubrica-row${
-                        rubricaFiltradaApagada ? " is-filtered" : ""
+                        rubricaExcluida ? " is-excluded" : ""
+                      }${rubricaHerdada && !rubricaExcluida ? " is-inherited" : ""
+                      }${rubricaManual && !rubricaExcluida ? " is-manual" : ""
                       }`}
-                      draggable
+                      draggable={!rubricaExcluida && !formularioBloqueado}
                       onDragStart={() => setRubricaDragIndex(index)}
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={() => {
+                        if (formularioBloqueado) return;
+                        if (rubricaExcluida) return;
                         if (rubricaDragIndex === null) return;
                         handleMoverRubricaGerenciada(rubricaDragIndex, index);
                         setRubricaDragIndex(null);
@@ -10198,7 +14684,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         <i className="pi pi-bars" aria-hidden="true" />
                       </button>
-                      <span>{index + 1}</span>
+                      <span>{posicaoRubrica}</span>
                       <code>{rubrica.codigo}</code>
                       <strong>{rubrica.nomeRubrica}</strong>
                       <span
@@ -10211,15 +14697,24 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         {tipoRubrica}
                       </span>
-                      {rubricaBloqueada ? (
+                      {rubricaExcluida ? (
                         <button
                           type="button"
-                          className="prototype-grupo-calculo-lock-rubrica-btn"
-                          title="Rubrica carregada pelos filtros"
-                          aria-label={`${rubrica.nomeRubrica} carregada pelos filtros`}
-                          disabled
+                          className="prototype-grupo-calculo-restore-rubrica-btn"
+                          title="Restaurar rubrica"
+                          aria-label={`Restaurar ${rubrica.nomeRubrica}`}
+                          disabled={formularioBloqueado}
+                          onClick={() =>
+                            setRubricasGerenciadas((current) =>
+                              current.map((item) =>
+                                item.id === rubrica.id
+                                  ? { ...item, excluida: false }
+                                  : item,
+                              ),
+                            )
+                          }
                         >
-                          <i className="pi pi-lock" aria-hidden="true" />
+                          <i className="pi pi-undo" aria-hidden="true" />
                         </button>
                       ) : (
                         <button
@@ -10227,6 +14722,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                           className="prototype-grupo-calculo-remove-rubrica-btn"
                           title="Remover rubrica"
                           aria-label={`Remover ${rubrica.nomeRubrica}`}
+                          disabled={formularioBloqueado}
                           onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
                         >
                           <i className="pi pi-trash" aria-hidden="true" />
@@ -10240,16 +14736,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                     Nenhuma rubrica adicionada.
                   </div>
                 )}
-                </div>
-              ) : (
-                <div className="prototype-grupo-calculo-rubricas-empty">
-                  <i className="pi pi-exclamation-circle" aria-hidden="true" />
-                  <span>
-                    Selecione o Regime Jurídico e Tipo de Vínculo para carregar
-                    as rubricas
-                  </span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
     </div>
@@ -10264,7 +14751,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title={`${isEdit ? "Alterar" : "Cadastrar"} - Grupos de Cálculo de Folha`}
+            title={`${isEdit ? (modoVersionamento ? "Versionar" : "Alterar") : "Cadastrar"} - Grupos de Cálculo de Folha`}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >
@@ -10276,23 +14763,122 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   type="button"
                   onClick={() => navigate("/prototipos/folha/grupos-calculo")}
                 />
-                <BotaoSalvarSeplag
-                  type="submit"
-                  label="Salvar Rascunho"
-                />
-                <BotaoSalvarSeplag
-                  type="button"
-                  label="Publicar"
-                  icon="pi pi-send"
-                  onClick={() => {}}
-                />
+                {!publicacaoConcluida && (
+                  <>
+                    {!modoVersionamento && (
+                      <BotaoSalvarSeplag
+                        type="submit"
+                        label="Salvar Rascunho"
+                      />
+                    )}
+                    <BotaoSalvarSeplag
+                      type="button"
+                      label={modoVersionamento ? `Publicar V${versaoEmEdicao}` : "Publicar"}
+                      icon="pi pi-send"
+                      onClick={handleAbrirModalPublicacao}
+                    />
+                  </>
+                )}
               </div>
             </div>
 
             <ModalSeplag
+              visible={modalPublicacaoAberto}
+              titulo={modoVersionamento ? `Publicar Versão V${versaoEmEdicao}` : "Publicar Grupo de Cálculo"}
+              tamanho="520px"
+              labelFechar="Cancelar"
+              customFooter={
+                <div className="prototype-grupo-calculo-publicacao-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    label="Cancelar"
+                    onClick={() => {
+                      setModalPublicacaoAberto(false);
+                      setPublicacaoFeedback("");
+                    }}
+                  />
+                  <BotaoSalvarSeplag
+                    type="button"
+                    label="Publicar"
+                    icon="pi pi-send"
+                    disabled={!credenciaisPublicacaoValidas}
+                    onClick={handleConfirmarPublicacao}
+                  />
+                </div>
+              }
+              fechar={() => {
+                setModalPublicacaoAberto(false);
+                setPublicacaoFeedback("");
+              }}
+            >
+              <div className="col-12 prototype-grupo-calculo-publicacao-modal">
+                {publicacaoFeedback ? (
+                  <div className="prototype-validation-panel">{publicacaoFeedback}</div>
+                ) : null}
+
+                <div className="prototype-grupo-calculo-publicacao-alerta">
+                  <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+                  <span>
+                    {modoVersionamento
+                      ? `Ao publicar a V${versaoEmEdicao}, ela passará a ser a versão ativa e a versão anterior será marcada como inativa. A nova versão ficará bloqueada para edição.`
+                      : "Ao publicar este grupo de cálculo, a versão V1 será criada como ativa e ficará bloqueada para edição. Alterações futuras deverão ser feitas por meio de uma nova versão."}
+                  </span>
+                </div>
+
+                <label>
+                  <span>Data Início</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="date"
+                    value={dataInicioPublicacao.split("/").reverse().join("-")}
+                    min={dataInicioV2.split("/").reverse().join("-")}
+                    onChange={(event) => {
+                      const [ano, mes, dia] = event.target.value.split("-");
+                      setDataInicioPublicacao(
+                        ano && mes && dia ? `${dia}/${mes}/${ano}` : "",
+                      );
+                    }}
+                  />
+                </label>
+
+                <label>
+                  <span>Usuário</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="text"
+                    value={credenciaisPublicacao.usuario}
+                    onChange={(event) =>
+                      setCredenciaisPublicacao((current) => ({
+                        ...current,
+                        usuario: event.target.value,
+                      }))
+                    }
+                    autoComplete="username"
+                  />
+                </label>
+
+                <label>
+                  <span>Senha</span>
+                  <input
+                    className="p-inputtext p-component"
+                    type="password"
+                    value={credenciaisPublicacao.senha}
+                    onChange={(event) =>
+                      setCredenciaisPublicacao((current) => ({
+                        ...current,
+                        senha: event.target.value,
+                      }))
+                    }
+                    autoComplete="current-password"
+                  />
+                </label>
+              </div>
+            </ModalSeplag>
+
+            <ModalSeplag
               visible={modalRubricasAberto}
               titulo="Adicionar Rubrica"
-              tamanho="720px"
+              tamanho="980px"
               labelFechar="Cancelar"
               labelAcao="Adicionar"
               iconAcao="pi pi-plus"
@@ -10303,23 +14889,45 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
               }}
             >
               <div className="col-12 prototype-grupo-calculo-modal-rubricas">
-                {rubricasDisponiveisParaAdicionar.length > 0 ? (
-                  rubricasDisponiveisParaAdicionar.map((rubrica) => {
+                <div className="prototype-grupo-calculo-modal-search">
+                  <span className="p-input-icon-left">
+                    <i className="pi pi-search" aria-hidden="true" />
+                    <input
+                      className="p-inputtext p-component"
+                      type="search"
+                      placeholder="Consultar por código, nome ou tipo da rubrica"
+                      value={rubricaTermoBusca}
+                      onChange={(event) => setRubricaTermoBusca(event.target.value)}
+                    />
+                  </span>
+                </div>
+
+                {rubricasParaAdicionar.length > 0 ? (
+                  rubricasParaAdicionar.map((rubrica) => {
                     const tipoRubrica = getGrupoCalculoRubricaTipo(rubrica);
                     const tipoRubricaBadge =
                       getGrupoCalculoRubricaTipoBadge(tipoRubrica);
+                    const rubricaNoGrupo = rubricasGerenciadas.find(
+                      (item) => item.id === rubrica.id,
+                    );
+                    const rubricaAtivaNoGrupo = Boolean(
+                      rubricaNoGrupo && !rubricaNoGrupo.excluida,
+                    );
                     const checked = rubricasSelecionadasParaAdicionar.includes(
                       rubrica.id,
-                    );
+                    ) || rubricaAtivaNoGrupo;
 
                     return (
                       <label
-                        className="prototype-grupo-calculo-modal-rubrica-item"
+                        className={`prototype-grupo-calculo-modal-rubrica-item${
+                          rubricaAtivaNoGrupo ? " is-added" : ""
+                        }`}
                         key={rubrica.id}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={rubricaAtivaNoGrupo}
                           onChange={() =>
                             handleToggleRubricaParaAdicionar(rubrica.id)
                           }
@@ -10338,12 +14946,17 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                         >
                           {tipoRubrica}
                         </span>
+                        {rubricaAtivaNoGrupo ? (
+                          <small>Já adicionada</small>
+                        ) : rubricaNoGrupo?.excluida ? (
+                          <small>Excluída do grupo</small>
+                        ) : null}
                       </label>
                     );
                   })
                 ) : (
                   <div className="prototype-grupo-calculo-modal-empty">
-                    Todas as rubricas disponíveis já foram adicionadas.
+                    Nenhuma rubrica encontrada para a consulta informada.
                   </div>
                 )}
               </div>
@@ -10985,4 +15598,902 @@ export function PrototiposConformidadePage() {
 
 export function PrototiposAuditoriaPage() {
   return <EmDesenvolvimentoPage nomeSistema="AUDITORIA" />;
+}
+
+export function PrototiposControleVagasVagasNumeradasPage() {
+  const navigate = useNavigate();
+
+  const handleEditar = (vaga: ControleVagasVagaNumeradaRow) => {
+    navigate(`/prototipos/sigep/controle-vagas/vagas-numeradas/${vaga.id}/editar`);
+  };
+
+  const totalVagasNumeradas = controleVagasVagaNumeradaMock.length;
+  const totalDisponiveis = controleVagasVagaNumeradaMock.filter(
+    (vaga) => vaga.situacao === "Disponível",
+  ).length;
+  const totalOcupadas = controleVagasVagaNumeradaMock.filter(
+    (vaga) => vaga.situacao === "Ocupada",
+  ).length;
+  const totalRestritas = controleVagasVagaNumeradaMock.filter((vaga) =>
+    ["Reservada", "Bloqueada"].includes(vaga.situacao),
+  ).length;
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Vagas Numeradas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-list">
+            <div className="prototype-controle-vagas-section-title prototype-controle-vagas-section-title--split">
+              <div>
+                <h3>Consulta de Vagas Numeradas</h3>
+                <p>
+                  Acompanhe vagas individualizadas por número, ocupação atual e situação.
+                </p>
+              </div>
+              <BotaoSeplag
+                type="button"
+                label="Adicionar Vaga Numerada"
+                icon="pi pi-plus"
+                onClick={() =>
+                  navigate("/prototipos/sigep/controle-vagas/vagas-numeradas/novo")
+                }
+              />
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Total</span>
+                <strong>{totalVagasNumeradas}</strong>
+              </div>
+              <div className="is-success">
+                <span>Disponíveis</span>
+                <strong>{totalDisponiveis}</strong>
+              </div>
+              <div className="is-info">
+                <span>Ocupadas</span>
+                <strong>{totalOcupadas}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Reservadas/Bloqueadas</span>
+                <strong>{totalRestritas}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-vagas-table">
+              <table className="prototype-simple-table">
+                <thead>
+                  <tr>
+                    <th>Código da Vaga</th>
+                    <th>Cargo/Função</th>
+                    <th>Órgão/Setor</th>
+                    <th>Ocupante Atual</th>
+                    <th>Ativação</th>
+                    <th>Situação</th>
+                    <th>Controle</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {controleVagasVagaNumeradaMock.map((vaga) => {
+                    const validacao = getControleVagasValidacaoVagaNumerada(vaga);
+
+                    return (
+                      <tr key={vaga.id}>
+                        <td>
+                          <strong>{vaga.numero}</strong>
+                        </td>
+                        <td>
+                          {vaga.cargoFuncao}
+                          <small>
+                            {
+                              controleVagasQuadroAutorizadoMock.find(
+                                (quadro) => quadro.id === vaga.quadroId,
+                              )?.codigo
+                            }
+                          </small>
+                        </td>
+                        <td>{vaga.orgaoSetor}</td>
+                        <td>
+                          {vaga.ocupacao?.pessoa ?? "-"}
+                          {vaga.ocupacao?.tipoVinculo && (
+                            <small>{vaga.ocupacao.tipoVinculo}</small>
+                          )}
+                        </td>
+                        <td>{vaga.dataAtivacao}</td>
+                        <td>{renderVagaNumeradaStatusBadge(vaga.situacao)}</td>
+                        <td>
+                          <span className={validacao.className}>
+                            {validacao.label}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="prototype-controle-vagas-row-actions">
+                            <BotaoIconSeplag
+                              type="button"
+                              icon="pi pi-eye"
+                              title="Visualizar vaga"
+                              onClick={() => handleEditar(vaga)}
+                            />
+                            <BotaoIconSeplag
+                              type="button"
+                              icon="pi pi-pencil"
+                              title="Editar vaga"
+                              onClick={() => handleEditar(vaga)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+              />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasVagasNumeradasFormPage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const vaga = controleVagasVagaNumeradaMock.find(
+    (item) => String(item.id) === id,
+  );
+  const isEditing = Boolean(id);
+  const [activeTab, setActiveTab] = useState("detalhes");
+
+  const { control } = useForm<ControleVagasVagaNumeradaForm>({
+    defaultValues: {
+      numero: vaga?.numero ?? "",
+      quadroId: vaga?.quadroId,
+      cargoFuncao: vaga?.cargoFuncao ?? "",
+      orgaoSetor: vaga?.orgaoSetor ?? "",
+      situacao: vaga?.situacao ?? "Disponível",
+      dataAtivacao: vaga?.dataAtivacao ?? "01/06/2026",
+      dataDesativacao: vaga?.dataDesativacao ?? "",
+      motivo: vaga?.motivo ?? "",
+      observacao: vaga?.observacao ?? "",
+    },
+  });
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={`${isEditing ? "Visualizar/Alterar" : "Cadastrar"} - Vaga Numerada`}
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-form">
+            <TabsSeplag
+              items={controleVagasVagaNumeradaTabs}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              equalWidth
+            />
+
+            {activeTab === "detalhes" && (
+              <div className="grid prototype-controle-vagas-form-section">
+                <TextFieldSeplag
+                  name="numero"
+                  control={control}
+                  label="Código da Vaga"
+                  cols="12 12 3"
+                  placeholder="Ex.: VA-001"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="quadroId"
+                  control={control}
+                  label="Quadro Autorizado"
+                  cols="12 12 3"
+                  options={controleVagasQuadroAutorizadoMock.map((quadro) => ({
+                    label: `${quadro.codigo} - ${quadro.cargoFuncao}`,
+                    value: quadro.id,
+                  }))}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="cargoFuncao"
+                  control={control}
+                  label="Cargo/Função"
+                  cols="12 12 3"
+                  options={controleVagasCargoFuncaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="orgaoSetor"
+                  control={control}
+                  label="Órgão/Setor"
+                  cols="12 12 3"
+                  options={controleVagasOrgaoSetorOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="situacao"
+                  control={control}
+                  label="Situação"
+                  cols="12 12 4"
+                  options={controleVagasVagaNumeradaSituacaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DateFieldSeplag
+                  name="dataAtivacao"
+                  control={control}
+                  label="Data de Ativação"
+                  cols="12 12 4"
+                  required
+                  getFormErrorMessage={() => null}
+                />
+                <DateFieldSeplag
+                  name="dataDesativacao"
+                  control={control}
+                  label="Data de Desativação"
+                  cols="12 12 4"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="motivo"
+                  control={control}
+                  label="Motivo"
+                  cols="12"
+                  placeholder="Motivo de bloqueio, reserva, desativação ou extinção"
+                  getFormErrorMessage={() => null}
+                />
+                <TextAreaFieldSeplag
+                  name="observacao"
+                  control={control}
+                  label="Observação"
+                  cols="12"
+                  rows={3}
+                  getFormErrorMessage={() => null}
+                />
+              </div>
+            )}
+
+            {activeTab === "ocupacao-atual" && (
+              <div className="prototype-controle-vagas-historico">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Ocupação Atual</h3>
+                  <p>Dados do servidor que está ocupando esta vaga atualmente.</p>
+                </div>
+                {vaga?.situacao === "Ocupada" ? (
+                  <div className="prototype-controle-vagas-ocupacao-card">
+                    <div>
+                      <span>Servidor</span>
+                      <strong>{vaga.ocupacao?.pessoa}</strong>
+                    </div>
+                    <div>
+                      <span>CPF</span>
+                      <strong>{vaga.ocupacao?.cpf}</strong>
+                    </div>
+                    <div>
+                      <span>Tipo de vínculo</span>
+                      <strong>{vaga.ocupacao?.tipoVinculo}</strong>
+                    </div>
+                    <div>
+                      <span>Data de ocupação</span>
+                      <strong>{vaga.ocupacao?.dataOcupacao}</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="prototype-empty-state">
+                    <p>A vaga não está ocupada no momento.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "historico" && (
+              <div className="prototype-controle-vagas-historico">
+                <div className="prototype-controle-vagas-section-title">
+                  <h3>Histórico da Vaga</h3>
+                  <p>Registro somente leitura das alterações simuladas para esta vaga.</p>
+                </div>
+                <div className="prototype-table-wrapper">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Data/Hora</th>
+                        <th>Evento</th>
+                        <th>Usuário</th>
+                        <th>Detalhe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controleVagasVagaNumeradaHistoricoMock.filter(h => h.vagaNumero === vaga?.numero).map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.dataHora}</td>
+                          <td>{item.evento}</td>
+                          <td>{item.usuario}</td>
+                          <td>{item.detalhe}</td>
+                        </tr>
+                      ))}
+                      {controleVagasVagaNumeradaHistoricoMock.filter(h => h.vagaNumero === vaga?.numero).length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="prototype-empty-table-cell">Nenhum histórico encontrado.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() =>
+                  navigate("/prototipos/sigep/controle-vagas/vagas-numeradas")
+                }
+              />
+              <BotaoSalvarSeplag type="button" label="Salvar" />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasIntegracaoPage() {
+  const navigate = useNavigate();
+  const { control, watch } = useForm<ControleVagasIntegracaoForm>({
+    defaultValues: {
+      vagaNumero: "VA-002",
+      pessoa: "ANA PAULA COSTA",
+      cpf: "456.789.123-00",
+      tipoVinculo: "Efetivo",
+    },
+  });
+  const [vagasSimuladas, setVagasSimuladas] = useState<
+    ControleVagasVagaNumeradaRow[]
+  >(controleVagasVagaNumeradaMock);
+  const [eventosIntegracao, setEventosIntegracao] = useState<
+    ControleVagasIntegracaoEventoRow[]
+  >([]);
+  const [resultadoIntegracao, setResultadoIntegracao] = useState<{
+    tipo: ControleVagasIntegracaoEventoRow["resultado"];
+    texto: string;
+  }>({
+    tipo: "Alerta",
+    texto: "Selecione uma vaga e execute uma ação para simular a integração.",
+  });
+
+  const valores = watch();
+  const vagaSelecionada = vagasSimuladas.find(
+    (vaga) => vaga.numero === valores.vagaNumero,
+  );
+  const quadroSelecionado = controleVagasQuadroAutorizadoMock.find(
+    (quadro) => quadro.id === vagaSelecionada?.quadroId,
+  );
+  const distribuicaoSelecionada =
+    getControleVagasDistribuicaoDaVaga(vagaSelecionada);
+  const saldoSelecionado = getControleVagasSaldoDistribuicaoSimulado(
+    distribuicaoSelecionada,
+    vagasSimuladas,
+  );
+
+  const registrarEventoIntegracao = (
+    evento: string,
+    resultado: ControleVagasIntegracaoEventoRow["resultado"],
+    detalhe: string,
+  ) => {
+    const dataHora = new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Cuiaba",
+    }).format(new Date());
+
+    setEventosIntegracao((eventos) => [
+      {
+        id: Date.now(),
+        dataHora,
+        evento,
+        vagaNumero: vagaSelecionada?.numero ?? "-",
+        resultado,
+        detalhe,
+      },
+      ...eventos,
+    ]);
+    setResultadoIntegracao({ tipo: resultado, texto: detalhe });
+  };
+
+  const validarOcupacao = () => {
+    if (!vagaSelecionada) {
+      return "Selecione uma vaga numerada para validar a operação.";
+    }
+
+    if (!quadroSelecionado) {
+      return "Operação bloqueada: a vaga selecionada não possui quadro autorizado vinculado.";
+    }
+
+    if (!distribuicaoSelecionada) {
+      return "Operação bloqueada: a vaga não possui distribuição compatível.";
+    }
+
+    if (saldoSelecionado.disponivel <= 0) {
+      return "Operação bloqueada: não há saldo disponível para a distribuição da vaga.";
+    }
+
+    if (quadroSelecionado.situacao !== STATUS_OPERACIONAL_VIGENCIA.ATIVO) {
+      return "Operação bloqueada: o quadro autorizado não está ativo.";
+    }
+
+    if (["Bloqueada", "Extinta", "Agendada"].includes(vagaSelecionada.situacao)) {
+      return `Operação bloqueada: a vaga está ${vagaSelecionada.situacao.toLowerCase()}.`;
+    }
+
+    if (vagaSelecionada.situacao === "Ocupada") {
+      return "Operação bloqueada: a vaga já está ocupada.";
+    }
+
+    if (
+      vagaSelecionada.situacao === "Reservada" &&
+      getControleVagasReservasAtivas(
+        vagaSelecionada.quadroId,
+        vagaSelecionada.orgaoSetor,
+      ).length === 0
+    ) {
+      return "Operação bloqueada: a vaga reservada não possui reserva ativa.";
+    }
+
+    return "";
+  };
+
+  const handleValidarSaldo = () => {
+    if (!vagaSelecionada || !distribuicaoSelecionada) {
+      registrarEventoIntegracao(
+        "Validação de saldo",
+        "Bloqueado",
+        "Não foi possível validar o saldo porque a vaga não possui distribuição compatível.",
+      );
+      return;
+    }
+
+    const mensagemBloqueio = validarOcupacao();
+    registrarEventoIntegracao(
+      "Validação de saldo",
+      mensagemBloqueio ? "Bloqueado" : "Sucesso",
+      mensagemBloqueio ||
+        `Saldo validado: ${saldoSelecionado.disponivel} vaga(s) disponível(is) para ${distribuicaoSelecionada.orgaoSetor}.`,
+    );
+  };
+
+  const handleOcuparVaga = () => {
+    const mensagemBloqueio = validarOcupacao();
+
+    if (mensagemBloqueio || !vagaSelecionada) {
+      registrarEventoIntegracao(
+        "Ocupação bloqueada",
+        "Bloqueado",
+        mensagemBloqueio || "Operação bloqueada por inconsistência da vaga.",
+      );
+      return;
+    }
+
+    setVagasSimuladas((vagas) =>
+      vagas.map((vaga) =>
+        vaga.numero === vagaSelecionada.numero
+          ? {
+              ...vaga,
+              situacao: "Ocupada",
+              ocupacao: {
+                id: Date.now(),
+                pessoa: valores.pessoa || "Pessoa não informada",
+                cpf: valores.cpf || "-",
+                cargoFuncao: vaga.cargoFuncao,
+                dataOcupacao: "03/06/2026",
+                tipoVinculo: valores.tipoVinculo || "Não informado",
+                nomeVinculo: "Ingresso funcional simulado",
+                observacao: "Ocupação gerada pela integração mockada.",
+              },
+              observacao: "Vaga ocupada pela integração com ingresso funcional.",
+            }
+          : vaga,
+      ),
+    );
+    registrarEventoIntegracao(
+      "Ocupação de vaga",
+      "Sucesso",
+      `Vaga ${vagaSelecionada.numero} ocupada por ${valores.pessoa || "pessoa não informada"}. Evento funcional registrado no histórico simulado.`,
+    );
+  };
+
+  const handleLiberarVaga = () => {
+    if (!vagaSelecionada) {
+      registrarEventoIntegracao(
+        "Liberação bloqueada",
+        "Bloqueado",
+        "Selecione uma vaga numerada para liberar.",
+      );
+      return;
+    }
+
+    if (vagaSelecionada.situacao !== "Ocupada") {
+      registrarEventoIntegracao(
+        "Liberação bloqueada",
+        "Bloqueado",
+        "Operação bloqueada: somente vagas ocupadas podem ser liberadas.",
+      );
+      return;
+    }
+
+    setVagasSimuladas((vagas) =>
+      vagas.map((vaga) =>
+        vaga.numero === vagaSelecionada.numero
+          ? {
+              ...vaga,
+              situacao: "Disponível",
+              ocupacao: undefined,
+              observacao: "Vaga liberada pela integração com evento funcional.",
+            }
+          : vaga,
+      ),
+    );
+    registrarEventoIntegracao(
+      "Liberação de vaga",
+      "Sucesso",
+      `Vaga ${vagaSelecionada.numero} liberada. Saldo da distribuição foi recomposto no mock.`,
+    );
+  };
+
+  const resultadoClassName =
+    resultadoIntegracao.tipo === "Sucesso"
+      ? "is-success"
+      : resultadoIntegracao.tipo === "Bloqueado"
+        ? "is-danger"
+        : "is-warning";
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Integração com Ingresso e Eventos Funcionais"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-integracao-page">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Simulação de Integração</h3>
+              <p>
+                Valide saldo, ocupe ou libere vagas e registre eventos funcionais em memória.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
+              <DropdownFieldSeplag
+                name="vagaNumero"
+                control={control}
+                label="Vaga Numerada"
+                cols="12 12 3"
+                options={vagasSimuladas.map((vaga) => ({
+                  label: `${vaga.numero} - ${vaga.cargoFuncao}`,
+                  value: vaga.numero,
+                }))}
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="pessoa"
+                control={control}
+                label="Pessoa"
+                cols="12 12 3"
+                placeholder="Nome da pessoa"
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="cpf"
+                control={control}
+                label="CPF"
+                cols="12 12 3"
+                placeholder="000.000.000-00"
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="tipoVinculo"
+                control={control}
+                label="Tipo de Vínculo"
+                cols="12 12 3"
+                options={[
+                  { label: "Efetivo", value: "Efetivo" },
+                  { label: "Designado", value: "Designado" },
+                  { label: "Comissionado", value: "Comissionado" },
+                  { label: "Contrato Temporário", value: "Contrato Temporário" },
+                ]}
+                getFormErrorMessage={() => null}
+              />
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Vaga selecionada</span>
+                <strong>{vagaSelecionada?.numero ?? "-"}</strong>
+              </div>
+              <div className="is-info">
+                <span>Situação atual</span>
+                <strong>{vagaSelecionada?.situacao ?? "-"}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Saldo disponível</span>
+                <strong>{saldoSelecionado.disponivel}</strong>
+              </div>
+              <div className="is-success">
+                <span>Ocupadas na distribuição</span>
+                <strong>{saldoSelecionado.ocupado}</strong>
+              </div>
+            </div>
+
+            <div className={`prototype-controle-vagas-integracao-result ${resultadoClassName}`}>
+              {resultadoIntegracao.texto}
+            </div>
+
+            <div className="prototype-controle-vagas-integracao-actions">
+              <BotaoSeplag
+                type="button"
+                label="Validar Saldo"
+                icon="pi pi-check-circle"
+                onClick={handleValidarSaldo}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Ocupar Vaga"
+                icon="pi pi-user-plus"
+                onClick={handleOcuparVaga}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Liberar Vaga"
+                icon="pi pi-user-minus"
+                onClick={handleLiberarVaga}
+              />
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-integracao-table">
+              <table className="prototype-simple-table">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Evento</th>
+                    <th>Vaga</th>
+                    <th>Resultado</th>
+                    <th>Detalhe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eventosIntegracao.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="prototype-empty-table-cell">
+                        Nenhum evento simulado.
+                      </td>
+                    </tr>
+                  ) : (
+                    eventosIntegracao.map((evento) => (
+                      <tr key={evento.id}>
+                        <td>{evento.dataHora}</td>
+                        <td>{evento.evento}</td>
+                        <td>{evento.vagaNumero}</td>
+                        <td>
+                          <span
+                            className={`prototype-badge ${
+                              evento.resultado === "Sucesso"
+                                ? "prototype-badge--success"
+                                : evento.resultado === "Bloqueado"
+                                  ? "prototype-badge--danger"
+                                  : "prototype-badge--warning"
+                            }`}
+                          >
+                            {evento.resultado}
+                          </span>
+                        </td>
+                        <td>{evento.detalhe}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate("/prototipos/sigep/controle-vagas")}
+              />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposControleVagasHistoricoPage() {
+  const navigate = useNavigate();
+  const { control } = useForm();
+  const totalEventosHistorico = controleVagasVagaNumeradaHistoricoMock.length;
+  const totalOcupacoesHistorico = controleVagasVagaNumeradaHistoricoMock.filter(
+    (item) => ["Ocupação", "Designação"].includes(item.evento),
+  ).length;
+  const totalEventosRestritivos = controleVagasVagaNumeradaHistoricoMock.filter(
+    (item) => ["Bloqueio", "Extinção"].includes(item.evento),
+  ).length;
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title="Histórico/Ocupação de Vagas"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-controle-vagas-historico-page">
+            <div className="prototype-controle-vagas-section-title">
+              <h3>Filtros de Histórico</h3>
+              <p>
+                Consulte eventos de ocupação, liberação, bloqueio e alterações de vagas.
+              </p>
+            </div>
+
+            <div className="grid prototype-controle-vagas-filtros prototype-controle-vagas-filtros-card">
+              <DropdownFieldSeplag
+                name="periodo"
+                control={control}
+                label="Período"
+                cols="12 12 3"
+                options={[{ label: 'Últimos 30 dias', value: '30d' }]}
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="cargoFuncao"
+                control={control}
+                label="Cargo/Função"
+                cols="12 12 3"
+                options={controleVagasCargoFuncaoOptions}
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="vaga"
+                control={control}
+                label="Vaga Numerada"
+                cols="12 12 3"
+                options={[{ label: 'Todas', value: '' }, { label: 'VA-001', value: 'VA-001' }, { label: 'VA-002', value: 'VA-002' }]}
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="evento"
+                control={control}
+                label="Evento"
+                cols="12 12 3"
+                options={[{ label: 'Todos', value: '' }, { label: 'Ocupação', value: 'ocupacao' }, { label: 'Reserva', value: 'reserva' }]}
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="pessoa"
+                control={control}
+                label="Pessoa/Vínculo"
+                cols="12 12 3"
+                placeholder="Nome, CPF ou vínculo"
+                getFormErrorMessage={() => null}
+              />
+              <TextFieldSeplag
+                name="usuario"
+                control={control}
+                label="Usuário"
+                cols="12 12 3"
+                placeholder="Responsável pelo evento"
+                getFormErrorMessage={() => null}
+              />
+            </div>
+            <div className="prototype-controle-vagas-filter-actions">
+              <BotaoSeplag type="button" label="Filtrar" icon="pi pi-filter" />
+              <BotaoLimparFiltroSeplag onClick={() => {}} />
+            </div>
+
+            <div className="prototype-controle-vagas-quadro-summary prototype-controle-vagas-quadro-summary--compact">
+              <div>
+                <span>Eventos</span>
+                <strong>{totalEventosHistorico}</strong>
+              </div>
+              <div className="is-info">
+                <span>Ocupações</span>
+                <strong>{totalOcupacoesHistorico}</strong>
+              </div>
+              <div className="is-warning">
+                <span>Restritivos</span>
+                <strong>{totalEventosRestritivos}</strong>
+              </div>
+            </div>
+
+            <div className="prototype-table-wrapper prototype-controle-vagas-historico-table">
+              <table className="prototype-simple-table">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Vaga</th>
+                    <th>Evento</th>
+                    <th>Usuário</th>
+                    <th>Detalhe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {controleVagasVagaNumeradaHistoricoMock.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.dataHora}</td>
+                      <td>{item.vagaNumero || '-'}</td>
+                      <td>
+                        <span className="prototype-controle-vagas-event-badge">
+                          {item.evento}
+                        </span>
+                      </td>
+                      <td>{item.usuario}</td>
+                      <td>{item.detalhe}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="prototype-form-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                icon="pi pi-arrow-left"
+                onClick={() => navigate('/prototipos/sigep/controle-vagas')}
+              />
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
 }
