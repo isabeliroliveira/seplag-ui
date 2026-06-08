@@ -41,6 +41,8 @@ import {
   PrototiposFolhaPagamentoLogPage,
   PrototiposFolhaPagamentoPage,
   PrototiposFolhaSolicitacoesAjustesPage,
+  PrototiposFolhaTabelaReferenciaVigenciaFormPage,
+  PrototiposFolhaTabelasReferenciaPage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
   PrototiposFolhaCatalogoRubricaViewPage,
@@ -457,6 +459,18 @@ function App() {
       <Route
         path="/prototipos/folha/grupo-eleitos"
         element={<PrototiposFolhaGrupoEleitosPage />}
+      />
+      <Route
+        path="/prototipos/folha/tabelas-referencia"
+        element={<PrototiposFolhaTabelasReferenciaPage />}
+      />
+      <Route
+        path="/prototipos/folha/tabelas-referencia/:tabelaId/vigencias/novo"
+        element={<PrototiposFolhaTabelaReferenciaVigenciaFormPage />}
+      />
+      <Route
+        path="/prototipos/folha/tabelas-referencia/:tabelaId/vigencias/:vigenciaId/editar"
+        element={<PrototiposFolhaTabelaReferenciaVigenciaFormPage />}
       />
       <Route
         path="/prototipos/folha/grupo-eleitos/novo"

@@ -21,6 +21,7 @@ import {
   DateFieldSeplag,
   CheckboxFieldSeplag,
   DropdownFieldSeplag,
+  MaskFieldSeplag,
   MultiSelectFieldSeplag,
   NumberFieldSeplag,
   SwitchFieldSeplag,
@@ -93,10 +94,18 @@ const FOLHA_COMPETENCIAS_BASE_PATH =
   "/prototipos/folha/processamento/competencias";
 const FOLHA_SOLICITACOES_AJUSTES_BASE_PATH =
   "/prototipos/folha/processamento/solicitacoes-ajustes";
+const FOLHA_TABELAS_REFERENCIA_BASE_PATH =
+  "/prototipos/folha/tabelas-referencia";
 const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
   `${FOLHA_PAGAMENTO_BASE_PATH}/execucoes/${execucaoId}/log`;
+const getFolhaTabelaReferenciaNovaVigenciaPath = (tabelaId: number) =>
+  `${FOLHA_TABELAS_REFERENCIA_BASE_PATH}/${tabelaId}/vigencias/novo`;
+const getFolhaTabelaReferenciaEditarVigenciaPath = (
+  tabelaId: number,
+  vigenciaId: number,
+) => `${FOLHA_TABELAS_REFERENCIA_BASE_PATH}/${tabelaId}/vigencias/${vigenciaId}/editar`;
 
 interface CargoConcursoRouteProps {
   routePrefix?: string;
@@ -281,7 +290,7 @@ const menuFolha: IMenuSeplag[] = [
     ],
   },
   {
-    label: "Configuração",
+    label: "Cadastro",
     icon: "pi pi-list",
     url: "#",
     visibleOnMenu: true,
@@ -304,6 +313,13 @@ const menuFolha: IMenuSeplag[] = [
         visibleOnRouter: true,
       },
       { label: "Parâmetros de Folha", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
+      {
+        label: "Tabelas de Referência",
+        icon: "pi pi-circle-on",
+        to: FOLHA_TABELAS_REFERENCIA_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
       { label: "Pensão Alimentícia", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão Especial", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
       { label: "Pensão por Morte", icon: "pi pi-circle-on", url: "#", visibleOnMenu: true, visibleOnRouter: true },
@@ -2665,8 +2681,8 @@ const folhaCompetenciaSituacaoOptions: {
   value: FolhaCompetenciaSituacao | "";
 }[] = [
   { label: "Todas", value: "" },
-  { label: "Ativa", value: "ATIVA" },
-  { label: "Fechada", value: "FECHADA" },
+  { label: "Vigente", value: "ATIVA" },
+  { label: "Encerrada", value: "FECHADA" },
 ];
 
 const grupoFolhaTipoOptions: { label: string; value: GrupoFolhaTipo | "" }[] = [
@@ -2759,12 +2775,217 @@ const solicitacaoAjusteFolhaSituacaoMeta: Record<
   CONCLUIDO: { label: "CONCLUÍDO", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
 };
 
+interface FolhaTabelaReferenciaFiltroForm {
+  tabela?: string;
+}
+
+interface FolhaTabelaReferenciaVigenciaRow {
+  id: number;
+  ano: string;
+  vigencia: ReactNode;
+  situacao: "Ativo" | "Inativo";
+}
+
+interface FolhaTabelaReferenciaRow {
+  id: number;
+  sigla: string;
+  nome: string;
+  vigencias: FolhaTabelaReferenciaVigenciaRow[];
+}
+
+interface FolhaTabelaReferenciaVigenciaForm {
+  descricao: string;
+  anoBase: string;
+  tetoPrevidenciario: string;
+  inicioVigencia: string;
+  fimVigencia: string;
+  observacoes: string;
+}
+
+interface FolhaTabelaReferenciaFaixaRow {
+  id: number;
+  ordem: number;
+  faixaInicial: string;
+  faixaFinal: string;
+  valorFaixa: string;
+  percentual: string;
+  contribuicaoFaixa: string;
+}
+
+const folhaTabelasReferenciaMock: FolhaTabelaReferenciaRow[] = [
+  {
+    id: 1,
+    sigla: "INSS",
+    nome: "INSTITUTO NACIONAL DO SEGURO SOCIAL",
+    vigencias: [
+      {
+        id: 101,
+        ano: "2026",
+        vigencia: (
+          <>
+            02/06/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+      {
+        id: 102,
+        ano: "2025",
+        vigencia: "01/06/2026 até 01/06/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 103,
+        ano: "2025",
+        vigencia: "28/05/2026 até 30/05/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 104,
+        ano: "2025",
+        vigencia: "20/05/2026 até 27/05/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 105,
+        ano: "2025",
+        vigencia: "03/02/2026 até 03/02/2026",
+        situacao: "Inativo",
+      },
+      {
+        id: 106,
+        ano: "500",
+        vigencia: "04/05/2026 até 06/05/2026",
+        situacao: "Inativo",
+      },
+    ],
+  },
+  {
+    id: 2,
+    sigla: "IRRF",
+    nome: "IMPOSTO DE RENDA RETIDO NA FONTE",
+    vigencias: [
+      {
+        id: 201,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/05/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+      {
+        id: 202,
+        ano: "2025",
+        vigencia: "01/01/2026 até 30/04/2026",
+        situacao: "Inativo",
+      },
+    ],
+  },
+  {
+    id: 3,
+    sigla: "RPPS",
+    nome: "REGIME PRÓPRIO DE PREVIDÊNCIA SOCIAL",
+    vigencias: [
+      {
+        id: 301,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+  {
+    id: 4,
+    sigla: "SALÁRIO MÍNIMO",
+    nome: "",
+    vigencias: [
+      {
+        id: 401,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+  {
+    id: 5,
+    sigla: "SALÁRIO FAMÍLIA",
+    nome: "",
+    vigencias: [
+      {
+        id: 501,
+        ano: "2026",
+        vigencia: (
+          <>
+            01/01/2026 até <em>vigente</em>
+          </>
+        ),
+        situacao: "Ativo",
+      },
+    ],
+  },
+];
+
+const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
+  {
+    id: 1,
+    ordem: 1,
+    faixaInicial: "R$ 0,01",
+    faixaFinal: "R$ 1.621,00",
+    valorFaixa: "R$ 1.621,00",
+    percentual: "7,5",
+    contribuicaoFaixa: "R$ 121,58",
+  },
+  {
+    id: 2,
+    ordem: 2,
+    faixaInicial: "R$ 1.621,01",
+    faixaFinal: "R$ 2.902,84",
+    valorFaixa: "R$ 1.281,84",
+    percentual: "9",
+    contribuicaoFaixa: "R$ 115,37",
+  },
+  {
+    id: 3,
+    ordem: 3,
+    faixaInicial: "R$ 2.902,85",
+    faixaFinal: "R$ 4.354,27",
+    valorFaixa: "R$ 1.451,43",
+    percentual: "12",
+    contribuicaoFaixa: "R$ 174,17",
+  },
+  {
+    id: 4,
+    ordem: 4,
+    faixaInicial: "R$ 4.354,28",
+    faixaFinal: "R$ 8.475,55",
+    valorFaixa: "R$ 4.121,28",
+    percentual: "14",
+    contribuicaoFaixa: "R$ 576,98",
+  },
+];
+
+const folhaTabelaReferenciaVigenciaTabs: TabItemSeplag[] = [
+  { label: "Dados Gerais", value: "dados-gerais" },
+  { label: "Faixa de Contribuição", value: "faixa-contribuicao" },
+];
+
 const folhaCompetenciaSituacaoMeta: Record<
   FolhaCompetenciaSituacao,
   { label: string; color: string; bg: string; border: string }
 > = {
-  ATIVA: { label: "Ativa", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
-  FECHADA: { label: "Fechada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
+  ATIVA: { label: "Vigente", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
+  FECHADA: { label: "Encerrada", color: "#334e68", bg: "#e2e8f0", border: "#e2e8f0" },
 };
 
 const folhaPagamentoExecucaoSituacaoMeta: Record<
@@ -9282,6 +9503,583 @@ export function PrototiposFolhaPage() {
   );
 }
 
+export function PrototiposFolhaTabelasReferenciaPage() {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<FolhaTabelaReferenciaFiltroForm>({
+    defaultValues: {
+      tabela: "",
+    },
+  });
+  const [linhasExpandidas, setLinhasExpandidas] = useState<number[]>([]);
+  const [filtrosVigencia, setFiltrosVigencia] = useState<
+    Record<number, { ano: string; status: "" | FolhaTabelaReferenciaVigenciaRow["situacao"] }>
+  >({});
+  const [feedback, setFeedback] = useState("");
+  const filtros = watch();
+  const termoTabela = filtros.tabela?.trim().toLowerCase() ?? "";
+
+  const tabelasFiltradas = folhaTabelasReferenciaMock.filter((tabela) => {
+    const descricao = `${tabela.sigla} ${tabela.nome}`.toLowerCase();
+    return !termoTabela || descricao.includes(termoTabela);
+  });
+
+  const toggleTabela = (id: number) => {
+    setLinhasExpandidas((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const renderSituacaoTabelaReferencia = (
+    situacao: FolhaTabelaReferenciaVigenciaRow["situacao"],
+  ) => {
+    const badgeClass =
+      situacao === "Ativo"
+        ? "prototype-badge prototype-badge--success"
+        : "prototype-badge prototype-badge--danger";
+
+    return <span className={badgeClass}>{situacao}</span>;
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-referencia-page">
+        {feedback ? (
+          <div className="prototype-validation-panel">{feedback}</div>
+        ) : null}
+
+        <CardSeplag
+          title="Tabelas de Referência"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="col-12 prototype-folha-referencia-filters">
+            <TextFieldSeplag
+              name="tabela"
+              control={control}
+              label="Tabela"
+              placeholder="Digite para buscar"
+              cols="12 12 4"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar Filtro"
+                icon="pi pi-refresh"
+                onClick={() => reset({ tabela: "" })}
+              />
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-referencia-list">
+            <div className="prototype-folha-referencia-list-head" />
+            {tabelasFiltradas.length ? (
+              tabelasFiltradas.map((tabela) => {
+                const isExpanded = linhasExpandidas.includes(tabela.id);
+                const filtroVigencia = filtrosVigencia[tabela.id] ?? {
+                  ano: "",
+                  status: "",
+                };
+                const vigenciasFiltradas = tabela.vigencias.filter((vigencia) => {
+                  const atendeAno =
+                    !filtroVigencia.ano.trim() ||
+                    vigencia.ano
+                      .toLowerCase()
+                      .includes(filtroVigencia.ano.trim().toLowerCase());
+                  const atendeStatus =
+                    !filtroVigencia.status ||
+                    vigencia.situacao === filtroVigencia.status;
+
+                  return atendeAno && atendeStatus;
+                });
+                const titulo = tabela.nome
+                  ? `${tabela.sigla}- ${tabela.nome}`
+                  : tabela.sigla;
+
+                return (
+                  <div className="prototype-folha-referencia-row" key={tabela.id}>
+                    <div className="prototype-folha-referencia-row-main">
+                      <strong>{titulo}</strong>
+                      <div className="prototype-folha-referencia-row-actions">
+                        <BotaoSeplag
+                          type="button"
+                          label="Nova Vigência"
+                          icon="pi pi-plus"
+                          onClick={() =>
+                            navigate(getFolhaTabelaReferenciaNovaVigenciaPath(tabela.id))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="prototype-folha-referencia-expand"
+                          aria-label={
+                            isExpanded ? "Recolher vigências" : "Expandir vigências"
+                          }
+                          onClick={() => toggleTabela(tabela.id)}
+                        >
+                          <i
+                            className={`pi ${
+                              isExpanded ? "pi-chevron-up" : "pi-chevron-down"
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded ? (
+                      <div className="prototype-folha-referencia-vigencias">
+                        <div className="prototype-folha-referencia-vigencia-filters">
+                          <label>
+                            <span>Ano</span>
+                            <input
+                              type="text"
+                              placeholder="Digite para buscar"
+                              value={filtroVigencia.ano}
+                              onChange={(event) =>
+                                setFiltrosVigencia((current) => ({
+                                  ...current,
+                                  [tabela.id]: {
+                                    ...filtroVigencia,
+                                    ano: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>Status</span>
+                            <select
+                              value={filtroVigencia.status}
+                              onChange={(event) =>
+                                setFiltrosVigencia((current) => ({
+                                  ...current,
+                                  [tabela.id]: {
+                                    ...filtroVigencia,
+                                    status: event.target
+                                      .value as typeof filtroVigencia.status,
+                                  },
+                                }))
+                              }
+                            >
+                              <option value="">Selecione...</option>
+                              <option value="Ativo">Ativo</option>
+                              <option value="Inativo">Inativo</option>
+                            </select>
+                          </label>
+                          <BotaoLimparFiltroSeplag
+                            type="button"
+                            label="Limpar Filtro"
+                            icon="pi pi-refresh"
+                            onClick={() =>
+                              setFiltrosVigencia((current) => ({
+                                ...current,
+                                [tabela.id]: { ano: "", status: "" },
+                              }))
+                            }
+                          />
+                        </div>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Ano</th>
+                              <th>Vigência</th>
+                              <th>Situação</th>
+                              <th>Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vigenciasFiltradas.map((vigencia) => (
+                              <tr key={vigencia.id}>
+                                <td>{vigencia.ano}</td>
+                                <td>{vigencia.vigencia}</td>
+                                <td>{renderSituacaoTabelaReferencia(vigencia.situacao)}</td>
+                                <td>
+                                  <div className="prototype-folha-referencia-actions">
+                                    <BotaoIconSeplag
+                                      type="button"
+                                      tooltip="Visualizar vigência"
+                                      icon="pi pi-eye"
+                                      onClick={() =>
+                                        setFeedback(
+                                          `Visualização da vigência ${vigencia.ano} selecionada.`,
+                                        )
+                                      }
+                                    />
+                                    <BotaoIconSeplag
+                                      severity="warning"
+                                      type="button"
+                                      tooltip="Editar vigência"
+                                      icon="pi pi-pencil"
+                                      onClick={() =>
+                                        navigate(
+                                          getFolhaTabelaReferenciaEditarVigenciaPath(
+                                            tabela.id,
+                                            vigencia.id,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {!vigenciasFiltradas.length ? (
+                              <tr>
+                                <td colSpan={4} className="prototype-empty-table-cell">
+                                  Nenhuma vigência encontrada.
+                                </td>
+                              </tr>
+                            ) : null}
+                          </tbody>
+                        </table>
+                        <div className="prototype-folha-referencia-pagination prototype-folha-referencia-pagination--inner">
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-double-left" aria-hidden="true" />
+                          </button>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-left" aria-hidden="true" />
+                          </button>
+                          <span>1</span>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-right" aria-hidden="true" />
+                          </button>
+                          <button type="button" disabled>
+                            <i className="pi pi-angle-double-right" aria-hidden="true" />
+                          </button>
+                          <select
+                            aria-label="Registros por página da vigência"
+                            value="10"
+                            onChange={() => {}}
+                          >
+                            <option value="10">10</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="prototype-folha-referencia-empty">
+                Nenhuma tabela encontrada.
+              </div>
+            )}
+            <div className="prototype-folha-referencia-pagination">
+              <button type="button" disabled>
+                <i className="pi pi-angle-double-left" aria-hidden="true" />
+              </button>
+              <button type="button" disabled>
+                <i className="pi pi-angle-left" aria-hidden="true" />
+              </button>
+              <span>1</span>
+              <button type="button" disabled>
+                <i className="pi pi-angle-right" aria-hidden="true" />
+              </button>
+              <button type="button" disabled>
+                <i className="pi pi-angle-double-right" aria-hidden="true" />
+              </button>
+              <select aria-label="Registros por página" value="10" onChange={() => {}}>
+                <option value="10">10</option>
+              </select>
+            </div>
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
+  const navigate = useNavigate();
+  const { tabelaId, vigenciaId } = useParams();
+  const tabela =
+    folhaTabelasReferenciaMock.find((item) => String(item.id) === tabelaId) ??
+    folhaTabelasReferenciaMock[0];
+  const isEditing = Boolean(vigenciaId);
+  const [activeTab, setActiveTab] = useState("dados-gerais");
+  const [dadosGeraisSalvos, setDadosGeraisSalvos] = useState(isEditing);
+  const [feedback, setFeedback] = useState("");
+  const [modalNovaFaixaAberto, setModalNovaFaixaAberto] = useState(false);
+  const { control, handleSubmit } = useForm<FolhaTabelaReferenciaVigenciaForm>({
+    defaultValues: {
+      descricao: isEditing ? "testeddd" : "",
+      anoBase: isEditing ? "2026" : "",
+      tetoPrevidenciario: isEditing ? "R$ 8.475,55" : "",
+      inicioVigencia: isEditing ? "02/06/2026" : "",
+      fimVigencia: "",
+      observacoes: "",
+    },
+  });
+  const tabsVigencia = folhaTabelaReferenciaVigenciaTabs.map((tab) =>
+    tab.value === "faixa-contribuicao"
+      ? { ...tab, disabled: !dadosGeraisSalvos }
+      : tab,
+  );
+  const tituloTabela = `TABELA - ${tabela.sigla}${
+    tabela.nome ? ` - ${tabela.nome}` : ""
+  }`;
+
+  const salvarVigencia = () => {
+    if (activeTab === "dados-gerais" && !dadosGeraisSalvos) {
+      setDadosGeraisSalvos(true);
+      setActiveTab("faixa-contribuicao");
+      setFeedback(
+        "Dados gerais salvos com sucesso. A aba Faixa de Contribuição foi habilitada.",
+      );
+      return;
+    }
+
+    setFeedback("Registro salvo com sucesso!");
+  };
+
+  const salvarNovaFaixa = () => {
+    setModalNovaFaixaAberto(false);
+    setFeedback("Faixa adicionada com sucesso!");
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <form onSubmit={handleSubmit(salvarVigencia)}>
+        <div className="prototype-page-content prototype-page-content--white prototype-folha-referencia-form-page">
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <CardSeplag
+            title={tituloTabela}
+            cols="12"
+            cardHeaderClassNames="prototype-regime-card"
+          >
+            <div className="col-12 prototype-folha-referencia-vigencia-form">
+              <TabsSeplag
+                items={tabsVigencia}
+                activeValue={activeTab}
+                onChange={setActiveTab}
+              />
+
+              <div className="prototype-folha-referencia-vigencia-panel">
+                {activeTab === "dados-gerais" ? (
+                  <>
+                    <div className="prototype-folha-referencia-vigencia-panel-title">
+                      <h3>Dados Gerais</h3>
+                    </div>
+                    <div className="grid prototype-folha-referencia-vigencia-fields">
+                      <TextFieldSeplag
+                        name="descricao"
+                        control={control}
+                        label="Descrição"
+                        required
+                        cols="12 12 8"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="anoBase"
+                        control={control}
+                        label="Ano Base"
+                        required
+                        cols="12 12 4"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="tetoPrevidenciario"
+                        control={control}
+                        label="Teto Previdenciário"
+                        required
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="inicioVigencia"
+                        control={control}
+                        label="Início da Vigência"
+                        required
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextFieldSeplag
+                        name="fimVigencia"
+                        control={control}
+                        label="Fim da Vigência"
+                        placeholder="dd/mm/aaaa"
+                        cols="12 12 3"
+                        getFormErrorMessage={() => null}
+                      />
+                      <TextAreaFieldSeplag
+                        name="observacoes"
+                        control={control}
+                        label="Observações"
+                        placeholder="Observações..."
+                        cols="12"
+                        rows={4}
+                        maxLength={500}
+                        getFormErrorMessage={() => null}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="prototype-folha-referencia-vigencia-panel-title">
+                      <h3>Faixa de Contribuição</h3>
+                    </div>
+                    <div className="prototype-folha-referencia-calculo-summary">
+                      <div>
+                        <span>Teto Previdenciário</span>
+                        <strong>R$ 8.475,55</strong>
+                      </div>
+                      <div>
+                        <span>Total de Faixas</span>
+                        <strong>4</strong>
+                      </div>
+                      <div>
+                        <span>Desconto Máximo CLT</span>
+                        <strong>R$ 988,09</strong>
+                      </div>
+                    </div>
+                    <div className="prototype-folha-referencia-faixa-toolbar">
+                      <BotaoSeplag
+                        type="button"
+                        label="Adicionar Faixa"
+                        icon="pi pi-plus"
+                        onClick={() => setModalNovaFaixaAberto(true)}
+                      />
+                    </div>
+                    <div className="prototype-folha-referencia-faixa-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Ordem</th>
+                            <th>Faixa Inicial</th>
+                            <th>Faixa Final</th>
+                            <th>Valor da Faixa</th>
+                            <th>Percentual (%)</th>
+                            <th>Contribuição da Faixa</th>
+                            <th>Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {folhaTabelaReferenciaFaixasMock.map((faixa) => (
+                            <tr key={faixa.id}>
+                              <td>{faixa.ordem}</td>
+                              <td>{faixa.faixaInicial}</td>
+                              <td>{faixa.faixaFinal}</td>
+                              <td>{faixa.valorFaixa}</td>
+                              <td>{faixa.percentual}</td>
+                              <td>{faixa.contribuicaoFaixa}</td>
+                              <td>
+                                <div className="prototype-folha-referencia-faixa-actions">
+                                  <button
+                                    type="button"
+                                    aria-label="Visualizar faixa"
+                                    onClick={() =>
+                                      setFeedback(`Faixa ${faixa.ordem} selecionada.`)
+                                    }
+                                  >
+                                    <i className="pi pi-eye" aria-hidden="true" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Abrir ações da faixa"
+                                    onClick={() =>
+                                      setFeedback(
+                                        `Ações da faixa ${faixa.ordem} abertas.`,
+                                      )
+                                    }
+                                  >
+                                    <i className="pi pi-chevron-down" aria-hidden="true" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="prototype-folha-referencia-pagination prototype-folha-referencia-pagination--inner">
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-double-left" aria-hidden="true" />
+                        </button>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-left" aria-hidden="true" />
+                        </button>
+                        <span>1</span>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-right" aria-hidden="true" />
+                        </button>
+                        <button type="button" disabled>
+                          <i className="pi pi-angle-double-right" aria-hidden="true" />
+                        </button>
+                        <select aria-label="Registros por página" value="10" onChange={() => {}}>
+                          <option value="10">10</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="prototype-category-form-footer prototype-folha-referencia-vigencia-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    label="Voltar"
+                    onClick={() => navigate(FOLHA_TABELAS_REFERENCIA_BASE_PATH)}
+                  />
+                  <BotaoSalvarSeplag type="submit" label="Salvar" />
+                </div>
+              </div>
+            </div>
+          </CardSeplag>
+
+          <ModalSeplag
+            visible={modalNovaFaixaAberto}
+            titulo="Nova Faixa"
+            tamanho="calc(100vw - 96px)"
+            fechar={() => setModalNovaFaixaAberto(false)}
+            labelFechar="Cancelar"
+            iconFechar="pi pi-arrow-left"
+            labelAcao="Salvar"
+            iconAcao="pi pi-save"
+            funcAcao={salvarNovaFaixa}
+          >
+            <div className="col-12 prototype-folha-referencia-nova-faixa-modal">
+              <div className="prototype-folha-referencia-nova-faixa-grid">
+                <label>
+                  <span>Ordem</span>
+                  <input type="text" value="4" readOnly />
+                </label>
+                <label>
+                  <span>Faixa Inicial</span>
+                  <input type="text" value="R$ 4.354,28" readOnly />
+                </label>
+                <label>
+                  <span>
+                    Faixa Final <strong>*</strong>
+                  </span>
+                  <input type="text" defaultValue="R$ 0,00" />
+                </label>
+                <label>
+                  <span>
+                    Percentual (%) <strong>*</strong>
+                  </span>
+                  <input type="text" placeholder="Ex.: 14" />
+                </label>
+              </div>
+            </div>
+          </ModalSeplag>
+        </div>
+      </form>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposFolhaGruposFolhaPage() {
   const navigate = useNavigate();
   const [grupos] = useState<GrupoFolhaRow[]>(() =>
@@ -9922,11 +10720,15 @@ export function PrototiposFolhaCompetenciasPage() {
   const getProximaCompetencia = (competencia: FolhaCompetenciaRow) => {
     const [ano, mes] = competencia.competencia.split("-").map(Number);
     const proximoMes = new Date(ano, mes, 1);
-    const dataInicio = new Date(proximoMes.getFullYear(), proximoMes.getMonth(), 1);
-    const competenciaIso = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, "0")}`;
-
+    const dataFimAtual = parseDataBr(competencia.dataFim);
+    const dataInicio = dataFimAtual
+      ? new Date(dataFimAtual)
+      : new Date(proximoMes.getFullYear(), proximoMes.getMonth(), 1);
+    if (dataFimAtual) {
+      dataInicio.setDate(dataInicio.getDate() + 1);
+    }
     return {
-      competencia: competenciaIso,
+      competencia: `${proximoMes.getFullYear()}-${String(proximoMes.getMonth() + 1).padStart(2, "0")}`,
       dataInicio: formatDataBr(dataInicio),
       dataFim: "",
     };
@@ -9942,12 +10744,8 @@ export function PrototiposFolhaCompetenciasPage() {
 
     if (!dataInicio) return fallback;
 
-    const competenciaIso = `${dataInicio.getFullYear()}-${String(
-      dataInicio.getMonth() + 1,
-    ).padStart(2, "0")}`;
-
     return {
-      competencia: competenciaIso,
+      competencia: fallback.competencia,
       dataInicio: formatDataBr(dataInicio),
       dataFim: "",
     };
@@ -10048,7 +10846,7 @@ export function PrototiposFolhaCompetenciasPage() {
     }
 
     if (competencias.some((item) => item.situacao === "ATIVA")) {
-      setFormFeedback("Já existe uma competência ativa. Feche a competência atual antes de abrir outra.");
+      setFormFeedback("Já existe uma competência vigente. Encerre a competência atual antes de abrir outra.");
       return;
     }
 
@@ -10078,7 +10876,7 @@ export function PrototiposFolhaCompetenciasPage() {
 
     setCompetencias((current) => [novaCompetencia, ...current]);
     setModalCadastroAberto(false);
-    setFeedback("Competência cadastrada com sucesso.");
+    setFeedback("Salvo com sucesso a Nova Competência!");
   };
 
   const fecharCompetencia = () => {
@@ -10135,7 +10933,7 @@ export function PrototiposFolhaCompetenciasPage() {
       return [novaCompetencia, ...currentFechadas];
     });
 
-    setFeedback("Competência fechada com sucesso. A competência do próximo mês foi aberta automaticamente.");
+    setFeedback("Competência encerrada com sucesso. A competência do próximo mês foi aberta automaticamente.");
     setCompetenciaParaFechar(null);
     setDataInicioProximaCompetencia("");
   };
@@ -10159,12 +10957,19 @@ export function PrototiposFolhaCompetenciasPage() {
         <BotaoIconSeplag
           type="button"
           icon="pi pi-lock"
-          tooltip="Fechar competência"
+          tooltip="Encerrar competência"
           onClick={() => abrirModalFecharCompetencia(row)}
         />
       ) : null}
     </div>
   );
+
+  const apagarCompetenciasSimulacao = () => {
+    setCompetencias([]);
+    setCompetenciaParaFechar(null);
+    setDataInicioProximaCompetencia("");
+    setFeedback("");
+  };
 
   return (
     <PrototypeSystemPage
@@ -10177,6 +10982,15 @@ export function PrototiposFolhaCompetenciasPage() {
           title="Configuração de Competência"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <BotaoIconSeplag
+              type="button"
+              icon="pi pi-trash"
+              tooltip="Apagar competências cadastradas"
+              severity="danger"
+              onClick={apagarCompetenciasSimulacao}
+            />
+          }
         >
           {feedback ? (
             <div className="prototype-validation-panel">{feedback}</div>
@@ -10216,29 +11030,48 @@ export function PrototiposFolhaCompetenciasPage() {
             </div>
           </div>
 
-          <div className="col-12 prototype-folha-pagamento-actions">
-            <BotaoSeplag
-              type="button"
-              label="Nova Competência"
-              icon="pi pi-plus"
-              onClick={abrirCadastroCompetencia}
-            />
-          </div>
-
           <div className="col-12 prototype-folha-pagamento-table">
-            <TablePaginadoSeplag
-              dataKey="id"
-              data={competenciasResults}
-              rows={10}
-              rowsPerPage={[10, 20, 50]}
-              paginator
-              lazy={false}
-              selectionMode={null}
-              columns={competenciaColumns}
-              hasEventoAcao
-              renderBotoes={renderAcoesCompetencia}
-              handleOnPageChange={() => {}}
-            />
+            {competencias.length === 0 ? (
+              <div className="prototype-competencia-empty-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Competência</th>
+                      <th>Data início</th>
+                      <th>Data fim</th>
+                      <th>Situação</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colSpan={5}>
+                        <BotaoSeplag
+                          type="button"
+                          label="Nova Competência"
+                          icon="pi pi-plus"
+                          onClick={abrirCadastroCompetencia}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <TablePaginadoSeplag
+                dataKey="id"
+                data={competenciasResults}
+                rows={10}
+                rowsPerPage={[10, 20, 50]}
+                paginator
+                lazy={false}
+                selectionMode={null}
+                columns={competenciaColumns}
+                hasEventoAcao
+                renderBotoes={renderAcoesCompetencia}
+                handleOnPageChange={() => {}}
+              />
+            )}
           </div>
         </CardSeplag>
 
@@ -10256,32 +11089,31 @@ export function PrototiposFolhaCompetenciasPage() {
               <div className="prototype-validation-panel">{formFeedback}</div>
             ) : null}
             <div className="grid prototype-category-form-fields">
-              <TextFieldSeplag
+              <MaskFieldSeplag
                 name="competencia"
                 control={formControl}
                 label="Competência"
+                mask="99/9999"
                 placeholder="MM/AAAA"
                 cols="12 12 4"
                 required
-                rules={{
-                  validate: (value) =>
-                    isMesAnoValido(value) || "Informe no formato MM/AAAA.",
-                }}
                 getFormErrorMessage={() => getFormErrorMessage("competencia")}
               />
-              <TextFieldSeplag
+              <MaskFieldSeplag
                 name="dataInicio"
                 control={formControl}
                 label="Data início"
+                mask="99/99/9999"
                 placeholder="DD/MM/AAAA"
                 cols="12 12 4"
                 required
                 getFormErrorMessage={() => getFormErrorMessage("dataInicio")}
               />
-              <TextFieldSeplag
+              <MaskFieldSeplag
                 name="dataFim"
                 control={formControl}
                 label="Data fim"
+                mask="99/99/9999"
                 placeholder="DD/MM/AAAA"
                 cols="12 12 4"
                 required
@@ -10302,21 +11134,21 @@ export function PrototiposFolhaCompetenciasPage() {
 
         <ModalSeplag
           visible={Boolean(competenciaParaFechar)}
-          titulo="Fechar Competência"
+          titulo="Fechamento da Competência"
           fechar={() => {
             setCompetenciaParaFechar(null);
             setDataInicioProximaCompetencia("");
           }}
-          labelFechar="Cancelar"
+          labelFechar="Não"
           iconFechar="pi pi-times"
-          labelAcao="Confirmar fechamento"
+          labelAcao="Sim"
           iconAcao="pi pi-lock"
           funcAcao={fecharCompetencia}
           tamanho="780px"
         >
           <div className="col-12 prototype-folha-pagamento-form prototype-fechar-competencia-modal">
             <div className="prototype-validation-panel prototype-fechar-competencia-alert">
-              Ao confirmar, a competência atual será fechada e uma nova competência será aberta automaticamente para o próximo mês.
+              Tem certeza que deseja encerrar a competência atual?
             </div>
             {competenciaParaFechar ? (
               <div className="prototype-fechar-competencia-summary">
