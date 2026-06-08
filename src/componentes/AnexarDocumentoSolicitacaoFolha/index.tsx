@@ -2,46 +2,11 @@ import RotuloSeplag from "../Rotulo";
 import { FileUpload } from "primereact/fileupload";
 import { useMemo, useCallback, useEffect, useRef } from "react";
 import { BotaoIconSeplag } from "../Botao";
+import type {
+  AnexarDocumentoSeplagProps,
+  ArquivoAnexadoSeplag,
+} from "../AnexarDocumento";
 import styles from "./style.module.css";
-
-export interface ArquivoAnexadoSeplag {
-  nome: string;
-  extensao: string;
-  contentType: string;
-  conteudoEmBase64: string;
-  tamanho?: string | number;
-}
-
-export interface AnexarDocumentoSeplagProps {
-  readonly fileUploadRef?: React.RefObject<FileUpload | null>;
-  readonly arquivoBase64?: ArquivoAnexadoSeplag | null;
-  readonly arquivosBase64?: ArquivoAnexadoSeplag[];
-  readonly handleViewArquivo: (
-    arquivo?: ArquivoAnexadoSeplag,
-    index?: number,
-  ) => void;
-  readonly onUploadDocument?: (event: any) => void;
-  readonly onRemoveArquivo?: (
-    arquivo?: ArquivoAnexadoSeplag,
-    index?: number,
-  ) => void;
-  readonly onDownloadArquivo?: (
-    arquivo: ArquivoAnexadoSeplag,
-    index: number,
-  ) => void;
-  readonly hideLabel?: boolean;
-  readonly label?: string;
-  readonly descricao?: string;
-  readonly cols?: string;
-  readonly canView?: boolean;
-  readonly canDownload?: boolean;
-  readonly multiple?: boolean;
-  readonly accept?: string;
-  readonly maxFileSize?: number;
-  readonly helpText?: string;
-  readonly className?: string;
-  readonly style?: React.CSSProperties;
-}
 
 function formatTamanho(tamanho?: string | number) {
   if (tamanho === undefined || tamanho === null || tamanho === "") return null;
@@ -56,7 +21,12 @@ function getIconByExtension(extensao: string) {
   return "pi pi-file";
 }
 
-export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
+export type AnexarDocumentoSolicitacaoFolhaSeplagProps =
+  AnexarDocumentoSeplagProps;
+
+export function AnexarDocumentoSolicitacaoFolhaSeplag(
+  props: AnexarDocumentoSolicitacaoFolhaSeplagProps,
+) {
   const {
     arquivoBase64,
     arquivosBase64,
@@ -81,7 +51,8 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
 
   const fileListRef = useRef<HTMLDivElement | null>(null);
   const arquivos = arquivosBase64 ?? (arquivoBase64 ? [arquivoBase64] : []);
-  const shouldShowUploader = Boolean(onUploadDocument) && (multiple || arquivos.length === 0);
+  const shouldShowUploader =
+    Boolean(onUploadDocument) && (multiple || arquivos.length === 0);
   const uploadKey = arquivos
     .map((arquivo, index) => `${arquivo.nome}-${arquivo.tamanho ?? index}`)
     .join("|");
@@ -171,14 +142,13 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
                 },
               }}
             />
-            <small className={styles.helpText}>
-              {helpText}
-            </small>
+            <small className={styles.helpText}>{helpText}</small>
           </div>
         )}
       </div>
     ),
     [
+      accept,
       arquivos,
       canDownload,
       canView,
@@ -186,10 +156,9 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
       fileUploadRef,
       handleRemove,
       handleView,
-      multiple,
-      accept,
-      maxFileSize,
       helpText,
+      maxFileSize,
+      multiple,
       onDownloadArquivo,
       onRemoveArquivo,
       onUploadDocument,
@@ -200,14 +169,14 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
 
   if (hideLabel) {
     return (
-      <div className={className ?? cols ?? "col-12 md:col-4"} style={style}>
+      <div className={className ?? cols ?? "col-12"} style={style}>
         {content}
       </div>
     );
   }
 
   return (
-    <RotuloSeplag nome={label || "Anexar Documento"} cols={cols || "12 4"}>
+    <RotuloSeplag nome={label || "Anexar Documento"} cols={cols || "12"}>
       <div className={className} style={style}>
         {content}
       </div>
@@ -215,4 +184,4 @@ export function AnexarDocumentoSeplag(props: AnexarDocumentoSeplagProps) {
   );
 }
 
-export default AnexarDocumentoSeplag;
+export default AnexarDocumentoSolicitacaoFolhaSeplag;

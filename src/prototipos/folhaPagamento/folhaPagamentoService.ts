@@ -2,6 +2,7 @@ import type {
   CreateFolhaCompetenciaRequest,
   CreateFolhaPagamentoRequest,
   CreateGrupoFolhaRequest,
+  CreateSolicitacaoAjusteFolhaRequest,
   ExecutarFolhaPagamentoRequest,
   FolhaCompetenciaRow,
   FolhaPagamentoExecucaoRow,
@@ -14,6 +15,7 @@ import type {
   GrupoFolhaVersaoRow,
   UpdateFolhaPagamentoRequest,
   UpdateGrupoFolhaRequest,
+  UpdateSolicitacaoAjusteFolhaRequest,
 } from "./types";
 
 const gruposFolhaMock: GrupoFolhaRow[] = [
@@ -1058,6 +1060,78 @@ export const folhaPagamentoMockRepository = {
     structuredClone(folhasPagamentoRubricaLogsMock),
   listarSolicitacoesAjusteFolha: (): SolicitacaoAjusteFolhaRow[] =>
     structuredClone(solicitacoesAjusteFolhaMock),
+  criarSolicitacaoAjusteFolha: (
+    request: CreateSolicitacaoAjusteFolhaRequest,
+  ): SolicitacaoAjusteFolhaRow => {
+    const novaSolicitacao: SolicitacaoAjusteFolhaRow = {
+      id:
+        Math.max(...solicitacoesAjusteFolhaMock.map((item) => item.id), 0) + 1,
+      numeroFolha: request.numeroFolha ?? "",
+      nomeFolha: request.nomeFolha ?? "",
+      competencia: request.competencia ?? "",
+      matriculaCpf:
+        request.escopo === "MATRICULA_CPF"
+          ? request.matriculasCpf?.join(", ") ?? ""
+          : "-",
+      grupoEleitos:
+        request.escopo === "GRUPO_ELEITOS" ? request.grupoEleitos ?? "" : "-",
+      solicitante: "Maria de Souza",
+      responsavelCorrecao: "-",
+      dataCriacao: request.dataCriacao ?? "",
+      dataFechamento: "-",
+      situacao: "NOVA",
+      motivoAbertura: request.motivoAbertura ?? "",
+    };
+
+    solicitacoesAjusteFolhaMock.unshift(novaSolicitacao);
+    solicitacoesAjusteFolhaHistoricoMock.unshift({
+      id:
+        Math.max(
+          ...solicitacoesAjusteFolhaHistoricoMock.map((item) => item.id),
+          0,
+        ) + 1,
+      solicitacaoId: novaSolicitacao.id,
+      situacaoDestino: "NOVA",
+      dataHora: `${novaSolicitacao.dataCriacao} 09:00`,
+      operador: novaSolicitacao.solicitante,
+      descricao: `Solicitação aberta pela Conformidade para ${novaSolicitacao.nomeFolha}.`,
+    });
+
+    return structuredClone(novaSolicitacao);
+  },
+  atualizarDadosSolicitacaoAjusteFolha: (
+    id: number,
+    request: UpdateSolicitacaoAjusteFolhaRequest,
+  ): SolicitacaoAjusteFolhaRow | undefined => {
+    const index = solicitacoesAjusteFolhaMock.findIndex(
+      (item) => item.id === id,
+    );
+    if (index < 0) return undefined;
+
+    solicitacoesAjusteFolhaMock[index] = {
+      ...solicitacoesAjusteFolhaMock[index],
+      numeroFolha:
+        request.numeroFolha ?? solicitacoesAjusteFolhaMock[index].numeroFolha,
+      nomeFolha:
+        request.nomeFolha ?? solicitacoesAjusteFolhaMock[index].nomeFolha,
+      competencia:
+        request.competencia ?? solicitacoesAjusteFolhaMock[index].competencia,
+      matriculaCpf:
+        request.escopo === "MATRICULA_CPF"
+          ? request.matriculasCpf?.join(", ") ?? ""
+          : "-",
+      grupoEleitos:
+        request.escopo === "GRUPO_ELEITOS" ? request.grupoEleitos ?? "" : "-",
+      motivoAbertura:
+        request.motivoAbertura ??
+        solicitacoesAjusteFolhaMock[index].motivoAbertura,
+      dataCriacao:
+        request.dataCriacao ?? solicitacoesAjusteFolhaMock[index].dataCriacao,
+      situacao: "NOVA",
+    };
+
+    return structuredClone(solicitacoesAjusteFolhaMock[index]);
+  },
   atualizarSolicitacaoAjusteFolha: (
     solicitacao: SolicitacaoAjusteFolhaRow,
   ): SolicitacaoAjusteFolhaRow | undefined => {
@@ -1129,6 +1203,12 @@ export const folhaPagamentoService = {
   // TODO backend: GET /solicitacoes-ajustes-folha
   listarSolicitacoesAjusteFolha:
     folhaPagamentoMockRepository.listarSolicitacoesAjusteFolha,
+  // TODO backend: POST /solicitacoes-ajustes-folha
+  criarSolicitacaoAjusteFolha:
+    folhaPagamentoMockRepository.criarSolicitacaoAjusteFolha,
+  // TODO backend: PUT /solicitacoes-ajustes-folha/{id}/dados
+  atualizarDadosSolicitacaoAjusteFolha:
+    folhaPagamentoMockRepository.atualizarDadosSolicitacaoAjusteFolha,
   // TODO backend: PUT /solicitacoes-ajustes-folha/{id}
   atualizarSolicitacaoAjusteFolha:
     folhaPagamentoMockRepository.atualizarSolicitacaoAjusteFolha,

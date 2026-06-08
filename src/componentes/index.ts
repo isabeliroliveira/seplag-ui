@@ -83,6 +83,9 @@ export type {
   ArquivoAnexadoSeplag,
 } from "./AnexarDocumento";
 
+export { AnexarDocumentoSolicitacaoFolhaSeplag } from "./AnexarDocumentoSolicitacaoFolha";
+export type { AnexarDocumentoSolicitacaoFolhaSeplagProps } from "./AnexarDocumentoSolicitacaoFolha";
+
 export { DocumentosLegaisAssociadosSeplag } from "./DocumentosLegaisAssociados";
 export type {
   DocumentoLegalAssociadoSeplag,
