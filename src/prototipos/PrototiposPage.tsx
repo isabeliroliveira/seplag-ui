@@ -2742,6 +2742,12 @@ const solicitacaoAjusteFolhaCompetenciaOptions = [
   { label: "03/2026", value: "03/2026" },
 ];
 
+const solicitacaoAjusteFolhaGrupoEleitosOptions = [
+  { label: "SERVIDORES COMISSIONADOS", value: "SERVIDORES COMISSIONADOS" },
+  { label: "SERVIDORES CONTRATADOS", value: "SERVIDORES CONTRATADOS" },
+  { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
+];
+
 const solicitacaoAjusteFolhaSituacaoMeta: Record<
   SolicitacaoAjusteFolhaSituacao,
   { label: string; color: string; bg: string; border: string }
@@ -5112,7 +5118,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                       name="orgaoSetor"
                       control={distribuicaoControl}
                       label="Órgão/Setor"
-                      cols="12 12 5"
+                      cols="12 12 4"
                       options={controleVagasDistribuicaoOrgaoSetorOptions}
                       optionLabel="label"
                       optionValue="value"
@@ -5133,7 +5139,7 @@ export function PrototiposControleVagasQuadroAutorizadoFormPage() {
                       placeholder="Descrição curta"
                       getFormErrorMessage={() => null}
                     />
-                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-1">
+                    <div className="prototype-controle-vagas-distribuicao-action col-12 md:col-12 lg:col-2">
                       <BotaoSeplag
                         type="button"
                         label="Adicionar"
@@ -12462,6 +12468,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
         termoFolha: "",
         competencias: [],
         matriculaCpf: "",
+        gruposEleitos: [],
         situacoes: [],
       },
     });
@@ -12493,11 +12500,20 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
       const atendePessoa =
         !termoPessoa ||
         solicitacao.matriculaCpf.toLowerCase().includes(termoPessoa);
+      const atendeGrupoEleitos =
+        !filtros.gruposEleitos?.length ||
+        filtros.gruposEleitos.includes(solicitacao.grupoEleitos);
       const atendeSituacao =
         !filtros.situacoes?.length ||
         filtros.situacoes.includes(solicitacao.situacao);
 
-      return atendeFolha && atendeCompetencia && atendePessoa && atendeSituacao;
+      return (
+        atendeFolha &&
+        atendeCompetencia &&
+        atendePessoa &&
+        atendeGrupoEleitos &&
+        atendeSituacao
+      );
     })
     .sort((a, b) => Number(a.numeroFolha) - Number(b.numeroFolha));
 
@@ -12848,18 +12864,14 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           <div className="prototype-validation-panel">{feedback}</div>
         ) : null}
 
-        <CardSeplag
-          title="Filtros de Consulta"
-          cols="12"
-          cardHeaderClassNames="prototype-regime-card"
-        >
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters prototype-solicitacoes-ajustes-filters">
             <TextFieldSeplag
               name="termoFolha"
               control={control}
               label="Número da Folha ou Nome da Folha"
               placeholder="Digite o número ou nome da folha"
-              cols="12 12 4"
+              cols="12 12 3"
               getFormErrorMessage={() => null}
             />
             <MultiSelectFieldSeplag
@@ -12874,12 +12886,24 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
               selectedItemsLabel="{0} competências selecionadas"
               getFormErrorMessage={() => null}
             />
+            <MultiSelectFieldSeplag
+              name="gruposEleitos"
+              control={control}
+              label="Grupo de Eleitos"
+              placeholder="Selecione o grupo"
+              cols="12 12 2"
+              options={solicitacaoAjusteFolhaGrupoEleitosOptions}
+              optionLabel="label"
+              optionValue="value"
+              selectedItemsLabel="{0} grupos selecionados"
+              getFormErrorMessage={() => null}
+            />
             <TextFieldSeplag
               name="matriculaCpf"
               control={control}
               label="Matrícula ou CPF"
               placeholder="Digite a matrícula ou CPF"
-              cols="12 12 3"
+              cols="12 12 2"
               getFormErrorMessage={() => null}
             />
             <MultiSelectFieldSeplag
@@ -12904,15 +12928,12 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
                     termoFolha: "",
                     competencias: [],
                     matriculaCpf: "",
+                    gruposEleitos: [],
                     situacoes: [],
                   })
                 }
               />
             </div>
-          </div>
-          <div className="col-12 prototype-solicitacoes-ajustes-hint">
-            Os campos textuais sugerem resultados a partir de 3 caracteres. A
-            filtragem é aplicada automaticamente.
           </div>
         </CardSeplag>
 

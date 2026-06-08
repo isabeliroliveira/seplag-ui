@@ -1323,6 +1323,43 @@
   font-size: 0.85rem;
 }
 
+.prototype-solicitacoes-ajustes-filters {
+  align-items: flex-end;
+  row-gap: 12px;
+  padding-top: 4px;
+}
+
+.prototype-solicitacoes-ajustes-filters [class*="content-rotulo"] {
+  margin-bottom: 5px;
+}
+
+.prototype-solicitacoes-ajustes-filters label,
+.prototype-solicitacoes-ajustes-filters .font-bold,
+.prototype-solicitacoes-ajustes-filters [class*="label-rotulo"] {
+  color: #52616b;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.prototype-solicitacoes-ajustes-filters .p-inputtext,
+.prototype-solicitacoes-ajustes-filters .p-dropdown,
+.prototype-solicitacoes-ajustes-filters .p-multiselect {
+  width: 100%;
+  min-height: 40px;
+  font-size: 0.9rem;
+}
+
+.prototype-solicitacoes-ajustes-filters .p-dropdown-label,
+.prototype-solicitacoes-ajustes-filters .p-multiselect-label {
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.prototype-solicitacoes-ajustes-filters .p-multiselect-token {
+  font-size: 0.78rem;
+}
+
 .prototype-solicitacoes-ajustes-card-actions {
   display: flex;
   align-items: center;
@@ -1344,6 +1381,8 @@
 .prototype-solicitacoes-ajustes-filters .prototype-category-clear .p-button {
   width: 96px;
   min-width: 96px;
+  height: 40px;
+  font-size: 0.9rem;
 }
 
 .prototype-solicitacoes-ajustes-table .p-datatable-wrapper {
@@ -4938,11 +4977,14 @@
 .prototype-controle-vagas-distribuicao-action {
   display: flex;
   align-items: flex-end;
+  min-width: 0;
 }
 
 .prototype-controle-vagas-distribuicao-action .p-button {
   width: 100%;
+  min-width: 0;
   height: 40px;
+  justify-content: center;
 }
 
 .prototype-controle-vagas-distribuicoes-table th:nth-child(n + 2),
@@ -4966,6 +5008,11 @@
 
 .prototype-controle-vagas-distribuicoes-table .prototype-sistema-status-badge {
   margin: 0 auto;
+}
+
+.prototype-controle-vagas-distribuicoes-table th:last-child,
+.prototype-controle-vagas-distribuicoes-table td:last-child {
+  width: 128px;
 }
 
 .prototype-controle-vagas-reservas-table th:nth-child(3),

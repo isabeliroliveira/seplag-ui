@@ -120,6 +120,7 @@ export interface SolicitacaoAjusteFolhaFiltroForm {
   termoFolha?: string;
   competencias?: string[];
   matriculaCpf?: string;
+  gruposEleitos?: string[];
   situacoes?: SolicitacaoAjusteFolhaSituacao[];
 }
 
