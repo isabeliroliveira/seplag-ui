@@ -2586,37 +2586,17 @@
 }
 
 .prototype-fechar-competencia-summary > div {
-  display: flex;
-  flex-direction: column;
-  min-height: 188px;
-}
-
-.prototype-fechar-competencia-date-field {
-  margin-top: auto;
-}
-
-.prototype-fechar-competencia-summary > div > p + .prototype-fechar-competencia-date-field {
-  margin-top: auto;
-}
-
-.prototype-fechar-competencia-summary {
-  align-items: stretch;
-}
-
-.prototype-fechar-competencia-summary > div {
   display: flex !important;
   flex-direction: column;
   min-height: 188px;
-}
-
-.prototype-fechar-competencia-summary .prototype-fechar-competencia-date-field {
-  margin-top: auto !important;
-}
-  min-height: 142px;
   padding: 18px 20px;
   border: 1px solid #d7e2ec;
   border-radius: 6px;
   background: #f8fafc;
+}
+
+.prototype-fechar-competencia-summary .prototype-fechar-competencia-date-field {
+  margin-top: auto !important;
 }
 
 .prototype-fechar-competencia-summary span {
