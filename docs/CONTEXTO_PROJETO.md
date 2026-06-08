@@ -185,6 +185,48 @@ Primeira implementação:
 - Criada a rota vazia `/prototipos/folha/penhora-judicial`.
 - A tela inicial da funcionalidade foi criada sem conteúdo visível por enquanto, apenas para validar navegação e posicionamento no menu.
 
+## Status Atual do Módulo Folha de Pagamento
+
+Em 08/06/2026 foi consolidado o status de implementação do módulo **Folha de Pagamento** em um documento próprio:
+
+```text
+docs/folha-pagamento-status-implementacao.md
+```
+
+Esse documento deve ser usado como referência principal para continuar o trabalho no módulo Folha.
+
+Principais entregas já documentadas:
+
+- Tela **Solicitações de Ajustes da Folha de Pagamento**.
+- Fluxo completo do botão **Nova Solicitação**.
+- Tela de cadastro, edição e visualização da solicitação de ajuste.
+- Regras de perfil Conformidade e Folha de Pagamento.
+- Ações de iniciar, reiniciar, finalizar, devolver e concluir solicitação.
+- Histórico da solicitação com linha do tempo.
+- Upload/anexo de documentos usando `AnexarDocumentoSeplag`.
+- Tela **Configuração de Competência**.
+- Fluxo de abertura e fechamento de competência.
+- Tela **Tabelas de Referência** com protótipo da tabela INSS.
+- Ajustes no componente `AnexarDocumentoSeplag`.
+- Publicação em GitHub Pages.
+
+Rotas principais do módulo Folha:
+
+```text
+/#/prototipos/folha
+/#/prototipos/folha/processamento/solicitacoes-ajustes
+/#/prototipos/folha/processamento/competencias
+/#/prototipos/folha/processamento/folha-pagamento
+/#/prototipos/folha/cadastro/tabelas-referencia
+/#/prototipos/folha/cadastro/grupo-eleitos
+```
+
+URL publicada:
+
+```text
+https://taylor-SEPLAG.github.io/seplag-ui/
+```
+
 ## Componente de Situação e Vigência
 
 Em 08/05/2026 foi analisada a US `USXXX – Componente de Situação e Vigência.pdf`. A US define um componente reutilizável para padronizar, nos cadastros do sistema, o controle de situação, vigência e status operacional.

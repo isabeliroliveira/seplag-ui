@@ -29,6 +29,7 @@
   - [UnsavedChanges](#unsavedchanges)
 - [OAuth2](#oauth2)
 - [Tokens de design](#tokens-de-design)
+- [Documentação de protótipos](#documentação-de-protótipos)
 - [Desenvolvimento](#desenvolvimento)
 
 ---
@@ -525,6 +526,18 @@ const estiloCustom = {
 | `SEPLAG_WARNING`       | Alerta                      |
 | `SEPLAG_DANGER`        | Erro / exclusão             |
 | `SEPLAG_INFO`          | Informação                  |
+
+---
+
+## Documentação de protótipos
+
+O repositório também mantém documentos de contexto e status para continuidade dos protótipos:
+
+| Documento | Conteúdo |
+| --------- | -------- |
+| `docs/CONTEXTO_PROJETO.md` | Visão geral do projeto, decisões já tomadas, rotas e orientações para continuar o trabalho. |
+| `docs/folha-pagamento-status-implementacao.md` | Status do módulo Folha de Pagamento, incluindo Solicitações de Ajustes da Folha, Competência e Tabelas de Referência. |
+| `docs/controle-vagas-status-implementacao.md` | Status do protótipo de Controle de Vagas em Gestão de Pessoas. |
 
 ---
 
