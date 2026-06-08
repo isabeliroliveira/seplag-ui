@@ -2807,9 +2807,13 @@ interface FolhaTabelaReferenciaFaixaRow {
   ordem: number;
   faixaInicial: string;
   faixaFinal: string;
-  valorFaixa: string;
   percentual: string;
   contribuicaoFaixa: string;
+}
+
+interface FolhaTabelaReferenciaNovaFaixaForm {
+  faixaFinal: string;
+  percentual: string;
 }
 
 const folhaTabelasReferenciaMock: FolhaTabelaReferenciaRow[] = [
@@ -2942,7 +2946,6 @@ const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
     ordem: 1,
     faixaInicial: "R$ 0,01",
     faixaFinal: "R$ 1.621,00",
-    valorFaixa: "R$ 1.621,00",
     percentual: "7,5",
     contribuicaoFaixa: "R$ 121,58",
   },
@@ -2951,7 +2954,6 @@ const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
     ordem: 2,
     faixaInicial: "R$ 1.621,01",
     faixaFinal: "R$ 2.902,84",
-    valorFaixa: "R$ 1.281,84",
     percentual: "9",
     contribuicaoFaixa: "R$ 115,37",
   },
@@ -2960,7 +2962,6 @@ const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
     ordem: 3,
     faixaInicial: "R$ 2.902,85",
     faixaFinal: "R$ 4.354,27",
-    valorFaixa: "R$ 1.451,43",
     percentual: "12",
     contribuicaoFaixa: "R$ 174,17",
   },
@@ -2969,7 +2970,6 @@ const folhaTabelaReferenciaFaixasMock: FolhaTabelaReferenciaFaixaRow[] = [
     ordem: 4,
     faixaInicial: "R$ 4.354,28",
     faixaFinal: "R$ 8.475,55",
-    valorFaixa: "R$ 4.121,28",
     percentual: "14",
     contribuicaoFaixa: "R$ 576,98",
   },
@@ -2979,6 +2979,44 @@ const folhaTabelaReferenciaVigenciaTabs: TabItemSeplag[] = [
   { label: "Dados Gerais", value: "dados-gerais" },
   { label: "Faixa de Contribuição", value: "faixa-contribuicao" },
 ];
+
+const parseMoedaReferencia = (valor: string) => {
+  const normalized = valor
+    .replace(/[R$\s.]/g, "")
+    .replace(",", ".")
+    .trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatMoedaReferencia = (valor: number) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(valor);
+
+const getProximaFaixaInicialReferencia = (
+  faixas: FolhaTabelaReferenciaFaixaRow[],
+) => {
+  const ultimaFaixa = faixas[faixas.length - 1];
+  if (!ultimaFaixa) return "R$ 0,01";
+
+  return formatMoedaReferencia(parseMoedaReferencia(ultimaFaixa.faixaFinal) + 0.01);
+};
+
+const calcularContribuicaoFaixaReferencia = (
+  faixaInicial: string,
+  faixaFinal: string,
+  percentual: string,
+) => {
+  const inicio = parseMoedaReferencia(faixaInicial);
+  const fim = parseMoedaReferencia(faixaFinal);
+  const aliquota = Number(percentual.replace(",", "."));
+  const base = Math.max(fim - Math.max(inicio - 0.01, 0), 0);
+  const contribuicao = base * (Number.isFinite(aliquota) ? aliquota / 100 : 0);
+
+  return formatMoedaReferencia(contribuicao);
+};
 
 const folhaCompetenciaSituacaoMeta: Record<
   FolhaCompetenciaSituacao,
@@ -9806,6 +9844,15 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [dadosGeraisSalvos, setDadosGeraisSalvos] = useState(isEditing);
   const [feedback, setFeedback] = useState("");
+  const [faixasVigencia, setFaixasVigencia] =
+    useState<FolhaTabelaReferenciaFaixaRow[]>(() =>
+      isEditing ? folhaTabelaReferenciaFaixasMock : [],
+    );
+  const [novaFaixaForm, setNovaFaixaForm] =
+    useState<FolhaTabelaReferenciaNovaFaixaForm>({
+      faixaFinal: "R$ 0,00",
+      percentual: "",
+    });
   const [modalNovaFaixaAberto, setModalNovaFaixaAberto] = useState(false);
   const { control, handleSubmit } = useForm<FolhaTabelaReferenciaVigenciaForm>({
     defaultValues: {
@@ -9825,6 +9872,17 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
   const tituloTabela = `TABELA - ${tabela.sigla}${
     tabela.nome ? ` - ${tabela.nome}` : ""
   }`;
+  const proximaOrdemFaixa = faixasVigencia.length + 1;
+  const proximaFaixaInicial = getProximaFaixaInicialReferencia(faixasVigencia);
+  const descontoMaximo = faixasVigencia.reduce(
+    (total, faixa) => total + parseMoedaReferencia(faixa.contribuicaoFaixa),
+    0,
+  );
+
+  const abrirModalNovaFaixa = () => {
+    setNovaFaixaForm({ faixaFinal: "R$ 0,00", percentual: "" });
+    setModalNovaFaixaAberto(true);
+  };
 
   const salvarVigencia = () => {
     if (activeTab === "dados-gerais" && !dadosGeraisSalvos) {
@@ -9840,6 +9898,29 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
   };
 
   const salvarNovaFaixa = () => {
+    const faixaFinal = novaFaixaForm.faixaFinal.trim() || "R$ 0,00";
+    const percentual = novaFaixaForm.percentual.trim();
+
+    if (!percentual || parseMoedaReferencia(faixaFinal) <= 0) {
+      setFeedback("Informe Faixa Final e Percentual (%) para adicionar a faixa.");
+      return;
+    }
+
+    setFaixasVigencia((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        ordem: current.length + 1,
+        faixaInicial: getProximaFaixaInicialReferencia(current),
+        faixaFinal,
+        percentual,
+        contribuicaoFaixa: calcularContribuicaoFaixaReferencia(
+          getProximaFaixaInicialReferencia(current),
+          faixaFinal,
+          percentual,
+        ),
+      },
+    ]);
     setModalNovaFaixaAberto(false);
     setFeedback("Faixa adicionada com sucesso!");
   };
@@ -9939,11 +10020,11 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
                       </div>
                       <div>
                         <span>Total de Faixas</span>
-                        <strong>4</strong>
+                        <strong>{faixasVigencia.length}</strong>
                       </div>
                       <div>
                         <span>Desconto Máximo CLT</span>
-                        <strong>R$ 988,09</strong>
+                        <strong>{formatMoedaReferencia(descontoMaximo)}</strong>
                       </div>
                     </div>
                     <div className="prototype-folha-referencia-faixa-toolbar">
@@ -9951,7 +10032,7 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
                         type="button"
                         label="Adicionar Faixa"
                         icon="pi pi-plus"
-                        onClick={() => setModalNovaFaixaAberto(true)}
+                        onClick={abrirModalNovaFaixa}
                       />
                     </div>
                     <div className="prototype-folha-referencia-faixa-table">
@@ -9961,19 +10042,17 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
                             <th>Ordem</th>
                             <th>Faixa Inicial</th>
                             <th>Faixa Final</th>
-                            <th>Valor da Faixa</th>
                             <th>Percentual (%)</th>
                             <th>Contribuição da Faixa</th>
                             <th>Ações</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {folhaTabelaReferenciaFaixasMock.map((faixa) => (
+                          {faixasVigencia.map((faixa) => (
                             <tr key={faixa.id}>
                               <td>{faixa.ordem}</td>
                               <td>{faixa.faixaInicial}</td>
                               <td>{faixa.faixaFinal}</td>
-                              <td>{faixa.valorFaixa}</td>
                               <td>{faixa.percentual}</td>
                               <td>{faixa.contribuicaoFaixa}</td>
                               <td>
@@ -10002,6 +10081,13 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
                               </td>
                             </tr>
                           ))}
+                          {!faixasVigencia.length ? (
+                            <tr>
+                              <td colSpan={6} className="prototype-empty-table-cell">
+                                Nenhuma faixa cadastrada.
+                              </td>
+                            </tr>
+                          ) : null}
                         </tbody>
                       </table>
                       <div className="prototype-folha-referencia-pagination prototype-folha-referencia-pagination--inner">
@@ -10053,23 +10139,42 @@ export function PrototiposFolhaTabelaReferenciaVigenciaFormPage() {
               <div className="prototype-folha-referencia-nova-faixa-grid">
                 <label>
                   <span>Ordem</span>
-                  <input type="text" value="4" readOnly />
+                  <input type="text" value={proximaOrdemFaixa} readOnly />
                 </label>
                 <label>
                   <span>Faixa Inicial</span>
-                  <input type="text" value="R$ 4.354,28" readOnly />
+                  <input type="text" value={proximaFaixaInicial} readOnly />
                 </label>
                 <label>
                   <span>
                     Faixa Final <strong>*</strong>
                   </span>
-                  <input type="text" defaultValue="R$ 0,00" />
+                  <input
+                    type="text"
+                    value={novaFaixaForm.faixaFinal}
+                    onChange={(event) =>
+                      setNovaFaixaForm((current) => ({
+                        ...current,
+                        faixaFinal: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
                 <label>
                   <span>
                     Percentual (%) <strong>*</strong>
                   </span>
-                  <input type="text" placeholder="Ex.: 14" />
+                  <input
+                    type="text"
+                    placeholder="Ex.: 14"
+                    value={novaFaixaForm.percentual}
+                    onChange={(event) =>
+                      setNovaFaixaForm((current) => ({
+                        ...current,
+                        percentual: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
               </div>
             </div>
@@ -10638,6 +10743,8 @@ export function PrototiposFolhaCompetenciasPage() {
   const [modalCadastroAberto, setModalCadastroAberto] = useState(false);
   const [competenciaParaFechar, setCompetenciaParaFechar] =
     useState<FolhaCompetenciaRow | null>(null);
+  const [dataFimCompetenciaAtual, setDataFimCompetenciaAtual] =
+    useState("");
   const [dataInicioProximaCompetencia, setDataInicioProximaCompetencia] =
     useState("");
   const [feedback, setFeedback] = useState("");
@@ -10734,31 +10841,41 @@ export function PrototiposFolhaCompetenciasPage() {
     };
   };
 
-  const getProximaCompetenciaPorDataInicio = (
+  const getProximaCompetenciaPorDataFim = (
     competencia: FolhaCompetenciaRow,
   ) => {
     const fallback = getProximaCompetencia(competencia);
-    const dataInicio =
-      parseDataBr(dataInicioProximaCompetencia) ??
-      parseDataBr(fallback.dataInicio);
-
-    if (!dataInicio) return fallback;
 
     return {
       competencia: fallback.competencia,
-      dataInicio: formatDataBr(dataInicio),
+      dataInicio: dataInicioProximaCompetencia,
       dataFim: "",
     };
   };
 
-  const getDataFimCompetenciaFechada = (dataInicioProxima: string) => {
-    const dataInicio = parseDataBr(dataInicioProxima);
-    if (!dataInicio) return "";
+  const getDataSomada = (value: string, dias: number) => {
+    const date = parseDataBr(value);
+    if (!date) return "";
 
-    const dataFimAtual = new Date(dataInicio);
-    dataFimAtual.setDate(dataFimAtual.getDate() - 1);
+    const novaData = new Date(date);
+    novaData.setDate(novaData.getDate() + dias);
+    return formatDataBr(novaData);
+  };
 
-    return formatDataBr(dataFimAtual);
+  const handleDataFimCompetenciaAtualChange = (value: string) => {
+    const masked = maskDataBr(value);
+    setDataFimCompetenciaAtual(masked);
+    setDataInicioProximaCompetencia(
+      masked.length === 10 ? getDataSomada(masked, 1) : "",
+    );
+  };
+
+  const handleDataInicioProximaCompetenciaChange = (value: string) => {
+    const masked = maskDataBr(value);
+    setDataInicioProximaCompetencia(masked);
+    setDataFimCompetenciaAtual(
+      masked.length === 10 ? getDataSomada(masked, -1) : "",
+    );
   };
 
   const maskDataBr = (value: string) => {
@@ -10814,12 +10931,10 @@ export function PrototiposFolhaCompetenciasPage() {
   const salvarCompetencia = (data: FolhaCompetenciaForm) => {
     const competencia = normalizeMesAno(data.competencia);
     const dataInicio = data.dataInicio?.trim() ?? "";
-    const dataFim = data.dataFim?.trim() ?? "";
     const dataInicioDate = parseDataBr(dataInicio);
-    const dataFimDate = parseDataBr(dataFim);
 
-    if (!competencia || !dataInicio || !dataFim) {
-      setFormFeedback("Preencha competência, data início e data fim.");
+    if (!competencia || !dataInicio) {
+      setFormFeedback("Preencha competência e data início.");
       return;
     }
 
@@ -10828,13 +10943,8 @@ export function PrototiposFolhaCompetenciasPage() {
       return;
     }
 
-    if (!dataInicioDate || !dataFimDate) {
-      setFormFeedback("Informe data início e data fim no formato DD/MM/AAAA.");
-      return;
-    }
-
-    if (dataInicioDate > dataFimDate) {
-      setFormFeedback("Data início não pode ser maior que data fim.");
+    if (!dataInicioDate) {
+      setFormFeedback("Informe data início no formato DD/MM/AAAA.");
       return;
     }
 
@@ -10855,7 +10965,7 @@ export function PrototiposFolhaCompetenciasPage() {
       const fimExistente = parseDataBr(item.dataFim);
       if (!inicioExistente || !fimExistente) return false;
 
-      return dataInicioDate <= fimExistente && dataFimDate >= inicioExistente;
+      return dataInicioDate <= fimExistente;
     });
 
     if (concorrente) {
@@ -10870,7 +10980,7 @@ export function PrototiposFolhaCompetenciasPage() {
       competencia,
       mesAnoReferencia: competencia,
       dataInicio,
-      dataFim,
+      dataFim: "",
       situacao: "ATIVA",
     });
 
@@ -10881,12 +10991,22 @@ export function PrototiposFolhaCompetenciasPage() {
 
   const fecharCompetencia = () => {
     if (!competenciaParaFechar) return;
+    const dataFimCompetenciaFechada = dataFimCompetenciaAtual.trim();
+    const dataInicioProxima = dataInicioProximaCompetencia.trim();
+    const dataFimCompetenciaFechadaDate = parseDataBr(dataFimCompetenciaFechada);
+    const dataInicioProximaDate = parseDataBr(dataInicioProxima);
+
+    if (!dataFimCompetenciaFechadaDate) {
+      setFeedback("Informe a data fim da competência atual no formato DD/MM/AAAA.");
+      return;
+    }
+    if (!dataInicioProximaDate) {
+      setFeedback("Informe a data início da próxima competência no formato DD/MM/AAAA.");
+      return;
+    }
 
     const proximaCompetencia =
-      getProximaCompetenciaPorDataInicio(competenciaParaFechar);
-    const dataFimCompetenciaFechada =
-      getDataFimCompetenciaFechada(proximaCompetencia.dataInicio) ||
-      competenciaParaFechar.dataFim;
+      getProximaCompetenciaPorDataFim(competenciaParaFechar);
     const competenciaExistente = competencias.find(
       (competencia) =>
         competencia.competencia === proximaCompetencia.competencia,
@@ -10935,6 +11055,7 @@ export function PrototiposFolhaCompetenciasPage() {
 
     setFeedback("Competência encerrada com sucesso. A competência do próximo mês foi aberta automaticamente.");
     setCompetenciaParaFechar(null);
+    setDataFimCompetenciaAtual("");
     setDataInicioProximaCompetencia("");
   };
 
@@ -10946,8 +11067,8 @@ export function PrototiposFolhaCompetenciasPage() {
   ];
 
   const abrirModalFecharCompetencia = (competencia: FolhaCompetenciaRow) => {
-    const proximaCompetencia = getProximaCompetencia(competencia);
-    setDataInicioProximaCompetencia(proximaCompetencia.dataInicio);
+    setDataFimCompetenciaAtual("");
+    setDataInicioProximaCompetencia("");
     setCompetenciaParaFechar(competencia);
   };
 
@@ -10967,6 +11088,7 @@ export function PrototiposFolhaCompetenciasPage() {
   const apagarCompetenciasSimulacao = () => {
     setCompetencias([]);
     setCompetenciaParaFechar(null);
+    setDataFimCompetenciaAtual("");
     setDataInicioProximaCompetencia("");
     setFeedback("");
   };
@@ -11048,7 +11170,7 @@ export function PrototiposFolhaCompetenciasPage() {
                       <td colSpan={5}>
                         <BotaoSeplag
                           type="button"
-                          label="Nova Competência"
+                          label="Abertura de Competência"
                           icon="pi pi-plus"
                           onClick={abrirCadastroCompetencia}
                         />
@@ -11109,16 +11231,6 @@ export function PrototiposFolhaCompetenciasPage() {
                 required
                 getFormErrorMessage={() => getFormErrorMessage("dataInicio")}
               />
-              <MaskFieldSeplag
-                name="dataFim"
-                control={formControl}
-                label="Data fim"
-                mask="99/99/9999"
-                placeholder="DD/MM/AAAA"
-                cols="12 12 4"
-                required
-                getFormErrorMessage={() => getFormErrorMessage("dataFim")}
-              />
               <TextAreaFieldSeplag
                 name="observacao"
                 control={formControl}
@@ -11137,7 +11249,7 @@ export function PrototiposFolhaCompetenciasPage() {
           titulo="Fechamento da Competência"
           fechar={() => {
             setCompetenciaParaFechar(null);
-            setDataInicioProximaCompetencia("");
+            setDataFimCompetenciaAtual("");
           }}
           labelFechar="Não"
           iconFechar="pi pi-times"
@@ -11155,13 +11267,24 @@ export function PrototiposFolhaCompetenciasPage() {
                 <div>
                   <span>Competência atual</span>
                   <strong>{formatMesAno(competenciaParaFechar.competencia)}</strong>
-                  <p>{competenciaParaFechar.dataInicio} a {competenciaParaFechar.dataFim}</p>
+                  <p>Início: {competenciaParaFechar.dataInicio}</p>
+                  <label className="prototype-fechar-competencia-date-field">
+                    Data fim
+                    <input
+                      type="text"
+                      value={dataFimCompetenciaAtual}
+                      placeholder="DD/MM/AAAA"
+                      onChange={(event) =>
+                        handleDataFimCompetenciaAtualChange(event.target.value)
+                      }
+                    />
+                  </label>
                 </div>
                 <div>
                   <span>Próxima competência</span>
                   <strong>
                     {formatMesAno(
-                      getProximaCompetenciaPorDataInicio(competenciaParaFechar)
+                      getProximaCompetenciaPorDataFim(competenciaParaFechar)
                         .competencia,
                     )}
                   </strong>
@@ -11172,8 +11295,8 @@ export function PrototiposFolhaCompetenciasPage() {
                       value={dataInicioProximaCompetencia}
                       placeholder="DD/MM/AAAA"
                       onChange={(event) =>
-                        setDataInicioProximaCompetencia(
-                          maskDataBr(event.target.value),
+                        handleDataInicioProximaCompetenciaChange(
+                          event.target.value,
                         )
                       }
                     />
