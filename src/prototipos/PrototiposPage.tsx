@@ -24,6 +24,7 @@ import {
   MaskFieldSeplag,
   MultiSelectFieldSeplag,
   NumberFieldSeplag,
+  RadioButtonFieldSeplag,
   SwitchFieldSeplag,
   TextAreaFieldSeplag,
   TextFieldSeplag,
@@ -73,6 +74,8 @@ import type {
   FolhaPagamentoRubricaLogSituacao,
   FolhaPagamentoSituacao,
   SolicitacaoAjusteFolhaFiltroForm,
+  SolicitacaoAjusteFolhaForm,
+  SolicitacaoAjusteFolhaEscopo,
   SolicitacaoAjusteFolhaHistoricoRow,
   SolicitacaoAjusteFolhaPerfil,
   SolicitacaoAjusteFolhaRow,
@@ -2764,6 +2767,25 @@ const solicitacaoAjusteFolhaGrupoEleitosOptions = [
   { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
 ];
 
+const solicitacaoAjusteFolhaEscopoOptions: {
+  label: string;
+  value: SolicitacaoAjusteFolhaEscopo;
+}[] = [
+  { label: "Matrícula ou CPF", value: "MATRICULA_CPF" },
+  { label: "Grupo de Eleitos", value: "GRUPO_ELEITOS" },
+];
+
+const solicitacaoAjusteFolhaExtensoesPermitidas = [
+  "pdf",
+  "doc",
+  "csv",
+  "xlsx",
+  "xls",
+  "docx",
+];
+
+type SolicitacaoAjusteFolhaModoFormulario = "novo" | "editar" | "visualizar";
+
 const solicitacaoAjusteFolhaSituacaoMeta: Record<
   SolicitacaoAjusteFolhaSituacao,
   { label: string; color: string; bg: string; border: string }
@@ -2774,6 +2796,21 @@ const solicitacaoAjusteFolhaSituacaoMeta: Record<
   DEVOLVIDO: { label: "DEVOLVIDO", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
   CONCLUIDO: { label: "CONCLUÍDO", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
 };
+
+function formatarCompetenciaFolha(valor?: string) {
+  if (!valor) return "";
+  const match = valor.match(/^(\d{4})-(\d{2})$/);
+  if (match) return `${match[2]}/${match[1]}`;
+  return valor;
+}
+
+function formatarDataPtBr(data = new Date()) {
+  return data.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
 interface FolhaTabelaReferenciaFiltroForm {
   tabela?: string;
@@ -4502,7 +4539,8 @@ export function PrototiposAnexarDocumentoPage() {
           <div className="grid prototype-anexar-documento-demo">
             <AnexarDocumentoSeplag
               label="Documento"
-              cols="12 12 6"
+              cols="12"
+              style={{ maxWidth: "760px" }}
               multiple
               arquivosBase64={arquivos}
               onUploadDocument={handleUploadDocumento}
@@ -13416,6 +13454,32 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
   const [modalIniciarAberto, setModalIniciarAberto] = useState(false);
   const [modalFinalizarAberto, setModalFinalizarAberto] = useState(false);
   const [motivoDevolucao, setMotivoDevolucao] = useState("");
+  const [documentosDevolucao, setDocumentosDevolucao] = useState<
+    ArquivoAnexadoSeplag[]
+  >([]);
+  const [motivoReinicioCorrecao, setMotivoReinicioCorrecao] = useState("");
+  const [modoFormularioSolicitacao, setModoFormularioSolicitacao] =
+    useState<SolicitacaoAjusteFolhaModoFormulario | null>(null);
+  const [documentosFormularioSolicitacao, setDocumentosFormularioSolicitacao] =
+    useState<ArquivoAnexadoSeplag[]>([]);
+  const [modalSairFormularioAberto, setModalSairFormularioAberto] =
+    useState(false);
+  const documentosReinicioCorrecao: ArquivoAnexadoSeplag[] = [
+    {
+      nome: "parecer-conformidade.pdf",
+      extensao: "pdf",
+      contentType: "application/pdf",
+      conteudoEmBase64: "",
+      tamanho: "245 KB",
+    },
+    {
+      nome: "evidencia-vinculos.png",
+      extensao: "png",
+      contentType: "image/png",
+      conteudoEmBase64: "",
+      tamanho: "318 KB",
+    },
+  ];
   const [feedback, setFeedback] = useState("");
   const { control, reset, watch } =
     useForm<SolicitacaoAjusteFolhaFiltroForm>({
@@ -13427,8 +13491,51 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
         situacoes: [],
       },
     });
+  const {
+    control: controlSolicitacao,
+    handleSubmit: handleSubmitSolicitacao,
+    reset: resetSolicitacao,
+    setValue: setValueSolicitacao,
+    watch: watchSolicitacao,
+    formState: { errors: errorsSolicitacao, isDirty: isSolicitacaoDirty },
+  } = useForm<SolicitacaoAjusteFolhaForm>({
+    defaultValues: {
+      numeroFolha: "",
+      nomeFolha: "",
+      competencia: "",
+      escopo: "",
+      matriculasCpf: [],
+      grupoEleitos: "",
+      motivoAbertura: "",
+      dataCriacao: formatarDataPtBr(),
+    },
+  });
 
   const filtros = watch();
+  const formularioSolicitacao = watchSolicitacao();
+  const escopoSolicitacao = formularioSolicitacao.escopo;
+  const isFormularioSolicitacaoReadonly =
+    modoFormularioSolicitacao === "visualizar";
+  const competenciaVigente =
+    folhaPagamentoService
+      .listarCompetencias()
+      .find((competencia) => competencia.situacao === "ATIVA")
+      ?.competencia ?? "05/2026";
+  const folhasProcessadasOptions = folhaPagamentoService
+    .listarFolhas()
+    .filter((folha) => folha.situacao === "PROCESSO_COM_SUCESSO")
+    .map((folha) => ({
+      label: String(folha.numero).padStart(3, "0"),
+      value: String(folha.numero).padStart(3, "0"),
+      nome: folha.nome.toUpperCase(),
+      competencia: formatarCompetenciaFolha(folha.competencia),
+    }));
+  const pessoasSolicitacaoOptions = folhaPagamentoService
+    .listarPessoaLogs()
+    .map((pessoa) => ({
+      label: `${pessoa.matricula} - ${pessoa.cpf} - ${pessoa.nome}`,
+      value: `${pessoa.matricula} / ${pessoa.cpf}`,
+    }));
   const usuarioAtual =
     perfil === "CONFORMIDADE"
       ? "Maria de Souza - Conformidade"
@@ -13516,9 +13623,206 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
     setFeedback(mensagem);
   };
 
+  const anexarDocumentosDevolucao = (event: { files?: File[] }) => {
+    const files = Array.from(event.files ?? []);
+    if (!files.length) return;
+
+    setDocumentosDevolucao((current) => [
+      ...current,
+      ...files.map((file) => ({
+        nome: file.name,
+        extensao: file.name.split(".").pop()?.toLowerCase() ?? "pdf",
+        contentType: file.type || "application/octet-stream",
+        conteudoEmBase64: "",
+        tamanho: file.size,
+      })),
+    ]);
+  };
+
+  const removerDocumentoDevolucao = (
+    _arquivo?: ArquivoAnexadoSeplag,
+    index = -1,
+  ) => {
+    setDocumentosDevolucao((current) =>
+      current.filter((__, itemIndex) => itemIndex !== index),
+    );
+  };
+
+  const getSolicitacaoFormErrorMessage = (
+    field: keyof SolicitacaoAjusteFolhaForm | string,
+  ) => {
+    const error = errorsSolicitacao[field as keyof SolicitacaoAjusteFolhaForm];
+    return error ? (
+      <small className="p-error">{String(error.message ?? "Campo obrigatório")}</small>
+    ) : null;
+  };
+
+  const preencherFormularioSolicitacao = (
+    solicitacao?: SolicitacaoAjusteFolhaRow | null,
+  ) => {
+    const escopo: SolicitacaoAjusteFolhaEscopo =
+      solicitacao?.matriculaCpf && solicitacao.matriculaCpf !== "-"
+        ? "MATRICULA_CPF"
+        : "GRUPO_ELEITOS";
+
+    resetSolicitacao({
+      numeroFolha: solicitacao?.numeroFolha ?? "",
+      nomeFolha: solicitacao?.nomeFolha ?? "",
+      competencia: solicitacao?.competencia ?? competenciaVigente,
+      escopo: solicitacao ? escopo : "",
+      matriculasCpf:
+        escopo === "MATRICULA_CPF" && solicitacao?.matriculaCpf
+          ? solicitacao.matriculaCpf.split(",").map((item) => item.trim())
+          : [],
+      grupoEleitos:
+        escopo === "GRUPO_ELEITOS" ? solicitacao?.grupoEleitos ?? "" : "",
+      motivoAbertura: solicitacao?.motivoAbertura ?? "",
+      dataCriacao: solicitacao?.dataCriacao ?? formatarDataPtBr(),
+    });
+    setDocumentosFormularioSolicitacao([]);
+  };
+
+  const abrirFormularioSolicitacao = (
+    modo: SolicitacaoAjusteFolhaModoFormulario,
+    solicitacao?: SolicitacaoAjusteFolhaRow,
+  ) => {
+    setSolicitacaoSelecionada(solicitacao ?? null);
+    preencherFormularioSolicitacao(solicitacao);
+    setModoFormularioSolicitacao(modo);
+    setFeedback("");
+  };
+
+  const selecionarFolhaFormularioSolicitacao = (numeroFolha?: string) => {
+    const folha = folhasProcessadasOptions.find(
+      (option) => option.value === numeroFolha,
+    );
+    setValueSolicitacao("nomeFolha", folha?.nome ?? "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValueSolicitacao("competencia", folha?.competencia ?? competenciaVigente, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const selecionarEscopoSolicitacao = (escopo?: string) => {
+    if (escopo === "MATRICULA_CPF") {
+      setValueSolicitacao("grupoEleitos", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    if (escopo === "GRUPO_ELEITOS") {
+      setValueSolicitacao("matriculasCpf", [], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
+  const anexarDocumentosFormularioSolicitacao = (event: { files?: File[] }) => {
+    const files = Array.from(event.files ?? []);
+    if (!files.length) return;
+
+    if (documentosFormularioSolicitacao.length + files.length > 10) {
+      setFeedback("É permitido anexar no máximo 10 arquivos por solicitação.");
+      return;
+    }
+
+    const arquivoInvalido = files.find((file) => {
+      const extensao = file.name.split(".").pop()?.toLowerCase() ?? "";
+      return (
+        !solicitacaoAjusteFolhaExtensoesPermitidas.includes(extensao) ||
+        file.size > 2 * 1024 * 1024
+      );
+    });
+
+    if (arquivoInvalido) {
+      setFeedback(
+        "Documentos permitidos: PDF, DOC, CSV, XLSX, XLS e DOCX, com até 2MB cada.",
+      );
+      return;
+    }
+
+    setDocumentosFormularioSolicitacao((current) => [
+      ...current,
+      ...files.map((file) => ({
+        nome: file.name,
+        extensao: file.name.split(".").pop()?.toLowerCase() ?? "",
+        contentType: file.type || "application/octet-stream",
+        conteudoEmBase64: "",
+        tamanho: file.size,
+      })),
+    ]);
+  };
+
+  const removerDocumentoFormularioSolicitacao = (
+    _arquivo?: ArquivoAnexadoSeplag,
+    index = -1,
+  ) => {
+    setDocumentosFormularioSolicitacao((current) =>
+      current.filter((__, itemIndex) => itemIndex !== index),
+    );
+  };
+
+  const voltarParaListagemSolicitacoes = () => {
+    setModoFormularioSolicitacao(null);
+    setSolicitacaoSelecionada(null);
+    setDocumentosFormularioSolicitacao([]);
+  };
+
+  const solicitarSaidaFormularioSolicitacao = () => {
+    if (
+      !isFormularioSolicitacaoReadonly &&
+      (isSolicitacaoDirty || documentosFormularioSolicitacao.length > 0)
+    ) {
+      setModalSairFormularioAberto(true);
+      return;
+    }
+
+    voltarParaListagemSolicitacoes();
+  };
+
+  const salvarFormularioSolicitacao = (form: SolicitacaoAjusteFolhaForm) => {
+    if (form.escopo === "MATRICULA_CPF" && !form.matriculasCpf?.length) {
+      setFeedback("Campo obrigatório");
+      return;
+    }
+
+    if (form.escopo === "GRUPO_ELEITOS" && !form.grupoEleitos) {
+      setFeedback("Campo obrigatório");
+      return;
+    }
+
+    if (modoFormularioSolicitacao === "editar" && solicitacaoSelecionada) {
+      const solicitacaoAtualizada =
+        folhaPagamentoService.atualizarDadosSolicitacaoAjusteFolha(
+          solicitacaoSelecionada.id,
+          form,
+        );
+      if (solicitacaoAtualizada) {
+        setSolicitacoes((current) =>
+          current.map((item) =>
+            item.id === solicitacaoAtualizada.id ? solicitacaoAtualizada : item,
+          ),
+        );
+      }
+      setFeedback("Registro atualizado com sucesso!");
+    } else {
+      const novaSolicitacao =
+        folhaPagamentoService.criarSolicitacaoAjusteFolha(form);
+      setSolicitacoes((current) => [novaSolicitacao, ...current]);
+      setFeedback("Registro cadastrado com sucesso!");
+    }
+
+    voltarParaListagemSolicitacoes();
+  };
+
   const abrirVisualizar = (solicitacao: SolicitacaoAjusteFolhaRow) => {
-    setSolicitacaoSelecionada(solicitacao);
-    setModalVisualizarAberto(true);
+    abrirFormularioSolicitacao("visualizar", solicitacao);
   };
 
   const abrirHistorico = (solicitacao: SolicitacaoAjusteFolhaRow) => {
@@ -13556,6 +13860,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
       "Registro atualizado com sucesso!",
     );
     setModalIniciarAberto(false);
+    setMotivoReinicioCorrecao("");
   };
 
   const confirmarFinalizacaoCorrecao = () => {
@@ -13586,6 +13891,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
       "Registro atualizado com sucesso!",
     );
     setMotivoDevolucao("");
+    setDocumentosDevolucao([]);
     setModalDevolverAberto(false);
   };
 
@@ -13630,10 +13936,19 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           {podeIniciar ? (
             <BotaoIconSeplag
               type="button"
-              tooltip="Iniciar Correção"
+              tooltip={
+                solicitacao.situacao === "DEVOLVIDO"
+                  ? "Reiniciar Correção"
+                  : "Iniciar Correção"
+              }
               icon="pi pi-play"
               onClick={() => {
                 setSolicitacaoSelecionada(solicitacao);
+                setMotivoReinicioCorrecao(
+                  solicitacao.situacao === "DEVOLVIDO"
+                    ? solicitacao.motivoDevolucao ?? ""
+                    : "",
+                );
                 setModalIniciarAberto(true);
               }}
             />
@@ -13680,10 +13995,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
             type="button"
             tooltip="Editar"
             icon="pi pi-pencil"
-            onClick={() => {
-              setSolicitacaoSelecionada(solicitacao);
-              setFeedback("Edição disponível apenas como fluxo de cadastro nesta US.");
-            }}
+            onClick={() => abrirFormularioSolicitacao("editar", solicitacao)}
           />
         ) : null}
         {podeEditarExcluir ? (
@@ -13729,6 +14041,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
             onClick={() => {
               setSolicitacaoSelecionada(solicitacao);
               setMotivoDevolucao("");
+              setDocumentosDevolucao([]);
               setModalDevolverAberto(true);
             }}
           />
@@ -13776,6 +14089,260 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
     },
   ];
 
+  useEffect(() => {
+    if (
+      escopoSolicitacao === "MATRICULA_CPF" &&
+      formularioSolicitacao.grupoEleitos
+    ) {
+      selecionarEscopoSolicitacao(escopoSolicitacao);
+    }
+
+    if (
+      escopoSolicitacao === "GRUPO_ELEITOS" &&
+      formularioSolicitacao.matriculasCpf?.length
+    ) {
+      selecionarEscopoSolicitacao(escopoSolicitacao);
+    }
+  }, [
+    escopoSolicitacao,
+    formularioSolicitacao.grupoEleitos,
+    formularioSolicitacao.matriculasCpf,
+  ]);
+
+  if (modoFormularioSolicitacao) {
+    const tituloFormulario =
+      modoFormularioSolicitacao === "novo"
+        ? "Cadastrar - Solicitação de Ajuste da Folha"
+        : modoFormularioSolicitacao === "editar"
+          ? "Alterar - Solicitação de Ajuste da Folha"
+          : "Visualizar - Solicitação de Ajuste da Folha";
+
+    return (
+      <PrototypeSystemPage
+        nomeSistema="FOLHA"
+        ambienteSistema="Teste"
+        menuItems={menuFolha}
+      >
+        <form onSubmit={handleSubmitSolicitacao(salvarFormularioSolicitacao)}>
+          <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-solicitacoes-ajustes-page">
+            {feedback ? (
+              <div className="prototype-validation-panel">{feedback}</div>
+            ) : null}
+
+            <CardSeplag
+              title={tituloFormulario}
+              cols="12"
+              cardHeaderClassNames="prototype-regime-card"
+              actions={
+                <div className="prototype-solicitacao-ajuste-competencia">
+                  <span>Competência vigente</span>
+                  <strong>{competenciaVigente}</strong>
+                </div>
+              }
+            >
+              <div className="col-12 prototype-solicitacao-ajuste-form">
+                <section className="prototype-folha-form-section">
+                  <h3>Cadastro da Solicitação de Ajuste da Folha</h3>
+                  <div className="grid prototype-category-form-fields">
+                    <DropdownFieldSeplag
+                      name="numeroFolha"
+                      control={controlSolicitacao}
+                      label="Número da Folha"
+                      cols="12 12 3"
+                      required
+                      disabled={isFormularioSolicitacaoReadonly}
+                      options={folhasProcessadasOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      onChange={selecionarFolhaFormularioSolicitacao}
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("numeroFolha")
+                      }
+                    />
+                    <TextFieldSeplag
+                      name="nomeFolha"
+                      control={controlSolicitacao}
+                      label="Nome da Folha"
+                      cols="12 12 5"
+                      required
+                      disabled
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("nomeFolha")
+                      }
+                    />
+                    <DropdownFieldSeplag
+                      name="competencia"
+                      control={controlSolicitacao}
+                      label="Competência"
+                      cols="12 12 2"
+                      required
+                      disabled={isFormularioSolicitacaoReadonly}
+                      options={solicitacaoAjusteFolhaCompetenciaOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("competencia")
+                      }
+                    />
+                    <TextFieldSeplag
+                      name="dataCriacao"
+                      control={controlSolicitacao}
+                      label="Data de criação"
+                      cols="12 12 2"
+                      required
+                      disabled
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("dataCriacao")
+                      }
+                    />
+                    <RadioButtonFieldSeplag
+                      name="escopo"
+                      control={controlSolicitacao}
+                      label="Origem da Solicitação"
+                      cols="12"
+                      required
+                      disabled={isFormularioSolicitacaoReadonly}
+                      options={solicitacaoAjusteFolhaEscopoOptions}
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("escopo")
+                      }
+                    />
+                    <MultiSelectFieldSeplag
+                      name="matriculasCpf"
+                      control={controlSolicitacao}
+                      label="Matrícula ou CPF"
+                      cols="12 12 6"
+                      visible={escopoSolicitacao === "MATRICULA_CPF"}
+                      required={escopoSolicitacao === "MATRICULA_CPF"}
+                      disabled={
+                        isFormularioSolicitacaoReadonly ||
+                        escopoSolicitacao !== "MATRICULA_CPF"
+                      }
+                      options={pessoasSolicitacaoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      selectedItemsLabel="{0} pessoas selecionadas"
+                      placeholder="Selecione matrícula ou CPF"
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("matriculasCpf")
+                      }
+                    />
+                    <DropdownFieldSeplag
+                      name="grupoEleitos"
+                      control={controlSolicitacao}
+                      label="Grupo de Eleitos"
+                      cols="12 12 6"
+                      visible={escopoSolicitacao === "GRUPO_ELEITOS"}
+                      required={escopoSolicitacao === "GRUPO_ELEITOS"}
+                      disabled={
+                        isFormularioSolicitacaoReadonly ||
+                        escopoSolicitacao !== "GRUPO_ELEITOS"
+                      }
+                      options={solicitacaoAjusteFolhaGrupoEleitosOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("grupoEleitos")
+                      }
+                    />
+                    <TextAreaFieldSeplag
+                      name="motivoAbertura"
+                      control={controlSolicitacao}
+                      label="Motivo do ajuste"
+                      cols="12"
+                      rows={5}
+                      maxLength={500}
+                      required
+                      disabled={isFormularioSolicitacaoReadonly}
+                      placeholder="Descreva o motivo do ajuste solicitado."
+                      getFormErrorMessage={() =>
+                        getSolicitacaoFormErrorMessage("motivoAbertura")
+                      }
+                    />
+                    <AnexarDocumentoSeplag
+                      label="Documento"
+                      cols="12"
+                      style={{ maxWidth: "760px" }}
+                      multiple={!isFormularioSolicitacaoReadonly}
+                      accept=".pdf,.doc,.csv,.xlsx,.xls,.docx"
+                      maxFileSize={2 * 1024 * 1024}
+                      helpText="Formatos aceitos: .pdf, .doc, .csv, .xlsx, .xls e .docx | Tamanho máximo: 2MB por arquivo"
+                      arquivosBase64={documentosFormularioSolicitacao}
+                      onUploadDocument={
+                        isFormularioSolicitacaoReadonly
+                          ? undefined
+                          : anexarDocumentosFormularioSolicitacao
+                      }
+                      onRemoveArquivo={
+                        isFormularioSolicitacaoReadonly
+                          ? undefined
+                          : removerDocumentoFormularioSolicitacao
+                      }
+                      onDownloadArquivo={(arquivo) =>
+                        setFeedback(
+                          `Documento ${arquivo.nome} selecionado para download.`,
+                        )
+                      }
+                      handleViewArquivo={(arquivo) =>
+                        setFeedback(
+                          arquivo
+                            ? `Documento ${arquivo.nome} selecionado para visualização.`
+                            : "Documento selecionado para visualização.",
+                        )
+                      }
+                    />
+                  </div>
+                </section>
+
+                <div className="prototype-category-form-footer">
+                  <BotaoVoltarSeplag
+                    type="button"
+                    label="Voltar"
+                    icon="pi pi-arrow-left"
+                    onClick={solicitarSaidaFormularioSolicitacao}
+                  />
+                  {isFormularioSolicitacaoReadonly &&
+                  perfil === "CONFORMIDADE" &&
+                  solicitacaoSelecionada?.situacao === "NOVA" ? (
+                    <BotaoSeplag
+                      type="button"
+                      label="Editar"
+                      icon="pi pi-pencil"
+                      tooltip="Alterar"
+                      onClick={() => setModoFormularioSolicitacao("editar")}
+                    />
+                  ) : null}
+                  {!isFormularioSolicitacaoReadonly ? (
+                    <BotaoSalvarSeplag type="submit" />
+                  ) : null}
+                </div>
+              </div>
+            </CardSeplag>
+
+            <ModalSeplag
+              visible={modalSairFormularioAberto}
+              titulo="Alterações não salvas"
+              fechar={() => setModalSairFormularioAberto(false)}
+              labelFechar="Cancelar"
+              labelAcao="Sim"
+              iconAcao="pi pi-check"
+              funcAcao={() => {
+                setModalSairFormularioAberto(false);
+                voltarParaListagemSolicitacoes();
+              }}
+              tamanho="620px"
+            >
+              <p className="col-12">
+                Você possui alterações não salvas. Se sair agora, os dados serão
+                perdidos. Deseja continuar?
+              </p>
+            </ModalSeplag>
+          </div>
+        </form>
+      </PrototypeSystemPage>
+    );
+  }
+
   return (
     <PrototypeSystemPage
       nomeSistema="FOLHA"
@@ -13785,14 +14352,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
       <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-solicitacoes-ajustes-page">
         <div className="prototype-solicitacoes-ajustes-header">
           <div>
-            <span className="prototype-breadcrumb">
-              Folha de Pagamento &gt; Solicitações de Ajustes da Folha
-            </span>
             <h1>Solicitações de Ajustes da Folha de Pagamento</h1>
-            <p>
-              Acompanhe e gerencie as solicitações de correção identificadas
-              durante a conformidade da folha.
-            </p>
           </div>
           <div className="prototype-solicitacoes-ajustes-user">
             <label>
@@ -13905,9 +14465,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
                 icon="pi pi-plus"
                 style={{ color: "#ffffff" }}
                 hasPermission={perfil === "CONFORMIDADE"}
-                onClick={() =>
-                  setFeedback("Fluxo de cadastro relatado em US específica.")
-                }
+                onClick={() => abrirFormularioSolicitacao("novo")}
               />
             </div>
           }
@@ -13983,7 +14541,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           labelAcao="Confirmar Devolução"
           iconAcao="pi pi-replay"
           funcAcao={confirmarDevolucao}
-          tamanho="760px"
+          tamanho="820px"
         >
           <div className="col-12 prototype-solicitacoes-ajustes-modal-text">
             Informe o motivo pelo qual a correção deverá retornar para a equipe
@@ -14000,6 +14558,22 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
               onChange={(event) => setMotivoDevolucao(event.target.value)}
             />
           </div>
+          <AnexarDocumentoSeplag
+            label="Documentos Anexados"
+            cols="12"
+            multiple
+            arquivosBase64={documentosDevolucao}
+            onUploadDocument={anexarDocumentosDevolucao}
+            onRemoveArquivo={removerDocumentoDevolucao}
+            canDownload={false}
+            handleViewArquivo={(arquivo) =>
+              setFeedback(
+                arquivo
+                  ? `Documento ${arquivo.nome} selecionado para visualização.`
+                  : "Documento selecionado para visualização.",
+              )
+            }
+          />
         </ModalSeplag>
 
         <ModalSeplag
@@ -14013,25 +14587,73 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           tamanho="620px"
         >
           <p className="col-12">
-            Confirma a conclusão desta solicitação de ajuste? Após a conclusão,
-            o registro ficará disponível apenas para visualização.
+            Deseja encerrar e concluir esta solicitação de ajuste?
+            <br />
+            Ao confirmar, o status será alterado para 'Concluído' e o registro
+            ficará permanentemente bloqueado para novas alterações ou exclusões.
           </p>
         </ModalSeplag>
 
         <ModalSeplag
           visible={modalIniciarAberto}
-          titulo="Iniciar Correção"
+          titulo={
+            solicitacaoSelecionada?.situacao === "DEVOLVIDO"
+              ? "Reiniciar Correção"
+              : "Iniciar Correção"
+          }
           fechar={() => setModalIniciarAberto(false)}
           labelFechar="Cancelar"
-          labelAcao="Confirmar Início"
+          labelAcao={
+            solicitacaoSelecionada?.situacao === "DEVOLVIDO"
+              ? "Confirmar Reinício"
+              : "Confirmar Início"
+          }
           iconAcao="pi pi-play"
           funcAcao={confirmarInicioCorrecao}
-          tamanho="620px"
+          tamanho={
+            solicitacaoSelecionada?.situacao === "DEVOLVIDO" ? "760px" : "620px"
+          }
         >
-          <p className="col-12">
-            Ao confirmar, você será registrado como responsável pela correção
-            desta solicitação.
-          </p>
+          {solicitacaoSelecionada?.situacao === "DEVOLVIDO" ? (
+            <>
+              <p className="col-12">
+                Esta solicitação foi devolvida pela equipe de Conformidade e
+                necessita de reajuste. Deseja reiniciar a correção deste
+                registro?
+              </p>
+              <div className="col-12">
+                <label className="prototype-solicitacoes-ajustes-textarea-label">
+                  Motivo da Devolução
+                </label>
+                <textarea
+                  className="prototype-solicitacoes-ajustes-textarea"
+                  value={motivoReinicioCorrecao}
+                  placeholder="Informe ou revise o motivo da devolução."
+                  onChange={(event) =>
+                    setMotivoReinicioCorrecao(event.target.value)
+                  }
+                />
+              </div>
+              <AnexarDocumentoSeplag
+                label="Documentos Anexados"
+                cols="12"
+                arquivosBase64={documentosReinicioCorrecao}
+                canDownload={false}
+                handleViewArquivo={(arquivo) =>
+                  setFeedback(
+                    arquivo
+                      ? `Documento ${arquivo.nome} selecionado para visualização.`
+                      : "Documento selecionado para visualização.",
+                  )
+                }
+              />
+            </>
+          ) : (
+            <p className="col-12">
+              Deseja iniciar o atendimento desta solicitação? Você será
+              registrado como o responsável técnico.
+            </p>
+          )}
         </ModalSeplag>
 
         <ModalSeplag
@@ -14045,7 +14667,8 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
           tamanho="620px"
         >
           <p className="col-12">
-            Confirma a finalização da correção desta solicitação?
+            Deseja finalizar a correção desta solicitação? O registro será
+            enviado para homologação da equipe de Conformidade.
           </p>
         </ModalSeplag>
 

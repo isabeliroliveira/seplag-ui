@@ -124,6 +124,19 @@ export interface SolicitacaoAjusteFolhaFiltroForm {
   situacoes?: SolicitacaoAjusteFolhaSituacao[];
 }
 
+export type SolicitacaoAjusteFolhaEscopo = "MATRICULA_CPF" | "GRUPO_ELEITOS";
+
+export interface SolicitacaoAjusteFolhaForm {
+  numeroFolha?: string;
+  nomeFolha?: string;
+  competencia?: string;
+  escopo?: SolicitacaoAjusteFolhaEscopo | "";
+  matriculasCpf?: string[];
+  grupoEleitos?: string;
+  motivoAbertura?: string;
+  dataCriacao?: string;
+}
+
 export interface FolhaCompetenciaFiltroForm {
   competencia?: string;
   situacao?: FolhaCompetenciaSituacao | "";
@@ -255,6 +268,8 @@ export type CreateFolhaPagamentoRequest = FolhaPagamentoForm & {
 export type UpdateFolhaPagamentoRequest = FolhaPagamentoForm & {
   situacao?: FolhaPagamentoSituacao;
 };
+export type CreateSolicitacaoAjusteFolhaRequest = SolicitacaoAjusteFolhaForm;
+export type UpdateSolicitacaoAjusteFolhaRequest = SolicitacaoAjusteFolhaForm;
 export type CreateFolhaCompetenciaRequest = FolhaCompetenciaForm;
 export type CreateGrupoFolhaRequest = GrupoFolhaForm;
 export type UpdateGrupoFolhaRequest = GrupoFolhaForm;
