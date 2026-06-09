@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
@@ -15720,14 +15720,31 @@ export function PrototiposFolhaGruposCalculoPage() {
       >
         <i className="pi pi-eye" aria-hidden="true" />
       </button>
-      <button
-        type="button"
-        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--edit"
-        aria-label={`Editar ${row.grupo}`}
-        onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
-      >
-        <i className="pi pi-pencil" aria-hidden="true" />
-      </button>
+      {normalizeGrupoCalculoSituacao(row.situacao) === "ATIVO" ? (
+        <button
+          type="button"
+          className="prototype-grupos-calculo-action prototype-grupos-calculo-action--new-version"
+          aria-label={`Nova versão ${row.grupo}`}
+          title="Nova versão"
+          onClick={() =>
+            navigate(
+              `/prototipos/folha/grupos-calculo/${row.id}/editar?modo=nova-versao`,
+            )
+          }
+        >
+          <i className="pi pi-plus" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="prototype-grupos-calculo-action prototype-grupos-calculo-action--edit"
+          aria-label={`Editar ${row.grupo}`}
+          title="Editar"
+          onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
+        >
+          <i className="pi pi-pencil" aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         className="prototype-grupos-calculo-action prototype-grupos-calculo-action--history"
@@ -15907,14 +15924,16 @@ export function PrototiposFolhaGruposCalculoPage() {
 export function PrototiposFolhaGrupoCalculoFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
+  const isNovaVersao = searchParams.get("modo") === "nova-versao";
   const grupo = gruposCalculoMock.find((item) => String(item.id) === id);
   const amanha = getAmanhaDate();
   const dataInicioV2 = formatDatePtBr(amanha);
   const versoesGrupoAtual = grupo ? gruposCalculoVersoesMock[grupo.id] ?? [grupo] : [];
   const grupoEstaPublicado =
     Boolean(grupo) && normalizeGrupoCalculoSituacao(grupo?.situacao) !== "RASCUNHO";
-  const modoVersionamento = Boolean(isEdit && grupoEstaPublicado);
+  const modoVersionamento = Boolean(isEdit && grupoEstaPublicado && isNovaVersao);
   const versaoEmEdicao = modoVersionamento
     ? versoesGrupoAtual.length + 1
     : Math.max(versoesGrupoAtual.length, 1);
@@ -15940,6 +15959,9 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   });
   const [dataInicioPublicacao, setDataInicioPublicacao] = useState(dataInicioV2);
   const [publicacaoFeedback, setPublicacaoFeedback] = useState("");
+  const tituloFormularioGrupoCalculo = modoVersionamento
+    ? "Criar Nova Versão do Grupo"
+    : `${isEdit ? "Alterar" : "Cadastrar"} - Grupos de Cálculo de Folha`;
   const formularioBloqueado = publicacaoConcluida;
   const credenciaisPublicacaoValidas = Boolean(
     credenciaisPublicacao.usuario.trim() &&
@@ -16362,7 +16384,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
       <form onSubmit={(event) => event.preventDefault()}>
         <div className="prototype-page-content prototype-page-content--white">
           <CardSeplag
-            title={`${isEdit ? (modoVersionamento ? "Versionar" : "Alterar") : "Cadastrar"} - Grupos de Cálculo de Folha`}
+            title={tituloFormularioGrupoCalculo}
             cols="12"
             cardHeaderClassNames="prototype-category-card"
           >

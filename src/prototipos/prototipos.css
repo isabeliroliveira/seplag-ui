@@ -1254,6 +1254,10 @@
   background: #fbc02d;
 }
 
+.prototype-grupos-calculo-action--new-version {
+  background: #2196f3;
+}
+
 .prototype-grupos-calculo-action--history {
   background: #64748b;
 }
