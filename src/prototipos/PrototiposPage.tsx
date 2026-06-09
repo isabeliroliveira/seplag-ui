@@ -402,7 +402,7 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnRouter: true,
     items: [
       {
-        label: "Conformidade da Folha",
+        label: "Relatório Dinâmico da Folha",
         icon: "pi pi-circle-on",
         to: FOLHA_CONFORMIDADE_BASE_PATH,
         visibleOnMenu: true,
@@ -1060,6 +1060,16 @@ interface GrupoCalculoForm {
   abrangenciaInstituicao?: string;
   abrangenciaHerdarDe?: string;
   abrangenciaOrgao?: string;
+}
+
+interface ProcessamentoFolhaForm {
+  competencia?: string;
+  tipoExecucao?: "PARCIAL" | "TOTAL";
+  orgaos?: string[];
+  regimesJuridicos?: string[];
+  categorias?: string[];
+  cargos?: string[];
+  grupoEleitos?: string;
 }
 
 interface GrupoEleitoForm {
@@ -2704,8 +2714,6 @@ const folhaPagamentoSituacaoOptions: {
   { label: "Em processamento", value: "EM_PROCESSAMENTO" },
   { label: "Processado com sucesso", value: "PROCESSO_COM_SUCESSO" },
   { label: "Processado com erro", value: "PROCESSO_COM_ERRO" },
-  { label: "Processado com falhas", value: "PROCESSO_COM_FALHAS" },
-  { label: "Cancelada", value: "CANCELADA" },
 ];
 
 const folhaCompetenciaSituacaoOptions: {
@@ -2769,8 +2777,6 @@ const folhaPagamentoSituacaoMeta: Record<
   EM_PROCESSAMENTO: { label: "Em processamento", color: "#005494", bg: "#e7f3ff", border: "#e7f3ff" },
   PROCESSO_COM_SUCESSO: { label: "Processado com sucesso", color: "#00843d", bg: "#e2f3e8", border: "#e2f3e8" },
   PROCESSO_COM_ERRO: { label: "Processado com erro", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
-  PROCESSO_COM_FALHAS: { label: "Processado com falhas", color: "#9a6500", bg: "#fff1c7", border: "#fff1c7" },
-  CANCELADA: { label: "Cancelada", color: "#b42318", bg: "#fee4e2", border: "#fee4e2" },
 };
 
 const solicitacaoAjusteFolhaSituacaoOptions: {
@@ -9808,12 +9814,262 @@ export function PrototiposMatrizValidacaoTesteFormPage() {
 }
 
 export function PrototiposFolhaPage() {
+  const [mesSelecionado, setMesSelecionado] = useState("MAIO");
+  const [gerenciandoBoletim, setGerenciandoBoletim] = useState(false);
+
+  const mesesCicloFolha = [
+    { mes: "MAIO", ano: "2026" },
+    { mes: "JUNHO", ano: "2026" },
+    { mes: "JULHO", ano: "2026" },
+    { mes: "AGOSTO", ano: "2026" },
+  ];
+
+  const prazosCicloFolha = [
+    {
+      id: 1,
+      data: "01/05",
+      evento: "Lançamento de Férias",
+      horario: "23:59",
+      status: "CONCLUIDO",
+    },
+    {
+      id: 2,
+      data: "05/05",
+      evento: "Último Processamento Total",
+      horario: "18:00",
+      status: "CONCLUIDO",
+    },
+    {
+      id: 3,
+      data: "10/05",
+      evento: "Consolidação da Folha",
+      horario: "14:00",
+      status: "EM_ANDAMENTO",
+    },
+    {
+      id: 4,
+      data: "15/05",
+      evento: "Processamento Final",
+      horario: "16:00",
+      status: "AGUARDANDO",
+    },
+  ];
+  const [prazosGerenciamento, setPrazosGerenciamento] = useState(() =>
+    prazosCicloFolha.slice(0, 3).map((prazo) => ({
+      ...prazo,
+      dataCompleta: `${prazo.data}/2026`,
+    })),
+  );
+
+  const statusPrazoMeta: Record<
+    string,
+    { label: string; icon: string; className: string }
+  > = {
+    CONCLUIDO: {
+      label: "Concluído",
+      icon: "pi pi-check",
+      className: "is-success",
+    },
+    EM_ANDAMENTO: {
+      label: "Em andamento",
+      icon: "pi pi-hourglass",
+      className: "is-warning",
+    },
+    AGUARDANDO: {
+      label: "Aguardando",
+      icon: "pi pi-clock",
+      className: "is-muted",
+    },
+  };
+
+  const adicionarPrazoBoletim = () => {
+    setPrazosGerenciamento((prazos) => [
+      ...prazos,
+      {
+        id: Date.now(),
+        data: "",
+        dataCompleta: "",
+        evento: "",
+        horario: "",
+        status: "AGUARDANDO",
+      },
+    ]);
+  };
+
+  const removerPrazoBoletim = (id: number) => {
+    setPrazosGerenciamento((prazos) =>
+      prazos.filter((prazo) => prazo.id !== id),
+    );
+  };
+
+  const voltarParaBoletim = () => {
+    setGerenciandoBoletim(false);
+  };
+
   return (
     <PrototypeSystemPage
       nomeSistema="FOLHA"
       ambienteSistema="Teste"
       menuItems={menuFolha}
-    />
+    >
+      <div className="prototype-page-content prototype-page-content--white">
+        <CardSeplag
+          title={
+            gerenciandoBoletim
+              ? "Boletim Mensal - Ciclo da Folha - Gerenciar"
+              : "Boletim Mensal - Ciclo da Folha"
+          }
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          actions={
+            !gerenciandoBoletim ? (
+              <BotaoSeplag
+                type="button"
+                label="Gerenciar"
+                icon="pi pi-cog"
+                className="prototype-folha-home-manage"
+                onClick={() => setGerenciandoBoletim(true)}
+              />
+            ) : null
+          }
+        >
+          {gerenciandoBoletim ? (
+            <div className="prototype-folha-home-manage-page">
+              <section className="prototype-folha-home-manage-section">
+                <h3>Selecione o período</h3>
+                <div className="prototype-folha-home-manage-field">
+                  <label htmlFor="folha-home-periodo">Mês / Ano</label>
+                  <div className="prototype-folha-home-input-icon">
+                    <input id="folha-home-periodo" type="text" defaultValue="maio de 2026" />
+                    <i className="pi pi-calendar" aria-hidden="true" />
+                  </div>
+                </div>
+              </section>
+
+              <section className="prototype-folha-home-manage-section">
+                <h3>Cadastro de Prazos</h3>
+                <div className="prototype-folha-home-deadline-list">
+                  {prazosGerenciamento.map((prazo) => (
+                    <div key={prazo.id} className="prototype-folha-home-deadline-row">
+                      <div className="prototype-folha-home-input-icon">
+                        <input type="text" defaultValue={prazo.dataCompleta} aria-label="Data do prazo" />
+                        <i className="pi pi-calendar" aria-hidden="true" />
+                      </div>
+                      <input type="text" defaultValue={prazo.evento} aria-label="Evento do prazo" />
+                      <div className="prototype-folha-home-input-icon">
+                        <input type="text" defaultValue={prazo.horario} aria-label="Horário do prazo" />
+                        <i className="pi pi-clock" aria-hidden="true" />
+                      </div>
+                      <button
+                        type="button"
+                        className="prototype-folha-home-remove"
+                        aria-label="Remover prazo"
+                        onClick={() => removerPrazoBoletim(prazo.id)}
+                      >
+                        <i className="pi pi-times" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <BotaoSeplag
+                  type="button"
+                  label="Adicionar Prazo"
+                  icon="pi pi-plus"
+                  className="prototype-folha-home-add"
+                  onClick={adicionarPrazoBoletim}
+                />
+              </section>
+
+              <section className="prototype-folha-home-manage-section">
+                <h3>Observações</h3>
+                <div className="prototype-folha-home-manage-field">
+                  <label htmlFor="folha-home-observacoes">Avisos importantes</label>
+                  <textarea
+                    id="folha-home-observacoes"
+                    defaultValue="Desligamentos após 14/05/2026 serão processados na Folha Rescisória 32"
+                    rows={4}
+                  />
+                </div>
+              </section>
+
+              <div className="prototype-folha-home-manage-actions">
+                <BotaoSeplag
+                  type="button"
+                  label="Cancelar"
+                  className="p-button-text"
+                  onClick={voltarParaBoletim}
+                />
+                <BotaoSalvarSeplag
+                  type="button"
+                  label="Publicar Boletim"
+                  icon="pi pi-check"
+                  onClick={voltarParaBoletim}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="prototype-folha-home-page">
+              <div className="prototype-folha-home-board">
+                <div className="prototype-folha-home-months" role="tablist" aria-label="Competências">
+                  {mesesCicloFolha.map((item) => (
+                    <button
+                      key={item.mes}
+                      type="button"
+                      className={item.mes === mesSelecionado ? "is-active" : ""}
+                      onClick={() => setMesSelecionado(item.mes)}
+                    >
+                      <strong>{item.mes}</strong>
+                      <span>{item.ano}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="prototype-table-wrapper prototype-folha-home-table">
+                  <table className="prototype-simple-table">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Evento</th>
+                        <th>Horário</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {prazosCicloFolha.map((prazo) => {
+                        const status = statusPrazoMeta[prazo.status];
+
+                        return (
+                          <tr key={prazo.id}>
+                            <td>{prazo.data}</td>
+                            <td>{prazo.evento}</td>
+                            <td>{prazo.horario}</td>
+                            <td>
+                              <span className={`prototype-folha-home-status ${status.className}`}>
+                                <i className={status.icon} aria-hidden="true" />
+                                {status.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <section className="prototype-folha-home-notes" aria-label="Observações complementares">
+                  <strong>
+                    <i className="pi pi-exclamation-triangle" aria-hidden="true" />
+                    Observações complementares
+                  </strong>
+                  <div>Nenhuma observação cadastrada para esta folha.</div>
+                </section>
+              </div>
+            </div>
+          )}
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
   );
 }
 
@@ -11611,7 +11867,6 @@ export function PrototiposFolhaPagamentoFormPage() {
   const situacoesComVersionamento: FolhaPagamentoSituacao[] = [
     "PROCESSO_COM_SUCESSO",
     "PROCESSO_COM_ERRO",
-    "PROCESSO_COM_FALHAS",
   ];
   const folhaPermiteEdicaoDireta =
     folhaEdicao?.situacao === "RASCUNHO" || folhaEdicao?.situacao === "ABERTO";
@@ -11697,9 +11952,7 @@ export function PrototiposFolhaPagamentoFormPage() {
   const deveExibirAvisoCompetencia =
     Boolean(competenciaDigitada?.trim()) && competenciaValida;
   const formTitle = isFolhaEdicao
-    ? folhaPermiteVersionamento
-      ? "Versionar - Folha de Pagamento"
-      : "Alterar - Folha de Pagamento"
+    ? "Alterar - Folha de Pagamento"
     : "Cadastrar - Folha de Pagamento";
 
   useEffect(() => {
@@ -12475,6 +12728,7 @@ export function PrototiposFolhaPagamentoPage() {
   const [modalFormularioAberto, setModalFormularioAberto] = useState(false);
   const [modalDetalheAberto, setModalDetalheAberto] = useState(false);
   const [modalExecucoesAberto, setModalExecucoesAberto] = useState(false);
+  const [modalProcessamentoAberto, setModalProcessamentoAberto] = useState(false);
   const [modalLogAberto, setModalLogAberto] = useState(false);
   const [modalPessoaLogAberto, setModalPessoaLogAberto] = useState(false);
   const [execucaoSelecionada, setExecucaoSelecionada] =
@@ -12536,6 +12790,22 @@ export function PrototiposFolhaPagamentoPage() {
       mensagem: "",
     },
   });
+  const {
+    control: processamentoControl,
+    reset: resetProcessamento,
+    watch: watchProcessamento,
+    handleSubmit: handleSubmitProcessamento,
+  } = useForm<ProcessamentoFolhaForm>({
+    defaultValues: {
+      competencia: "",
+      tipoExecucao: "TOTAL",
+      orgaos: [],
+      regimesJuridicos: [],
+      categorias: [],
+      cargos: [],
+      grupoEleitos: "",
+    },
+  });
 
   const filtros = watch();
   const normalizeMesAno = (value?: string) => {
@@ -12557,18 +12827,15 @@ export function PrototiposFolhaPagamentoPage() {
   const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
   const termoBusca =
     termoBuscaDigitado.length >= 3 ? termoBuscaDigitado : "";
-  const competenciaFiltro = normalizeMesAno(filtros.mesAnoReferencia);
   const folhasFiltradas = folhas.filter((folha) => {
     const atendeTermo =
       !termoBusca ||
       folha.numero.toLowerCase().includes(termoBusca) ||
       folha.nome.toLowerCase().includes(termoBusca);
-    const atendeCompetencia =
-      !competenciaFiltro || folha.competencia === competenciaFiltro;
     const atendeSituacao =
       !filtros.situacao || folha.situacao === filtros.situacao;
 
-    return atendeTermo && atendeCompetencia && atendeSituacao;
+    return atendeTermo && atendeSituacao;
   });
 
   const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
@@ -12630,6 +12897,8 @@ export function PrototiposFolhaPagamentoPage() {
   const competenciaVigente = folhaPagamentoService
     .listarCompetencias()
     .find((competencia) => competencia.situacao === "ATIVA");
+  const processamentoTipoExecucao = watchProcessamento("tipoExecucao");
+  const processamentoTotal = processamentoTipoExecucao === "TOTAL";
 
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
   const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
@@ -12642,23 +12911,26 @@ export function PrototiposFolhaPagamentoPage() {
     );
 
   const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
+    folha.situacao === "RASCUNHO" ||
+    folha.situacao === "ABERTO" ||
+    folha.situacao === "PROCESSO_COM_SUCESSO" ||
+    folha.situacao === "PROCESSO_COM_ERRO";
+
+  const folhaPodeExcluir = (folha: FolhaPagamentoRow) =>
     folha.situacao === "RASCUNHO" || folha.situacao === "ABERTO";
 
-  const folhaPodeVersionar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "PROCESSO_COM_SUCESSO" ||
-    folha.situacao === "PROCESSO_COM_ERRO" ||
-    folha.situacao === "PROCESSO_COM_FALHAS";
-
-  const folhaPodeEditarOuVersionar = (folha: FolhaPagamentoRow) =>
-    folhaPodeEditar(folha) || folhaPodeVersionar(folha);
+  const folhaTemHistoricoProcessamento = (folha: FolhaPagamentoRow) =>
+    folha.situacao !== "RASCUNHO" && folha.situacao !== "ABERTO";
 
   const folhaPodeProcessar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "ABERTO" || folhaPodeVersionar(folha);
+    folha.situacao === "ABERTO" ||
+    folha.situacao === "PROCESSO_COM_SUCESSO" ||
+    folha.situacao === "PROCESSO_COM_ERRO";
 
   const getMensagemBloqueioEdicao = (folha: FolhaPagamentoRow) =>
-    folhaPodeEditarOuVersionar(folha)
+    folhaPodeEditar(folha)
       ? ""
-      : "Não é possível editar ou versionar uma folha aguardando processamento, em processamento ou cancelada.";
+      : "Não é possível editar uma folha aguardando processamento, em processamento, processada ou cancelada.";
 
   const getMensagemBloqueioProcessamento = (folha: FolhaPagamentoRow) =>
     folhaPodeProcessar(folha)
@@ -12759,6 +13031,31 @@ export function PrototiposFolhaPagamentoPage() {
   const abrirDetalheFolha = (folha: FolhaPagamentoRow) => {
     setFolhaSelecionada(folha);
     setModalDetalheAberto(true);
+  };
+
+  const abrirModalProcessamentoFolha = (folha: FolhaPagamentoRow) => {
+    const mensagemValidacao = validarProcessamentoFolha(folha);
+    if (mensagemValidacao) {
+      setFeedback(`Não foi possível processar a folha. ${mensagemValidacao}`);
+      return;
+    }
+
+    setFolhaSelecionada(folha);
+    resetProcessamento({
+      competencia: formatMesAno(folha.competencia),
+      tipoExecucao: "TOTAL",
+      orgaos: folha.orgaos,
+      regimesJuridicos: folha.regimeJuridico ? [folha.regimeJuridico] : [],
+      categorias: folha.categoria ? [folha.categoria] : [],
+      cargos: folha.cargo ? [folha.cargo] : [],
+      grupoEleitos: folha.grupoEleitos,
+    });
+    setModalProcessamentoAberto(true);
+  };
+
+  const cancelarProcessamentoFolha = () => {
+    setModalProcessamentoAberto(false);
+    setFolhaSelecionada(null);
   };
 
   const salvarFolha = (data: FolhaPagamentoForm) => {
@@ -12886,10 +13183,16 @@ export function PrototiposFolhaPagamentoPage() {
     setModalFormularioAberto(false);
   };
 
-  const processarFolha = (folha: FolhaPagamentoRow) => {
+  const processarFolha = (folha: FolhaPagamentoRow, data?: ProcessamentoFolhaForm) => {
     const mensagemValidacao = validarProcessamentoFolha(folha);
     if (mensagemValidacao) {
       setFeedback(`Não foi possível processar a folha. ${mensagemValidacao}`);
+      return;
+    }
+
+    const competenciaProcessamento = normalizeMesAno(data?.competencia ?? folha.competencia);
+    if (!isMesAnoValido(data?.competencia ?? folha.competencia)) {
+      setFeedback("Não foi possível processar a folha. Competência deve estar no formato MM/AAAA.");
       return;
     }
 
@@ -12906,7 +13209,10 @@ export function PrototiposFolhaPagamentoPage() {
       totalSucesso: 0,
       totalAlerta: 0,
       totalErro: 0,
-      parametrosResumo: `Adiantar ${folha.totalMesesAdiantar} mês(es), retroagir ${folha.totalMesesRetroagir} mês(es)`,
+      parametrosResumo:
+        data?.tipoExecucao === "PARCIAL"
+          ? `Execução parcial da competência ${formatMesAno(competenciaProcessamento)}`
+          : `Execução total da competência ${formatMesAno(competenciaProcessamento)}`,
     };
 
     setExecucoes((current) => [novaExecucao, ...current]);
@@ -12914,14 +13220,23 @@ export function PrototiposFolhaPagamentoPage() {
       current.map((item) =>
         item.id === folha.id
           ? {
-              ...item,
+            ...item,
+              competencia: competenciaProcessamento,
+              mesAnoReferencia: competenciaProcessamento,
               situacao: "AGUARDANDO_PROCESSAMENTO",
               ultimaExecucao: "28/05/2026 10:00",
             }
           : item,
       ),
     );
-    setFeedback("Processamento enviado para a fila.");
+    setModalProcessamentoAberto(false);
+    setFolhaSelecionada(null);
+    setFeedback("Processamento da folha enviado com sucesso.");
+  };
+
+  const confirmarProcessamentoFolha = (data: ProcessamentoFolhaForm) => {
+    if (!folhaSelecionada) return;
+    processarFolha(folhaSelecionada, data);
   };
 
   const abrirExecucoesFolha = (folha: FolhaPagamentoRow) => {
@@ -12929,10 +13244,16 @@ export function PrototiposFolhaPagamentoPage() {
     setModalExecucoesAberto(true);
   };
 
+  const excluirFolha = (folha: FolhaPagamentoRow) => {
+    if (!folhaPodeExcluir(folha)) return;
+
+    setFolhas((current) => current.filter((item) => item.id !== folha.id));
+    setFeedback("Folha excluída com sucesso.");
+  };
+
   const folhaColumns: ColumnMetaSeplag<FolhaPagamentoRow>[] = [
     { field: "numero", header: "Número" },
     { field: "nome", header: "Nome" },
-    { header: "Órgão", body: (row) => row.orgaos.join(", ") || "-" },
     {
       header: "Situação processamento",
       body: (row) => renderFolhaSituacaoBadge(row.situacao),
@@ -13076,20 +13397,15 @@ export function PrototiposFolhaPagamentoPage() {
         icon="pi pi-eye"
         onClick={() => abrirDetalheFolha(folha)}
       />
-      <BotaoIconSeplag
-        severity="warning"
-        type="button"
-        tooltip={
-          folhaPodeEditar(folha)
-            ? "Editar folha"
-            : folhaPodeEditarOuVersionar(folha)
-              ? "Versionar"
-              : "Edição/versionamento bloqueado pela situação da folha"
-        }
-        icon={folhaPodeEditar(folha) ? "pi pi-pencil" : "pi pi-copy"}
-        disabled={!folhaPodeEditarOuVersionar(folha)}
-        onClick={() => abrirEditarFolha(folha)}
-      />
+      {folhaPodeEditar(folha) ? (
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Editar folha"
+          icon="pi pi-pencil"
+          style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
+          onClick={() => abrirEditarFolha(folha)}
+        />
+      ) : null}
       <BotaoIconSeplag
         type="button"
         tooltip={
@@ -13101,15 +13417,26 @@ export function PrototiposFolhaPagamentoPage() {
         }
         icon="pi pi-play"
         disabled={!folhaPodeProcessar(folha)}
-        onClick={() => processarFolha(folha)}
+        onClick={() => abrirModalProcessamentoFolha(folha)}
       />
-      <BotaoIconSeplag
-        type="button"
-        tooltip="Consultar execuções"
-        icon="pi pi-list-check"
-        disabled={!execucoes.some((execucao) => execucao.folhaPagamentoId === folha.id)}
-        onClick={() => abrirExecucoesFolha(folha)}
-      />
+      {folhaTemHistoricoProcessamento(folha) ? (
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Histórico do processamento"
+          icon="pi pi-history"
+          disabled={!execucoes.some((execucao) => execucao.folhaPagamentoId === folha.id)}
+          onClick={() => abrirExecucoesFolha(folha)}
+        />
+      ) : null}
+      {folhaPodeExcluir(folha) ? (
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Excluir"
+          icon="pi pi-trash"
+          style={{ backgroundColor: "#d32f2f", color: "#ffffff" }}
+          onClick={() => excluirFolha(folha)}
+        />
+      ) : null}
     </>
   );
 
@@ -13170,14 +13497,6 @@ export function PrototiposFolhaPagamentoPage() {
               cols="12 12 4"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="mesAnoReferencia"
-              control={control}
-              label="Competência"
-              placeholder="MM/AAAA"
-              cols="12 6 3"
-              getFormErrorMessage={() => null}
-            />
             <DropdownFieldSeplag
               name="situacao"
               control={control}
@@ -13196,7 +13515,6 @@ export function PrototiposFolhaPagamentoPage() {
                 onClick={() =>
                   reset({
                     termo: "",
-                    mesAnoReferencia: "",
                     situacao: "",
                   })
                 }
@@ -13229,6 +13547,121 @@ export function PrototiposFolhaPagamentoPage() {
             />
           </div>
         </CardSeplag>
+
+        <ModalSeplag
+          visible={modalProcessamentoAberto}
+          titulo={
+            <div className="prototype-processamento-folha-header">
+              <span>Processamento da Folha</span>
+              <div className="prototype-processamento-folha-topbar">
+                <span>Competência vigente</span>
+                <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+              </div>
+            </div>
+          }
+          fechar={cancelarProcessamentoFolha}
+          tamanho="920px"
+          customFooter={
+            <div className="prototype-processamento-folha-footer">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Cancelar"
+                icon="pi pi-times"
+                onClick={cancelarProcessamentoFolha}
+              />
+              <BotaoSeplag
+                type="button"
+                variant="save"
+                label="Processar folha"
+                icon="pi pi-play"
+                onClick={handleSubmitProcessamento(confirmarProcessamentoFolha)}
+              />
+            </div>
+          }
+        >
+          <div className="col-12 prototype-processamento-folha-modal">
+            <div className="grid prototype-category-form-fields">
+              <TextFieldSeplag
+                name="competencia"
+                control={processamentoControl}
+                label="Competência"
+                placeholder="MM/AAAA"
+                cols="12 12 4"
+                getFormErrorMessage={() => null}
+              />
+              <RadioButtonFieldSeplag
+                name="tipoExecucao"
+                control={processamentoControl}
+                label="Tipo de execução"
+                cols="12 12 8"
+                options={[
+                  { label: "Parcial", value: "PARCIAL" },
+                  { label: "Total", value: "TOTAL" },
+                ]}
+                getFormErrorMessage={() => null}
+              />
+              <MultiSelectFieldSeplag
+                name="orgaos"
+                control={processamentoControl}
+                label="Órgãos"
+                cols="12 12 6"
+                options={folhaPagamentoOrgaoOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} órgãos selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => null}
+              />
+              <MultiSelectFieldSeplag
+                name="regimesJuridicos"
+                control={processamentoControl}
+                label="Regime jurídico"
+                cols="12 12 6"
+                options={folhaPagamentoRegimeOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} regimes selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => null}
+              />
+              <MultiSelectFieldSeplag
+                name="categorias"
+                control={processamentoControl}
+                label="Categoria"
+                cols="12 12 4"
+                options={folhaPagamentoCategoriaOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} categorias selecionadas"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => null}
+              />
+              <MultiSelectFieldSeplag
+                name="cargos"
+                control={processamentoControl}
+                label="Cargo"
+                cols="12 12 4"
+                options={folhaPagamentoCargoOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} cargos selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => null}
+              />
+              <DropdownFieldSeplag
+                name="grupoEleitos"
+                control={processamentoControl}
+                label="Grupo de eleitos"
+                cols="12 12 4"
+                options={folhaPagamentoGrupoEleitosOptions}
+                optionLabel="label"
+                optionValue="value"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => null}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
 
         <ModalSeplag
           visible={modalFormularioAberto}
@@ -15154,11 +15587,13 @@ export function PrototiposFolhaFichaFinanceiraPage() {
 
 export function PrototiposFolhaGruposCalculoPage() {
   const navigate = useNavigate();
+  const [grupoHistoricoSelecionado, setGrupoHistoricoSelecionado] =
+    useState<GrupoCalculoRow | null>(null);
+  const [versaoHistoricoAberta, setVersaoHistoricoAberta] = useState<string | null>(null);
   const { control, reset, watch } = useForm<GrupoCalculoFiltroForm>({
     defaultValues: {
       nomeGrupo: "",
       situacao: "",
-      tipoVinculo: "",
     },
   });
 
@@ -15172,15 +15607,108 @@ export function PrototiposFolhaGruposCalculoPage() {
     const atendeSituacao =
       !filtros.situacao ||
       normalizeGrupoCalculoSituacao(grupo.situacao) === filtros.situacao;
-    const atendeTipoVinculo =
-      !filtros.tipoVinculo ||
-      filtros.tipoVinculo === "todos" ||
-      grupo.tipoVinculo.toLowerCase() === filtros.tipoVinculo.toLowerCase();
-    return atendeTermo && atendeSituacao && atendeTipoVinculo;
+    return atendeTermo && atendeSituacao;
   });
 
   const getGrupoCalculoVersao = (grupo: GrupoCalculoRow) =>
     `V${gruposCalculoVersoesMock[grupo.id]?.length ?? 1}`;
+
+  const abrirHistoricoGrupoCalculo = (grupo: GrupoCalculoRow) => {
+    const versoes = gruposCalculoVersoesMock[grupo.id] ?? [grupo];
+    setGrupoHistoricoSelecionado(grupo);
+    setVersaoHistoricoAberta(`${versoes[0].id}-${versoes[0].codigo}`);
+  };
+
+  const fecharHistoricoGrupoCalculo = () => {
+    setGrupoHistoricoSelecionado(null);
+    setVersaoHistoricoAberta(null);
+  };
+
+  const renderGrupoCalculoHistoricoStatus = (grupo: GrupoCalculoRow, index: number) => {
+    const situacao = normalizeGrupoCalculoSituacao(grupo.situacao);
+    const label = situacao === "ATIVO" && index === 0 ? "Vigente" : grupoCalculoSituacaoMeta[situacao].label;
+    const meta =
+      situacao === "ATIVO" && index === 0
+        ? { color: "#00843d", bg: "#d1fae5", border: "#bbf7d0" }
+        : grupoCalculoSituacaoMeta[situacao];
+
+    return (
+      <span
+        className="prototype-grupos-calculo-history-status"
+        style={{ color: meta.color, backgroundColor: meta.bg, borderColor: meta.border }}
+      >
+        {label}
+      </span>
+    );
+  };
+
+  const renderGrupoCalculoHistoricoDetalhe = (grupo: GrupoCalculoRow) => (
+    <div className="prototype-grupos-calculo-history-detail">
+      <strong>Abrangência</strong>
+      <div className="prototype-grupos-calculo-history-scope">
+        <div>
+          <span>Regime jurídico</span>
+          <p>Estatutário</p>
+        </div>
+        <div>
+          <span>Tipo de vínculo</span>
+          <p>{grupo.tipoVinculo === "Todos" ? "Todos" : grupo.tipoVinculo}</p>
+        </div>
+        <div>
+          <span>Instituição</span>
+          <p>{grupo.orgaoSetor === "Todos" ? "SEDUC" : grupo.orgaoSetor}</p>
+        </div>
+        <div>
+          <span>Órgão</span>
+          <p>MTI</p>
+        </div>
+        <div>
+          <span>Herdar de</span>
+          <p>{grupo.herdaDe === "-" ? "Nenhum" : grupo.herdaDe}</p>
+        </div>
+      </div>
+
+      <strong>Gerenciar rubricas ({Math.min(5, grupo.rubricas)})</strong>
+      <div className="prototype-grupos-calculo-history-rubricas">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Nome da rubrica</th>
+              <th>Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {catalogoRubricasMock.slice(0, 5).map((rubrica, index) => {
+              const tipo = getGrupoCalculoRubricaTipo(rubrica);
+              const badge = getGrupoCalculoRubricaTipoBadge(tipo);
+
+              return (
+                <tr key={rubrica.id}>
+                  <td>{index + 1}</td>
+                  <td>{rubrica.codigo}</td>
+                  <td>{rubrica.nomeRubrica}</td>
+                  <td>
+                    <span
+                      className="prototype-grupos-calculo-history-rubrica-badge"
+                      style={{
+                        color: badge.color,
+                        backgroundColor: badge.bg,
+                        borderColor: badge.border,
+                      }}
+                    >
+                      {tipo}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   const renderGrupoCalculoAction = (row: GrupoCalculoRow) => (
     <div className="prototype-grupos-calculo-actions">
@@ -15202,11 +15730,11 @@ export function PrototiposFolhaGruposCalculoPage() {
       </button>
       <button
         type="button"
-        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--version"
-        aria-label={`Versionar ${row.grupo}`}
-        onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
+        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--history"
+        aria-label={`Histórico ${row.grupo}`}
+        onClick={() => abrirHistoricoGrupoCalculo(row)}
       >
-        <i className="pi pi-refresh" aria-hidden="true" />
+        <i className="pi pi-history" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -15233,30 +15761,20 @@ export function PrototiposFolhaGruposCalculoPage() {
 
         <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-category-filters prototype-grupos-calculo-filters">
-            <DropdownFieldSeplag
-              name="situacao"
-              control={control}
-              label="Situação"
-              cols="12 md:col-2"
-              options={[{ label: "Todas", value: "" }, ...grupoCalculoSituacaoOptions]}
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
             <TextFieldSeplag
               name="nomeGrupo"
               control={control}
-              label="Buscar"
-              cols="12 md:col-3"
+              label="Nome do Grupo"
+              cols="12"
               placeholder="Nome do grupo..."
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
-              name="tipoVinculo"
+              name="situacao"
               control={control}
-              label="Tipo de Vínculo"
-              cols="12 md:col-3"
-              options={grupoCalculoFiltroTipoVinculoOptions}
+              label="Situação"
+              cols="12"
+              options={[{ label: "Todas", value: "" }, ...grupoCalculoSituacaoOptions]}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
@@ -15270,7 +15788,6 @@ export function PrototiposFolhaGruposCalculoPage() {
                   reset({
                     nomeGrupo: "",
                     situacao: "",
-                    tipoVinculo: "",
                   })
                 }
               />
@@ -15327,6 +15844,61 @@ export function PrototiposFolhaGruposCalculoPage() {
             </div>
           </div>
         </CardSeplag>
+
+        <ModalSeplag
+          visible={Boolean(grupoHistoricoSelecionado)}
+          titulo="Histórico de Versões"
+          tamanho="900px"
+          fechar={fecharHistoricoGrupoCalculo}
+          customFooter={
+            <div className="prototype-grupos-calculo-history-footer">
+              <BotaoSeplag
+                type="button"
+                label="Fechar"
+                onClick={fecharHistoricoGrupoCalculo}
+              />
+            </div>
+          }
+        >
+          <div className="col-12 prototype-grupos-calculo-history-modal">
+            {(grupoHistoricoSelecionado
+              ? gruposCalculoVersoesMock[grupoHistoricoSelecionado.id] ?? [
+                  grupoHistoricoSelecionado,
+                ]
+              : []
+            ).map((versao, index, versoes) => {
+              const key = `${versao.id}-${versao.codigo}`;
+              const isAberta = versaoHistoricoAberta === key;
+
+              return (
+                <div
+                  className={`prototype-grupos-calculo-history-version${
+                    isAberta ? " prototype-grupos-calculo-history-version--open" : ""
+                  }`}
+                  key={key}
+                >
+                  <button
+                    type="button"
+                    className="prototype-grupos-calculo-history-version-header"
+                    onClick={() => setVersaoHistoricoAberta(isAberta ? null : key)}
+                  >
+                    <span>{versao.grupo}</span>
+                    <span>{`V${versoes.length - index}`}</span>
+                    <span>{versao.inicioVigencia}</span>
+                    <span>{versao.fimVigencia}</span>
+                    {renderGrupoCalculoHistoricoStatus(versao, index)}
+                    <span>Admin User</span>
+                    <i
+                      className={`pi ${isAberta ? "pi-chevron-up" : "pi-chevron-down"}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {isAberta ? renderGrupoCalculoHistoricoDetalhe(versao) : null}
+                </div>
+              );
+            })}
+          </div>
+        </ModalSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -16395,7 +16967,7 @@ export function PrototiposFolhaConformidadePage() {
         <div className="grid">
           <div className="col-12">
             <div className="prototype-conformidade-heading">
-              <h2>Conformidade da Folha</h2>
+              <h2>Relatório Dinâmico da Folha</h2>
               <div className="prototype-conformidade-heading-status">
                 <strong>Competência 05/2026</strong>
               </div>

@@ -5,8 +5,7 @@ export type FolhaPagamentoSituacao =
   | "EM_PROCESSAMENTO"
   | "PROCESSO_COM_SUCESSO"
   | "PROCESSO_COM_ERRO"
-  | "PROCESSO_COM_FALHAS"
-  | "CANCELADA";
+  | "PROCESSO_COM_FALHAS";
 
 export type FolhaCompetenciaSituacao =
   | "ATIVA"

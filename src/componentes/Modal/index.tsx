@@ -6,7 +6,7 @@ import styles from "./style.module.css";
 export interface ModalSeplagProps {
   visible: boolean;
   isSubmit?: boolean;
-  titulo?: string;
+  titulo?: ReactNode;
   children: ReactNode;
   funcAcao?: () => void;
   fechar: () => void;
@@ -70,7 +70,8 @@ export const ModalSeplag = (props: Readonly<ModalSeplagProps>) => {
     [tamanho, altura],
   );
 
-  const resolvedAriaLabel = ariaLabel?.trim() || titulo || "Modal";
+  const resolvedAriaLabel =
+    ariaLabel?.trim() || (typeof titulo === "string" ? titulo : "Modal");
 
   const footerContent = useMemo(() => {
     if (hideFooter) return undefined;
