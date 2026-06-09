@@ -1038,9 +1038,11 @@ interface GrupoEleitosFiltroForm {
   situacao?: StatusOperacionalVigenciaSeplag | "";
 }
 
+type GrupoCalculoSituacao = "RASCUNHO" | "ATIVO" | "ENCERRADO";
+
 interface GrupoCalculoFiltroForm {
   nomeGrupo?: string;
-  situacao?: StatusOperacionalVigenciaSeplag | "";
+  situacao?: GrupoCalculoSituacao | "";
   tipoVinculo?: string;
 }
 
@@ -1210,7 +1212,7 @@ interface GrupoCalculoRow {
   herdaDe: string;
   orgaoSetor: string;
   tipoVinculo: string;
-  situacao: StatusOperacionalVigenciaSeplag;
+  situacao: GrupoCalculoSituacao | StatusOperacionalVigenciaSeplag;
   inicioVigencia: string;
   fimVigencia: string;
   rubricas: number;
@@ -1728,7 +1730,7 @@ const regimesJuridicosMock: RegimeJuridicoRow[] = [
     descricao: "Estatutário Militar",
     instituicao: "govmt",
     instituicoesVinculadas: 3,
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
   },
   {
     id: 3,
@@ -1768,38 +1770,38 @@ const gruposEleitosMock: GrupoEleitosRow[] = [
   {
     id: 81,
     descricao: "PESSOA FÍSICA",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
     quantidadeEleitos: 0,
   },
   {
     id: 79,
     descricao: "abc123",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
     quantidadeEleitos: 0,
   },
   {
     id: 80,
     descricao:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas minima reprehenderit cupiditate tempore. Commodi dignissimos ad impedit repellendus consequatur aliquam cumque magnam saepe vero dolor acc",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
+    situacao: "ENCERRADO",
     quantidadeEleitos: 0,
   },
   {
     id: 77,
     descricao: "Grupo Teste",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
     quantidadeEleitos: 0,
   },
   {
     id: 75,
     descricao: "TESTE",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+    situacao: "RASCUNHO",
     quantidadeEleitos: 0,
   },
   {
     id: 76,
     descricao: "TESTE",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+    situacao: "ENCERRADO",
     quantidadeEleitos: 0,
   },
   {
@@ -1819,7 +1821,7 @@ const regimesJuridicosTesteMock: RegimeJuridicoTesteRow[] = [
     instituicao: "govmt",
     instituicoesVinculadas: 1,
     vigencia: "01/01/2026 -",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
   },
   {
     id: 2,
@@ -1839,7 +1841,7 @@ const regimesJuridicosTesteMock: RegimeJuridicoTesteRow[] = [
     instituicao: "govmt",
     instituicoesVinculadas: 2,
     vigencia: "01/01/2026 -",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO,
+    situacao: "ENCERRADO",
   },
   {
     id: 4,
@@ -1849,7 +1851,7 @@ const regimesJuridicosTesteMock: RegimeJuridicoTesteRow[] = [
     instituicao: "mti",
     instituicoesVinculadas: 3,
     vigencia: "01/01/2026 -",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
   },
   {
     id: 5,
@@ -1859,7 +1861,7 @@ const regimesJuridicosTesteMock: RegimeJuridicoTesteRow[] = [
     instituicao: "govmt",
     instituicoesVinculadas: 1,
     vigencia: "01/03/2026 -",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO,
+    situacao: "RASCUNHO",
   },
 ];
 
@@ -2015,7 +2017,7 @@ const controleVagasQuadroAutorizadoMock: ControleVagasQuadroAutorizadoRow[] = [
     vagasOcupadas: 45,
     vagasReservadas: 0,
     vagasDisponiveis: 0,
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+    situacao: "ENCERRADO",
     inicioVigencia: "01/01/2025",
     atoLegal: "Norma 001-A/2022",
   },
@@ -3277,21 +3279,6 @@ const folhaConformidadeSituacaoAnaliseOptions = [
   { label: "Justificado", value: "Justificado" },
 ];
 
-const folhaConformidadeCriterios = [
-  "Comparativo mensal",
-  "Descontos",
-  "Retenções",
-  "Saldo ALN",
-  "Lançamentos manuais",
-  "Manutenção de parcelas",
-  "INSS/IRRF",
-  "Afastamentos/LSF",
-  "Admitidos no período",
-  "Vacância",
-  "Rubricas sensíveis",
-  "Checklist da folha",
-];
-
 const folhaConformidadeRows: FolhaConformidadeRow[] = [
   {
     id: 1,
@@ -3623,7 +3610,7 @@ const gruposCalculoMock: GrupoCalculoRow[] = [
     herdaDe: "Geral",
     orgaoSetor: "Todos",
     tipoVinculo: "Pensionista",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO,
+    situacao: "ENCERRADO",
     inicioVigencia: "02/2026",
     fimVigencia: "08/2026",
     rubricas: 16,
@@ -3637,7 +3624,7 @@ const gruposCalculoMock: GrupoCalculoRow[] = [
     herdaDe: "Efetivos",
     orgaoSetor: "PGE",
     tipoVinculo: "Efetivo",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
     inicioVigencia: "01/2026",
     fimVigencia: "-",
     rubricas: 38,
@@ -3651,7 +3638,7 @@ const gruposCalculoMock: GrupoCalculoRow[] = [
     herdaDe: "Efetivos SEDUC",
     orgaoSetor: "SEDUC",
     tipoVinculo: "Efetivo",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+    situacao: "ATIVO",
     inicioVigencia: "03/2026",
     fimVigencia: "-",
     rubricas: 44,
@@ -3665,7 +3652,7 @@ const gruposCalculoMock: GrupoCalculoRow[] = [
     herdaDe: "Contratados",
     orgaoSetor: "SEPLAG",
     tipoVinculo: "Contratado",
-    situacao: STATUS_OPERACIONAL_VIGENCIA.EXTINTO,
+    situacao: "ENCERRADO",
     inicioVigencia: "01/2025",
     fimVigencia: "04/2026",
     rubricas: 19,
@@ -3679,7 +3666,7 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
     {
       ...gruposCalculoMock[0],
       codigo: "G001-V1",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      situacao: "ENCERRADO",
       inicioVigencia: "01/2025",
       fimVigencia: "12/2025",
       rubricas: 39,
@@ -3690,7 +3677,7 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
     {
       ...gruposCalculoMock[1],
       codigo: "G010-V1",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      situacao: "ENCERRADO",
       inicioVigencia: "01/2025",
       fimVigencia: "12/2025",
       rubricas: 31,
@@ -3701,7 +3688,7 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
     {
       ...gruposCalculoMock[2],
       codigo: "G011-V2",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ATIVO,
+      situacao: "ATIVO",
       inicioVigencia: "01/2026",
       fimVigencia: "05/2026",
       rubricas: 36,
@@ -3710,7 +3697,7 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
     {
       ...gruposCalculoMock[2],
       codigo: "G011-V1",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      situacao: "ENCERRADO",
       inicioVigencia: "03/2025",
       fimVigencia: "12/2025",
       rubricas: 34,
@@ -3723,7 +3710,7 @@ const gruposCalculoVersoesMock: Record<number, GrupoCalculoRow[]> = {
     {
       ...gruposCalculoMock[4],
       codigo: "G030-V1",
-      situacao: STATUS_OPERACIONAL_VIGENCIA.ENCERRADO,
+      situacao: "ENCERRADO",
       inicioVigencia: "01/2025",
       fimVigencia: "12/2025",
       rubricas: 15,
@@ -3908,56 +3895,76 @@ const grupoCalculoSimNaoOptions = [
   { label: "Não", value: "nao" },
 ];
 
-function mapGrupoCalculoSituacao(
-  situacao?: StatusOperacionalVigenciaSeplag,
-): SituacaoVigenciaValueSeplag["situacao"] {
-  if (
-    situacao === STATUS_OPERACIONAL_VIGENCIA.ENCERRADO ||
-    situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO
-  ) {
-    return SITUACAO_VIGENCIA.ENCERRADO;
-  }
+const grupoCalculoSituacaoOptions = [
+  { label: "Rascunho", value: "RASCUNHO" },
+  { label: "Ativo", value: "ATIVO" },
+  { label: "Encerrado", value: "ENCERRADO" },
+];
 
-  if (
-    situacao === STATUS_OPERACIONAL_VIGENCIA.EXTINTO ||
-    situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
-  ) {
-    return SITUACAO_VIGENCIA.EXTINTO;
+const grupoCalculoSituacaoMeta: Record<
+  GrupoCalculoSituacao,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  RASCUNHO: {
+    label: "Rascunho",
+    color: "#9a6500",
+    bg: "#fff1c7",
+    border: "#fff1c7",
+  },
+  ATIVO: {
+    label: "Ativo",
+    color: "#00843d",
+    bg: "#dff3e7",
+    border: "#dff3e7",
+  },
+  ENCERRADO: {
+    label: "Encerrado",
+    color: "#334e68",
+    bg: "#e2e8f0",
+    border: "#e2e8f0",
+  },
+};
+
+function mapGrupoCalculoSituacao(
+  situacao?: GrupoCalculoSituacao | StatusOperacionalVigenciaSeplag,
+): SituacaoVigenciaValueSeplag["situacao"] {
+  if (normalizeGrupoCalculoSituacao(situacao) === "ENCERRADO") {
+    return SITUACAO_VIGENCIA.ENCERRADO;
   }
 
   return SITUACAO_VIGENCIA.ATIVO;
 }
 
-function renderGrupoCalculoStatusBadge(status: StatusOperacionalVigenciaSeplag) {
-  const badge = regimeStatusMeta[status];
-  const isStatusLongo =
-    status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
-    status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO;
+function normalizeGrupoCalculoSituacao(
+  status?: GrupoCalculoSituacao | StatusOperacionalVigenciaSeplag,
+): GrupoCalculoSituacao {
+  if (status === "RASCUNHO" || status === "ATIVO" || status === "ENCERRADO") {
+    return status;
+  }
+
+  if (status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO) {
+    return "RASCUNHO";
+  }
+
+  return "ENCERRADO";
+}
+
+function renderGrupoCalculoStatusBadge(
+  status: GrupoCalculoSituacao | StatusOperacionalVigenciaSeplag,
+) {
+  const badge = grupoCalculoSituacaoMeta[normalizeGrupoCalculoSituacao(status)];
 
   return (
     <span className="prototype-grupo-calculo-status-badge-wrap">
       <span
-        className={`prototype-sistema-status-badge${
-          isStatusLongo ? " prototype-sistema-status-badge--long" : ""
-        }`}
+        className="prototype-sistema-status-badge"
         style={{
           color: badge.color,
           backgroundColor: badge.bg,
           borderColor: badge.border,
         }}
       >
-        {isStatusLongo ? (
-          <>
-            <span>Agendado para</span>
-            <strong>
-              {status === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO
-                ? "Encerramento"
-                : "Extinção"}
-            </strong>
-          </>
-        ) : (
-          badge.label
-        )}
+        {badge.label}
       </span>
     </span>
   );
@@ -15162,7 +15169,9 @@ export function PrototiposFolhaGruposCalculoPage() {
       !termoBusca ||
       grupo.grupo.toLowerCase().includes(termoBusca) ||
       grupo.codigo.toLowerCase().includes(termoBusca);
-    const atendeSituacao = !filtros.situacao || grupo.situacao === filtros.situacao;
+    const atendeSituacao =
+      !filtros.situacao ||
+      normalizeGrupoCalculoSituacao(grupo.situacao) === filtros.situacao;
     const atendeTipoVinculo =
       !filtros.tipoVinculo ||
       filtros.tipoVinculo === "todos" ||
@@ -15220,12 +15229,7 @@ export function PrototiposFolhaGruposCalculoPage() {
           title="Gestão de Grupos de Cálculo"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
-        >
-          <div className="prototype-grupos-calculo-title-row">
-            <i className="pi pi-chart-bar" aria-hidden="true" />
-            <span>Gestão de Grupos de Cálculo</span>
-          </div>
-        </CardSeplag>
+        />
 
         <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-category-filters prototype-grupos-calculo-filters">
@@ -15234,7 +15238,7 @@ export function PrototiposFolhaGruposCalculoPage() {
               control={control}
               label="Situação"
               cols="12 md:col-2"
-              options={[{ label: "Todas", value: "" }, ...regimeSituacaoOptions]}
+              options={[{ label: "Todas", value: "" }, ...grupoCalculoSituacaoOptions]}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
@@ -15337,7 +15341,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   const dataInicioV2 = formatDatePtBr(amanha);
   const versoesGrupoAtual = grupo ? gruposCalculoVersoesMock[grupo.id] ?? [grupo] : [];
   const grupoEstaPublicado =
-    Boolean(grupo) && grupo?.situacao !== STATUS_OPERACIONAL_VIGENCIA.AGENDADO;
+    Boolean(grupo) && normalizeGrupoCalculoSituacao(grupo?.situacao) !== "RASCUNHO";
   const modoVersionamento = Boolean(isEdit && grupoEstaPublicado);
   const versaoEmEdicao = modoVersionamento
     ? versoesGrupoAtual.length + 1
@@ -15383,29 +15387,13 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           ? dataInicioV2
           : "",
       dataEncerramento:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.ENCERRADO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.EXTINTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
-          ? "30/06/2026"
-          : "",
+        normalizeGrupoCalculoSituacao(grupo?.situacao) === "ENCERRADO" ? "30/06/2026" : "",
       motivoEncerramento:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.ENCERRADO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.EXTINTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
+        normalizeGrupoCalculoSituacao(grupo?.situacao) === "ENCERRADO"
           ? "Encerramento programado da configuração vigente."
           : "",
-      dataExtincao:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.EXTINTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
-          ? "30/07/2026"
-          : "",
-      motivoExtincao:
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.EXTINTO ||
-        grupo?.situacao === STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO
-          ? "Extinção administrativa da configuração."
-          : "",
+      dataExtincao: "",
+      motivoExtincao: "",
       abrangenciaRegimeJuridico: "",
       abrangenciaTipoVinculo: "",
       abrangenciaInstituicao: "",
@@ -16261,25 +16249,9 @@ export function PrototiposFolhaConformidadePage() {
   const { control, handleSubmit, reset } = useForm<FolhaConformidadeFiltroForm>({
     defaultValues: defaultFilters,
   });
-  const [criteriosSelecionados, setCriteriosSelecionados] = useState<string[]>([
-    "Comparativo mensal",
-    "Descontos",
-    "Retenções",
-    "Saldo ALN",
-    "Lançamentos manuais",
-    "Checklist da folha",
-  ]);
   const [filtrosGerados, setFiltrosGerados] =
     useState<FolhaConformidadeFiltroForm>(defaultFilters);
   const getEmptyFieldError = () => null;
-
-  const toggleCriterio = (criterio: string) => {
-    setCriteriosSelecionados((current) =>
-      current.includes(criterio)
-        ? current.filter((item) => item !== criterio)
-        : [...current, criterio],
-    );
-  };
 
   const handleGerarRelatorio = (data: FolhaConformidadeFiltroForm) => {
     setFiltrosGerados(data);
@@ -16363,15 +16335,37 @@ export function PrototiposFolhaConformidadePage() {
     </span>
   );
 
+  const renderMatriculaVinculo = (row: FolhaConformidadeRow) => (
+    <div className="prototype-conformidade-cell prototype-conformidade-cell--compact">
+      <strong>{row.matricula}</strong>
+      <span>Vínculo {row.vinculo}</span>
+    </div>
+  );
+
+  const renderRubrica = (row: FolhaConformidadeRow) => {
+    const [codigo, ...descricao] = row.rubrica.split(" - ");
+
+    return (
+      <div className="prototype-conformidade-cell prototype-conformidade-cell--rubrica">
+        <strong>{codigo}</strong>
+        <span>{descricao.join(" - ") || row.rubrica}</span>
+      </div>
+    );
+  };
+
+  const renderMoneyCell = (value: string) => (
+    <span className="prototype-conformidade-money">{value}</span>
+  );
+
   const columns: ColumnMetaSeplag<FolhaConformidadeRow>[] = [
-    { header: "Matrícula/Vínculo", body: (row) => `${row.matricula}/${row.vinculo}` },
+    { header: "Matrícula", body: renderMatriculaVinculo },
     { header: "Servidor", field: "servidor" },
     { header: "Órgão", field: "orgao" },
     { header: "Folha", field: "folha" },
-    { header: "Rubrica", field: "rubrica" },
-    { header: "Vantagens", field: "vantagens" },
-    { header: "Descontos", field: "descontos" },
-    { header: "Líquido", field: "liquido" },
+    { header: "Rubrica", body: renderRubrica },
+    { header: "Vantagens", body: (row) => renderMoneyCell(row.vantagens) },
+    { header: "Descontos", body: (row) => renderMoneyCell(row.descontos) },
+    { header: "Líquido", body: (row) => renderMoneyCell(row.liquido) },
     { header: "Alerta", field: "alerta" },
     {
       header: "Análise",
@@ -16400,26 +16394,12 @@ export function PrototiposFolhaConformidadePage() {
       <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-folha-conformidade-page">
         <div className="grid">
           <div className="col-12">
-            <CardSeplag
-              title="Conformidade da Folha"
-              cols="12"
-              cardHeaderClassNames="prototype-regime-card"
-            >
-              <div className="prototype-conformidade-heading">
-                <div>
-                  <span>Relatórios</span>
-                  <h2>Gerar relatório de conformidade da folha</h2>
-                  <p>
-                    Selecione os parâmetros, escolha os critérios de análise e
-                    gere uma visão consolidada para conferência da folha.
-                  </p>
-                </div>
-                <div className="prototype-conformidade-heading-status">
-                  <strong>Competência 05/2026</strong>
-                  <span>Conformidade em análise</span>
-                </div>
+            <div className="prototype-conformidade-heading">
+              <h2>Conformidade da Folha</h2>
+              <div className="prototype-conformidade-heading-status">
+                <strong>Competência 05/2026</strong>
               </div>
-            </CardSeplag>
+            </div>
           </div>
 
           <form className="col-12" onSubmit={handleSubmit(handleGerarRelatorio)}>
@@ -16428,14 +16408,14 @@ export function PrototiposFolhaConformidadePage() {
                 label="Competência"
                 name="competencia"
                 control={control}
-                cols="12 md:col-3"
+                cols="12"
                 placeholder="MM/AAAA"
               />
               <DropdownFieldSeplag
                 label="Número da folha"
                 name="numeroFolha"
                 control={control}
-                cols="12 md:col-3"
+                cols="12"
                 options={folhaConformidadeNumeroFolhaOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16445,7 +16425,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Tipo de folha"
                 name="tipoFolha"
                 control={control}
-                cols="12 md:col-3"
+                cols="12"
                 options={folhaConformidadeTipoFolhaOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16455,7 +16435,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Tipo de relatório"
                 name="tipoRelatorio"
                 control={control}
-                cols="12 md:col-3"
+                cols="12"
                 options={folhaConformidadeTipoRelatorioOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16465,7 +16445,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Órgão"
                 name="orgaos"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaPagamentoOrgaoOptions.filter((option) => option.value)}
                 optionLabel="label"
                 optionValue="value"
@@ -16475,7 +16455,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Setor"
                 name="setores"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaConformidadeSetorOptions.filter((option) => option.value)}
                 optionLabel="label"
                 optionValue="value"
@@ -16485,7 +16465,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Categoria"
                 name="categorias"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaPagamentoCategoriaOptions.filter((option) => option.value)}
                 optionLabel="label"
                 optionValue="value"
@@ -16495,7 +16475,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Tipo de vínculo"
                 name="tiposVinculo"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaConformidadeTipoVinculoOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16505,7 +16485,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Formato de saída"
                 name="formatoSaida"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaConformidadeFormatoOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16515,7 +16495,7 @@ export function PrototiposFolhaConformidadePage() {
                 label="Situação da análise"
                 name="situacaoAnalise"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 options={folhaConformidadeSituacaoAnaliseOptions}
                 optionLabel="label"
                 optionValue="value"
@@ -16525,42 +16505,23 @@ export function PrototiposFolhaConformidadePage() {
                 label="Matrícula"
                 name="matricula"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 placeholder="Digite a matrícula"
               />
               <TextFieldSeplag
                 label="Servidor"
                 name="servidor"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 placeholder="Nome do servidor"
               />
               <TextFieldSeplag
                 label="Rubrica"
                 name="rubrica"
                 control={control}
-                cols="12 md:col-4"
+                cols="12"
                 placeholder="Código ou descrição"
               />
-            </div>
-
-            <div className="prototype-conformidade-criterios">
-              <div className="prototype-conformidade-section-title">
-                <strong>Critérios de análise</strong>
-                <span>{criteriosSelecionados.length} selecionados</span>
-              </div>
-              <div className="prototype-conformidade-criterios-grid">
-                {folhaConformidadeCriterios.map((criterio) => (
-                  <label className="prototype-conformidade-check" key={criterio}>
-                    <input
-                      type="checkbox"
-                      checked={criteriosSelecionados.includes(criterio)}
-                      onChange={() => toggleCriterio(criterio)}
-                    />
-                    <span>{criterio}</span>
-                  </label>
-                ))}
-              </div>
             </div>
 
             <div className="prototype-folha-pagamento-actions prototype-conformidade-actions">
@@ -16608,7 +16569,7 @@ export function PrototiposFolhaConformidadePage() {
             </div>
           </div>
 
-          <div className="col-12 prototype-folha-pagamento-table prototype-conformidade-table">
+          <div className="col-12 prototype-folha-pagamento-table prototype-conformidade-table prototype-conformidade-table--resultado">
             <div className="prototype-conformidade-section-title">
               <strong>Resultado da geração</strong>
               <span>
