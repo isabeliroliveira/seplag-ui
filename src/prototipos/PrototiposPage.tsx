@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
   BotaoLimparFiltroSeplag,
@@ -99,6 +99,10 @@ const FOLHA_SOLICITACOES_AJUSTES_BASE_PATH =
   "/prototipos/folha/processamento/solicitacoes-ajustes";
 const FOLHA_TABELAS_REFERENCIA_BASE_PATH =
   "/prototipos/folha/tabelas-referencia";
+const FOLHA_CONFORMIDADE_BASE_PATH =
+  "/prototipos/folha/relatorios/conformidade";
+const FOLHA_FICHA_FINANCEIRA_BASE_PATH =
+  "/prototipos/folha/lancamento-financeiro/ficha-financeira";
 const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
@@ -366,6 +370,13 @@ const menuFolha: IMenuSeplag[] = [
     visibleOnRouter: true,
     items: [
       {
+        label: "Ficha Financeira",
+        icon: "pi pi-circle-on",
+        to: FOLHA_FICHA_FINANCEIRA_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
+      {
         label: "Retenções Judiciais",
         icon: "pi pi-folder-open",
         url: "#",
@@ -380,6 +391,22 @@ const menuFolha: IMenuSeplag[] = [
             visibleOnRouter: true,
           },
         ],
+      },
+    ],
+  },
+  {
+    label: "Relatórios",
+    icon: "pi pi-chart-bar",
+    url: "#",
+    visibleOnMenu: true,
+    visibleOnRouter: true,
+    items: [
+      {
+        label: "Conformidade da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_CONFORMIDADE_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
       },
     ],
   },
@@ -2816,6 +2843,47 @@ interface FolhaTabelaReferenciaFiltroForm {
   tabela?: string;
 }
 
+interface FolhaConformidadeFiltroForm {
+  competencia: string;
+  numeroFolha: string;
+  tipoFolha: string;
+  orgaos: string[];
+  setores: string[];
+  categorias: string[];
+  tiposVinculo: string[];
+  tipoRelatorio: string;
+  formatoSaida: string;
+  matricula?: string;
+  servidor?: string;
+  rubrica?: string;
+  situacaoAnalise?: string;
+}
+
+interface FolhaConformidadeRow {
+  id: number;
+  matricula: string;
+  vinculo: string;
+  servidor: string;
+  orgao: string;
+  folha: string;
+  rubrica: string;
+  vantagens: string;
+  descontos: string;
+  liquido: string;
+  alerta: string;
+  situacaoAnalise: "Pendente" | "Conforme" | "Inconsistente" | "Justificado";
+}
+
+interface FolhaConformidadeHistoricoRow {
+  id: number;
+  dataHora: string;
+  competencia: string;
+  folha: string;
+  tipoRelatorio: string;
+  geradoPor: string;
+  situacao: "Prévia" | "Oficial" | "Regerado";
+}
+
 interface FolhaTabelaReferenciaVigenciaRow {
   id: number;
   ano: string;
@@ -3148,6 +3216,169 @@ const folhaPagamentoGrupoEleitosOptions = [
   { label: "PESSOA FÍSICA", value: "PESSOA FÍSICA" },
   { label: "Grupo Teste", value: "Grupo Teste" },
   { label: "Teste 24/04/2026", value: "Teste 24/04/2026" },
+];
+
+const folhaConformidadeNumeroFolhaOptions = [
+  { label: "01 - Folha Normal", value: "01" },
+  { label: "02 - Folha com descontos", value: "02" },
+  { label: "31 - Rescisão", value: "31" },
+  { label: "40 - Complementar", value: "40" },
+  { label: "60 - Contratos", value: "60" },
+  { label: "61 - Pensionistas", value: "61" },
+];
+
+const folhaConformidadeTipoFolhaOptions = [
+  { label: "Normal", value: "Normal" },
+  { label: "Complementar", value: "Complementar" },
+  { label: "Rescisão", value: "Rescisão" },
+  { label: "Contratos", value: "Contratos" },
+  { label: "Pensionistas", value: "Pensionistas" },
+];
+
+const folhaConformidadeSetorOptions = [
+  { label: "Todos", value: "" },
+  { label: "Superintendência de Gestão de Pessoas", value: "Superintendência de Gestão de Pessoas" },
+  { label: "Coordenadoria de Folha", value: "Coordenadoria de Folha" },
+  { label: "Coordenadoria Financeira", value: "Coordenadoria Financeira" },
+  { label: "Unidade Setorial", value: "Unidade Setorial" },
+];
+
+const folhaConformidadeTipoVinculoOptions = [
+  { label: "Efetivo", value: "Efetivo" },
+  { label: "Contrato temporário", value: "Contrato temporário" },
+  { label: "Exclusivamente comissão", value: "Exclusivamente comissão" },
+  { label: "Aposentado", value: "Aposentado" },
+  { label: "Pensionista", value: "Pensionista" },
+  { label: "Estagiário", value: "Estagiário" },
+];
+
+const folhaConformidadeTipoRelatorioOptions = [
+  { label: "Sintético", value: "Sintético" },
+  { label: "Detalhado", value: "Detalhado" },
+  { label: "Comparativo mensal", value: "Comparativo mensal" },
+  { label: "Saldo ALN", value: "Saldo ALN" },
+  { label: "Retenções", value: "Retenções" },
+  { label: "Descontos", value: "Descontos" },
+  { label: "INSS/IRRF", value: "INSS/IRRF" },
+  { label: "Afastamentos/LSF", value: "Afastamentos/LSF" },
+];
+
+const folhaConformidadeFormatoOptions = [
+  { label: "Tela", value: "Tela" },
+  { label: "Excel", value: "Excel" },
+  { label: "PDF", value: "PDF" },
+];
+
+const folhaConformidadeSituacaoAnaliseOptions = [
+  { label: "Todas", value: "" },
+  { label: "Pendente", value: "Pendente" },
+  { label: "Conforme", value: "Conforme" },
+  { label: "Inconsistente", value: "Inconsistente" },
+  { label: "Justificado", value: "Justificado" },
+];
+
+const folhaConformidadeCriterios = [
+  "Comparativo mensal",
+  "Descontos",
+  "Retenções",
+  "Saldo ALN",
+  "Lançamentos manuais",
+  "Manutenção de parcelas",
+  "INSS/IRRF",
+  "Afastamentos/LSF",
+  "Admitidos no período",
+  "Vacância",
+  "Rubricas sensíveis",
+  "Checklist da folha",
+];
+
+const folhaConformidadeRows: FolhaConformidadeRow[] = [
+  {
+    id: 1,
+    matricula: "102030",
+    vinculo: "1",
+    servidor: "MARIA OLIVEIRA",
+    orgao: "SEPLAG",
+    folha: "01",
+    rubrica: "992 - Auxílio Alimentação",
+    vantagens: "R$ 850,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 850,00",
+    alerta: "Rubrica sensível em vínculo inativo",
+    situacaoAnalise: "Inconsistente",
+  },
+  {
+    id: 2,
+    matricula: "204411",
+    vinculo: "2",
+    servidor: "JOÃO PEREIRA",
+    orgao: "SEDUC",
+    folha: "01",
+    rubrica: "8019 - Saldo ALN",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 1.245,90",
+    liquido: "-R$ 312,10",
+    alerta: "ALN pendente",
+    situacaoAnalise: "Pendente",
+  },
+  {
+    id: 3,
+    matricula: "887120",
+    vinculo: "1",
+    servidor: "ANA SANTOS",
+    orgao: "SES",
+    folha: "02",
+    rubrica: "5250 - Desconto LSF",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 486,34",
+    liquido: "R$ 3.214,65",
+    alerta: "Afastamento com desconto",
+    situacaoAnalise: "Conforme",
+  },
+  {
+    id: 4,
+    matricula: "451278",
+    vinculo: "3",
+    servidor: "CARLOS ALMEIDA",
+    orgao: "PGE",
+    folha: "31",
+    rubrica: "8014 - Ordem Judicial",
+    vantagens: "R$ 2.900,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 2.900,00",
+    alerta: "Lançamento manual exige processo",
+    situacaoAnalise: "Justificado",
+  },
+];
+
+const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
+  {
+    id: 1,
+    dataHora: "22/05/2026 17:40",
+    competencia: "05/2026",
+    folha: "01 - Folha Normal",
+    tipoRelatorio: "Sintético",
+    geradoPor: "ROBERTO JUNIOR",
+    situacao: "Oficial",
+  },
+  {
+    id: 2,
+    dataHora: "22/05/2026 10:18",
+    competencia: "05/2026",
+    folha: "01 - Folha Normal",
+    tipoRelatorio: "Comparativo mensal",
+    geradoPor: "EQUIPE GCFP",
+    situacao: "Prévia",
+  },
+  {
+    id: 3,
+    dataHora: "21/05/2026 16:05",
+    competencia: "05/2026",
+    folha: "02 - Folha com descontos",
+    tipoRelatorio: "Retenções",
+    geradoPor: "EQUIPE GCFP",
+    situacao: "Regerado",
+  },
 ];
 
 const grupoFolhaRubricaOptions = [
@@ -14710,10 +14941,213 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
   );
 }
 
+type FichaFinanceiraFiltroForm = {
+  competencia: string;
+  matriculaCpf: string;
+  nomeServidor: string;
+};
+
+type FichaFinanceiraRubricaRow = {
+  id: number;
+  rubrica: string;
+  descricao: string;
+  complemento: string;
+  competencia: string;
+  vantagem: number;
+  percentual: string;
+  desconto: number;
+};
+
+const fichaFinanceiraRubricasMock: FichaFinanceiraRubricaRow[] = [
+  {
+    id: 1,
+    rubrica: "001",
+    descricao: "Subsídio",
+    complemento: "Vínculo efetivo",
+    competencia: "05/2026",
+    vantagem: 12500,
+    percentual: "",
+    desconto: 0,
+  },
+  {
+    id: 2,
+    rubrica: "112",
+    descricao: "Adicional por tempo de serviço",
+    complemento: "Quinquênio",
+    competencia: "05/2026",
+    vantagem: 1875,
+    percentual: "",
+    desconto: 0,
+  },
+  {
+    id: 3,
+    rubrica: "301",
+    descricao: "Previdência",
+    complemento: "RPPS",
+    competencia: "05/2026",
+    vantagem: 0,
+    percentual: "14,00%",
+    desconto: 1750,
+  },
+  {
+    id: 4,
+    rubrica: "401",
+    descricao: "Imposto de renda retido na fonte",
+    complemento: "Tabela progressiva",
+    competencia: "05/2026",
+    vantagem: 0,
+    percentual: "22,50%",
+    desconto: 1189.36,
+  },
+];
+
+export function PrototiposFolhaFichaFinanceiraPage() {
+  const { control, reset } = useForm<FichaFinanceiraFiltroForm>({
+    defaultValues: {
+      competencia: "05/2026",
+      matriculaCpf: "102030/1",
+      nomeServidor: "MARIA OLIVEIRA",
+    },
+  });
+
+  const totalVantagens = fichaFinanceiraRubricasMock.reduce(
+    (total, item) => total + item.vantagem,
+    0,
+  );
+  const totalDescontos = fichaFinanceiraRubricasMock.reduce(
+    (total, item) => total + item.desconto,
+    0,
+  );
+  const totalLiquido = totalVantagens - totalDescontos;
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-ficha-financeira-page">
+        <CardSeplag
+          title="Ficha Financeira por Competência"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+        >
+          <div className="prototype-ficha-financeira-title-row">
+            <i className="pi pi-wallet" aria-hidden="true" />
+            <span>Ficha Financeira por Competência</span>
+          </div>
+        </CardSeplag>
+
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="col-12 prototype-category-filters prototype-ficha-financeira-filters">
+            <TextFieldSeplag
+              name="competencia"
+              control={control}
+              label="Mês/Ano Competência"
+              cols="12 md:col-3"
+              placeholder="MM/AAAA"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="matriculaCpf"
+              control={control}
+              label="Matrícula/CPF"
+              cols="12 md:col-3"
+              placeholder="Matrícula ou CPF"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="nomeServidor"
+              control={control}
+              label="Nome do Servidor"
+              cols="12 md:col-4"
+              placeholder="Nome do servidor"
+              getFormErrorMessage={() => null}
+            />
+            <div className="prototype-category-clear col-12 md:col-2">
+              <BotaoLimparFiltroSeplag
+                type="button"
+                label="Limpar"
+                icon="pi pi-refresh"
+                onClick={() =>
+                  reset({
+                    competencia: "",
+                    matriculaCpf: "",
+                    nomeServidor: "",
+                  })
+                }
+              />
+            </div>
+          </div>
+        </CardSeplag>
+
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="col-12 prototype-ficha-financeira-table-wrapper">
+            <table className="prototype-simple-table prototype-ficha-financeira-table">
+              <thead>
+                <tr>
+                  <th>Rubrica</th>
+                  <th>Descrição Rubrica</th>
+                  <th>Complemento</th>
+                  <th>Competência</th>
+                  <th>Vantagens</th>
+                  <th>Percentual</th>
+                  <th>Descontos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fichaFinanceiraRubricasMock.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>{item.rubrica}</strong>
+                    </td>
+                    <td>{item.descricao}</td>
+                    <td>{item.complemento}</td>
+                    <td>{item.competencia}</td>
+                    <td className="prototype-ficha-financeira-money">
+                      {item.vantagem ? formatMoedaReferencia(item.vantagem) : ""}
+                    </td>
+                    <td>{item.percentual}</td>
+                    <td className="prototype-ficha-financeira-money">
+                      {item.desconto ? formatMoedaReferencia(item.desconto) : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardSeplag>
+
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
+          <div className="col-12 prototype-ficha-financeira-totalizador">
+            <div>
+              <span>Vantagens</span>
+              <strong>{formatMoedaReferencia(totalVantagens)}</strong>
+            </div>
+            <div>
+              <span>Descontos</span>
+              <strong>{formatMoedaReferencia(totalDescontos)}</strong>
+            </div>
+            <div>
+              <span>Líquido</span>
+              <strong>{formatMoedaReferencia(totalLiquido)}</strong>
+            </div>
+            <BotaoSeplag
+              type="button"
+              label="Holerite"
+              icon="pi pi-file-pdf"
+              onClick={() => undefined}
+            />
+          </div>
+        </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
 export function PrototiposFolhaGruposCalculoPage() {
   const navigate = useNavigate();
-  const [expandedGrupoCalculoIds, setExpandedGrupoCalculoIds] = useState<number[]>([]);
-  const { control, reset } = useForm<GrupoCalculoFiltroForm>({
+  const { control, reset, watch } = useForm<GrupoCalculoFiltroForm>({
     defaultValues: {
       nomeGrupo: "",
       situacao: "",
@@ -14721,18 +15155,29 @@ export function PrototiposFolhaGruposCalculoPage() {
     },
   });
 
-  const toggleGrupoCalculo = (grupoId: number) => {
-    setExpandedGrupoCalculoIds((current) =>
-      current.includes(grupoId)
-        ? current.filter((id) => id !== grupoId)
-        : [...current, grupoId],
-    );
-  };
+  const filtros = watch();
+  const termoBusca = filtros.nomeGrupo?.trim().toLowerCase() ?? "";
+  const gruposFiltrados = gruposCalculoMock.filter((grupo) => {
+    const atendeTermo =
+      !termoBusca ||
+      grupo.grupo.toLowerCase().includes(termoBusca) ||
+      grupo.codigo.toLowerCase().includes(termoBusca);
+    const atendeSituacao = !filtros.situacao || grupo.situacao === filtros.situacao;
+    const atendeTipoVinculo =
+      !filtros.tipoVinculo ||
+      filtros.tipoVinculo === "todos" ||
+      grupo.tipoVinculo.toLowerCase() === filtros.tipoVinculo.toLowerCase();
+    return atendeTermo && atendeSituacao && atendeTipoVinculo;
+  });
+
+  const getGrupoCalculoVersao = (grupo: GrupoCalculoRow) =>
+    `V${gruposCalculoVersoesMock[grupo.id]?.length ?? 1}`;
 
   const renderGrupoCalculoAction = (row: GrupoCalculoRow) => (
-    <div className="prototype-accordion-action-button">
+    <div className="prototype-grupos-calculo-actions">
       <button
         type="button"
+        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--view"
         aria-label={`Visualizar ${row.grupo}`}
         onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
       >
@@ -14740,10 +15185,26 @@ export function PrototiposFolhaGruposCalculoPage() {
       </button>
       <button
         type="button"
-        aria-label={`Abrir ações de ${row.grupo}`}
+        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--edit"
+        aria-label={`Editar ${row.grupo}`}
         onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
       >
-        <i className="pi pi-chevron-down" aria-hidden="true" />
+        <i className="pi pi-pencil" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--version"
+        aria-label={`Versionar ${row.grupo}`}
+        onClick={() => navigate(`/prototipos/folha/grupos-calculo/${row.id}/editar`)}
+      >
+        <i className="pi pi-refresh" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="prototype-grupos-calculo-action prototype-grupos-calculo-action--delete"
+        aria-label={`Excluir ${row.grupo}`}
+      >
+        <i className="pi pi-trash" aria-hidden="true" />
       </button>
     </div>
   );
@@ -14756,42 +15217,50 @@ export function PrototiposFolhaGruposCalculoPage() {
     >
       <div className="prototype-page-content prototype-page-content--white prototype-folha-grupos-calculo-page">
         <CardSeplag
-          title="Configuração de Grupos de Cálculo da Folha"
+          title="Gestão de Grupos de Cálculo"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
         >
+          <div className="prototype-grupos-calculo-title-row">
+            <i className="pi pi-chart-bar" aria-hidden="true" />
+            <span>Gestão de Grupos de Cálculo</span>
+          </div>
+        </CardSeplag>
+
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-category-filters prototype-grupos-calculo-filters">
-            <TextFieldSeplag
-              name="nomeGrupo"
-              control={control}
-              label="Nome do Grupo"
-              cols="12 6"
-              getFormErrorMessage={() => null}
-            />
             <DropdownFieldSeplag
               name="situacao"
               control={control}
               label="Situação"
-              cols="12 6"
-              options={regimeSituacaoOptions}
+              cols="12 md:col-2"
+              options={[{ label: "Todas", value: "" }, ...regimeSituacaoOptions]}
               optionLabel="label"
               optionValue="value"
+              getFormErrorMessage={() => null}
+            />
+            <TextFieldSeplag
+              name="nomeGrupo"
+              control={control}
+              label="Buscar"
+              cols="12 md:col-3"
+              placeholder="Nome do grupo..."
               getFormErrorMessage={() => null}
             />
             <DropdownFieldSeplag
               name="tipoVinculo"
               control={control}
               label="Tipo de Vínculo"
-              cols="12 6"
+              cols="12 md:col-3"
               options={grupoCalculoFiltroTipoVinculoOptions}
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
             />
-            <div className="prototype-category-clear col-12 md:col-6">
+            <div className="prototype-category-clear col-12 md:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -14802,94 +15271,53 @@ export function PrototiposFolhaGruposCalculoPage() {
                 }
               />
             </div>
+            <div className="prototype-category-clear col-12 md:col-2">
+              <BotaoSeplag
+                type="button"
+                label="Adicionar"
+                icon="pi pi-plus"
+                onClick={() => navigate("/prototipos/folha/grupos-calculo/novo")}
+              />
+            </div>
           </div>
+        </CardSeplag>
 
+        <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-folha-grupos-calculo-table">
-            <div className="prototype-grupos-calculo-accordion-table">
-              <div className="prototype-grupos-calculo-table-toolbar">
-                <BotaoSeplag
-                  type="button"
-                  label="Adicionar"
-                  icon="pi pi-plus"
-                  onClick={() => navigate("/prototipos/folha/grupos-calculo/novo")}
-                />
-              </div>
-
+            <div className="prototype-grupos-calculo-accordion-table prototype-grupos-calculo-flat-table">
               <table>
                 <thead>
                   <tr>
-                    <th>Grupo</th>
-                    <th>Tipo vínculo</th>
-                    <th>Situação atual</th>
-                    <th aria-label="Expandir versões" />
+                    <th>Nome do grupo</th>
+                    <th>Versão</th>
+                    <th>Data início</th>
+                    <th>Data fim</th>
+                    <th>Situação</th>
+                    <th>Responsável</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {gruposCalculoMock.map((grupo) => {
-                    const isExpanded = expandedGrupoCalculoIds.includes(grupo.id);
-                    const versoes = gruposCalculoVersoesMock[grupo.id] ?? [grupo];
-
-                    return (
-                      <Fragment key={grupo.id}>
-                        <tr className="prototype-grupos-calculo-group-row" key={grupo.id}>
-                          <td>
-                            <strong>{grupo.grupo}</strong>
-                          </td>
-                          <td>{grupo.tipoVinculo}</td>
-                          <td>{renderGrupoCalculoStatusBadge(grupo.situacao)}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="prototype-grupos-calculo-expand"
-                              aria-label={`${isExpanded ? "Recolher" : "Expandir"} versões de ${grupo.grupo}`}
-                              aria-expanded={isExpanded}
-                              onClick={() => toggleGrupoCalculo(grupo.id)}
-                            >
-                              <i
-                                className={`pi ${isExpanded ? "pi-chevron-up" : "pi-chevron-down"}`}
-                                aria-hidden="true"
-                              />
-                            </button>
-                          </td>
-                        </tr>
-
-                        {isExpanded && (
-                          <tr className="prototype-grupos-calculo-versions-row" key={`${grupo.id}-versions`}>
-                            <td colSpan={4}>
-                              <div className="prototype-grupos-calculo-versions">
-                                <table>
-                                  <thead>
-                                    <tr>
-                                      <th>Versão</th>
-                                      <th>Início vigência</th>
-                                      <th>Fim vigência</th>
-                                      <th>Rubricas</th>
-                                      <th>Situação</th>
-                                      <th>Ações</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {versoes.map((versao, index) => (
-                                      <tr key={`${grupo.id}-${versao.codigo}-${index}`}>
-                                        <td>
-                                          <strong>{`V${versoes.length - index}`}</strong>
-                                        </td>
-                                        <td>{versao.inicioVigencia}</td>
-                                        <td>{versao.fimVigencia}</td>
-                                        <td>{versao.rubricas}</td>
-                                        <td>{renderGrupoCalculoStatusBadge(versao.situacao)}</td>
-                                        <td>{renderGrupoCalculoAction(versao)}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
+                  {gruposFiltrados.map((grupo) => (
+                    <tr className="prototype-grupos-calculo-group-row" key={grupo.id}>
+                      <td>
+                        <strong>{grupo.grupo}</strong>
+                      </td>
+                      <td>{getGrupoCalculoVersao(grupo)}</td>
+                      <td>{grupo.inicioVigencia}</td>
+                      <td>{grupo.fimVigencia}</td>
+                      <td>{renderGrupoCalculoStatusBadge(grupo.situacao)}</td>
+                      <td>Admin User</td>
+                      <td>{renderGrupoCalculoAction(grupo)}</td>
+                    </tr>
+                  ))}
+                  {!gruposFiltrados.length && (
+                    <tr>
+                      <td colSpan={7} className="prototype-grupos-calculo-empty">
+                        Nenhum grupo encontrado para os filtros informados.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -15809,6 +16237,403 @@ export function PrototiposFolhaCatalogoRubricaViewPage() {
             <div className="prototype-empty-content">Rubrica não encontrada.</div>
           )}
         </CardSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaConformidadePage() {
+  const defaultFilters: FolhaConformidadeFiltroForm = {
+    competencia: "05/2026",
+    numeroFolha: "01",
+    tipoFolha: "Normal",
+    orgaos: ["SEPLAG"],
+    setores: [],
+    categorias: [],
+    tiposVinculo: [],
+    tipoRelatorio: "Sintético",
+    formatoSaida: "Tela",
+    matricula: "",
+    servidor: "",
+    rubrica: "",
+    situacaoAnalise: "",
+  };
+  const { control, handleSubmit, reset } = useForm<FolhaConformidadeFiltroForm>({
+    defaultValues: defaultFilters,
+  });
+  const [criteriosSelecionados, setCriteriosSelecionados] = useState<string[]>([
+    "Comparativo mensal",
+    "Descontos",
+    "Retenções",
+    "Saldo ALN",
+    "Lançamentos manuais",
+    "Checklist da folha",
+  ]);
+  const [filtrosGerados, setFiltrosGerados] =
+    useState<FolhaConformidadeFiltroForm>(defaultFilters);
+  const getEmptyFieldError = () => null;
+
+  const toggleCriterio = (criterio: string) => {
+    setCriteriosSelecionados((current) =>
+      current.includes(criterio)
+        ? current.filter((item) => item !== criterio)
+        : [...current, criterio],
+    );
+  };
+
+  const handleGerarRelatorio = (data: FolhaConformidadeFiltroForm) => {
+    setFiltrosGerados(data);
+  };
+
+  const handleLimpar = () => {
+    reset({ ...defaultFilters, orgaos: [] });
+    setFiltrosGerados({ ...defaultFilters, orgaos: [] });
+  };
+
+  const registrosFiltrados = useMemo(() => {
+    const matricula = filtrosGerados.matricula?.trim().toLowerCase() ?? "";
+    const servidor = filtrosGerados.servidor?.trim().toLowerCase() ?? "";
+    const rubrica = filtrosGerados.rubrica?.trim().toLowerCase() ?? "";
+    return folhaConformidadeRows.filter((row) => {
+      const atendeFolha =
+        !filtrosGerados.numeroFolha || row.folha === filtrosGerados.numeroFolha;
+      const atendeOrgao =
+        !filtrosGerados.orgaos.length || filtrosGerados.orgaos.includes(row.orgao);
+      const atendeMatricula =
+        !matricula || row.matricula.toLowerCase().includes(matricula);
+      const atendeServidor =
+        !servidor || row.servidor.toLowerCase().includes(servidor);
+      const atendeRubrica =
+        !rubrica || row.rubrica.toLowerCase().includes(rubrica);
+      const atendeSituacao =
+        !filtrosGerados.situacaoAnalise ||
+        row.situacaoAnalise === filtrosGerados.situacaoAnalise;
+      return (
+        atendeFolha &&
+        atendeOrgao &&
+        atendeMatricula &&
+        atendeServidor &&
+        atendeRubrica &&
+        atendeSituacao
+      );
+    });
+  }, [filtrosGerados]);
+
+  const resumo = {
+    matriculas: registrosFiltrados.length,
+    vantagens: "R$ 482.118,21",
+    descontos: "R$ 522.219,17",
+    inconsistencias: registrosFiltrados.filter(
+      (row) => row.situacaoAnalise === "Inconsistente",
+    ).length,
+    alnPendente: registrosFiltrados.filter((row) => row.alerta.includes("ALN"))
+      .length,
+    manuais: registrosFiltrados.filter((row) =>
+      row.alerta.includes("Lançamento manual"),
+    ).length,
+  };
+
+  const normalizeStatusClass = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const renderSituacaoAnalise = (
+    situacao: FolhaConformidadeRow["situacaoAnalise"],
+  ) => (
+    <span
+      className={`prototype-conformidade-status prototype-conformidade-status--${normalizeStatusClass(
+        situacao,
+      )}`}
+    >
+      {situacao}
+    </span>
+  );
+
+  const renderHistoricoSituacao = (
+    situacao: FolhaConformidadeHistoricoRow["situacao"],
+  ) => (
+    <span
+      className={`prototype-conformidade-status prototype-conformidade-status--${normalizeStatusClass(
+        situacao,
+      )}`}
+    >
+      {situacao}
+    </span>
+  );
+
+  const columns: ColumnMetaSeplag<FolhaConformidadeRow>[] = [
+    { header: "Matrícula/Vínculo", body: (row) => `${row.matricula}/${row.vinculo}` },
+    { header: "Servidor", field: "servidor" },
+    { header: "Órgão", field: "orgao" },
+    { header: "Folha", field: "folha" },
+    { header: "Rubrica", field: "rubrica" },
+    { header: "Vantagens", field: "vantagens" },
+    { header: "Descontos", field: "descontos" },
+    { header: "Líquido", field: "liquido" },
+    { header: "Alerta", field: "alerta" },
+    {
+      header: "Análise",
+      body: (row) => renderSituacaoAnalise(row.situacaoAnalise),
+    },
+  ];
+
+  const historicoColumns: ColumnMetaSeplag<FolhaConformidadeHistoricoRow>[] = [
+    { header: "Data/Hora", field: "dataHora" },
+    { header: "Competência", field: "competencia" },
+    { header: "Folha", field: "folha" },
+    { header: "Tipo", field: "tipoRelatorio" },
+    { header: "Gerado por", field: "geradoPor" },
+    {
+      header: "Situação",
+      body: (row) => renderHistoricoSituacao(row.situacao),
+    },
+  ];
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page prototype-folha-conformidade-page">
+        <div className="grid">
+          <div className="col-12">
+            <CardSeplag
+              title="Conformidade da Folha"
+              cols="12"
+              cardHeaderClassNames="prototype-regime-card"
+            >
+              <div className="prototype-conformidade-heading">
+                <div>
+                  <span>Relatórios</span>
+                  <h2>Gerar relatório de conformidade da folha</h2>
+                  <p>
+                    Selecione os parâmetros, escolha os critérios de análise e
+                    gere uma visão consolidada para conferência da folha.
+                  </p>
+                </div>
+                <div className="prototype-conformidade-heading-status">
+                  <strong>Competência 05/2026</strong>
+                  <span>Conformidade em análise</span>
+                </div>
+              </div>
+            </CardSeplag>
+          </div>
+
+          <form className="col-12" onSubmit={handleSubmit(handleGerarRelatorio)}>
+            <div className="grid prototype-category-filters prototype-folha-pagamento-filters prototype-conformidade-filters">
+              <TextFieldSeplag
+                label="Competência"
+                name="competencia"
+                control={control}
+                cols="12 md:col-3"
+                placeholder="MM/AAAA"
+              />
+              <DropdownFieldSeplag
+                label="Número da folha"
+                name="numeroFolha"
+                control={control}
+                cols="12 md:col-3"
+                options={folhaConformidadeNumeroFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <DropdownFieldSeplag
+                label="Tipo de folha"
+                name="tipoFolha"
+                control={control}
+                cols="12 md:col-3"
+                options={folhaConformidadeTipoFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <DropdownFieldSeplag
+                label="Tipo de relatório"
+                name="tipoRelatorio"
+                control={control}
+                cols="12 md:col-3"
+                options={folhaConformidadeTipoRelatorioOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <MultiSelectFieldSeplag
+                label="Órgão"
+                name="orgaos"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaPagamentoOrgaoOptions.filter((option) => option.value)}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <MultiSelectFieldSeplag
+                label="Setor"
+                name="setores"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaConformidadeSetorOptions.filter((option) => option.value)}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <MultiSelectFieldSeplag
+                label="Categoria"
+                name="categorias"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaPagamentoCategoriaOptions.filter((option) => option.value)}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <MultiSelectFieldSeplag
+                label="Tipo de vínculo"
+                name="tiposVinculo"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaConformidadeTipoVinculoOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <DropdownFieldSeplag
+                label="Formato de saída"
+                name="formatoSaida"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaConformidadeFormatoOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <DropdownFieldSeplag
+                label="Situação da análise"
+                name="situacaoAnalise"
+                control={control}
+                cols="12 md:col-4"
+                options={folhaConformidadeSituacaoAnaliseOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={getEmptyFieldError}
+              />
+              <TextFieldSeplag
+                label="Matrícula"
+                name="matricula"
+                control={control}
+                cols="12 md:col-4"
+                placeholder="Digite a matrícula"
+              />
+              <TextFieldSeplag
+                label="Servidor"
+                name="servidor"
+                control={control}
+                cols="12 md:col-4"
+                placeholder="Nome do servidor"
+              />
+              <TextFieldSeplag
+                label="Rubrica"
+                name="rubrica"
+                control={control}
+                cols="12 md:col-4"
+                placeholder="Código ou descrição"
+              />
+            </div>
+
+            <div className="prototype-conformidade-criterios">
+              <div className="prototype-conformidade-section-title">
+                <strong>Critérios de análise</strong>
+                <span>{criteriosSelecionados.length} selecionados</span>
+              </div>
+              <div className="prototype-conformidade-criterios-grid">
+                {folhaConformidadeCriterios.map((criterio) => (
+                  <label className="prototype-conformidade-check" key={criterio}>
+                    <input
+                      type="checkbox"
+                      checked={criteriosSelecionados.includes(criterio)}
+                      onChange={() => toggleCriterio(criterio)}
+                    />
+                    <span>{criterio}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="prototype-folha-pagamento-actions prototype-conformidade-actions">
+              <BotaoLimparFiltroSeplag onClick={handleLimpar} type="button" />
+              <BotaoSeplag
+                label="Pré-visualizar"
+                icon="pi pi-eye"
+                type="button"
+                outlined
+              />
+              <BotaoSalvarSeplag
+                label="Gerar relatório"
+                icon="pi pi-file-export"
+                type="submit"
+              />
+            </div>
+          </form>
+
+          <div className="col-12">
+            <div className="prototype-conformidade-summary">
+              <div>
+                <span>Matrículas</span>
+                <strong>{resumo.matriculas}</strong>
+              </div>
+              <div>
+                <span>Vantagens</span>
+                <strong>{resumo.vantagens}</strong>
+              </div>
+              <div>
+                <span>Descontos</span>
+                <strong>{resumo.descontos}</strong>
+              </div>
+              <div>
+                <span>Inconsistências</span>
+                <strong>{resumo.inconsistencias}</strong>
+              </div>
+              <div>
+                <span>ALN pendente</span>
+                <strong>{resumo.alnPendente}</strong>
+              </div>
+              <div>
+                <span>Lançamentos manuais</span>
+                <strong>{resumo.manuais}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table prototype-conformidade-table">
+            <div className="prototype-conformidade-section-title">
+              <strong>Resultado da geração</strong>
+              <span>
+                {filtrosGerados.tipoRelatorio} • {filtrosGerados.formatoSaida}
+              </span>
+            </div>
+            <TablePaginadoSeplag
+              data={createResults(registrosFiltrados)}
+              columns={columns}
+              rows={10}
+            />
+          </div>
+
+          <div className="col-12 prototype-folha-pagamento-table prototype-conformidade-table">
+            <div className="prototype-conformidade-section-title">
+              <strong>Histórico de relatórios gerados</strong>
+              <span>Gerações recentes</span>
+            </div>
+            <TablePaginadoSeplag
+              data={createResults(folhaConformidadeHistoricoRows)}
+              columns={historicoColumns}
+              rows={5}
+            />
+          </div>
+        </div>
       </div>
     </PrototypeSystemPage>
   );

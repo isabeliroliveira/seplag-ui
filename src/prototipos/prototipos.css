@@ -1144,6 +1144,288 @@
   text-align: center;
 }
 
+.prototype-folha-grupos-calculo-page {
+  gap: 16px;
+}
+
+.prototype-folha-grupos-calculo-page .p-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.prototype-grupos-calculo-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: #111827;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.prototype-grupos-calculo-title-row i {
+  color: #005a92;
+  font-size: 1.2rem;
+}
+
+.prototype-grupos-calculo-flat-table {
+  overflow: auto;
+  border-color: #e5e7eb;
+  border-radius: 6px;
+}
+
+.prototype-grupos-calculo-flat-table table {
+  min-width: 1040px;
+}
+
+.prototype-grupos-calculo-flat-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.prototype-grupos-calculo-flat-table td {
+  height: 70px;
+  background: #ffffff;
+}
+
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:last-child,
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:last-child {
+  width: 210px;
+  text-align: left;
+}
+
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:nth-child(3),
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:nth-child(3),
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:nth-child(4),
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:nth-child(4),
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:nth-child(5),
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:nth-child(5) {
+  width: auto;
+  text-align: left;
+}
+
+.prototype-grupos-calculo-flat-table .prototype-grupos-calculo-group-row td strong {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.prototype-grupos-calculo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prototype-grupos-calculo-action {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 5px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.prototype-grupos-calculo-action:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.prototype-grupos-calculo-action--view {
+  background: #005eb8;
+}
+
+.prototype-grupos-calculo-action--edit {
+  background: #f59e0b;
+}
+
+.prototype-grupos-calculo-action--version {
+  background: #0f9faf;
+}
+
+.prototype-grupos-calculo-action--delete {
+  background: #ef4444;
+}
+
+.prototype-grupos-calculo-empty {
+  padding: 28px 16px !important;
+  color: #64748b !important;
+  text-align: center !important;
+}
+
+.prototype-ficha-financeira-page {
+  gap: 16px;
+}
+
+.prototype-ficha-financeira-page .p-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.prototype-ficha-financeira-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: #111827;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.prototype-ficha-financeira-title-row i {
+  color: #005a92;
+  font-size: 1.2rem;
+}
+
+.prototype-ficha-financeira-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(190px, 0.8fr)
+    minmax(220px, 1fr)
+    minmax(320px, 1.45fr)
+    minmax(150px, 0.65fr);
+  align-items: end;
+  gap: 10px 14px;
+  margin: 8px 0 14px;
+  padding: 0;
+  width: 100%;
+}
+
+.prototype-ficha-financeira-filters::before,
+.prototype-ficha-financeira-filters::after {
+  display: none;
+}
+
+.prototype-ficha-financeira-filters > [class*="col-"] {
+  width: auto !important;
+  max-width: none !important;
+  flex: initial !important;
+  padding: 0 !important;
+  min-width: 0;
+}
+
+.prototype-ficha-financeira-filters [class*="content-rotulo"] {
+  gap: 4px;
+}
+
+.prototype-ficha-financeira-filters [class*="label-rotulo"] {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.prototype-ficha-financeira-filters .p-inputtext {
+  height: 36px;
+  min-height: 36px;
+  font-size: 0.84rem;
+}
+
+.prototype-ficha-financeira-filters .prototype-category-clear {
+  display: flex;
+  align-items: flex-end;
+  min-height: 58px;
+}
+
+.prototype-ficha-financeira-filters .prototype-category-clear .p-button {
+  width: 100% !important;
+  height: 36px;
+}
+
+.prototype-ficha-financeira-table-wrapper {
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.prototype-ficha-financeira-table {
+  min-width: 1040px;
+}
+
+.prototype-ficha-financeira-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.prototype-ficha-financeira-table td {
+  height: 62px;
+  vertical-align: middle;
+}
+
+.prototype-ficha-financeira-table td strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.prototype-ficha-financeira-money {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.prototype-ficha-financeira-table th:nth-child(5),
+.prototype-ficha-financeira-table td:nth-child(5),
+.prototype-ficha-financeira-table th:nth-child(7),
+.prototype-ficha-financeira-table td:nth-child(7) {
+  text-align: right;
+}
+
+.prototype-ficha-financeira-totalizador {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.prototype-ficha-financeira-totalizador > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid #d9e2ec;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.prototype-ficha-financeira-totalizador span {
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.prototype-ficha-financeira-totalizador strong {
+  margin-top: 6px;
+  color: #0f2742;
+  font-size: 1.05rem;
+}
+
+.prototype-ficha-financeira-totalizador .p-button {
+  align-self: stretch;
+  min-width: 138px;
+}
+
+@media (max-width: 1180px) {
+  .prototype-ficha-financeira-filters,
+  .prototype-ficha-financeira-totalizador {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .prototype-ficha-financeira-filters,
+  .prototype-ficha-financeira-totalizador {
+    grid-template-columns: 1fr;
+  }
+}
+
 .prototype-accordion-action-button {
   display: inline-flex;
   overflow: hidden;
@@ -6141,5 +6423,196 @@
 
   .prototype-form-actions {
     flex-direction: column-reverse;
+  }
+}
+
+.prototype-folha-conformidade-page {
+  gap: 1rem;
+}
+
+.prototype-conformidade-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.prototype-conformidade-heading span,
+.prototype-conformidade-section-title span,
+.prototype-conformidade-summary span {
+  color: #5f6b7a;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.prototype-conformidade-heading h2 {
+  color: #17324d;
+  font-size: 1.35rem;
+  margin: 0.2rem 0 0.3rem;
+}
+
+.prototype-conformidade-heading p {
+  color: #4f5f6f;
+  margin: 0;
+  max-width: 760px;
+}
+
+.prototype-conformidade-heading-status {
+  background: #eef6ff;
+  border: 1px solid #c8ddf2;
+  border-radius: 8px;
+  min-width: 220px;
+  padding: 0.8rem 1rem;
+}
+
+.prototype-conformidade-heading-status strong {
+  color: #005a92;
+  display: block;
+  font-size: 0.98rem;
+}
+
+.prototype-conformidade-filters {
+  align-items: flex-start;
+}
+
+.prototype-conformidade-criterios {
+  background: #f8fafc;
+  border-top: 1px solid #d7dde5;
+  margin-top: 1rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.prototype-conformidade-section-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.prototype-conformidade-section-title strong {
+  color: #17324d;
+  font-size: 1rem;
+}
+
+.prototype-conformidade-criterios-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(6, minmax(150px, 1fr));
+}
+
+.prototype-conformidade-check {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  color: #263747;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.88rem;
+  gap: 0.55rem;
+  min-height: 42px;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+}
+
+.prototype-conformidade-check input {
+  accent-color: #005a92;
+  flex: 0 0 auto;
+}
+
+.prototype-conformidade-check span {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.prototype-conformidade-actions {
+  border-top: 1px solid #d7dde5;
+  margin-top: 0;
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.prototype-conformidade-summary {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.prototype-conformidade-summary > div {
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  min-height: 84px;
+  padding: 0.85rem 1rem;
+}
+
+.prototype-conformidade-summary strong {
+  color: #17324d;
+  display: block;
+  font-size: 1.08rem;
+  margin-top: 0.35rem;
+}
+
+.prototype-conformidade-table {
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.prototype-conformidade-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 92px;
+  padding: 0.25rem 0.55rem;
+}
+
+.prototype-conformidade-status--conforme,
+.prototype-conformidade-status--oficial {
+  background: #d4edda;
+  color: #166534;
+}
+
+.prototype-conformidade-status--inconsistente {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.prototype-conformidade-status--pendente,
+.prototype-conformidade-status--previa {
+  background: #fff3cd;
+  color: #8a5a00;
+}
+
+.prototype-conformidade-status--justificado,
+.prototype-conformidade-status--regerado {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+@media (max-width: 1200px) {
+  .prototype-conformidade-criterios-grid {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+
+  .prototype-conformidade-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .prototype-conformidade-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .prototype-conformidade-criterios-grid,
+  .prototype-conformidade-summary {
+    grid-template-columns: 1fr;
   }
 }

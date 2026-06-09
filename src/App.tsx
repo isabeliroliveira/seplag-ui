@@ -37,12 +37,14 @@ import {
   PrototiposFolhaGrupoCalculoFormPage,
   PrototiposFolhaGruposCalculoPage,
   PrototiposFolhaCompetenciasPage,
+  PrototiposFolhaFichaFinanceiraPage,
   PrototiposFolhaPagamentoFormPage,
   PrototiposFolhaPagamentoLogPage,
   PrototiposFolhaPagamentoPage,
   PrototiposFolhaSolicitacoesAjustesPage,
   PrototiposFolhaTabelaReferenciaVigenciaFormPage,
   PrototiposFolhaTabelasReferenciaPage,
+  PrototiposFolhaConformidadePage,
   PrototiposFolhaPenhoraJudicialPage,
   PrototiposFolhaCatalogoRubricasPage,
   PrototiposFolhaCatalogoRubricaViewPage,
@@ -471,6 +473,14 @@ function App() {
       <Route
         path="/prototipos/folha/tabelas-referencia/:tabelaId/vigencias/:vigenciaId/editar"
         element={<PrototiposFolhaTabelaReferenciaVigenciaFormPage />}
+      />
+      <Route
+        path="/prototipos/folha/relatorios/conformidade"
+        element={<PrototiposFolhaConformidadePage />}
+      />
+      <Route
+        path="/prototipos/folha/lancamento-financeiro/ficha-financeira"
+        element={<PrototiposFolhaFichaFinanceiraPage />}
       />
       <Route
         path="/prototipos/folha/grupo-eleitos/novo"
