@@ -1055,11 +1055,15 @@ interface GrupoCalculoForm {
   motivoEncerramento?: string;
   dataExtincao?: string;
   motivoExtincao?: string;
-  abrangenciaRegimeJuridico?: string;
-  abrangenciaTipoVinculo?: string;
-  abrangenciaInstituicao?: string;
+  abrangenciaRegimeJuridico?: string[];
+  abrangenciaTipoVinculo?: string[];
+  abrangenciaInstituicao?: string[];
   abrangenciaHerdarDe?: string;
-  abrangenciaOrgao?: string;
+  abrangenciaOrgao?: string[];
+  abrangenciaSetores?: string[];
+  abrangenciaCategorias?: string[];
+  abrangenciaSubcategorias?: string[];
+  abrangenciaCargos?: string[];
 }
 
 interface ProcessamentoFolhaForm {
@@ -1250,6 +1254,8 @@ interface RubricaRow {
 
 interface GrupoCalculoRubricaGerenciada extends RubricaRow {
   origem: "filtro" | "manual";
+  paoe?: string;
+  paoeAlterado?: boolean;
   reordenada?: boolean;
   excluida?: boolean;
 }
@@ -2864,6 +2870,8 @@ interface FolhaConformidadeFiltroForm {
   categorias: string[];
   cargos: string[];
   tiposVinculo: string[];
+  nivel?: string;
+  classe?: string;
   tipoRelatorio: string;
   formatoSaida: string;
   matricula?: string;
@@ -2880,6 +2888,10 @@ interface FolhaConformidadeFiltroForm {
   dataExercicioFim?: string;
   dataAposentadoriaInicio?: string;
   dataAposentadoriaFim?: string;
+  numeroExecucaoProcessamento?: string;
+  dataProcessamento?: string;
+  tipoAfastamento?: string;
+  quantidadeDiasAfastado?: number;
   situacaoAnalise?: string;
 }
 
@@ -2906,6 +2918,19 @@ interface FolhaConformidadeHistoricoRow {
   tipoRelatorio: string;
   geradoPor: string;
   situacao: "Prévia" | "Oficial" | "Regerado";
+}
+
+interface FolhaConformidadeFiltroSalvoRow {
+  id: number;
+  nome: string;
+  visibilidade: "Privado" | "Público";
+  atualizadoEm: string;
+  criadoPor: string;
+}
+
+interface FolhaConformidadeSalvarFiltroForm {
+  nomeFiltro: string;
+  visibilidade: "Privado" | "Público";
 }
 
 interface FolhaTabelaReferenciaVigenciaRow {
@@ -3327,6 +3352,33 @@ const folhaConformidadeJornadaOptions = [
   { label: "Dedicação exclusiva", value: "Dedicação exclusiva" },
 ];
 
+const folhaConformidadeNivelOptions = [
+  { label: "Fundamental", value: "Fundamental" },
+  { label: "Médio", value: "Médio" },
+  { label: "Superior", value: "Superior" },
+  { label: "Estratégico", value: "Estratégico" },
+];
+
+const folhaConformidadeClasseOptions = [
+  { label: "A", value: "A" },
+  { label: "B", value: "B" },
+  { label: "C", value: "C" },
+  { label: "D", value: "D" },
+];
+
+const folhaConformidadeExecucaoOptions = [
+  { label: "001 - Processamento inicial", value: "001" },
+  { label: "002 - Reprocessamento parcial", value: "002" },
+  { label: "003 - Processamento final", value: "003" },
+];
+
+const folhaConformidadeTipoAfastamentoOptions = [
+  { label: "Licença saúde", value: "Licença saúde" },
+  { label: "Licença maternidade", value: "Licença maternidade" },
+  { label: "Afastamento sem remuneração", value: "Afastamento sem remuneração" },
+  { label: "Cessão", value: "Cessão" },
+];
+
 const folhaConformidadeColunasPadrao = [
   "Órgão",
   "Setor",
@@ -3339,7 +3391,68 @@ const folhaConformidadeColunasPadrao = [
   "Sexo",
   "Escolaridade",
   "Idade",
+  "Nível",
+  "Classe",
 ];
+
+const folhaConformidadeMapaColunas = [
+  {
+    key: "funcionais",
+    titulo: "Filtros funcionais",
+    colunas: folhaConformidadeColunasPadrao,
+  },
+  {
+    key: "folha",
+    titulo: "Filtros de Folha",
+    colunas: [
+      "Competência",
+      "Mês/AAAA até",
+      "Número da Folha",
+      "Nome da Folha",
+      "Número da execução do processamento",
+      "Data do processamento",
+    ],
+  },
+  {
+    key: "rubrica",
+    titulo: "Filtro de Rubrica",
+    colunas: [
+      "Código da Rubrica",
+      "Tipo da Rubrica",
+      "Total Valor Rubrica Desconto",
+      "Total Valor Rubrica Vantagem",
+    ],
+  },
+  {
+    key: "financeiros",
+    titulo: "Filtros Financeiros",
+    colunas: ["Valor Bruto", "Valor Líquido"],
+  },
+  {
+    key: "frequencia",
+    titulo: "Filtros de frequência / afastamento",
+    colunas: [
+      "Frequência",
+      "Motivo do Afastamento",
+      "Tipo de Afastamento",
+      "Quantidade de dias afastado",
+    ],
+  },
+  {
+    key: "previdenciarios",
+    titulo: "Filtros previdenciários / INSS",
+    colunas: ["Valor Base INSS", "INSS Pago", "INSS Simulado", "Data Aposentadoria"],
+  },
+  {
+    key: "outros",
+    titulo: "Outros filtros",
+    colunas: ["Jornada", "Data de Exercício"],
+  },
+] as const;
+
+const folhaConformidadeTodasColunas = folhaConformidadeMapaColunas.flatMap(
+  (grupo) => grupo.colunas,
+);
 
 const folhaConformidadeSituacaoAnaliseOptions = [
   { label: "Todas", value: "" },
@@ -3436,6 +3549,28 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     geradoPor: "EQUIPE GCFP",
     situacao: "Regerado",
   },
+];
+
+const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
+  {
+    id: 1,
+    nome: "Conferência mensal SEPLAG",
+    visibilidade: "Privado",
+    atualizadoEm: "22/05/2026 17:40",
+    criadoPor: "ROBERTO JUNIOR",
+  },
+  {
+    id: 2,
+    nome: "Rubricas sensíveis",
+    visibilidade: "Público",
+    atualizadoEm: "21/05/2026 16:05",
+    criadoPor: "EQUIPE GCFP",
+  },
+];
+
+const folhaConformidadeVisibilidadeFiltroOptions = [
+  { label: "Privado", value: "Privado" },
+  { label: "Público", value: "Público" },
 ];
 
 const grupoFolhaRubricaOptions = [
@@ -3882,6 +4017,31 @@ const grupoCalculoOrgaoOptions = [
   { label: "PGE", value: "pge" },
 ];
 
+const grupoCalculoSetorOptions = [
+  { label: "Todos os setores", value: "todos" },
+  { label: "Administração Central", value: "administracao-central" },
+  { label: "Unidade Setorial", value: "unidade-setorial" },
+  { label: "Coordenadoria de Folha", value: "coordenadoria-folha" },
+  { label: "Superintendência de Gestão de Pessoas", value: "superintendencia-gestao-pessoas" },
+  { label: "Coordenadoria Financeira", value: "coordenadoria-financeira" },
+  { label: "Escolas Estaduais", value: "escolas-estaduais" },
+  { label: "Gestão Escolar", value: "gestao-escolar" },
+  { label: "Projetos Educacionais", value: "projetos-educacionais" },
+  { label: "Procuradoria Administrativa", value: "procuradoria-administrativa" },
+  { label: "Procuradoria Judicial", value: "procuradoria-judicial" },
+];
+
+const grupoCalculoCategoriaOptions = folhaPagamentoCategoriaOptions.filter((option) => option.value);
+
+const grupoCalculoSubcategoriaOptions = [
+  { label: "Administração Direta", value: "administracao-direta" },
+  { label: "Defesa Agropecuária", value: "defesa-agropecuaria" },
+  { label: "Tecnologia da Informação", value: "tecnologia-informacao" },
+  { label: "Educação Básica", value: "educacao-basica" },
+];
+
+const grupoCalculoCargoOptions = folhaPagamentoCargoOptions.filter((option) => option.value);
+
 const grupoCalculoTipoFolhaOptions = [
   { label: "Normal", value: "normal" },
   { label: "13º Salário", value: "decimo-terceiro" },
@@ -3914,6 +4074,13 @@ const grupoCalculoRegimeJuridicoOptions = regimesJuridicosMock.map((regime) => (
   label: regime.nome,
   value: regime.nome,
 }));
+
+const grupoCalculoPaoeOptions = [
+  { label: "PAOE-001 - Órgão de Lotação", value: "PAOE-001 - Órgão de Lotação" },
+  { label: "PAOE-002 - Projeto de Educação", value: "PAOE-002 - Projeto de Educação" },
+  { label: "PAOE-003 - Projeto de Saúde", value: "PAOE-003 - Projeto de Saúde" },
+  { label: "PAOE-004 - Administração Central", value: "PAOE-004 - Administração Central" },
+];
 
 const grupoCalculoRubricasPorFiltro: Record<string, string[]> = {
   "regime:ESTATUTARIO CIVIL": ["1001", "1006", "1007", "1008", "1010", "1011"],
@@ -16008,6 +16175,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         ? catalogoRubricasMock.slice(0, 12).map((rubrica) => ({
             ...rubrica,
             origem: "filtro",
+            paoe: grupoCalculoPaoeOptions[0].value,
           }))
         : [],
   );
@@ -16052,11 +16220,15 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           : "",
       dataExtincao: "",
       motivoExtincao: "",
-      abrangenciaRegimeJuridico: "",
-      abrangenciaTipoVinculo: "",
-      abrangenciaInstituicao: "",
+      abrangenciaRegimeJuridico: [],
+      abrangenciaTipoVinculo: [],
+      abrangenciaInstituicao: [],
       abrangenciaHerdarDe: grupo?.herdaDe && grupo.herdaDe !== "-" ? grupo.herdaDe : "nenhum",
-      abrangenciaOrgao: "",
+      abrangenciaOrgao: [],
+      abrangenciaSetores: [],
+      abrangenciaCategorias: [],
+      abrangenciaSubcategorias: [],
+      abrangenciaCargos: [],
     },
   });
 
@@ -16083,12 +16255,26 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     setRubricasGerenciadas((current) => {
       const rubricaRemovida = current.find((rubrica) => rubrica.id === idRubrica);
       if (!rubricaRemovida) return current;
+      if (rubricaRemovida.origem !== "manual") return current;
 
-      return [
-        ...current.filter((rubrica) => rubrica.id !== idRubrica),
-        { ...rubricaRemovida, excluida: true },
-      ];
+      return current.filter((rubrica) => rubrica.id !== idRubrica);
     });
+  };
+
+  const handleAlterarPaoeRubrica = (idRubrica: number, paoe: string) => {
+    setRubricasGerenciadas((current) =>
+      current.map((rubrica) => {
+        if (rubrica.id !== idRubrica) return rubrica;
+
+        return {
+          ...rubrica,
+          paoe,
+          paoeAlterado:
+            rubrica.origem === "filtro" &&
+            paoe !== grupoCalculoPaoeOptions[0].value,
+        };
+      }),
+    );
   };
 
   const handleAbrirModalAdicionarRubricas = () => {
@@ -16117,6 +16303,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         .map((rubrica) => ({
           ...rubrica,
           origem: "manual" as const,
+          paoe: grupoCalculoPaoeOptions[0].value,
         }));
 
       const rubricasReativadas = current.map((rubrica) =>
@@ -16141,7 +16328,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
 
   const handleConfirmarPublicacao = () => {
     if (!credenciaisPublicacaoValidas) {
-      setPublicacaoFeedback("Informe Data Início, usuário e senha para publicar o grupo de cálculo.");
+      setPublicacaoFeedback("Informe Data Início, usuário e senha para aprovar o grupo de cálculo.");
       return;
     }
 
@@ -16153,6 +16340,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
   };
 
   const abrangenciaHerdarDe = watch("abrangenciaHerdarDe");
+
   useEffect(() => {
     if (!abrangenciaHerdarDe || abrangenciaHerdarDe === "nenhum") return;
 
@@ -16172,6 +16360,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
         .map((rubrica) => ({
           ...rubrica,
           origem: "filtro" as const,
+          paoe: grupoCalculoPaoeOptions[0].value,
         }));
 
       const rubricasReativadas = current.map((rubrica) =>
@@ -16207,9 +16396,9 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 <span>
                   {publicacaoConcluida
                     ? modoVersionamento
-                      ? `Versão V${versaoEmEdicao} publicada como ativa. A versão anterior foi marcada como inativa e esta edição foi bloqueada.`
-                      : "Versão V1 publicada como ativa. A edição desta versão foi bloqueada; novas alterações devem ser feitas por versionamento."
-                    : `Este grupo já foi publicado. Você está criando a versão V${versaoEmEdicao}; a Data Início foi sugerida como ${dataInicioV2} e deve ser uma data futura.`}
+                      ? `Versão V${versaoEmEdicao} aprovada como ativa. A versão anterior foi marcada como inativa e esta edição foi bloqueada.`
+                      : "Versão V1 aprovada como ativa. A edição desta versão foi bloqueada; novas alterações devem ser feitas por versionamento."
+                    : `Este grupo já foi aprovado. Você está criando a versão V${versaoEmEdicao}; a Data Início foi sugerida como ${dataInicioV2} e deve ser uma data futura.`}
                 </span>
               </div>
             </div>
@@ -16245,7 +16434,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
               </div>
               <div className="grid prototype-category-form-fields">
-                <DropdownFieldSeplag
+                <MultiSelectFieldSeplag
                   name="abrangenciaRegimeJuridico"
                   control={control}
                   label="Regime Jurídico"
@@ -16255,9 +16444,10 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   options={grupoCalculoRegimeJuridicoOptions}
                   optionLabel="label"
                   optionValue="value"
+                  selectedItemsLabel="{0} regimes selecionados"
                   getFormErrorMessage={() => null}
                 />
-                <DropdownFieldSeplag
+                <MultiSelectFieldSeplag
                   name="abrangenciaTipoVinculo"
                   control={control}
                   label="Tipo de Vínculo"
@@ -16267,9 +16457,10 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   options={grupoCalculoTipoVinculoOptions}
                   optionLabel="label"
                   optionValue="value"
+                  selectedItemsLabel="{0} vínculos selecionados"
                   getFormErrorMessage={() => null}
                 />
-                <DropdownFieldSeplag
+                <MultiSelectFieldSeplag
                   name="abrangenciaInstituicao"
                   control={control}
                   label="Instituição"
@@ -16278,9 +16469,10 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   options={grupoCalculoInstituicaoOptions}
                   optionLabel="label"
                   optionValue="value"
+                  selectedItemsLabel="{0} instituições selecionadas"
                   getFormErrorMessage={() => null}
                 />
-                <DropdownFieldSeplag
+                <MultiSelectFieldSeplag
                   name="abrangenciaOrgao"
                   control={control}
                   label="Órgão"
@@ -16289,6 +16481,55 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   options={grupoCalculoOrgaoOptions}
                   optionLabel="label"
                   optionValue="value"
+                  selectedItemsLabel="{0} órgãos selecionados"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
+                  name="abrangenciaSetores"
+                  control={control}
+                  label="Setor"
+                  cols="12 12 3"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoSetorOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} setores selecionados"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
+                  name="abrangenciaCategorias"
+                  control={control}
+                  label="Categoria"
+                  cols="12 12 3"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoCategoriaOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} categorias selecionadas"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
+                  name="abrangenciaSubcategorias"
+                  control={control}
+                  label="Subcategoria"
+                  cols="12 12 3"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoSubcategoriaOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} subcategorias selecionadas"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
+                  name="abrangenciaCargos"
+                  control={control}
+                  label="Cargo"
+                  cols="12 12 3"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoCargoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} cargos selecionados"
                   getFormErrorMessage={() => null}
                 />
                 <DropdownFieldSeplag
@@ -16308,10 +16549,10 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
             <div className="prototype-grupo-calculo-rubricas-manager">
               <div className="prototype-grupo-calculo-rubricas-header">
                 <div>
-                  <strong>Gerenciar Rubricas</strong>
+                  <strong>Relacionar Rubricas</strong>
                   <span>
                     {rubricasAtivasNoGrupo} rubrica(s) ativa(s) no grupo.
-                    Rubricas excluídas permanecem opacas para histórico.
+                    Rubricas herdadas não podem ser excluídas; apenas as adicionadas manualmente.
                   </span>
                 </div>
                 <BotaoSeplag
@@ -16324,12 +16565,6 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                 />
               </div>
 
-              <div className="prototype-grupo-calculo-rubricas-legend">
-                <span><i className="prototype-legend-dot prototype-legend-dot--manual" />Manual</span>
-                <span><i className="prototype-legend-dot prototype-legend-dot--inherited" />Herdada</span>
-                <span><i className="prototype-legend-dot prototype-legend-dot--excluded" />Excluída/desmarcada</span>
-              </div>
-
               <div className="prototype-grupo-calculo-rubricas-list">
                 <div className="prototype-grupo-calculo-rubricas-list-head">
                   <span aria-label="Ordenar" />
@@ -16337,6 +16572,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   <span>Código</span>
                   <span>Nome da Rubrica</span>
                   <span>Tipo</span>
+                  <span>PAOE</span>
                   <span>Ações</span>
                 </div>
 
@@ -16347,6 +16583,15 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   const rubricaExcluida = Boolean(rubrica.excluida);
                   const rubricaHerdada = rubrica.origem === "filtro";
                   const rubricaManual = rubrica.origem === "manual";
+                  const tagRubrica = rubricaExcluida
+                    ? { label: "Excluída", className: "is-excluded" }
+                    : rubricaHerdada && rubrica.paoeAlterado
+                      ? { label: "Herdada - Alterada", className: "is-changed" }
+                    : rubricaHerdada && rubrica.reordenada
+                      ? { label: "Herdada - ordem alterada", className: "is-reordered" }
+                      : rubricaHerdada
+                        ? { label: "Herdada", className: "is-inherited" }
+                        : { label: "Adicionada", className: "is-manual" };
                   const posicaoRubrica = rubricaExcluida
                     ? ""
                     : rubricasGerenciadas
@@ -16383,7 +16628,14 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       </button>
                       <span>{posicaoRubrica}</span>
                       <code>{rubrica.codigo}</code>
-                      <strong>{rubrica.nomeRubrica}</strong>
+                      <div className="prototype-grupo-calculo-rubrica-name">
+                        <strong>{rubrica.nomeRubrica}</strong>
+                        <span
+                          className={`prototype-grupo-calculo-origem-tag ${tagRubrica.className}`}
+                        >
+                          {tagRubrica.label}
+                        </span>
+                      </div>
                       <span
                         className="prototype-grupo-calculo-tipo-pill"
                         style={{
@@ -16394,6 +16646,21 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                       >
                         {tipoRubrica}
                       </span>
+                      <select
+                        className="prototype-grupo-calculo-paoe-select"
+                        value={rubrica.paoe ?? grupoCalculoPaoeOptions[0].value}
+                        disabled={formularioBloqueado || rubricaExcluida}
+                        onChange={(event) =>
+                          handleAlterarPaoeRubrica(rubrica.id, event.target.value)
+                        }
+                        aria-label={`PAOE da rubrica ${rubrica.nomeRubrica}`}
+                      >
+                        {grupoCalculoPaoeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                       {rubricaExcluida ? (
                         <button
                           type="button"
@@ -16417,9 +16684,13 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                         <button
                           type="button"
                           className="prototype-grupo-calculo-remove-rubrica-btn"
-                          title="Remover rubrica"
+                          title={
+                            rubricaManual
+                              ? "Remover rubrica"
+                              : "Rubrica herdada não pode ser excluída"
+                          }
                           aria-label={`Remover ${rubrica.nomeRubrica}`}
-                          disabled={formularioBloqueado}
+                          disabled={formularioBloqueado || !rubricaManual}
                           onClick={() => handleRemoverRubricaGerenciada(rubrica.id)}
                         >
                           <i className="pi pi-trash" aria-hidden="true" />
@@ -16470,7 +16741,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                     )}
                     <BotaoSalvarSeplag
                       type="button"
-                      label={modoVersionamento ? `Publicar V${versaoEmEdicao}` : "Publicar"}
+                      label={modoVersionamento ? `Aprovar V${versaoEmEdicao}` : "Aprovar"}
                       icon="pi pi-send"
                       onClick={handleAbrirModalPublicacao}
                     />
@@ -16481,7 +16752,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
 
             <ModalSeplag
               visible={modalPublicacaoAberto}
-              titulo={modoVersionamento ? `Publicar Versão V${versaoEmEdicao}` : "Publicar Grupo de Cálculo"}
+              titulo={modoVersionamento ? `Aprovar Versão V${versaoEmEdicao}` : "Aprovar Grupo de Cálculo"}
               tamanho="520px"
               labelFechar="Cancelar"
               customFooter={
@@ -16496,7 +16767,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   />
                   <BotaoSalvarSeplag
                     type="button"
-                    label="Publicar"
+                    label="Aprovar"
                     icon="pi pi-send"
                     disabled={!credenciaisPublicacaoValidas}
                     onClick={handleConfirmarPublicacao}
@@ -16517,8 +16788,8 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   <i className="pi pi-exclamation-triangle" aria-hidden="true" />
                   <span>
                     {modoVersionamento
-                      ? `Ao publicar a V${versaoEmEdicao}, ela passará a ser a versão ativa e a versão anterior será marcada como inativa. A nova versão ficará bloqueada para edição.`
-                      : "Ao publicar este grupo de cálculo, a versão V1 será criada como ativa e ficará bloqueada para edição. Alterações futuras deverão ser feitas por meio de uma nova versão."}
+                      ? `Ao aprovar a V${versaoEmEdicao}, ela passará a ser a versão ativa e a versão anterior será marcada como inativa. A nova versão ficará bloqueada para edição.`
+                      : "Ao aprovar este grupo de cálculo, a versão V1 será criada como ativa e ficará bloqueada para edição. Alterações futuras deverão ser feitas por meio de uma nova versão."}
                   </span>
                 </div>
 
@@ -16902,6 +17173,8 @@ export function PrototiposFolhaConformidadePage() {
     categorias: [],
     cargos: [],
     tiposVinculo: [],
+    nivel: "",
+    classe: "",
     tipoRelatorio: "Dinâmico",
     formatoSaida: "Excel",
     matricula: "",
@@ -16918,20 +17191,47 @@ export function PrototiposFolhaConformidadePage() {
     dataExercicioFim: "",
     dataAposentadoriaInicio: "",
     dataAposentadoriaFim: "",
+    numeroExecucaoProcessamento: "",
+    dataProcessamento: "",
+    tipoAfastamento: "",
+    quantidadeDiasAfastado: undefined,
     situacaoAnalise: "",
   };
   const { control, handleSubmit, reset } = useForm<FolhaConformidadeFiltroForm>({
     defaultValues: defaultFilters,
   });
+  const {
+    control: salvarFiltroControl,
+    handleSubmit: handleSubmitSalvarFiltro,
+    reset: resetSalvarFiltro,
+  } = useForm<FolhaConformidadeSalvarFiltroForm>({
+    defaultValues: {
+      nomeFiltro: "",
+      visibilidade: "Privado",
+    },
+  });
   const [filtrosGerados, setFiltrosGerados] =
     useState<FolhaConformidadeFiltroForm>(defaultFilters);
+  const [modalFiltrosAberto, setModalFiltrosAberto] = useState(false);
+  const [modalFiltrosModo, setModalFiltrosModo] = useState<"carregar" | "salvar">(
+    "carregar",
+  );
+  const [filtrosSalvos, setFiltrosSalvos] = useState<
+    FolhaConformidadeFiltroSalvoRow[]
+  >(folhaConformidadeFiltrosSalvosMock);
   const [colunasSelecionadas, setColunasSelecionadas] = useState<string[]>(
-    folhaConformidadeColunasPadrao,
+    folhaConformidadeTodasColunas,
   );
   const [relatorioAccordions, setRelatorioAccordions] = useState({
+    colunas: true,
+    filtros: true,
     funcionais: true,
     folha: true,
     rubrica: true,
+    financeiros: true,
+    frequencia: true,
+    previdenciarios: true,
+    outros: true,
   });
   const getEmptyFieldError = () => null;
 
@@ -16942,6 +17242,14 @@ export function PrototiposFolhaConformidadePage() {
         : [...colunas, label],
     );
   };
+
+  const isColunaSelecionada = (label: string) =>
+    colunasSelecionadas.includes(label);
+
+  const getFiltroFieldClassName = (label: string) =>
+    `prototype-dynamic-report-field ${
+      isColunaSelecionada(label) ? "" : "prototype-dynamic-report-field--hidden"
+    }`;
 
   const toggleRelatorioAccordion = (key: keyof typeof relatorioAccordions) => {
     setRelatorioAccordions((state) => ({ ...state, [key]: !state[key] }));
@@ -16970,10 +17278,52 @@ export function PrototiposFolhaConformidadePage() {
     setFiltrosGerados(data);
   };
 
+  const abrirModalCarregarFiltro = () => {
+    setModalFiltrosModo("carregar");
+    setModalFiltrosAberto(true);
+  };
+
+  const abrirModalSalvarFiltro = () => {
+    setModalFiltrosModo("salvar");
+    resetSalvarFiltro({
+      nomeFiltro: "",
+      visibilidade: "Privado",
+    });
+    setModalFiltrosAberto(true);
+  };
+
+  const handleSalvarFiltro = (data: FolhaConformidadeSalvarFiltroForm) => {
+    const nomeFiltro = data.nomeFiltro.trim() || "Filtro sem nome";
+    const dataHora = new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Cuiaba",
+    }).format(new Date());
+
+    setFiltrosSalvos((filtros) => [
+      {
+        id: Date.now(),
+        nome: nomeFiltro,
+        visibilidade: data.visibilidade,
+        atualizadoEm: dataHora,
+        criadoPor: "ROBERTO JUNIOR",
+      },
+      ...filtros,
+    ]);
+    setModalFiltrosAberto(false);
+  };
+
+  const handleCarregarFiltro = (_filtro: FolhaConformidadeFiltroSalvoRow) => {
+    setModalFiltrosAberto(false);
+  };
+
   const handleLimpar = () => {
     reset({ ...defaultFilters, orgaos: [] });
     setFiltrosGerados({ ...defaultFilters, orgaos: [] });
-    setColunasSelecionadas(folhaConformidadeColunasPadrao);
+    setColunasSelecionadas(folhaConformidadeTodasColunas);
   };
 
   const registrosFiltrados = useMemo(() => {
@@ -17108,35 +17458,59 @@ export function PrototiposFolhaConformidadePage() {
           title="Relatório Dinâmico da Folha"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <BotaoSeplag
+              type="button"
+              label="Carregar filtro"
+              icon="pi pi-filter"
+              outlined
+              className="prototype-dynamic-report-load-filter"
+              onClick={abrirModalCarregarFiltro}
+            />
+          }
         >
           <form
             className="prototype-dynamic-report"
             onSubmit={handleSubmit(handleGerarRelatorio)}
           >
-            <div className="prototype-dynamic-report-selected">
-              <div>
-                <strong>Colunas selecionadas</strong>
-                <span>{colunasSelecionadas.length} colunas para o relatório</span>
-              </div>
-              <div className="prototype-dynamic-report-chips">
-                {folhaConformidadeColunasPadrao.map((coluna) => (
-                  <button
-                    key={coluna}
-                    type="button"
-                    className={colunasSelecionadas.includes(coluna) ? "is-active" : ""}
-                    onClick={() => toggleColunaRelatorio(coluna)}
-                  >
-                    {coluna}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="prototype-dynamic-report-main-grid">
+            <section className="prototype-dynamic-report-section">
+              {renderRelatorioAccordionHeader("colunas", "Colunas do relatório")}
+              {relatorioAccordions.colunas ? (
+                <div className="prototype-dynamic-report-selected">
+                  {folhaConformidadeMapaColunas.map((grupo, index) => (
+                    <div key={grupo.titulo} className="prototype-dynamic-report-chip-row">
+                      {index > 0 ? <div className="prototype-dynamic-report-divider" /> : null}
+                      {renderRelatorioAccordionHeader(grupo.key, grupo.titulo)}
+                      {relatorioAccordions[grupo.key] ? (
+                        <div className="prototype-dynamic-report-chips">
+                          {grupo.colunas.map((coluna) => (
+                            <button
+                              key={coluna}
+                              type="button"
+                              className={colunasSelecionadas.includes(coluna) ? "is-active" : ""}
+                              onClick={() => toggleColunaRelatorio(coluna)}
+                            >
+                              {coluna}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </section>
 
             <section className="prototype-dynamic-report-section">
-              {renderRelatorioAccordionHeader("funcionais", "Filtros funcionais")}
-              {relatorioAccordions.funcionais ? (
-              <div className="prototype-dynamic-report-grid">
-                <div className="prototype-dynamic-report-field">
+              {renderRelatorioAccordionHeader("filtros", "Filtros")}
+              {relatorioAccordions.filtros ? (
+                <div className="prototype-dynamic-report-nested-accordions">
+                  <section className="prototype-dynamic-report-section">
+                    {renderRelatorioAccordionHeader("funcionais", "Filtros funcionais")}
+                    {relatorioAccordions.funcionais ? (
+                    <div className="prototype-dynamic-report-grid">
+                <div className={getFiltroFieldClassName("Órgão")}>
                   <MultiSelectFieldSeplag
                     label="Órgão"
                     name="orgaos"
@@ -17148,7 +17522,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Setor")}>
                   <MultiSelectFieldSeplag
                     label="Setor"
                     name="setores"
@@ -17160,7 +17534,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Tipo de vínculo")}>
                   <MultiSelectFieldSeplag
                     label="Tipo de vínculo"
                     name="tiposVinculo"
@@ -17172,7 +17546,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Regime jurídico")}>
                   <MultiSelectFieldSeplag
                     label="Regime jurídico"
                     name="regimesJuridicos"
@@ -17184,7 +17558,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Categoria")}>
                   <MultiSelectFieldSeplag
                     label="Categoria"
                     name="categorias"
@@ -17196,7 +17570,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Cargo")}>
                   <MultiSelectFieldSeplag
                     label="Cargo"
                     name="cargos"
@@ -17208,7 +17582,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Matrícula")}>
                   <TextFieldSeplag
                     label="Matrícula"
                     name="matricula"
@@ -17217,7 +17591,7 @@ export function PrototiposFolhaConformidadePage() {
                     placeholder="Digite a matrícula"
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("CPF")}>
                   <TextFieldSeplag
                     label="CPF"
                     name="cpf"
@@ -17226,7 +17600,7 @@ export function PrototiposFolhaConformidadePage() {
                     placeholder="000.000.000-00"
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Sexo")}>
                   <DropdownFieldSeplag
                     label="Sexo"
                     name="sexo"
@@ -17238,7 +17612,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Escolaridade")}>
                   <DropdownFieldSeplag
                     label="Escolaridade"
                     name="escolaridade"
@@ -17250,7 +17624,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Idade")}>
                   <TextFieldSeplag
                     label="Idade"
                     name="idade"
@@ -17259,74 +17633,119 @@ export function PrototiposFolhaConformidadePage() {
                     placeholder="Ex.: maior que 60"
                   />
                 </div>
-              </div>
-              ) : null}
-            </section>
-
-            <section className="prototype-dynamic-report-section">
-              {renderRelatorioAccordionHeader("folha", "Filtros da folha")}
-              {relatorioAccordions.folha ? (
-              <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--folha">
-                <div className="prototype-dynamic-report-field">
-                  <TextFieldSeplag
-                    label="Competência"
-                    name="competencia"
+                <div className={getFiltroFieldClassName("Nível")}>
+                  <DropdownFieldSeplag
+                    label="Nível"
+                    name="nivel"
                     control={control}
                     cols="12"
-                    placeholder="MM/AAAA"
+                    options={folhaConformidadeNivelOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
-                  <div className="prototype-dynamic-report-range">
+                <div className={getFiltroFieldClassName("Classe")}>
+                  <DropdownFieldSeplag
+                    label="Classe"
+                    name="classe"
+                    control={control}
+                    cols="12"
+                    options={folhaConformidadeClasseOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
+                  />
+                </div>
+                    </div>
+                    ) : null}
+                  </section>
+
+                  <section className="prototype-dynamic-report-section">
+                    {renderRelatorioAccordionHeader("folha", "Filtros de Folha")}
+                    {relatorioAccordions.folha ? (
+                      <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--folha">
+                  <div className={getFiltroFieldClassName("Competência")}>
                     <TextFieldSeplag
-                      label="Mês/AAAA da folha"
-                      name="folhaInicio"
-                      control={control}
-                      cols="12"
-                      placeholder="MM/AAAA"
-                    />
-                    <TextFieldSeplag
-                      label="Até"
-                      name="folhaFim"
+                      label="Competência"
+                      name="competencia"
                       control={control}
                       cols="12"
                       placeholder="MM/AAAA"
                     />
                   </div>
-                </div>
-                <div className="prototype-dynamic-report-field">
-                  <DropdownFieldSeplag
-                    label="Número da folha"
-                    name="numeroFolha"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeNumeroFolhaOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-                <div className="prototype-dynamic-report-field">
-                  <DropdownFieldSeplag
-                    label="Nome da folha"
-                    name="nomeFolha"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeNomeFolhaOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-              </div>
-              ) : null}
-            </section>
+                  <div className={getFiltroFieldClassName("Mês/AAAA até")}>
+                    <div className="prototype-dynamic-report-range">
+                      <TextFieldSeplag
+                        label="Mês/AAAA"
+                        name="folhaInicio"
+                        control={control}
+                        cols="12"
+                        placeholder="MM/AAAA"
+                      />
+                      <TextFieldSeplag
+                        label="Até"
+                        name="folhaFim"
+                        control={control}
+                        cols="12"
+                        placeholder="MM/AAAA"
+                      />
+                    </div>
+                  </div>
+                  <div className={getFiltroFieldClassName("Número da Folha")}>
+                    <DropdownFieldSeplag
+                      label="Número da Folha"
+                      name="numeroFolha"
+                      control={control}
+                      cols="12"
+                      options={folhaConformidadeNumeroFolhaOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={getEmptyFieldError}
+                    />
+                  </div>
+                  <div className={getFiltroFieldClassName("Nome da Folha")}>
+                    <DropdownFieldSeplag
+                      label="Nome da Folha"
+                      name="nomeFolha"
+                      control={control}
+                      cols="12"
+                      options={folhaConformidadeNomeFolhaOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={getEmptyFieldError}
+                    />
+                  </div>
+                  <div className={getFiltroFieldClassName("Número da execução do processamento")}>
+                    <DropdownFieldSeplag
+                      label="Número da execução do processamento"
+                      name="numeroExecucaoProcessamento"
+                      control={control}
+                      cols="12"
+                      options={folhaConformidadeExecucaoOptions}
+                      optionLabel="label"
+                      optionValue="value"
+                      getFormErrorMessage={getEmptyFieldError}
+                    />
+                  </div>
+                  <div className={getFiltroFieldClassName("Data do processamento")}>
+                    <DateFieldSeplag
+                      label="Data do processamento"
+                      name="dataProcessamento"
+                      control={control}
+                      cols="12"
+                      getFormErrorMessage={getEmptyFieldError}
+                    />
+                  </div>
+                      </div>
+                    ) : null}
+                  </section>
 
-            <section className="prototype-dynamic-report-section">
-              {renderRelatorioAccordionHeader("rubrica", "Filtros de rubrica")}
-              {relatorioAccordions.rubrica ? (
-              <div className="prototype-dynamic-report-grid">
-                <div className="prototype-dynamic-report-field">
+                  <section className="prototype-dynamic-report-section">
+                    {renderRelatorioAccordionHeader("rubrica", "Filtros de rubrica")}
+                    {relatorioAccordions.rubrica ? (
+                    <div className="prototype-dynamic-report-grid">
+                <div className={getFiltroFieldClassName("Código da Rubrica")}>
                   <DropdownFieldSeplag
                     label="Código da rubrica"
                     name="codigoRubrica"
@@ -17338,7 +17757,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Tipo da Rubrica")}>
                   <DropdownFieldSeplag
                     label="Tipo da rubrica"
                     name="tipoRubrica"
@@ -17350,53 +17769,18 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-display-only">
-                  <strong>Total valor rubrica desconto</strong>
-                </div>
-                <div className="prototype-dynamic-report-display-only">
-                  <strong>Total valor rubrica vantagem</strong>
-                </div>
-              </div>
-              ) : null}
-            </section>
+                    </div>
+                    ) : null}
+                  </section>
 
-            <section className="prototype-dynamic-report-section">
-              <h3>Filtros financeiros</h3>
-              <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--display">
-                {[
-                  "Valor Bruto",
-                  "Valor Líquido",
-                  "Descontos Mês Anterior",
-                  "Vantagens Mês Anterior",
-                  "Valor Líquido Mês Anterior",
-                ].map((label) => (
-                  <div key={label} className="prototype-dynamic-report-display-only">
-                    <strong>{label}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="prototype-dynamic-report-section">
-              <h3>Filtros de frequência / afastamento</h3>
-              <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--display">
-                {["Frequência", "Motivo do Afastamento"].map((label) => (
-                  <div key={label} className="prototype-dynamic-report-display-only">
-                    <strong>{label}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="prototype-dynamic-report-section">
-              <h3>Filtros previdenciários / INSS</h3>
-              <div className="prototype-dynamic-report-grid">
-                {["Valor Base INSS", "INSS Pago", "INSS Simulado"].map((label) => (
-                  <div key={label} className="prototype-dynamic-report-display-only">
-                    <strong>{label}</strong>
-                  </div>
-                ))}
-                <div className="prototype-dynamic-report-field">
+                  <section className="prototype-dynamic-report-section">
+                    {renderRelatorioAccordionHeader(
+                      "previdenciarios",
+                      "Filtros previdenciários / INSS",
+                    )}
+                    {relatorioAccordions.previdenciarios ? (
+                    <div className="prototype-dynamic-report-grid">
+                <div className={getFiltroFieldClassName("Data Aposentadoria")}>
                   <div className="prototype-dynamic-report-range">
                     <TextFieldSeplag
                       label="Data aposentadoria"
@@ -17414,13 +17798,37 @@ export function PrototiposFolhaConformidadePage() {
                     />
                   </div>
                 </div>
-              </div>
-            </section>
+                <div className={getFiltroFieldClassName("Tipo de Afastamento")}>
+                  <DropdownFieldSeplag
+                    label="Tipo de Afastamento"
+                    name="tipoAfastamento"
+                    control={control}
+                    cols="12"
+                    options={folhaConformidadeTipoAfastamentoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
+                  />
+                </div>
+                <div className={getFiltroFieldClassName("Quantidade de dias afastado")}>
+                  <NumberFieldSeplag
+                    label="Quantidade de dias afastado"
+                    name="quantidadeDiasAfastado"
+                    control={control}
+                    cols="12"
+                    min={0}
+                    getFormErrorMessage={getEmptyFieldError}
+                  />
+                </div>
+                    </div>
+                    ) : null}
+                  </section>
 
-            <section className="prototype-dynamic-report-section">
-              <h3>Outros filtros</h3>
-              <div className="prototype-dynamic-report-grid">
-                <div className="prototype-dynamic-report-field">
+                  <section className="prototype-dynamic-report-section">
+                    {renderRelatorioAccordionHeader("outros", "Outros filtros")}
+                    {relatorioAccordions.outros ? (
+                    <div className="prototype-dynamic-report-grid">
+                <div className={getFiltroFieldClassName("Jornada")}>
                   <DropdownFieldSeplag
                     label="Jornada"
                     name="jornada"
@@ -17432,7 +17840,7 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className="prototype-dynamic-report-field">
+                <div className={getFiltroFieldClassName("Data de Exercício")}>
                   <div className="prototype-dynamic-report-range">
                     <TextFieldSeplag
                       label="Data de exercício"
@@ -17450,8 +17858,13 @@ export function PrototiposFolhaConformidadePage() {
                     />
                   </div>
                 </div>
-              </div>
+                    </div>
+                    ) : null}
+                  </section>
+                </div>
+              ) : null}
             </section>
+            </div>
 
             <div className="prototype-dynamic-report-actions">
               <BotaoLimparFiltroSeplag onClick={handleLimpar} type="button" />
@@ -17460,6 +17873,7 @@ export function PrototiposFolhaConformidadePage() {
                 icon="pi pi-save"
                 type="button"
                 outlined
+                onClick={abrirModalSalvarFiltro}
               />
               <BotaoSeplag
                 label="Pré-visualizar"
@@ -17489,6 +17903,84 @@ export function PrototiposFolhaConformidadePage() {
             />
           </div>
         </div>
+
+        <ModalSeplag
+          visible={modalFiltrosAberto}
+          titulo={
+            modalFiltrosModo === "carregar"
+              ? "Carregar filtro"
+              : "Salvar filtro"
+          }
+          fechar={() => setModalFiltrosAberto(false)}
+          labelFechar="Cancelar"
+          labelAcao="Salvar filtro"
+          iconAcao="pi pi-save"
+          tamanho="760px"
+          funcAcao={handleSubmitSalvarFiltro(handleSalvarFiltro)}
+          hideFooter={modalFiltrosModo === "carregar"}
+        >
+          <div className="col-12 prototype-dynamic-report-filter-modal">
+            <div className="prototype-dynamic-report-filter-list">
+              <strong>Filtros salvos públicos e privados</strong>
+              <div className="prototype-table-wrapper">
+                <table className="prototype-simple-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Visibilidade</th>
+                      <th>Atualizado em</th>
+                      <th>Criado por</th>
+                      {modalFiltrosModo === "carregar" ? <th>Ação</th> : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrosSalvos.map((filtro) => (
+                      <tr key={filtro.id}>
+                        <td>{filtro.nome}</td>
+                        <td>{filtro.visibilidade}</td>
+                        <td>{filtro.atualizadoEm}</td>
+                        <td>{filtro.criadoPor}</td>
+                        {modalFiltrosModo === "carregar" ? (
+                          <td>
+                            <BotaoIconSeplag
+                              type="button"
+                              icon="pi pi-check"
+                              tooltip="Carregar filtro"
+                              onClick={() => handleCarregarFiltro(filtro)}
+                            />
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {modalFiltrosModo === "salvar" ? (
+              <div className="prototype-dynamic-report-filter-form">
+                <strong>Novo filtro</strong>
+                <TextFieldSeplag
+                  label="Nome do filtro"
+                  name="nomeFiltro"
+                  control={salvarFiltroControl}
+                  cols="12"
+                  placeholder="Informe um nome para o filtro"
+                />
+                <DropdownFieldSeplag
+                  label="Visibilidade"
+                  name="visibilidade"
+                  control={salvarFiltroControl}
+                  cols="12"
+                  options={folhaConformidadeVisibilidadeFiltroOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={getEmptyFieldError}
+                />
+              </div>
+            ) : null}
+          </div>
+        </ModalSeplag>
       </div>
     </PrototypeSystemPage>
   );
