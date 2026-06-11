@@ -10074,96 +10074,361 @@ export function PrototiposMatrizValidacaoTesteFormPage() {
 }
 
 export function PrototiposFolhaPage() {
-  const [mesSelecionado, setMesSelecionado] = useState("MAIO");
-  const [gerenciandoBoletim, setGerenciandoBoletim] = useState(false);
-
-  const mesesCicloFolha = [
-    { mes: "MAIO", ano: "2026" },
-    { mes: "JUNHO", ano: "2026" },
-    { mes: "JULHO", ano: "2026" },
-    { mes: "AGOSTO", ano: "2026" },
-  ];
-
-  const prazosCicloFolha = [
+  const [modoEdicaoHomeFolha, setModoEdicaoHomeFolha] = useState(true);
+  const [modalNovoInformativoAberto, setModalNovoInformativoAberto] =
+    useState(false);
+  const [modalNovoCronogramaAberto, setModalNovoCronogramaAberto] =
+    useState(false);
+  const [modalEditarEventoAberto, setModalEditarEventoAberto] = useState(false);
+  const [informativoEdicaoId, setInformativoEdicaoId] = useState<number | null>(
+    null,
+  );
+  const [eventoEdicao, setEventoEdicao] = useState<{
+    cronogramaId: number;
+    eventoIndex: number;
+  } | null>(null);
+  const [novoInformativo, setNovoInformativo] = useState({
+    titulo: "",
+    texto: "",
+  });
+  const [novoCronograma, setNovoCronograma] = useState({
+    titulo: "",
+    dataInicio: "",
+    dataFim: "",
+    horario: "",
+    descricao: "",
+    observacao: "",
+  });
+  const [eventoForm, setEventoForm] = useState({
+    dataInicio: "",
+    dataFim: "",
+    horario: "",
+    descricao: "",
+  });
+  const [homeFormError, setHomeFormError] = useState("");
+  const [informativosFolha, setInformativosFolha] = useState([
     {
       id: 1,
-      data: "01/05",
-      evento: "Lançamento de Férias",
-      horario: "23:59",
-      status: "CONCLUIDO",
+      icon: "pi pi-exclamation-triangle",
+      titulo: "Prazo Final para Ajustes",
+      dataPostagem: "15/06/2026",
+      texto:
+        "Prazo para lançamento de horas extras vence em 15/06/2026 às 23:59. Após essa data, não será possível fazer alterações no sistema.",
+      destaque: "is-warning",
     },
     {
       id: 2,
-      data: "05/05",
-      evento: "Último Processamento Total",
-      horario: "18:00",
-      status: "CONCLUIDO",
+      icon: "pi pi-info-circle",
+      titulo: "Processamento em Andamento",
+      dataPostagem: "14/06/2026",
+      texto:
+        "Processamento da folha de junho iniciou em 16/06/2026. Você receberá notificação quando disponível para consulta.",
+      destaque: "is-info",
     },
     {
       id: 3,
-      data: "10/05",
-      evento: "Consolidação da Folha",
-      horario: "14:00",
-      status: "EM_ANDAMENTO",
+      icon: "pi pi-thumbtack",
+      titulo: "Férias - saldo residual e intervalo mínimo",
+      dataPostagem: "09/06/2026",
+      texto:
+        "O sistema não permitirá mais o registro de gozos que resultem em um saldo final de 5 dias. Verifique suas solicitações pendentes.",
+      destaque: "is-pin",
+    },
+  ]);
+
+  const [cronogramasFolha, setCronogramasFolha] = useState([
+    {
+      id: 1,
+      titulo: "Folha principal",
+      marcador: "is-main",
+      eventos: [
+        {
+          periodo: "14/06 - 16/06 - 18:00",
+          descricao:
+            "Limite para envio de documentos pelas setoriais à SAGPP/SEPLAG",
+          status: "Agendado",
+        },
+        {
+          periodo: "14/06 - 14/06 - 18:00",
+          descricao: "Carga dos consignados na folha",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "15/06 - 15/06 - 17:00",
+          descricao: "Limite para execução do último operador PAEP",
+          status: "Agendado",
+        },
+        {
+          periodo: "15/06 - 15/06 - 17:00",
+          descricao: "Limite para lançamento de férias do mês subsequente no SEAP",
+          status: "Agendado",
+        },
+        {
+          periodo: "17/06 - 17/06 - 18:00",
+          descricao:
+            "Último processamento total - Último dia para registros na folha principal",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "18/06 - 22/06 - 17:00",
+          descricao: "Período exclusivo de conformidade - bloqueio do SEAP",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "20/06 - 20/06 - 11:00",
+          descricao: "Limite para solicitação de cancelamento de pagamento (SEPLAG)",
+          status: "Agendado",
+        },
+        {
+          periodo: "22/06 - 22/06 - 17:00",
+          descricao: "Consolidação",
+          status: "Concluído",
+        },
+        {
+          periodo: "03/06 - 03/06 - 18:00",
+          descricao: "Limite para solicitação de retransmissão de pagamento",
+          status: "Agendado",
+        },
+      ],
     },
     {
-      id: 4,
-      data: "15/05",
-      evento: "Processamento Final",
-      horario: "16:00",
-      status: "AGUARDANDO",
+      id: 2,
+      titulo: "Rescisão - Folha 31",
+      marcador: "is-rescission",
+      observacao:
+        "Os desligamentos ocorridos após o dia 14/06/2026 serão processados na Folha Rescisória 32 de junho/2026.",
+      eventos: [
+        {
+          periodo: "14/06 - 14/06 - 18:00",
+          descricao: "Processamento da folha - desligamentos até 14/05",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "15/06 - 15/06 - 11:00",
+          descricao: "Limite para solicitação de cancelamento de pagamento",
+          status: "Agendado",
+        },
+        {
+          periodo: "18/06 - 18/06 - 17:00",
+          descricao: "Consolidação",
+          status: "Concluído",
+        },
+      ],
     },
-  ];
-  const [prazosGerenciamento, setPrazosGerenciamento] = useState(() =>
-    prazosCicloFolha.slice(0, 3).map((prazo) => ({
-      ...prazo,
-      dataCompleta: `${prazo.data}/2026`,
-    })),
-  );
+  ]);
 
-  const statusPrazoMeta: Record<
-    string,
-    { label: string; icon: string; className: string }
-  > = {
-    CONCLUIDO: {
-      label: "Concluído",
-      icon: "pi pi-check",
-      className: "is-success",
-    },
-    EM_ANDAMENTO: {
-      label: "Em andamento",
-      icon: "pi pi-hourglass",
-      className: "is-warning",
-    },
-    AGUARDANDO: {
-      label: "Aguardando",
-      icon: "pi pi-clock",
-      className: "is-muted",
-    },
+  const abrirNovoInformativo = () => {
+    setInformativoEdicaoId(null);
+    setNovoInformativo({
+      titulo: "",
+      texto: "",
+    });
+    setHomeFormError("");
+    setModalNovoInformativoAberto(true);
   };
 
-  const adicionarPrazoBoletim = () => {
-    setPrazosGerenciamento((prazos) => [
-      ...prazos,
-      {
-        id: Date.now(),
-        data: "",
-        dataCompleta: "",
-        evento: "",
-        horario: "",
-        status: "AGUARDANDO",
-      },
-    ]);
+  const abrirNovoCronograma = () => {
+    setNovoCronograma({
+      titulo: "",
+      dataInicio: "",
+      dataFim: "",
+      horario: "",
+      descricao: "",
+      observacao: "",
+    });
+    setHomeFormError("");
+    setModalNovoCronogramaAberto(true);
   };
 
-  const removerPrazoBoletim = (id: number) => {
-    setPrazosGerenciamento((prazos) =>
-      prazos.filter((prazo) => prazo.id !== id),
+  const abrirEditarInformativo = (
+    informativo: (typeof informativosFolha)[number],
+  ) => {
+    setInformativoEdicaoId(informativo.id);
+    setNovoInformativo({
+      titulo: informativo.titulo,
+      texto: informativo.texto,
+    });
+    setHomeFormError("");
+    setModalNovoInformativoAberto(true);
+  };
+
+  const removerInformativo = (informativoId: number) => {
+    setInformativosFolha((current) =>
+      current.filter((informativo) => informativo.id !== informativoId),
     );
   };
 
-  const voltarParaBoletim = () => {
-    setGerenciandoBoletim(false);
+  const parsePeriodoEvento = (periodo: string) => {
+    const [dataInicio = "", dataFim = "", horario = ""] = periodo
+      .split(" - ")
+      .map((item) => item.trim());
+
+    return { dataInicio, dataFim, horario };
+  };
+
+  const abrirEditarEvento = (
+    cronogramaId: number,
+    eventoIndex: number,
+    evento: { periodo: string; descricao: string },
+  ) => {
+    setEventoEdicao({ cronogramaId, eventoIndex });
+    setEventoForm({
+      ...parsePeriodoEvento(evento.periodo),
+      descricao: evento.descricao,
+    });
+    setHomeFormError("");
+    setModalEditarEventoAberto(true);
+  };
+
+  const removerEvento = (cronogramaId: number, eventoIndex: number) => {
+    setCronogramasFolha((current) =>
+      current
+        .map((cronograma) =>
+          cronograma.id === cronogramaId
+            ? {
+                ...cronograma,
+                eventos: cronograma.eventos.filter((_, index) => index !== eventoIndex),
+              }
+            : cronograma,
+        )
+        .filter((cronograma) => cronograma.eventos.length),
+    );
+  };
+
+  const salvarNovoInformativo = () => {
+    if (
+      !novoInformativo.titulo.trim() ||
+      !novoInformativo.texto.trim()
+    ) {
+      setHomeFormError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (informativoEdicaoId) {
+      setInformativosFolha((current) =>
+        current.map((informativo) =>
+          informativo.id === informativoEdicaoId
+            ? {
+                ...informativo,
+                titulo: novoInformativo.titulo.trim(),
+                texto: novoInformativo.texto.trim(),
+              }
+            : informativo,
+        ),
+      );
+      setModalNovoInformativoAberto(false);
+      setInformativoEdicaoId(null);
+      setHomeFormError("");
+      return;
+    }
+
+    setInformativosFolha((current) => [
+      {
+        id: Math.max(...current.map((item) => item.id), 0) + 1,
+        icon: "pi pi-info-circle",
+        titulo: novoInformativo.titulo.trim(),
+        dataPostagem: new Intl.DateTimeFormat("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(new Date()),
+        texto: novoInformativo.texto.trim(),
+        destaque: "is-info",
+      },
+      ...current,
+    ]);
+    setModalNovoInformativoAberto(false);
+    setHomeFormError("");
+  };
+
+  const salvarEventoEditado = () => {
+    if (
+      !eventoForm.dataInicio.trim() ||
+      !eventoForm.dataFim.trim() ||
+      !eventoForm.horario.trim() ||
+      !eventoForm.descricao.trim() ||
+      !eventoEdicao
+    ) {
+      setHomeFormError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === eventoEdicao.cronogramaId
+          ? {
+              ...cronograma,
+              eventos: cronograma.eventos.map((evento, index) =>
+                index === eventoEdicao.eventoIndex
+                  ? {
+                      ...evento,
+                      periodo: `${eventoForm.dataInicio.trim()} - ${eventoForm.dataFim.trim()} - ${eventoForm.horario.trim()}`,
+                      descricao: eventoForm.descricao.trim(),
+                      status: calcularStatusCronograma(
+                        eventoForm.dataInicio,
+                        eventoForm.dataFim,
+                      ),
+                    }
+                  : evento,
+              ),
+            }
+          : cronograma,
+      ),
+    );
+    setModalEditarEventoAberto(false);
+    setEventoEdicao(null);
+    setHomeFormError("");
+  };
+
+  const salvarNovoCronograma = () => {
+    if (
+      !novoCronograma.titulo.trim() ||
+      !novoCronograma.dataInicio.trim() ||
+      !novoCronograma.dataFim.trim() ||
+      !novoCronograma.horario.trim() ||
+      !novoCronograma.descricao.trim()
+    ) {
+      setHomeFormError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    setCronogramasFolha((current) => [
+      {
+        id: Math.max(...current.map((item) => item.id), 0) + 1,
+        titulo: novoCronograma.titulo.trim(),
+        marcador: "is-main",
+        observacao: novoCronograma.observacao.trim(),
+        eventos: [
+          {
+            periodo: `${novoCronograma.dataInicio.trim()} - ${novoCronograma.dataFim.trim()} - ${novoCronograma.horario.trim()}`,
+            descricao: novoCronograma.descricao.trim(),
+            status: calcularStatusCronograma(
+              novoCronograma.dataInicio,
+              novoCronograma.dataFim,
+            ),
+          },
+        ],
+      },
+      ...current,
+    ]);
+    setModalNovoCronogramaAberto(false);
+    setHomeFormError("");
+  };
+
+  const calcularStatusCronograma = (dataInicio: string, dataFim: string) => {
+    const parseDiaMes = (value: string) => {
+      const [dia, mes] = value.split("/").map(Number);
+      if (!dia || !mes) return null;
+      return new Date(2026, mes - 1, dia).getTime();
+    };
+    const hojeMock = new Date(2026, 5, 16).getTime();
+    const inicio = parseDiaMes(dataInicio.trim());
+    const fim = parseDiaMes(dataFim.trim());
+
+    if (!inicio || !fim) return "Agendado";
+    if (hojeMock < inicio) return "Agendado";
+    if (hojeMock > fim) return "Concluído";
+    return "Em Andamento";
   };
 
   return (
@@ -10173,161 +10438,444 @@ export function PrototiposFolhaPage() {
       menuItems={menuFolha}
     >
       <div className="prototype-page-content prototype-page-content--white">
-        <CardSeplag
-          title={
-            gerenciandoBoletim
-              ? "Boletim Mensal - Ciclo da Folha - Gerenciar"
-              : "Boletim Mensal - Ciclo da Folha"
-          }
-          cols="12"
-          cardHeaderClassNames="prototype-regime-card"
-          actions={
-            !gerenciandoBoletim ? (
-              <BotaoSeplag
-                type="button"
-                label="Gerenciar"
-                icon="pi pi-cog"
-                className="prototype-folha-home-manage"
-                onClick={() => setGerenciandoBoletim(true)}
-              />
-            ) : null
-          }
-        >
-          {gerenciandoBoletim ? (
-            <div className="prototype-folha-home-manage-page">
-              <section className="prototype-folha-home-manage-section">
-                <h3>Selecione o período</h3>
-                <div className="prototype-folha-home-manage-field">
-                  <label htmlFor="folha-home-periodo">Mês / Ano</label>
-                  <div className="prototype-folha-home-input-icon">
-                    <input id="folha-home-periodo" type="text" defaultValue="maio de 2026" />
-                    <i className="pi pi-calendar" aria-hidden="true" />
-                  </div>
-                </div>
-              </section>
+        <div className="prototype-folha-home-page">
+          <section className="prototype-folha-home-panel prototype-folha-home-panel--info">
+            <header className="prototype-folha-home-panel-header">
+              <div className="prototype-folha-home-panel-heading">
+                <i className="pi pi-clipboard" aria-hidden="true" />
+                <h2>Informativos</h2>
+              </div>
+            </header>
 
-              <section className="prototype-folha-home-manage-section">
-                <h3>Cadastro de Prazos</h3>
-                <div className="prototype-folha-home-deadline-list">
-                  {prazosGerenciamento.map((prazo) => (
-                    <div key={prazo.id} className="prototype-folha-home-deadline-row">
-                      <div className="prototype-folha-home-input-icon">
-                        <input type="text" defaultValue={prazo.dataCompleta} aria-label="Data do prazo" />
-                        <i className="pi pi-calendar" aria-hidden="true" />
-                      </div>
-                      <input type="text" defaultValue={prazo.evento} aria-label="Evento do prazo" />
-                      <div className="prototype-folha-home-input-icon">
-                        <input type="text" defaultValue={prazo.horario} aria-label="Horário do prazo" />
-                        <i className="pi pi-clock" aria-hidden="true" />
-                      </div>
-                      <button
-                        type="button"
-                        className="prototype-folha-home-remove"
-                        aria-label="Remover prazo"
-                        onClick={() => removerPrazoBoletim(prazo.id)}
-                      >
-                        <i className="pi pi-times" aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <BotaoSeplag
-                  type="button"
-                  label="Adicionar Prazo"
-                  icon="pi pi-plus"
-                  className="prototype-folha-home-add"
-                  onClick={adicionarPrazoBoletim}
-                />
-              </section>
-
-              <section className="prototype-folha-home-manage-section">
-                <h3>Observações</h3>
-                <div className="prototype-folha-home-manage-field">
-                  <label htmlFor="folha-home-observacoes">Avisos importantes</label>
-                  <textarea
-                    id="folha-home-observacoes"
-                    defaultValue="Desligamentos após 14/05/2026 serão processados na Folha Rescisória 32"
-                    rows={4}
+            <div className="prototype-folha-home-panel-body">
+              {modoEdicaoHomeFolha ? (
+                <div className="prototype-folha-home-panel-toolbar">
+                  <BotaoSeplag
+                    type="button"
+                    label="+ Novo Informativo"
+                    className="prototype-folha-home-full-action"
+                    onClick={abrirNovoInformativo}
                   />
                 </div>
-              </section>
+              ) : null}
 
-              <div className="prototype-folha-home-manage-actions">
-                <BotaoSeplag
-                  type="button"
-                  label="Cancelar"
-                  className="p-button-text"
-                  onClick={voltarParaBoletim}
-                />
-                <BotaoSalvarSeplag
-                  type="button"
-                  label="Publicar Boletim"
-                  icon="pi pi-check"
-                  onClick={voltarParaBoletim}
-                />
+              <div className="prototype-folha-home-info-list">
+                {informativosFolha.map((informativo) => (
+                  <article
+                    key={informativo.id}
+                    className="prototype-folha-home-info-card"
+                  >
+                    <h3>
+                      <i
+                        className={`${informativo.icon} ${informativo.destaque}`}
+                        aria-hidden="true"
+                      />
+                      {informativo.titulo}
+                    </h3>
+                    <time>{informativo.dataPostagem}</time>
+                    <p>{informativo.texto}</p>
+                    {modoEdicaoHomeFolha ? (
+                      <div className="prototype-folha-home-icon-actions">
+                        <BotaoIconSeplag
+                          type="button"
+                          tooltip="Editar"
+                          icon="pi pi-pencil"
+                          style={{
+                            backgroundColor: "#fbc02d",
+                            borderColor: "#fbc02d",
+                            color: "#102a43",
+                          }}
+                          onClick={() => abrirEditarInformativo(informativo)}
+                        />
+                        <BotaoIconSeplag
+                          type="button"
+                          tooltip="Remover"
+                          icon="pi pi-trash"
+                          style={{
+                            backgroundColor: "#d32f2f",
+                            borderColor: "#d32f2f",
+                            color: "#ffffff",
+                          }}
+                          onClick={() => removerInformativo(informativo.id)}
+                        />
+                      </div>
+                    ) : null}
+                  </article>
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="prototype-folha-home-page">
-              <div className="prototype-folha-home-board">
-                <div className="prototype-folha-home-months" role="tablist" aria-label="Competências">
-                  {mesesCicloFolha.map((item) => (
-                    <button
-                      key={item.mes}
-                      type="button"
-                      className={item.mes === mesSelecionado ? "is-active" : ""}
-                      onClick={() => setMesSelecionado(item.mes)}
-                    >
-                      <strong>{item.mes}</strong>
-                      <span>{item.ano}</span>
-                    </button>
-                  ))}
+          </section>
+
+          <section className="prototype-folha-home-panel prototype-folha-home-panel--schedule">
+            <header className="prototype-folha-home-panel-header">
+              <div className="prototype-folha-home-panel-heading">
+                <i className="pi pi-calendar" aria-hidden="true" />
+                <h2>Ciclo de Folha de Pagamento - Junho/2026</h2>
+              </div>
+              <button
+                type="button"
+                className={`prototype-folha-home-edit-toggle ${
+                  modoEdicaoHomeFolha ? "is-active" : ""
+                }`}
+                aria-pressed={modoEdicaoHomeFolha}
+                onClick={() =>
+                  setModoEdicaoHomeFolha((current) => !current)
+                }
+              >
+                <span>{modoEdicaoHomeFolha ? "Modo edição" : "Visualização"}</span>
+                <i
+                  className={modoEdicaoHomeFolha ? "pi pi-check" : "pi pi-lock"}
+                  aria-hidden="true"
+                />
+              </button>
+            </header>
+
+            <div className="prototype-folha-home-panel-body">
+              {modoEdicaoHomeFolha ? (
+                <div className="prototype-folha-home-panel-toolbar">
+                  <BotaoSeplag
+                    type="button"
+                    label="+ Novo Cronograma"
+                    className="prototype-folha-home-full-action"
+                    onClick={abrirNovoCronograma}
+                  />
                 </div>
+              ) : null}
 
-                <div className="prototype-table-wrapper prototype-folha-home-table">
-                  <table className="prototype-simple-table">
-                    <thead>
-                      <tr>
-                        <th>Data</th>
-                        <th>Evento</th>
-                        <th>Horário</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {prazosCicloFolha.map((prazo) => {
-                        const status = statusPrazoMeta[prazo.status];
+              <div className="prototype-folha-home-schedule-list">
+                {cronogramasFolha.map((cronograma) => (
+                  <section
+                    key={cronograma.id}
+                    className="prototype-folha-home-schedule-group"
+                  >
+                    <div className="prototype-folha-home-schedule-title">
+                      <div className="prototype-folha-home-schedule-name">
+                        <span
+                          className={`prototype-folha-home-schedule-dot ${cronograma.marcador}`}
+                          aria-hidden="true"
+                        />
+                        <h3>{cronograma.titulo}</h3>
+                        <small>{cronograma.eventos.length} eventos</small>
+                      </div>
+                    </div>
 
-                        return (
-                          <tr key={prazo.id}>
-                            <td>{prazo.data}</td>
-                            <td>{prazo.evento}</td>
-                            <td>{prazo.horario}</td>
-                            <td>
-                              <span className={`prototype-folha-home-status ${status.className}`}>
-                                <i className={status.icon} aria-hidden="true" />
-                                {status.label}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                    <div className="prototype-folha-home-schedule-events">
+                      {cronograma.eventos.map((evento, eventoIndex) => (
+                        <div
+                          key={`${cronograma.id}-${evento.periodo}-${evento.descricao}`}
+                          className="prototype-folha-home-schedule-event"
+                        >
+                          <time>{evento.periodo}</time>
+                          <span>{evento.descricao}</span>
+                          <strong
+                            className={`prototype-folha-home-event-tag is-${evento.status
+                              .normalize("NFD")
+                              .replace(/[\u0300-\u036f]/g, "")
+                              .replace(/\s+/g, "-")
+                              .toLowerCase()}`}
+                          >
+                            {evento.status}
+                          </strong>
+                          {modoEdicaoHomeFolha ? (
+                            <div className="prototype-folha-home-icon-actions">
+                              <BotaoIconSeplag
+                                type="button"
+                                tooltip="Editar"
+                                icon="pi pi-pencil"
+                                style={{
+                                  backgroundColor: "#fbc02d",
+                                  borderColor: "#fbc02d",
+                                  color: "#102a43",
+                                }}
+                                onClick={() =>
+                                  abrirEditarEvento(cronograma.id, eventoIndex, evento)
+                                }
+                              />
+                              <BotaoIconSeplag
+                                type="button"
+                                tooltip="Remover"
+                                icon="pi pi-trash"
+                                style={{
+                                  backgroundColor: "#d32f2f",
+                                  borderColor: "#d32f2f",
+                                  color: "#ffffff",
+                                }}
+                                onClick={() =>
+                                  removerEvento(cronograma.id, eventoIndex)
+                                }
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
 
-                <section className="prototype-folha-home-notes" aria-label="Observações complementares">
-                  <strong>
-                    <i className="pi pi-exclamation-triangle" aria-hidden="true" />
-                    Observações complementares
-                  </strong>
-                  <div>Nenhuma observação cadastrada para esta folha.</div>
-                </section>
+                    {cronograma.observacao ? (
+                      <div className="prototype-folha-home-schedule-note">
+                        <i className="pi pi-clock" aria-hidden="true" />
+                        <span>{cronograma.observacao}</span>
+                      </div>
+                    ) : null}
+                  </section>
+                ))}
               </div>
             </div>
-          )}
-        </CardSeplag>
+          </section>
+        </div>
+
+        <ModalSeplag
+          visible={modalNovoInformativoAberto}
+          titulo={informativoEdicaoId ? "Editar Informativo" : "Novo Informativo"}
+          fechar={() => {
+            setModalNovoInformativoAberto(false);
+            setInformativoEdicaoId(null);
+          }}
+          tamanho="620px"
+          hideFooter
+        >
+          <div className="col-12 prototype-folha-home-modal-form">
+            {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
+            <label>
+              Título
+              <input
+                type="text"
+                value={novoInformativo.titulo}
+                onChange={(event) =>
+                  setNovoInformativo((current) => ({
+                    ...current,
+                    titulo: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              Texto
+              <textarea
+                rows={4}
+                value={novoInformativo.texto}
+                onChange={(event) =>
+                  setNovoInformativo((current) => ({
+                    ...current,
+                    texto: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="prototype-folha-home-modal-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Cancelar"
+                onClick={() => {
+                  setModalNovoInformativoAberto(false);
+                  setInformativoEdicaoId(null);
+                }}
+              />
+              <BotaoSalvarSeplag
+                type="button"
+                label={informativoEdicaoId ? "Salvar" : "Adicionar"}
+                icon="pi pi-check"
+                onClick={salvarNovoInformativo}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalNovoCronogramaAberto}
+          titulo="Novo Cronograma"
+          fechar={() => setModalNovoCronogramaAberto(false)}
+          tamanho="760px"
+          hideFooter
+        >
+          <div className="col-12 prototype-folha-home-modal-form">
+            {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
+            <label>
+              Nome do ciclo
+              <input
+                type="text"
+                placeholder="Folha complementar"
+                value={novoCronograma.titulo}
+                onChange={(event) =>
+                  setNovoCronograma((current) => ({
+                    ...current,
+                    titulo: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="prototype-folha-home-modal-grid">
+              <label>
+                Data início
+                <input
+                  type="text"
+                  placeholder="14/06"
+                  value={novoCronograma.dataInicio}
+                  onChange={(event) =>
+                    setNovoCronograma((current) => ({
+                      ...current,
+                      dataInicio: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Data fim
+                <input
+                  type="text"
+                  placeholder="16/06"
+                  value={novoCronograma.dataFim}
+                  onChange={(event) =>
+                    setNovoCronograma((current) => ({
+                      ...current,
+                      dataFim: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Horário
+                <input
+                  type="text"
+                  placeholder="18:00"
+                  value={novoCronograma.horario}
+                  onChange={(event) =>
+                    setNovoCronograma((current) => ({
+                      ...current,
+                      horario: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              Descrição do primeiro evento
+              <input
+                type="text"
+                value={novoCronograma.descricao}
+                onChange={(event) =>
+                  setNovoCronograma((current) => ({
+                    ...current,
+                    descricao: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              Observação
+              <textarea
+                rows={3}
+                value={novoCronograma.observacao}
+                onChange={(event) =>
+                  setNovoCronograma((current) => ({
+                    ...current,
+                    observacao: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="prototype-folha-home-modal-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Cancelar"
+                onClick={() => setModalNovoCronogramaAberto(false)}
+              />
+              <BotaoSalvarSeplag
+                type="button"
+                label="Adicionar"
+                icon="pi pi-check"
+                onClick={salvarNovoCronograma}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalEditarEventoAberto}
+          titulo="Editar Evento"
+          fechar={() => {
+            setModalEditarEventoAberto(false);
+            setEventoEdicao(null);
+          }}
+          tamanho="720px"
+          hideFooter
+        >
+          <div className="col-12 prototype-folha-home-modal-form">
+            {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
+            <div className="prototype-folha-home-modal-grid">
+              <label>
+                Data início
+                <input
+                  type="text"
+                  placeholder="14/06"
+                  value={eventoForm.dataInicio}
+                  onChange={(event) =>
+                    setEventoForm((current) => ({
+                      ...current,
+                      dataInicio: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Data fim
+                <input
+                  type="text"
+                  placeholder="16/06"
+                  value={eventoForm.dataFim}
+                  onChange={(event) =>
+                    setEventoForm((current) => ({
+                      ...current,
+                      dataFim: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Hora fim
+                <input
+                  type="text"
+                  placeholder="18:00"
+                  value={eventoForm.horario}
+                  onChange={(event) =>
+                    setEventoForm((current) => ({
+                      ...current,
+                      horario: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              Descrição
+              <input
+                type="text"
+                value={eventoForm.descricao}
+                onChange={(event) =>
+                  setEventoForm((current) => ({
+                    ...current,
+                    descricao: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="prototype-folha-home-modal-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Cancelar"
+                onClick={() => {
+                  setModalEditarEventoAberto(false);
+                  setEventoEdicao(null);
+                }}
+              />
+              <BotaoSalvarSeplag
+                type="button"
+                label="Salvar"
+                icon="pi pi-check"
+                onClick={salvarEventoEditado}
+              />
+            </div>
+          </div>
+        </ModalSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -12894,6 +13442,29 @@ interface ProcessamentoFolhaExecucaoRow extends FolhaPagamentoExecucaoRow {
   folha?: FolhaPagamentoRow;
 }
 
+type RelatorioTecnicoTipoFiltro =
+  | "Todos"
+  | "Processado com erro"
+  | "Processado com Sucesso";
+
+type RelatorioTecnicoFormatoArquivo = ".PDF" | ".DOCX" | ".CSV";
+
+interface RelatorioTecnicoProcessamentoRow {
+  id: number;
+  execucaoId: number;
+  dataHoraEmissao: string;
+  responsavel: string;
+  tipoFiltro: RelatorioTecnicoTipoFiltro;
+  quantidadeErros: number;
+  quantidadeRegistros: number;
+  formato: RelatorioTecnicoFormatoArquivo;
+}
+
+interface RelatorioTecnicoProcessamentoForm {
+  tipoFiltro: RelatorioTecnicoTipoFiltro | "";
+  formatoArquivo: RelatorioTecnicoFormatoArquivo | "";
+}
+
 export function PrototiposFolhaPagamentoPage({
   title = "Folha de Pagamento",
   variant = "folha",
@@ -12920,16 +13491,62 @@ export function PrototiposFolhaPagamentoPage({
   const [modalProcessamentoAberto, setModalProcessamentoAberto] = useState(false);
   const [modalLogAberto, setModalLogAberto] = useState(false);
   const [modalPessoaLogAberto, setModalPessoaLogAberto] = useState(false);
+  const [modalRelatorioTecnicoAberto, setModalRelatorioTecnicoAberto] =
+    useState(false);
+  const [modalEmitirRelatorioTecnicoAberto, setModalEmitirRelatorioTecnicoAberto] =
+    useState(false);
+  const [relatorioTecnicoSimularVazio, setRelatorioTecnicoSimularVazio] =
+    useState(false);
   const [execucaoSelecionada, setExecucaoSelecionada] =
     useState<FolhaPagamentoExecucaoRow | null>(null);
+  const [
+    processamentoRelatorioTecnicoSelecionado,
+    setProcessamentoRelatorioTecnicoSelecionado,
+  ] = useState<ProcessamentoFolhaExecucaoRow | null>(null);
   const [pessoaLogSelecionada, setPessoaLogSelecionada] =
     useState<FolhaPagamentoPessoaLogRow | null>(null);
+  const [relatoriosTecnicos, setRelatoriosTecnicos] = useState<
+    RelatorioTecnicoProcessamentoRow[]
+  >(() => [
+    {
+      id: 1,
+      execucaoId: 1013,
+      dataHoraEmissao: "24/05/2026 09:40",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com erro",
+      quantidadeErros: 12,
+      quantidadeRegistros: 842,
+      formato: ".PDF",
+    },
+    {
+      id: 2,
+      execucaoId: 1013,
+      dataHoraEmissao: "24/05/2026 08:35",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Todos",
+      quantidadeErros: 12,
+      quantidadeRegistros: 842,
+      formato: ".CSV",
+    },
+    {
+      id: 3,
+      execucaoId: 1011,
+      dataHoraEmissao: "22/05/2026 18:10",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com Sucesso",
+      quantidadeErros: 0,
+      quantidadeRegistros: 842,
+      formato: ".DOCX",
+    },
+  ]);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [activeTab, setActiveTab] = useState("dados");
   const [feedback, setFeedback] = useState("");
   const [formFeedback, setFormFeedback] = useState("");
   const [processamentoErrors, setProcessamentoErrors] =
     useState<Partial<Record<keyof ProcessamentoFolhaForm, string>>>({});
+  const [relatorioTecnicoErrors, setRelatorioTecnicoErrors] =
+    useState<Partial<Record<keyof RelatorioTecnicoProcessamentoForm, string>>>({});
   const { control, reset, watch } = useForm<FolhaPagamentoFiltroForm>({
     defaultValues: {
       termo: "",
@@ -13027,6 +13644,16 @@ export function PrototiposFolhaPagamentoPage({
       categorias: [],
       cargos: [],
       grupoEleitos: "",
+    },
+  });
+  const {
+    control: relatorioTecnicoControl,
+    reset: resetRelatorioTecnico,
+    handleSubmit: handleSubmitRelatorioTecnico,
+  } = useForm<RelatorioTecnicoProcessamentoForm>({
+    defaultValues: {
+      tipoFiltro: "",
+      formatoArquivo: "",
     },
   });
 
@@ -13238,6 +13865,16 @@ export function PrototiposFolhaPagamentoPage({
       ["CONCLUIDA", "CONCLUIDA_COM_ALERTA"].includes(row.situacao),
     ).length,
   };
+  const relatorioTecnicoTipoFiltroOptions = [
+    { label: "Todos", value: "Todos" },
+    { label: "Processado com erro", value: "Processado com erro" },
+    { label: "Processado com Sucesso", value: "Processado com Sucesso" },
+  ];
+  const relatorioTecnicoFormatoOptions = [
+    { label: ".PDF", value: ".PDF" },
+    { label: ".DOCX", value: ".DOCX" },
+    { label: ".CSV", value: ".CSV" },
+  ];
   const processamentoTipoExecucao = watchProcessamento("tipoExecucao");
   const processamentoTotal = processamentoTipoExecucao === "TOTAL";
   const processamentoNumeroFolha = watchProcessamento("numeroFolha");
@@ -13835,6 +14472,38 @@ export function PrototiposFolhaPagamentoPage({
   });
   const logResults = createResults(logsFiltrados);
   const rubricasResults = createResults(rubricasDaPessoa);
+  const parseDataHoraBrTimestamp = (value: string) => {
+    const [data, hora] = value.split(" ");
+    const [dia, mes, ano] = data.split("/").map(Number);
+    const [horas, minutos] = hora.split(":").map(Number);
+    return new Date(ano, mes - 1, dia, horas, minutos).getTime();
+  };
+  const relatoriosTecnicosDaExecucaoBase =
+    processamentoRelatorioTecnicoSelecionado
+      ? relatoriosTecnicos
+          .filter(
+            (relatorio) =>
+              relatorio.execucaoId === processamentoRelatorioTecnicoSelecionado.id,
+          )
+          .sort(
+            (a, b) =>
+              parseDataHoraBrTimestamp(b.dataHoraEmissao) -
+              parseDataHoraBrTimestamp(a.dataHoraEmissao),
+          )
+      : [];
+  const relatoriosTecnicosDaExecucao = relatorioTecnicoSimularVazio
+    ? []
+    : relatoriosTecnicosDaExecucaoBase;
+  const relatorioTecnicoResults = {
+    ...createResults(relatoriosTecnicosDaExecucao),
+    totalPages: Math.max(
+      1,
+      Math.ceil(relatoriosTecnicosDaExecucao.length / 10),
+    ),
+    totalRecords: relatoriosTecnicosDaExecucao.length,
+    size: 10,
+    sizePage: 10,
+  };
   const logPessoaColumns: ColumnMetaSeplag<FolhaPagamentoPessoaLogRow>[] = [
     { header: "Matrícula/vínculo", body: (row) => `${row.matricula}/${row.vinculo}` },
     { field: "nome", header: "Nome" },
@@ -13846,6 +14515,14 @@ export function PrototiposFolhaPagamentoPage({
       body: (row) => renderPessoaLogSituacaoBadge(row.situacao),
     },
     { field: "mensagem", header: "Mensagem" },
+  ];
+  const relatorioTecnicoColumns: ColumnMetaSeplag<RelatorioTecnicoProcessamentoRow>[] = [
+    { field: "dataHoraEmissao", header: "Data/Hora da Emissão" },
+    { field: "responsavel", header: "Responsável" },
+    { field: "tipoFiltro", header: "Tipo do Filtro" },
+    { field: "quantidadeErros", header: "Quantidade de Erros" },
+    { field: "quantidadeRegistros", header: "Quantidade de Registros" },
+    { field: "formato", header: "Formato" },
   ];
   const rubricaLogColumns: ColumnMetaSeplag<FolhaPagamentoRubricaLogRow>[] = [
     { field: "codigoRubrica", header: "Código" },
@@ -13930,8 +14607,105 @@ export function PrototiposFolhaPagamentoPage({
   const abrirRelatorioTecnicoProcessamento = (
     processamento: ProcessamentoFolhaExecucaoRow,
   ) => {
-    setFeedback(`Relatório técnico da execução ${processamento.numeroExecucao} disponível para consulta.`);
-    abrirVisualizarProcessamento(processamento);
+    setProcessamentoRelatorioTecnicoSelecionado(processamento);
+    setRelatorioTecnicoSimularVazio(false);
+    setModalRelatorioTecnicoAberto(true);
+    setFeedback("");
+  };
+
+  const fecharRelatorioTecnicoProcessamento = () => {
+    setModalRelatorioTecnicoAberto(false);
+    setModalEmitirRelatorioTecnicoAberto(false);
+    setProcessamentoRelatorioTecnicoSelecionado(null);
+    setRelatorioTecnicoErrors({});
+    setRelatorioTecnicoSimularVazio(false);
+  };
+
+  const abrirEmitirRelatorioTecnico = () => {
+    setRelatorioTecnicoErrors({});
+    resetRelatorioTecnico({
+      tipoFiltro: "",
+      formatoArquivo: "",
+    });
+    setModalEmitirRelatorioTecnicoAberto(true);
+  };
+
+  const simularDownloadRelatorioTecnico = (
+    relatorio: RelatorioTecnicoProcessamentoRow,
+  ) => {
+    const conteudo = [
+      "Relatório Técnico do Processamento da Folha",
+      `Execução: ${relatorio.execucaoId}`,
+      `Tipo do filtro: ${relatorio.tipoFiltro}`,
+      `Formato: ${relatorio.formato}`,
+    ].join("\n");
+    const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `relatorio-tecnico-${relatorio.execucaoId}${relatorio.formato.toLowerCase()}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const baixarRelatorioTecnico = (
+    relatorio: RelatorioTecnicoProcessamentoRow,
+  ) => {
+    simularDownloadRelatorioTecnico(relatorio);
+    setFeedback("Download do relatório técnico iniciado.");
+  };
+
+  const getRelatorioTecnicoErrorMessage = (
+    name: keyof RelatorioTecnicoProcessamentoForm,
+  ) => {
+    const message = relatorioTecnicoErrors[name];
+    return message ? <small className="p-error">{message}</small> : null;
+  };
+
+  const confirmarEmissaoRelatorioTecnico = (
+    data: RelatorioTecnicoProcessamentoForm,
+  ) => {
+    const errors: Partial<
+      Record<keyof RelatorioTecnicoProcessamentoForm, string>
+    > = {};
+
+    if (!data.tipoFiltro) errors.tipoFiltro = "Campo obrigatório";
+    if (!data.formatoArquivo) errors.formatoArquivo = "Campo obrigatório";
+
+    setRelatorioTecnicoErrors(errors);
+    if (Object.keys(errors).length || !processamentoRelatorioTecnicoSelecionado) {
+      return;
+    }
+
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const dataHoraEmissao = `${pad(now.getDate())}/${pad(
+      now.getMonth() + 1,
+    )}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const quantidadeErros =
+      data.tipoFiltro === "Processado com Sucesso"
+        ? 0
+        : processamentoRelatorioTecnicoSelecionado.erros;
+    const quantidadeRegistros =
+      data.tipoFiltro === "Processado com erro"
+        ? processamentoRelatorioTecnicoSelecionado.erros
+        : processamentoRelatorioTecnicoSelecionado.totalPessoas;
+    const novoRelatorio: RelatorioTecnicoProcessamentoRow = {
+      id: Math.max(...relatoriosTecnicos.map((relatorio) => relatorio.id), 0) + 1,
+      execucaoId: processamentoRelatorioTecnicoSelecionado.id,
+      dataHoraEmissao,
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: data.tipoFiltro,
+      quantidadeErros,
+      quantidadeRegistros,
+      formato: data.formatoArquivo,
+    };
+
+    setRelatoriosTecnicos((current) => [novoRelatorio, ...current]);
+    simularDownloadRelatorioTecnico(novoRelatorio);
+    setModalEmitirRelatorioTecnicoAberto(false);
+    setRelatorioTecnicoErrors({});
+    setFeedback("Relatório técnico emitido com sucesso.");
   };
 
   const renderAcoesProcessamento = (
@@ -13951,14 +14725,6 @@ export function PrototiposFolhaPagamentoPage({
           icon="pi pi-eye"
           onClick={() => abrirVisualizarProcessamento(processamento)}
         />
-        {processamento.folha && folhaPodeProcessar(processamento.folha) ? (
-          <BotaoIconSeplag
-            type="button"
-            tooltip="Reprocessar"
-            icon="pi pi-play"
-            onClick={() => abrirModalProcessamentoFolha(processamento.folha as FolhaPagamentoRow)}
-          />
-        ) : null}
         {podeExibirRelatorioTecnico ? (
           <BotaoIconSeplag
             type="button"
@@ -14530,6 +15296,137 @@ export function PrototiposFolhaPagamentoPage({
               )}
             </div>
           ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalRelatorioTecnicoAberto}
+          titulo={
+            <div className="prototype-relatorio-tecnico-title">
+              <span>Histórico de Emissões de Relatórios Técnicos</span>
+              <button
+                type="button"
+                className="prototype-relatorio-tecnico-empty-toggle"
+                onClick={() =>
+                  setRelatorioTecnicoSimularVazio((current) => !current)
+                }
+              >
+                {relatorioTecnicoSimularVazio ? "Mostrar dados" : "Simular vazio"}
+              </button>
+            </div>
+          }
+          fechar={fecharRelatorioTecnicoProcessamento}
+          tamanho="80vw"
+          hideFooter
+        >
+          {processamentoRelatorioTecnicoSelecionado ? (
+            <div className="col-12 prototype-relatorio-tecnico-modal">
+              <div className="prototype-relatorio-tecnico-context">
+                <div>
+                  <span>Número da Folha</span>
+                  <strong>
+                    {processamentoRelatorioTecnicoSelecionado.numeroFolha}
+                  </strong>
+                </div>
+                <div>
+                  <span>Nome da Folha</span>
+                  <strong>
+                    {processamentoRelatorioTecnicoSelecionado.nomeFolha}
+                  </strong>
+                </div>
+                <div>
+                  <span>Número da Execução</span>
+                  <strong>
+                    {processamentoRelatorioTecnicoSelecionado.numeroExecucao}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="prototype-relatorio-tecnico-actions">
+                <BotaoSeplag
+                  type="button"
+                  label="Emitir Novo Relatório"
+                  icon="pi pi-file-export"
+                  onClick={abrirEmitirRelatorioTecnico}
+                />
+              </div>
+
+              <div className="prototype-relatorio-tecnico-table">
+                <TablePaginadoSeplag
+                  dataKey="id"
+                  data={relatorioTecnicoResults}
+                  rows={10}
+                  rowsPerPage={[5, 10, 25, 50]}
+                  paginator
+                  lazy={false}
+                  selectionMode={null}
+                  columns={relatorioTecnicoColumns}
+                  hasEventoAcao
+                  renderBotoes={(row) => (
+                    <BotaoIconSeplag
+                      type="button"
+                      tooltip="Download"
+                      icon="pi pi-download"
+                      onClick={() => baixarRelatorioTecnico(row)}
+                    />
+                  )}
+                  handleOnPageChange={() => {}}
+                />
+              </div>
+            </div>
+          ) : null}
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={modalEmitirRelatorioTecnicoAberto}
+          titulo="Emitir Novo Relatório"
+          fechar={() => setModalEmitirRelatorioTecnicoAberto(false)}
+          tamanho="560px"
+          hideFooter
+        >
+          <form
+            className="col-12 prototype-relatorio-tecnico-form"
+            onSubmit={handleSubmitRelatorioTecnico(
+              confirmarEmissaoRelatorioTecnico,
+            )}
+          >
+            <DropdownFieldSeplag
+              name="tipoFiltro"
+              control={relatorioTecnicoControl}
+              label="Tipo do Filtro"
+              cols="12"
+              options={relatorioTecnicoTipoFiltroOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() =>
+                getRelatorioTecnicoErrorMessage("tipoFiltro")
+              }
+            />
+            <DropdownFieldSeplag
+              name="formatoArquivo"
+              control={relatorioTecnicoControl}
+              label="Formato do Arquivo"
+              cols="12"
+              options={relatorioTecnicoFormatoOptions}
+              optionLabel="label"
+              optionValue="value"
+              getFormErrorMessage={() =>
+                getRelatorioTecnicoErrorMessage("formatoArquivo")
+              }
+            />
+
+            <div className="prototype-modal-actions">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Voltar"
+                onClick={() => setModalEmitirRelatorioTecnicoAberto(false)}
+              />
+              <BotaoSeplag
+                type="submit"
+                label="Confirmar"
+                icon="pi pi-check"
+              />
+            </div>
+          </form>
         </ModalSeplag>
 
         <ModalSeplag
