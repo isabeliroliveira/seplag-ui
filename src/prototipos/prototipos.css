@@ -2824,6 +2824,253 @@
   text-align: center;
 }
 
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-wrapper {
+  overflow-x: auto !important;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-table {
+  min-width: 1120px !important;
+  table-layout: fixed;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th,
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td {
+  padding: 10px 8px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(1),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(1) {
+  width: 94px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(2),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(2) {
+  width: 76px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(3),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(3) {
+  width: 235px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(4),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(4) {
+  width: 96px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(5),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(5) {
+  width: 68px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(6),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6) {
+  width: 146px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  .p-button,
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  [class*="badge"],
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  [class*="chip"] {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 118px;
+  max-width: 126px;
+  min-height: 34px;
+  height: auto;
+  padding: 4px 10px !important;
+  overflow: hidden;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  .p-button-label,
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  .p-button-label > span,
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  [class*="badge"],
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6)
+  [class*="chip"] {
+  display: inline-block;
+  max-width: 100%;
+  white-space: pre-line !important;
+  line-height: 1.12 !important;
+  text-align: center;
+  overflow-wrap: normal;
+}
+
+.prototype-processamento-data-hora {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.prototype-processamento-data-hora strong {
+  font-weight: 600;
+}
+
+.prototype-processamento-data-hora small {
+  color: #52616b;
+  font-size: 0.78rem;
+}
+
+.prototype-processamento-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  max-width: 126px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  white-space: pre-line;
+  line-height: 1.12;
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(7),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(7) {
+  width: 122px;
+  padding-left: 12px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(8),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(8) {
+  width: 148px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(9),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(9) {
+  width: 58px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(10),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(10) {
+  width: 128px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(10)
+  > div {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(10)
+  .p-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
 .prototype-folha-versoes-table {
   width: 100%;
   display: grid;

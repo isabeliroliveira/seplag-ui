@@ -1076,6 +1076,8 @@ interface GrupoCalculoForm {
 }
 
 interface ProcessamentoFolhaForm {
+  numeroFolha?: string;
+  nomeFolha?: string;
   competencia?: string;
   tipoExecucao?: "PARCIAL" | "TOTAL";
   orgaos?: string[];
@@ -12967,6 +12969,8 @@ export function PrototiposFolhaPagamentoPage({
   const [activeTab, setActiveTab] = useState("dados");
   const [feedback, setFeedback] = useState("");
   const [formFeedback, setFormFeedback] = useState("");
+  const [processamentoErrors, setProcessamentoErrors] =
+    useState<Partial<Record<keyof ProcessamentoFolhaForm, string>>>({});
   const { control, reset, watch } = useForm<FolhaPagamentoFiltroForm>({
     defaultValues: {
       termo: "",
@@ -13005,6 +13009,33 @@ export function PrototiposFolhaPagamentoPage({
     const grupo = gruposFolha.find((item) => item.id === grupoFolhaId);
     return grupo ? grupo.grupo : "-";
   };
+  const usuarioLogadoProcessamentoMock = {
+    orgaos: ["SEPLAG", "MTI"],
+    regimesJuridicos: ["Estatutário Civil"],
+    categorias: ["Área Meio"],
+    cargos: ["Analista Administrativo"],
+    grupoEleitos: "",
+  };
+  const toUpperOptions = <T extends { label: string; value: unknown }>(
+    options: T[],
+  ) =>
+    options.map((option) => ({
+      ...option,
+      label: option.label.toUpperCase(),
+    }));
+  const processamentoOrgaoOptions = toUpperOptions(folhaPagamentoOrgaoOptions);
+  const processamentoRegimeOptions = toUpperOptions(
+    folhaPagamentoRegimeOptions.filter((option) => option.value),
+  );
+  const processamentoCategoriaOptions = toUpperOptions(
+    folhaPagamentoCategoriaOptions.filter((option) => option.value),
+  );
+  const processamentoCargoOptions = toUpperOptions(
+    folhaPagamentoCargoOptions.filter((option) => option.value),
+  );
+  const processamentoGrupoEleitosOptions = toUpperOptions(
+    folhaPagamentoGrupoEleitosOptions,
+  );
   const {
     control: logControl,
     reset: resetLog,
@@ -13023,10 +13054,13 @@ export function PrototiposFolhaPagamentoPage({
   const {
     control: processamentoControl,
     reset: resetProcessamento,
+    setValue: setValueProcessamento,
     watch: watchProcessamento,
     handleSubmit: handleSubmitProcessamento,
   } = useForm<ProcessamentoFolhaForm>({
     defaultValues: {
+      numeroFolha: "",
+      nomeFolha: "",
       competencia: "",
       tipoExecucao: "TOTAL",
       orgaos: [],
@@ -13140,16 +13174,30 @@ export function PrototiposFolhaPagamentoPage({
     const labels: Record<FolhaPagamentoExecucaoSituacao, string> = {
       EM_FILA: "Em Fila",
       EM_PROCESSAMENTO: "Em Processamento",
-      CONCLUIDA: "Processado com Sucesso",
-      CONCLUIDA_COM_ALERTA: "Processado com Sucesso",
-      CONCLUIDA_COM_ERRO: "Processado com Erro",
+      CONCLUIDA: "Processado\ncom Sucesso",
+      CONCLUIDA_COM_ALERTA: "Processado\ncom Sucesso",
+      CONCLUIDA_COM_ERRO: "Processado\ncom Erro",
       CANCELADA: "Cancelado",
     };
     return { ...meta, label: labels[situacao] };
   };
   const renderProcessamentoSituacaoBadge = (
     situacao: FolhaPagamentoExecucaoSituacao,
-  ) => <BadgeSeplag {...getProcessamentoSituacaoMeta(situacao)} size="md" />;
+  ) => {
+    const meta = getProcessamentoSituacaoMeta(situacao);
+    return (
+      <span
+        className="prototype-processamento-status-badge"
+        style={{
+          color: meta.color,
+          backgroundColor: meta.bg,
+          borderColor: meta.border,
+        }}
+      >
+        {meta.label}
+      </span>
+    );
+  };
   const processamentosBase: ProcessamentoFolhaExecucaoRow[] = [
     ...execucoes.map((execucao) => {
       const folha = folhas.find((item) => item.id === execucao.folhaPagamentoId);
@@ -13233,6 +13281,47 @@ export function PrototiposFolhaPagamentoPage({
   };
   const processamentoTipoExecucao = watchProcessamento("tipoExecucao");
   const processamentoTotal = processamentoTipoExecucao === "TOTAL";
+  const processamentoNumeroFolha = watchProcessamento("numeroFolha");
+  const processamentoNomeFolha = watchProcessamento("nomeFolha");
+  const processamentoNumeroFolhaOptions = Array.from(
+    new Map(
+      folhas.map((folha) => [
+        folha.numero,
+        {
+          label: folha.numero.toUpperCase(),
+          value: folha.numero,
+        },
+      ]),
+    ).values(),
+  );
+  const processamentoNomeFolhaOptions = folhas
+    .filter(
+      (folha) =>
+        !processamentoNumeroFolha || folha.numero === processamentoNumeroFolha,
+    )
+    .map((folha) => ({
+      label: folha.nome.toUpperCase(),
+      value: folha.nome,
+    }));
+
+  useEffect(() => {
+    if (!processamentoNumeroFolha) return;
+
+    const folhaSelecionadaPorNumero = folhas.find(
+      (folha) => folha.numero === processamentoNumeroFolha,
+    );
+    if (
+      folhaSelecionadaPorNumero &&
+      processamentoNomeFolha !== folhaSelecionadaPorNumero.nome
+    ) {
+      setValueProcessamento("nomeFolha", folhaSelecionadaPorNumero.nome);
+    }
+  }, [
+    folhas,
+    processamentoNomeFolha,
+    processamentoNumeroFolha,
+    setValueProcessamento,
+  ]);
 
   const isTextoPreenchido = (value?: string) => Boolean(value?.trim());
   const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
@@ -13375,14 +13464,23 @@ export function PrototiposFolhaPagamentoPage({
     }
 
     setFolhaSelecionada(folha);
+    setProcessamentoErrors({});
     resetProcessamento({
+      numeroFolha: folha.numero,
+      nomeFolha: folha.nome,
       competencia: formatMesAno(folha.competencia),
       tipoExecucao: "TOTAL",
-      orgaos: folha.orgaos,
-      regimesJuridicos: folha.regimeJuridico ? [folha.regimeJuridico] : [],
-      categorias: folha.categoria ? [folha.categoria] : [],
-      cargos: folha.cargo ? [folha.cargo] : [],
-      grupoEleitos: folha.grupoEleitos,
+      orgaos: folha.orgaos.length
+        ? folha.orgaos
+        : usuarioLogadoProcessamentoMock.orgaos,
+      regimesJuridicos: folha.regimeJuridico
+        ? [folha.regimeJuridico]
+        : usuarioLogadoProcessamentoMock.regimesJuridicos,
+      categorias: folha.categoria
+        ? [folha.categoria]
+        : usuarioLogadoProcessamentoMock.categorias,
+      cargos: folha.cargo ? [folha.cargo] : usuarioLogadoProcessamentoMock.cargos,
+      grupoEleitos: folha.grupoEleitos || usuarioLogadoProcessamentoMock.grupoEleitos,
     });
     setModalProcessamentoAberto(true);
   };
@@ -13390,6 +13488,41 @@ export function PrototiposFolhaPagamentoPage({
   const cancelarProcessamentoFolha = () => {
     setModalProcessamentoAberto(false);
     setFolhaSelecionada(null);
+    setProcessamentoErrors({});
+  };
+
+  const getProcessamentoErrorMessage = (name: keyof ProcessamentoFolhaForm) => {
+    const message = processamentoErrors[name];
+    return message ? <small className="p-error">{message}</small> : null;
+  };
+
+  const validarFormularioProcessamento = (data: ProcessamentoFolhaForm) => {
+    const errors: Partial<Record<keyof ProcessamentoFolhaForm, string>> = {};
+
+    if (!data.numeroFolha) errors.numeroFolha = "Campo obrigatório";
+    if (!data.nomeFolha) errors.nomeFolha = "Campo obrigatório";
+    if (!data.competencia?.trim()) {
+      errors.competencia = "Campo obrigatório";
+    } else if (!isMesAnoValido(data.competencia)) {
+      errors.competencia = "Formato inválido";
+    }
+    if (!data.tipoExecucao) errors.tipoExecucao = "Campo obrigatório";
+
+    if (data.tipoExecucao === "PARCIAL") {
+      const possuiFiltro =
+        Boolean(data.orgaos?.length) ||
+        Boolean(data.regimesJuridicos?.length) ||
+        Boolean(data.categorias?.length) ||
+        Boolean(data.cargos?.length) ||
+        Boolean(data.grupoEleitos);
+
+      if (!possuiFiltro) {
+        errors.orgaos = "Campo obrigatório";
+      }
+    }
+
+    setProcessamentoErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const salvarFolha = (data: FolhaPagamentoForm) => {
@@ -13535,7 +13668,7 @@ export function PrototiposFolhaPagamentoPage({
     const novaExecucao: FolhaPagamentoExecucaoRow = {
       id: Math.max(...execucoes.map((execucao) => execucao.id), 1000) + 1,
       folhaPagamentoId: folha.id,
-      situacao: "AGUARDANDO_PROCESSAMENTO",
+      situacao: "EM_FILA",
       dataHoraInicio: "28/05/2026 10:00",
       dataHoraFim: "-",
       usuarioResponsavel: "ROBERTO JUNIOR",
@@ -13565,12 +13698,26 @@ export function PrototiposFolhaPagamentoPage({
     );
     setModalProcessamentoAberto(false);
     setFolhaSelecionada(null);
-    setFeedback("Processamento da folha enviado com sucesso.");
+    setProcessamentoErrors({});
+    setFeedback("Registro cadastrado com sucesso!");
   };
 
   const confirmarProcessamentoFolha = (data: ProcessamentoFolhaForm) => {
-    if (!folhaSelecionada) return;
-    processarFolha(folhaSelecionada, data);
+    if (!validarFormularioProcessamento(data)) return;
+
+    const folhaParaProcessar = folhas.find(
+      (folha) =>
+        folha.numero === data.numeroFolha && folha.nome === data.nomeFolha,
+    );
+    if (!folhaParaProcessar) {
+      setProcessamentoErrors({
+        numeroFolha: "Campo obrigatório",
+        nomeFolha: "Campo obrigatório",
+      });
+      return;
+    }
+
+    processarFolha(folhaParaProcessar, data);
   };
 
   const abrirExecucoesFolha = (folha: FolhaPagamentoRow) => {
@@ -13594,6 +13741,18 @@ export function PrototiposFolhaPagamentoPage({
     },
   ];
 
+  const renderDataHoraProcessamento = (dataHora: string) => {
+    if (!dataHora || dataHora === "-") return "-";
+
+    const [data, hora] = dataHora.split(" ");
+    return (
+      <span className="prototype-processamento-data-hora">
+        <strong>{data}</strong>
+        <small>{hora}</small>
+      </span>
+    );
+  };
+
   const processamentoColumns: ColumnMetaSeplag<ProcessamentoFolhaExecucaoRow>[] = [
     { field: "numeroExecucao", header: "Nº Execução" },
     { field: "numeroFolha", header: "Nº Folha" },
@@ -13604,7 +13763,10 @@ export function PrototiposFolhaPagamentoPage({
       header: "Situação",
       body: (row) => renderProcessamentoSituacaoBadge(row.situacao),
     },
-    { field: "solicitadoEm", header: "Solicitado em" },
+    {
+      header: "Solicitado em",
+      body: (row) => renderDataHoraProcessamento(row.solicitadoEm),
+    },
     { field: "responsavel", header: "Responsável" },
     { field: "erros", header: "Erros" },
   ];
@@ -13990,7 +14152,11 @@ export function PrototiposFolhaPagamentoPage({
             </div>
           ) : null}
 
-          <div className="col-12 prototype-folha-pagamento-table">
+          <div
+            className={`col-12 prototype-folha-pagamento-table${
+              isTelaProcessamentoFolha ? " prototype-processamento-table" : ""
+            }`}
+          >
             <TablePaginadoSeplag
               dataKey="id"
               data={isTelaProcessamentoFolha ? processamentoResults : folhaResults}
@@ -14017,7 +14183,7 @@ export function PrototiposFolhaPagamentoPage({
             <div className="prototype-processamento-folha-header">
               <span>Processamento da Folha</span>
               <div className="prototype-processamento-folha-topbar">
-                <span>Competência vigente</span>
+                <span>Competência vigente:</span>
                 <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
               </div>
             </div>
@@ -14035,7 +14201,7 @@ export function PrototiposFolhaPagamentoPage({
               <BotaoSeplag
                 type="button"
                 variant="save"
-                label="Processar folha"
+                label="Executar Processamento"
                 icon="pi pi-play"
                 onClick={handleSubmitProcessamento(confirmarProcessamentoFolha)}
               />
@@ -14044,83 +14210,108 @@ export function PrototiposFolhaPagamentoPage({
         >
           <div className="col-12 prototype-processamento-folha-modal">
             <div className="grid prototype-category-form-fields">
+              <DropdownFieldSeplag
+                name="numeroFolha"
+                control={processamentoControl}
+                label="Número da Folha"
+                cols="12 12 6"
+                required
+                options={processamentoNumeroFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => getProcessamentoErrorMessage("numeroFolha")}
+              />
+              <DropdownFieldSeplag
+                name="nomeFolha"
+                control={processamentoControl}
+                label="Nome da Folha"
+                cols="12 12 6"
+                required
+                options={processamentoNomeFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => getProcessamentoErrorMessage("nomeFolha")}
+              />
               <TextFieldSeplag
                 name="competencia"
                 control={processamentoControl}
                 label="Competência"
                 placeholder="MM/AAAA"
-                cols="12 12 4"
-                getFormErrorMessage={() => null}
+                cols="12 12 6"
+                required
+                maxLength={7}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("competencia")}
               />
               <RadioButtonFieldSeplag
                 name="tipoExecucao"
                 control={processamentoControl}
                 label="Tipo de execução"
-                cols="12 12 8"
+                cols="12 12 6"
+                required
                 options={[
                   { label: "Parcial", value: "PARCIAL" },
                   { label: "Total", value: "TOTAL" },
                 ]}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("tipoExecucao")}
               />
               <MultiSelectFieldSeplag
                 name="orgaos"
                 control={processamentoControl}
                 label="Órgãos"
                 cols="12 12 6"
-                options={folhaPagamentoOrgaoOptions}
+                options={processamentoOrgaoOptions}
                 optionLabel="label"
                 optionValue="value"
                 selectedItemsLabel="{0} órgãos selecionados"
                 disabled={processamentoTotal}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("orgaos")}
               />
               <MultiSelectFieldSeplag
                 name="regimesJuridicos"
                 control={processamentoControl}
                 label="Regime jurídico"
                 cols="12 12 6"
-                options={folhaPagamentoRegimeOptions}
+                options={processamentoRegimeOptions}
                 optionLabel="label"
                 optionValue="value"
                 selectedItemsLabel="{0} regimes selecionados"
                 disabled={processamentoTotal}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("regimesJuridicos")}
               />
               <MultiSelectFieldSeplag
                 name="categorias"
                 control={processamentoControl}
                 label="Categoria"
                 cols="12 12 4"
-                options={folhaPagamentoCategoriaOptions}
+                options={processamentoCategoriaOptions}
                 optionLabel="label"
                 optionValue="value"
                 selectedItemsLabel="{0} categorias selecionadas"
                 disabled={processamentoTotal}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("categorias")}
               />
               <MultiSelectFieldSeplag
                 name="cargos"
                 control={processamentoControl}
                 label="Cargo"
                 cols="12 12 4"
-                options={folhaPagamentoCargoOptions}
+                options={processamentoCargoOptions}
                 optionLabel="label"
                 optionValue="value"
                 selectedItemsLabel="{0} cargos selecionados"
                 disabled={processamentoTotal}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("cargos")}
               />
               <DropdownFieldSeplag
                 name="grupoEleitos"
                 control={processamentoControl}
                 label="Grupo de eleitos"
                 cols="12 12 4"
-                options={folhaPagamentoGrupoEleitosOptions}
+                options={processamentoGrupoEleitosOptions}
                 optionLabel="label"
                 optionValue="value"
                 disabled={processamentoTotal}
-                getFormErrorMessage={() => null}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("grupoEleitos")}
               />
             </div>
           </div>
