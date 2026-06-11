@@ -93,6 +93,8 @@ const SIGEP_CARGO_CONCURSO_TESTE_BASE_PATH =
   "/prototipos/sigep/cargo-concurso-teste";
 const FOLHA_PAGAMENTO_BASE_PATH =
   "/prototipos/folha/processamento/folha-pagamento";
+const FOLHA_PROCESSAMENTO_BASE_PATH =
+  "/prototipos/folha/processamento/processamento-folha";
 const FOLHA_COMPETENCIAS_BASE_PATH =
   "/prototipos/folha/processamento/competencias";
 const FOLHA_SOLICITACOES_AJUSTES_BASE_PATH =
@@ -343,6 +345,13 @@ const menuFolha: IMenuSeplag[] = [
         label: "Competências da Folha",
         icon: "pi pi-circle-on",
         to: FOLHA_COMPETENCIAS_BASE_PATH,
+        visibleOnMenu: true,
+        visibleOnRouter: true,
+      },
+      {
+        label: "Processamento da Folha",
+        icon: "pi pi-circle-on",
+        to: FOLHA_PROCESSAMENTO_BASE_PATH,
         visibleOnMenu: true,
         visibleOnRouter: true,
       },
@@ -2720,6 +2729,24 @@ const folhaPagamentoSituacaoOptions: {
   { label: "Em processamento", value: "EM_PROCESSAMENTO" },
   { label: "Processado com sucesso", value: "PROCESSO_COM_SUCESSO" },
   { label: "Processado com erro", value: "PROCESSO_COM_ERRO" },
+];
+
+const processamentoFolhaSituacaoOptions: {
+  label: string;
+  value: FolhaPagamentoExecucaoSituacao | "";
+}[] = [
+  { label: "Todas", value: "" },
+  { label: "Em Fila", value: "EM_FILA" },
+  { label: "Em Processamento", value: "EM_PROCESSAMENTO" },
+  { label: "Processado com Sucesso", value: "CONCLUIDA" },
+  { label: "Processado com Erro", value: "CONCLUIDA_COM_ERRO" },
+  { label: "Cancelado", value: "CANCELADA" },
+];
+
+const processamentoFolhaTipoOptions = [
+  { label: "Todos", value: "" },
+  { label: "Total", value: "TOTAL" },
+  { label: "Parcial", value: "PARCIAL" },
 ];
 
 const folhaCompetenciaSituacaoOptions: {
@@ -12940,8 +12967,29 @@ export function PrototiposFolhaPagamentoLogPage() {
   );
 }
 
-export function PrototiposFolhaPagamentoPage() {
+interface PrototiposFolhaPagamentoPageProps {
+  title?: string;
+  variant?: "folha" | "processamento";
+}
+
+interface ProcessamentoFolhaExecucaoRow extends FolhaPagamentoExecucaoRow {
+  numeroExecucao: string;
+  numeroFolha: string;
+  nomeFolha: string;
+  competencia: string;
+  tipoProcessamento: "Total" | "Parcial";
+  solicitadoEm: string;
+  responsavel: string;
+  erros: number;
+  folha?: FolhaPagamentoRow;
+}
+
+export function PrototiposFolhaPagamentoPage({
+  title = "Folha de Pagamento",
+  variant = "folha",
+}: PrototiposFolhaPagamentoPageProps = {}) {
   const navigate = useNavigate();
+  const isTelaProcessamentoFolha = variant === "processamento";
   const [folhas, setFolhas] = useState<FolhaPagamentoRow[]>(() =>
     folhaPagamentoService.listarFolhas(),
   );
@@ -12975,6 +13023,8 @@ export function PrototiposFolhaPagamentoPage() {
       termo: "",
       orgaos: [],
       mesAnoReferencia: "",
+      competencia: "",
+      tipoProcessamento: "",
       situacao: "",
     },
   });
@@ -13128,6 +13178,110 @@ export function PrototiposFolhaPagamentoPage() {
   const competenciaVigente = folhaPagamentoService
     .listarCompetencias()
     .find((competencia) => competencia.situacao === "ATIVA");
+  const getTipoProcessamentoExecucao = (
+    execucao: FolhaPagamentoExecucaoRow,
+  ): "Total" | "Parcial" =>
+    execucao.parametrosResumo.toLowerCase().includes("parcial")
+      ? "Parcial"
+      : "Total";
+  const getProcessamentoSituacaoMeta = (
+    situacao: FolhaPagamentoExecucaoSituacao,
+  ) => {
+    const meta = folhaPagamentoExecucaoSituacaoMeta[situacao];
+    const labels: Record<FolhaPagamentoExecucaoSituacao, string> = {
+      EM_FILA: "Em Fila",
+      EM_PROCESSAMENTO: "Em Processamento",
+      CONCLUIDA: "Processado com Sucesso",
+      CONCLUIDA_COM_ALERTA: "Processado com Sucesso",
+      CONCLUIDA_COM_ERRO: "Processado com Erro",
+      CANCELADA: "Cancelado",
+    };
+    return { ...meta, label: labels[situacao] };
+  };
+  const renderProcessamentoSituacaoBadge = (
+    situacao: FolhaPagamentoExecucaoSituacao,
+  ) => <BadgeSeplag {...getProcessamentoSituacaoMeta(situacao)} size="md" />;
+  const processamentosBase: ProcessamentoFolhaExecucaoRow[] = [
+    ...execucoes.map((execucao) => {
+      const folha = folhas.find((item) => item.id === execucao.folhaPagamentoId);
+      return {
+        ...execucao,
+        numeroExecucao: String(execucao.id),
+        numeroFolha: folha?.numero ?? "-",
+        nomeFolha: folha?.nome ?? "Folha não localizada",
+        competencia: folha?.competencia ?? competenciaVigente?.competencia ?? "2026-05",
+        tipoProcessamento: getTipoProcessamentoExecucao(execucao),
+        solicitadoEm: execucao.dataHoraInicio,
+        responsavel: execucao.usuarioResponsavel,
+        erros: execucao.totalErro,
+        folha,
+      };
+    }),
+    ...folhas
+      .filter(
+        (folha) =>
+          folha.situacao === "AGUARDANDO_PROCESSAMENTO" &&
+          !execucoes.some((execucao) => execucao.folhaPagamentoId === folha.id),
+      )
+      .map((folha) => ({
+        id: 9000 + folha.id,
+        folhaPagamentoId: folha.id,
+        situacao: "EM_FILA" as FolhaPagamentoExecucaoSituacao,
+        dataHoraInicio: folha.ultimaExecucao || "28/05/2026 10:00",
+        dataHoraFim: "-",
+        usuarioResponsavel: "ROBERTO JUNIOR",
+        totalPessoas: folha.totalPessoas,
+        totalSucesso: 0,
+        totalAlerta: 0,
+        totalErro: 0,
+        parametrosResumo: "Execução total aguardando processamento",
+        numeroExecucao: String(9000 + folha.id),
+        numeroFolha: folha.numero,
+        nomeFolha: folha.nome,
+        competencia: folha.competencia,
+        tipoProcessamento: "Total" as const,
+        solicitadoEm: folha.ultimaExecucao || "28/05/2026 10:00",
+        responsavel: "ROBERTO JUNIOR",
+        erros: 0,
+        folha,
+      })),
+  ];
+  const competenciaProcessamentoFiltro = normalizeMesAno(filtros.competencia);
+  const processamentosFiltrados = processamentosBase.filter((processamento) => {
+    const atendeTermo =
+      !termoBusca ||
+      processamento.numeroFolha.toLowerCase().includes(termoBusca) ||
+      processamento.nomeFolha.toLowerCase().includes(termoBusca);
+    const atendeSituacao =
+      !filtros.situacao || processamento.situacao === filtros.situacao;
+    const atendeCompetencia =
+      !competenciaProcessamentoFiltro ||
+      processamento.competencia === competenciaProcessamentoFiltro;
+    const atendeTipo =
+      !filtros.tipoProcessamento ||
+      processamento.tipoProcessamento.toUpperCase() === filtros.tipoProcessamento;
+
+    return atendeTermo && atendeSituacao && atendeCompetencia && atendeTipo;
+  });
+  const processamentoResults = {
+    ...createResults(processamentosFiltrados),
+    totalPages: Math.max(1, Math.ceil(processamentosFiltrados.length / 10)),
+    totalRecords: processamentosFiltrados.length,
+    size: 10,
+    sizePage: 10,
+  };
+  const processamentoResumo = {
+    emFila: processamentosFiltrados.filter((row) => row.situacao === "EM_FILA").length,
+    emProcessamento: processamentosFiltrados.filter(
+      (row) => row.situacao === "EM_PROCESSAMENTO",
+    ).length,
+    processadoErro: processamentosFiltrados.filter(
+      (row) => row.situacao === "CONCLUIDA_COM_ERRO",
+    ).length,
+    processadoSucesso: processamentosFiltrados.filter((row) =>
+      ["CONCLUIDA", "CONCLUIDA_COM_ALERTA"].includes(row.situacao),
+    ).length,
+  };
   const processamentoTipoExecucao = watchProcessamento("tipoExecucao");
   const processamentoTotal = processamentoTipoExecucao === "TOTAL";
 
@@ -13491,6 +13645,21 @@ export function PrototiposFolhaPagamentoPage() {
     },
   ];
 
+  const processamentoColumns: ColumnMetaSeplag<ProcessamentoFolhaExecucaoRow>[] = [
+    { field: "numeroExecucao", header: "Nº Execução" },
+    { field: "numeroFolha", header: "Nº Folha" },
+    { field: "nomeFolha", header: "Nome da Folha" },
+    { header: "Competência", body: (row) => formatMesAno(row.competencia) },
+    { field: "tipoProcessamento", header: "Tipo" },
+    {
+      header: "Situação",
+      body: (row) => renderProcessamentoSituacaoBadge(row.situacao),
+    },
+    { field: "solicitadoEm", header: "Solicitado em" },
+    { field: "responsavel", header: "Responsável" },
+    { field: "erros", header: "Erros" },
+  ];
+
   const execucoesFolha = folhaSelecionada
     ? execucoes.filter(
         (execucao) => execucao.folhaPagamentoId === folhaSelecionada.id,
@@ -13671,6 +13840,67 @@ export function PrototiposFolhaPagamentoPage() {
     </>
   );
 
+  const abrirNovoProcessamento = () => {
+    const folhaParaProcessar = folhas.find(folhaPodeProcessar);
+    if (!folhaParaProcessar) {
+      setFeedback("Não há folha disponível para iniciar novo processamento.");
+      return;
+    }
+
+    abrirModalProcessamentoFolha(folhaParaProcessar);
+  };
+
+  const abrirVisualizarProcessamento = (
+    processamento: ProcessamentoFolhaExecucaoRow,
+  ) => {
+    setExecucaoSelecionada(processamento);
+    setModalLogAberto(true);
+  };
+
+  const abrirRelatorioTecnicoProcessamento = (
+    processamento: ProcessamentoFolhaExecucaoRow,
+  ) => {
+    setFeedback(`Relatório técnico da execução ${processamento.numeroExecucao} disponível para consulta.`);
+    abrirVisualizarProcessamento(processamento);
+  };
+
+  const renderAcoesProcessamento = (
+    processamento: ProcessamentoFolhaExecucaoRow,
+  ) => {
+    const podeExibirRelatorioTecnico = [
+      "CONCLUIDA",
+      "CONCLUIDA_COM_ALERTA",
+      "CONCLUIDA_COM_ERRO",
+    ].includes(processamento.situacao);
+
+    return (
+      <>
+        <BotaoIconSeplag
+          type="button"
+          tooltip="Visualizar"
+          icon="pi pi-eye"
+          onClick={() => abrirVisualizarProcessamento(processamento)}
+        />
+        {processamento.folha && folhaPodeProcessar(processamento.folha) ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Reprocessar"
+            icon="pi pi-play"
+            onClick={() => abrirModalProcessamentoFolha(processamento.folha as FolhaPagamentoRow)}
+          />
+        ) : null}
+        {podeExibirRelatorioTecnico ? (
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Relatório Técnico"
+            icon="pi pi-file-pdf"
+            onClick={() => abrirRelatorioTecnicoProcessamento(processamento)}
+          />
+        ) : null}
+      </>
+    );
+  };
+
   const handleFolhaFormInvalido = (
     formErrors: FieldErrors<FolhaPagamentoForm>,
   ) => {
@@ -13706,7 +13936,7 @@ export function PrototiposFolhaPagamentoPage() {
     >
       <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
         <CardSeplag
-          title="Folha de Pagamento"
+          title={title}
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
           actions={
@@ -13731,13 +13961,39 @@ export function PrototiposFolhaPagamentoPage() {
             <DropdownFieldSeplag
               name="situacao"
               control={control}
-              label="Situação"
+              label={isTelaProcessamentoFolha ? "Situação da Execução" : "Situação"}
               cols="12 6 3"
-              options={folhaPagamentoSituacaoOptions}
+              options={
+                isTelaProcessamentoFolha
+                  ? processamentoFolhaSituacaoOptions
+                  : folhaPagamentoSituacaoOptions
+              }
               optionLabel="label"
               optionValue="value"
               getFormErrorMessage={() => null}
             />
+            {isTelaProcessamentoFolha ? (
+              <>
+                <TextFieldSeplag
+                  name="competencia"
+                  control={control}
+                  label="Competência"
+                  placeholder="MM/AAAA"
+                  cols="12 6 2"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="tipoProcessamento"
+                  control={control}
+                  label="Tipo de Processamento"
+                  cols="12 6 2"
+                  options={processamentoFolhaTipoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+              </>
+            ) : null}
             <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
               <BotaoLimparFiltroSeplag
                 type="button"
@@ -13746,6 +14002,8 @@ export function PrototiposFolhaPagamentoPage() {
                 onClick={() =>
                   reset({
                     termo: "",
+                    competencia: "",
+                    tipoProcessamento: "",
                     situacao: "",
                   })
                 }
@@ -13756,24 +14014,49 @@ export function PrototiposFolhaPagamentoPage() {
           <div className="col-12 prototype-folha-pagamento-actions">
             <BotaoSeplag
               type="button"
-              label="Nova Folha"
+              label={isTelaProcessamentoFolha ? "Novo Processamento" : "Nova Folha"}
               icon="pi pi-plus"
-              onClick={abrirNovaFolha}
+              onClick={isTelaProcessamentoFolha ? abrirNovoProcessamento : abrirNovaFolha}
             />
           </div>
+
+          {isTelaProcessamentoFolha ? (
+            <div className="col-12 prototype-processamento-resumo">
+              <div>
+                <span>Em Fila</span>
+                <strong>{processamentoResumo.emFila}</strong>
+              </div>
+              <div>
+                <span>Em Processamento</span>
+                <strong>{processamentoResumo.emProcessamento}</strong>
+              </div>
+              <div>
+                <span>Processado com Erro</span>
+                <strong>{processamentoResumo.processadoErro}</strong>
+              </div>
+              <div>
+                <span>Processado com Sucesso</span>
+                <strong>{processamentoResumo.processadoSucesso}</strong>
+              </div>
+            </div>
+          ) : null}
 
           <div className="col-12 prototype-folha-pagamento-table">
             <TablePaginadoSeplag
               dataKey="id"
-              data={folhaResults}
+              data={isTelaProcessamentoFolha ? processamentoResults : folhaResults}
               rows={10}
               rowsPerPage={[10, 20, 50]}
               paginator
               lazy={false}
               selectionMode={null}
-              columns={folhaColumns}
+              columns={isTelaProcessamentoFolha ? processamentoColumns : folhaColumns}
               hasEventoAcao
-              renderBotoes={renderAcoesFolha}
+              renderBotoes={
+                isTelaProcessamentoFolha
+                  ? renderAcoesProcessamento
+                  : renderAcoesFolha
+              }
               handleOnPageChange={() => {}}
             />
           </div>

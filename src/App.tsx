@@ -86,6 +86,7 @@ function HomePage() {
       to: "/prototipos/folha",
       links: [
         { label: "Competências da Folha", to: "/prototipos/folha/processamento/competencias" },
+        { label: "Processamento da Folha", to: "/prototipos/folha/processamento/processamento-folha" },
         { label: "Folha de Pagamento", to: "/prototipos/folha/processamento/folha-pagamento" },
         { label: "Grupo de Eleitos", to: "/prototipos/folha/grupo-eleitos" },
         { label: "Grupos de Cálculo", to: "/prototipos/folha/grupos-calculo" },
@@ -421,6 +422,15 @@ function App() {
       <Route
         path="/prototipos/folha/processamento/folha-pagamento"
         element={<PrototiposFolhaPagamentoPage />}
+      />
+      <Route
+        path="/prototipos/folha/processamento/processamento-folha"
+        element={
+          <PrototiposFolhaPagamentoPage
+            title="Processamento da Folha"
+            variant="processamento"
+          />
+        }
       />
       <Route
         path="/prototipos/folha/processamento/solicitacoes-ajustes"
