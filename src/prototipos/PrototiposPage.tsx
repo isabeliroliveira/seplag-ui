@@ -12111,7 +12111,6 @@ export function PrototiposFolhaPagamentoFormPage() {
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
@@ -12166,22 +12165,6 @@ export function PrototiposFolhaPagamentoFormPage() {
   const competenciaVigente = competenciasFolha.find(
     (competencia) => competencia.situacao === "ATIVA",
   );
-  const competenciaOptions = competenciasFolha.map((competencia) => ({
-    label: `${formatMesAno(competencia.competencia)} - ${
-      folhaCompetenciaSituacaoMeta[competencia.situacao].label
-    }`,
-    value: competencia.competencia,
-  }));
-  const competenciaDigitada = watch("competencia");
-  const competenciaNormalizada = normalizeMesAno(competenciaDigitada);
-  const competenciaValida = isMesAnoValido(competenciaDigitada);
-  const competenciaCadastrada = competenciaValida
-    ? competenciasFolha.find(
-        (competencia) => competencia.competencia === competenciaNormalizada,
-      )
-    : undefined;
-  const deveExibirAvisoCompetencia =
-    Boolean(competenciaDigitada?.trim()) && competenciaValida;
   const formTitle = isFolhaEdicao
     ? "Alterar - Folha de Pagamento"
     : "Cadastrar - Folha de Pagamento";
@@ -12255,10 +12238,6 @@ export function PrototiposFolhaPagamentoFormPage() {
       return { tab: "dados", message: "Número da folha é obrigatório." };
     }
 
-    if (!isTextoPreenchido(data.competencia)) {
-      return { tab: "dados", message: "Competência é obrigatória." };
-    }
-
     if (!temAbrangenciaFolha(data)) {
       return {
         tab: "abrangencia",
@@ -12310,13 +12289,15 @@ export function PrototiposFolhaPagamentoFormPage() {
     const orgaos = data.orgaos ?? [];
     const totalMesesAdiantar = data.totalMesesAdiantar ?? 0;
     const totalMesesRetroagir = data.totalMesesRetroagir ?? 0;
-    const competencia = normalizeMesAno(data.competencia);
+    const competencia = normalizeMesAno(
+      data.competencia || competenciaVigente?.competencia,
+    );
     const mesAnoReferencia = competencia;
     const nome = data.nome?.trim() ?? "";
     const numero = data.numero?.trim() ?? "";
 
-    if (!isMesAnoValido(data.competencia)) {
-      setFormFeedback("Informe competência no formato MM/AAAA.");
+    if (!isMesAnoValido(competencia)) {
+      setFormFeedback("Não há competência vigente válida para cadastrar a folha.");
       return;
     }
 
@@ -12431,42 +12412,10 @@ export function PrototiposFolhaPagamentoFormPage() {
                     name="nome"
                     control={control}
                     label="Nome da folha"
-                    cols="12 12 6"
+                    cols="12 12 9"
                     required
                     getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
-                  <DropdownFieldSeplag
-                    name="competencia"
-                    control={control}
-                    label="Competência"
-                    cols="12 12 3"
-                    options={competenciaOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    required
-                    rules={{
-                      validate: (value) =>
-                        Boolean(value) || "Selecione uma competência.",
-                    }}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("competencia")
-                    }
-                  />
-                  {deveExibirAvisoCompetencia ? (
-                    <div
-                      className={`col-12 prototype-competencia-aviso ${
-                        competenciaCadastrada
-                          ? competenciaCadastrada.situacao === "ATIVA"
-                            ? "prototype-competencia-aviso--ok"
-                            : "prototype-competencia-aviso--closed"
-                          : "prototype-competencia-aviso--warning"
-                      }`}
-                    >
-                      {competenciaCadastrada
-                        ? `Competência: ${formatMesAno(competenciaCadastrada.competencia)} está ${folhaCompetenciaSituacaoMeta[competenciaCadastrada.situacao].label.toLowerCase()}.`
-                        : ""}
-                    </div>
-                  ) : null}
                   </div>
                 ))}
 
