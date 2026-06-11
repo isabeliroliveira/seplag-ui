@@ -6758,7 +6758,7 @@
 
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-table {
-  min-width: 1420px !important;
+  min-width: 1430px !important;
 }
 
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
@@ -6818,7 +6818,7 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(4) {
-  width: 190px;
+  width: 145px;
 }
 
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
@@ -6835,7 +6835,10 @@
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-tbody
   > tr
-  > td:nth-child(5),
+  > td:nth-child(5) {
+  width: 150px;
+}
+
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-thead
   > tr
@@ -6844,7 +6847,7 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(6) {
-  width: 150px;
+  width: 110px;
 }
 
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
@@ -6855,7 +6858,17 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(7) {
-  width: 125px;
+  width: 110px;
+}
+
+.prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(7),
+.prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(7) {
   text-align: center;
 }
 
@@ -6867,6 +6880,10 @@
   .p-datatable-thead
   > tr
   > th:nth-child(7),
+.prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(8),
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-tbody
   > tr
@@ -6904,14 +6921,14 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(8) {
-  width: 155px;
+  width: 130px;
   text-align: center;
 }
 
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-tbody
   > tr
-  > td:nth-child(8)
+  > td:nth-child(9)
   [class*="border-round"] {
   max-width: 135px;
   padding-right: 8px !important;
@@ -6927,6 +6944,18 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(9) {
+  width: 155px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(10),
+.prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(10) {
   width: 215px;
   text-align: left;
 }
@@ -6934,7 +6963,7 @@
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-tbody
   > tr
-  > td:nth-child(9)
+  > td:nth-child(10)
   > div {
   display: inline-flex;
   flex-wrap: wrap;
@@ -6946,12 +6975,44 @@
 .prototype-folha-pagamento-table.prototype-solicitacoes-ajustes-table
   .p-datatable-tbody
   > tr
-  > td:nth-child(9)
+  > td:nth-child(10)
   .p-button {
   width: 32px;
   min-width: 32px;
   height: 32px;
   padding: 0;
+}
+
+.prototype-finalizar-correcao-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.prototype-finalizar-correcao-field label {
+  color: #24364b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.prototype-finalizar-correcao-field label span {
+  color: #d32f2f;
+}
+
+.prototype-finalizar-correcao-field input {
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #1f2a44;
+  font-size: 0.95rem;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.prototype-finalizar-correcao-field input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.12);
+  outline: none;
 }
 
 .prototype-solicitacao-ajuste-form {

@@ -252,6 +252,7 @@ export interface SolicitacaoAjusteFolhaRow {
   numeroFolha: string;
   nomeFolha: string;
   competencia: string;
+  numeroExecucaoProcessamento?: string;
   matriculaCpf: string;
   grupoEleitos: string;
   solicitante: string;

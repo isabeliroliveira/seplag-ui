@@ -14779,6 +14779,12 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
   const [modalIniciarAberto, setModalIniciarAberto] = useState(false);
   const [modalFinalizarAberto, setModalFinalizarAberto] = useState(false);
   const [motivoDevolucao, setMotivoDevolucao] = useState("");
+  const [numeroExecucaoFinalizacao, setNumeroExecucaoFinalizacao] =
+    useState("");
+  const [
+    numeroExecucaoFinalizacaoErro,
+    setNumeroExecucaoFinalizacaoErro,
+  ] = useState("");
   const [documentosDevolucao, setDocumentosDevolucao] = useState<
     ArquivoAnexadoSeplag[]
   >([]);
@@ -15155,6 +15161,20 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
     setModalHistoricoAberto(true);
   };
 
+  const abrirFinalizacaoCorrecao = (
+    solicitacao: SolicitacaoAjusteFolhaRow,
+  ) => {
+    setSolicitacaoSelecionada(solicitacao);
+    setNumeroExecucaoFinalizacao(
+      solicitacao.numeroExecucaoProcessamento &&
+        solicitacao.numeroExecucaoProcessamento !== "-"
+        ? solicitacao.numeroExecucaoProcessamento
+        : "",
+    );
+    setNumeroExecucaoFinalizacaoErro("");
+    setModalFinalizarAberto(true);
+  };
+
   const confirmarExclusaoSolicitacao = () => {
     if (!solicitacaoSelecionada) return;
     if (perfil !== "CONFORMIDADE") {
@@ -15190,14 +15210,23 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
 
   const confirmarFinalizacaoCorrecao = () => {
     if (!solicitacaoSelecionada) return;
+    const numeroExecucao = numeroExecucaoFinalizacao.trim();
+
+    if (!numeroExecucao) {
+      setNumeroExecucaoFinalizacaoErro("Campo obrigatório");
+      return;
+    }
 
     atualizarSolicitacao(
       {
         ...solicitacaoSelecionada,
+        numeroExecucaoProcessamento: numeroExecucao,
         situacao: "CORRIGIDO",
       },
       "Registro atualizado com sucesso!",
     );
+    setNumeroExecucaoFinalizacao("");
+    setNumeroExecucaoFinalizacaoErro("");
     setModalFinalizarAberto(false);
   };
 
@@ -15284,10 +15313,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
               type="button"
               tooltip="Finalizar Correção"
               icon="pi pi-check-circle"
-              onClick={() => {
-                setSolicitacaoSelecionada(solicitacao);
-                setModalFinalizarAberto(true);
-              }}
+              onClick={() => abrirFinalizacaoCorrecao(solicitacao)}
             />
           ) : null}
           <BotaoIconSeplag
@@ -15351,10 +15377,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
             type="button"
             tooltip="Finalizar Correção"
             icon="pi pi-check-circle"
-            onClick={() => {
-              setSolicitacaoSelecionada(solicitacao);
-              setModalFinalizarAberto(true);
-            }}
+            onClick={() => abrirFinalizacaoCorrecao(solicitacao)}
           />
         ) : null}
         {podeDevolverConcluir ? (
@@ -15408,6 +15431,10 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
     { field: "solicitante", header: "Solicitante" },
     { field: "dataCriacao", header: "Data de\nCriação" },
     { field: "dataFechamento", header: "Data de\nFechamento" },
+    {
+      header: "Nº Execução\nProcessamento",
+      body: (row) => row.numeroExecucaoProcessamento || "-",
+    },
     {
       header: "Situação",
       body: (row) => renderSolicitacaoSituacaoBadge(row.situacao),
@@ -15984,7 +16011,10 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
         <ModalSeplag
           visible={modalFinalizarAberto}
           titulo="Finalizar Correção"
-          fechar={() => setModalFinalizarAberto(false)}
+          fechar={() => {
+            setModalFinalizarAberto(false);
+            setNumeroExecucaoFinalizacaoErro("");
+          }}
           labelFechar="Cancelar"
           labelAcao="Confirmar"
           iconAcao="pi pi-check-circle"
@@ -15995,6 +16025,28 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
             Deseja finalizar a correção desta solicitação? O registro será
             enviado para homologação da equipe de Conformidade.
           </p>
+          <div className="col-12 prototype-finalizar-correcao-field">
+            <label htmlFor="numero-execucao-finalizacao">
+              Nº Execução Processamento <span>*</span>
+            </label>
+            <input
+              id="numero-execucao-finalizacao"
+              type="text"
+              value={numeroExecucaoFinalizacao}
+              placeholder="Informe o número da execução"
+              onChange={(event) => {
+                setNumeroExecucaoFinalizacao(event.target.value);
+                if (event.target.value.trim()) {
+                  setNumeroExecucaoFinalizacaoErro("");
+                }
+              }}
+            />
+            {numeroExecucaoFinalizacaoErro ? (
+              <small className="p-error">
+                {numeroExecucaoFinalizacaoErro}
+              </small>
+            ) : null}
+          </div>
         </ModalSeplag>
 
         <ModalSeplag
