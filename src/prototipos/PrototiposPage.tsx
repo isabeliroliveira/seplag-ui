@@ -12111,7 +12111,6 @@ export function PrototiposFolhaPagamentoFormPage() {
   const [accordionAberto, setAccordionAberto] = useState({
     dados: true,
     abrangencia: true,
-    parametros: true,
     observacao: true,
   });
   const competenciasFolha = folhaPagamentoService.listarCompetencias();
@@ -12510,33 +12509,6 @@ export function PrototiposFolhaPagamentoFormPage() {
                   </div>
                 ))}
 
-                {renderAccordionFolha("parametros", "Parâmetros de Cálculo", (
-                  <div className="grid prototype-category-form-fields">
-                  <NumberFieldSeplag
-                    name="totalMesesAdiantar"
-                    control={control}
-                    label="Total de meses a adiantar"
-                    cols="12 12 6"
-                    required
-                    min={0}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("totalMesesAdiantar")
-                    }
-                  />
-                  <NumberFieldSeplag
-                    name="totalMesesRetroagir"
-                    control={control}
-                    label="Total de meses a retroagir"
-                    cols="12 12 6"
-                    required
-                    min={0}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("totalMesesRetroagir")
-                    }
-                  />
-                  </div>
-                ))}
-
                 {renderAccordionFolha("observacao", "Observação", (
                   <div className="grid prototype-category-form-fields">
                   <TextAreaFieldSeplag
@@ -12561,19 +12533,6 @@ export function PrototiposFolhaPagamentoFormPage() {
                 />
                 <BotaoSalvarSeplag
                   type="button"
-                  label="Salvar Rascunho"
-                  onClick={handleSubmit(
-                    (data) => salvarFolha(data, "RASCUNHO"),
-                    handleFolhaFormInvalido,
-                  )}
-                />
-                <BotaoSeplag
-                  type="button"
-                  variant="save"
-                  label="Publicar"
-                  icon="pi pi-send"
-                  iconPos="left"
-                  raised
                   onClick={handleSubmit(
                     (data) => salvarFolha(data, "ABERTO"),
                     handleFolhaFormInvalido,
