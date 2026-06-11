@@ -467,6 +467,8 @@ const sistemas: AppSystemItemSeplag[] = [
   { id: "auditoria", label: "AUDITORIA", url: "#/prototipos/auditoria", icon: "pi pi-check-square" },
 ];
 
+const USUARIO_FOLHA_LOGADO = "ROBERTO JUNIOR";
+
 const componentPrototypeItems = [
   {
     id: "situacao-vigencia",
@@ -2952,15 +2954,61 @@ interface FolhaConformidadeHistoricoRow {
 interface FolhaConformidadeFiltroSalvoRow {
   id: number;
   nome: string;
-  visibilidade: "Privado" | "Público";
+  visibilidade: "PRIVADO" | "PÚBLICO";
+  criadoEm: string;
   atualizadoEm: string;
   criadoPor: string;
+  filtros: FolhaConformidadeFiltroForm;
+  colunas: string[];
 }
 
 interface FolhaConformidadeSalvarFiltroForm {
   nomeFiltro: string;
-  visibilidade: "Privado" | "Público";
+  visibilidade: "PRIVADO" | "PÚBLICO";
 }
+
+interface FolhaConformidadeGerenciadorFiltroForm {
+  nome: string;
+  criadoPor: string;
+}
+
+const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
+  competencia: "",
+  folhaInicio: "",
+  folhaFim: "",
+  numeroFolha: "",
+  nomeFolha: "",
+  tipoFolha: "",
+  orgaos: [],
+  setores: [],
+  regimesJuridicos: [],
+  categorias: [],
+  cargos: [],
+  tiposVinculo: [],
+  nivel: "",
+  classe: "",
+  tipoRelatorio: "Dinâmico",
+  formatoSaida: "Excel",
+  matricula: "",
+  cpf: "",
+  sexo: "",
+  escolaridade: "",
+  idade: "",
+  servidor: "",
+  rubrica: "",
+  codigoRubrica: "",
+  tipoRubrica: "",
+  jornada: "",
+  dataExercicioInicio: "",
+  dataExercicioFim: "",
+  dataAposentadoriaInicio: "",
+  dataAposentadoriaFim: "",
+  numeroExecucaoProcessamento: "",
+  dataProcessamento: "",
+  tipoAfastamento: "",
+  quantidadeDiasAfastado: undefined,
+  situacaoAnalise: "",
+};
 
 interface FolhaTabelaReferenciaVigenciaRow {
   id: number;
@@ -3584,22 +3632,59 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
   {
     id: 1,
     nome: "Conferência mensal SEPLAG",
-    visibilidade: "Privado",
-    atualizadoEm: "22/05/2026 17:40",
+    visibilidade: "PRIVADO",
+    criadoEm: "22/05/2026",
+    atualizadoEm: "22/05/2026",
     criadoPor: "ROBERTO JUNIOR",
+    filtros: {
+      ...folhaConformidadeDefaultFilters,
+      orgaos: ["SEPLAG"],
+      competencia: "05/2026",
+      numeroFolha: "01",
+      nomeFolha: "Folha Normal Maio/2026",
+    },
+    colunas: folhaConformidadeTodasColunas,
   },
   {
     id: 2,
     nome: "Rubricas sensíveis",
-    visibilidade: "Público",
-    atualizadoEm: "21/05/2026 16:05",
+    visibilidade: "PÚBLICO",
+    criadoEm: "21/05/2026",
+    atualizadoEm: "21/05/2026",
     criadoPor: "EQUIPE GCFP",
+    filtros: {
+      ...folhaConformidadeDefaultFilters,
+      codigoRubrica: "1006 - PREVIDÊNCIA RPPS",
+      tipoRubrica: "Desconto",
+    },
+    colunas: [
+      "Órgão",
+      "Matrícula",
+      "Nome da Folha",
+      "Código da Rubrica",
+      "Tipo da Rubrica",
+      "Valor Bruto",
+      "Valor Líquido",
+    ],
+  },
+  {
+    id: 3,
+    nome: "Privado de outro usuário",
+    visibilidade: "PRIVADO",
+    criadoEm: "20/05/2026",
+    atualizadoEm: "20/05/2026",
+    criadoPor: "OUTRO USUARIO",
+    filtros: {
+      ...folhaConformidadeDefaultFilters,
+      orgaos: ["SES"],
+    },
+    colunas: folhaConformidadeTodasColunas,
   },
 ];
 
 const folhaConformidadeVisibilidadeFiltroOptions = [
-  { label: "Privado", value: "Privado" },
-  { label: "Público", value: "Público" },
+  { label: "PRIVADO", value: "PRIVADO" },
+  { label: "PÚBLICO", value: "PÚBLICO" },
 ];
 
 const grupoFolhaRubricaOptions = [
@@ -18564,43 +18649,8 @@ export function PrototiposFolhaCatalogoRubricaViewPage() {
 }
 
 export function PrototiposFolhaConformidadePage() {
-  const defaultFilters: FolhaConformidadeFiltroForm = {
-    competencia: "05/2026",
-    folhaInicio: "05/2026",
-    folhaFim: "05/2026",
-    numeroFolha: "01",
-    nomeFolha: "Folha Normal Maio/2026",
-    tipoFolha: "Normal",
-    orgaos: ["SEPLAG"],
-    setores: [],
-    regimesJuridicos: [],
-    categorias: [],
-    cargos: [],
-    tiposVinculo: [],
-    nivel: "",
-    classe: "",
-    tipoRelatorio: "Dinâmico",
-    formatoSaida: "Excel",
-    matricula: "",
-    cpf: "",
-    sexo: "",
-    escolaridade: "",
-    idade: "",
-    servidor: "",
-    rubrica: "",
-    codigoRubrica: "",
-    tipoRubrica: "",
-    jornada: "",
-    dataExercicioInicio: "",
-    dataExercicioFim: "",
-    dataAposentadoriaInicio: "",
-    dataAposentadoriaFim: "",
-    numeroExecucaoProcessamento: "",
-    dataProcessamento: "",
-    tipoAfastamento: "",
-    quantidadeDiasAfastado: undefined,
-    situacaoAnalise: "",
-  };
+  const defaultFilters: FolhaConformidadeFiltroForm =
+    folhaConformidadeDefaultFilters;
   const { control, handleSubmit, reset } = useForm<FolhaConformidadeFiltroForm>({
     defaultValues: defaultFilters,
   });
@@ -18611,7 +18661,17 @@ export function PrototiposFolhaConformidadePage() {
   } = useForm<FolhaConformidadeSalvarFiltroForm>({
     defaultValues: {
       nomeFiltro: "",
-      visibilidade: "Privado",
+      visibilidade: "PRIVADO",
+    },
+  });
+  const {
+    control: gerenciadorFiltroControl,
+    reset: resetGerenciadorFiltro,
+    watch: watchGerenciadorFiltro,
+  } = useForm<FolhaConformidadeGerenciadorFiltroForm>({
+    defaultValues: {
+      nome: "",
+      criadoPor: "",
     },
   });
   const [filtrosGerados, setFiltrosGerados] =
@@ -18623,6 +18683,13 @@ export function PrototiposFolhaConformidadePage() {
   const [filtrosSalvos, setFiltrosSalvos] = useState<
     FolhaConformidadeFiltroSalvoRow[]
   >(folhaConformidadeFiltrosSalvosMock);
+  const [filtroEmEdicaoId, setFiltroEmEdicaoId] = useState<number | null>(null);
+  const [filtroParaExcluir, setFiltroParaExcluir] =
+    useState<FolhaConformidadeFiltroSalvoRow | null>(null);
+  const [feedbackFiltro, setFeedbackFiltro] = useState("");
+  const [paginaGerenciadorFiltro, setPaginaGerenciadorFiltro] = useState(1);
+  const [linhasGerenciadorFiltro, setLinhasGerenciadorFiltro] = useState(10);
+  const [auditoriaFiltros, setAuditoriaFiltros] = useState<string[]>([]);
   const [colunasSelecionadas, setColunasSelecionadas] = useState<string[]>(
     folhaConformidadeTodasColunas,
   );
@@ -18682,53 +18749,145 @@ export function PrototiposFolhaConformidadePage() {
     setFiltrosGerados(data);
   };
 
+  const registrarAuditoriaFiltro = (evento: string, filtro: string) => {
+    setAuditoriaFiltros((logs) => [
+      `${formatarDataPtBr(new Date())} - ${evento}: ${filtro}`,
+      ...logs,
+    ]);
+  };
+
+  const podeVisualizarFiltroSalvo = (filtro: FolhaConformidadeFiltroSalvoRow) =>
+    filtro.visibilidade === "PÚBLICO" ||
+    filtro.criadoPor === USUARIO_FOLHA_LOGADO;
+
+  const podeEditarFiltroSalvo = (filtro: FolhaConformidadeFiltroSalvoRow) =>
+    filtro.visibilidade === "PÚBLICO" ||
+    filtro.criadoPor === USUARIO_FOLHA_LOGADO;
+
+  const podeExcluirFiltroSalvo = (filtro: FolhaConformidadeFiltroSalvoRow) =>
+    filtro.criadoPor === USUARIO_FOLHA_LOGADO;
+
   const abrirModalCarregarFiltro = () => {
     setModalFiltrosModo("carregar");
+    setPaginaGerenciadorFiltro(1);
     setModalFiltrosAberto(true);
   };
 
   const abrirModalSalvarFiltro = () => {
     setModalFiltrosModo("salvar");
+    const filtroEmEdicao = filtrosSalvos.find(
+      (filtro) => filtro.id === filtroEmEdicaoId,
+    );
     resetSalvarFiltro({
-      nomeFiltro: "",
-      visibilidade: "Privado",
+      nomeFiltro: filtroEmEdicao?.nome ?? "",
+      visibilidade: filtroEmEdicao?.visibilidade ?? "PRIVADO",
     });
+    setPaginaGerenciadorFiltro(1);
     setModalFiltrosAberto(true);
   };
 
   const handleSalvarFiltro = (data: FolhaConformidadeSalvarFiltroForm) => {
     const nomeFiltro = data.nomeFiltro.trim() || "Filtro sem nome";
-    const dataHora = new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "America/Cuiaba",
-    }).format(new Date());
+    const dataAtual = formatarDataPtBr(new Date());
 
-    setFiltrosSalvos((filtros) => [
-      {
-        id: Date.now(),
-        nome: nomeFiltro,
-        visibilidade: data.visibilidade,
-        atualizadoEm: dataHora,
-        criadoPor: "ROBERTO JUNIOR",
-      },
-      ...filtros,
-    ]);
+    if (filtroEmEdicaoId) {
+      setFiltrosSalvos((filtros) =>
+        filtros.map((filtro) =>
+          filtro.id === filtroEmEdicaoId
+            ? {
+                ...filtro,
+                nome: nomeFiltro,
+                visibilidade: data.visibilidade,
+                atualizadoEm: dataAtual,
+                filtros: filtrosGerados,
+                colunas: colunasSelecionadas,
+              }
+            : filtro,
+        ),
+      );
+      registrarAuditoriaFiltro("Alteração de filtro", nomeFiltro);
+      setFeedbackFiltro("Registro atualizado com sucesso!");
+    } else {
+      setFiltrosSalvos((filtros) => [
+        {
+          id: Date.now(),
+          nome: nomeFiltro,
+          visibilidade: data.visibilidade,
+          criadoEm: dataAtual,
+          atualizadoEm: dataAtual,
+          criadoPor: USUARIO_FOLHA_LOGADO,
+          filtros: filtrosGerados,
+          colunas: colunasSelecionadas,
+        },
+        ...filtros,
+      ]);
+      registrarAuditoriaFiltro("Inclusão de filtro", nomeFiltro);
+      setFeedbackFiltro("Registro salvo com sucesso!");
+    }
     setModalFiltrosAberto(false);
   };
 
-  const handleCarregarFiltro = (_filtro: FolhaConformidadeFiltroSalvoRow) => {
+  const handleEditarFiltro = (filtro: FolhaConformidadeFiltroSalvoRow) => {
+    if (!podeEditarFiltroSalvo(filtro)) return;
+    reset(filtro.filtros);
+    setFiltrosGerados(filtro.filtros);
+    setColunasSelecionadas(filtro.colunas);
+    setFiltroEmEdicaoId(filtro.id);
     setModalFiltrosAberto(false);
+  };
+
+  const handleLimparGerenciadorFiltro = () => {
+    resetGerenciadorFiltro({ nome: "", criadoPor: "" });
+    setPaginaGerenciadorFiltro(1);
+  };
+
+  const confirmarExcluirFiltro = () => {
+    if (!filtroParaExcluir) return;
+    setFiltrosSalvos((filtros) =>
+      filtros.filter((filtro) => filtro.id !== filtroParaExcluir.id),
+    );
+    registrarAuditoriaFiltro("Exclusão de filtro", filtroParaExcluir.nome);
+    setFeedbackFiltro("Registro deletado com sucesso!");
+    setFiltroParaExcluir(null);
   };
 
   const handleLimpar = () => {
     reset({ ...defaultFilters, orgaos: [] });
     setFiltrosGerados({ ...defaultFilters, orgaos: [] });
     setColunasSelecionadas(folhaConformidadeTodasColunas);
+    setFiltroEmEdicaoId(null);
   };
+
+  const filtrosGerenciador = watchGerenciadorFiltro();
+
+  const filtrosSalvosElegiveis = useMemo(() => {
+    const nome = filtrosGerenciador.nome.trim().toLowerCase();
+    const criadoPor = filtrosGerenciador.criadoPor.trim().toLowerCase();
+
+    return filtrosSalvos
+      .filter(podeVisualizarFiltroSalvo)
+      .filter((filtro) => {
+        const atendeNome =
+          !nome || filtro.nome.toLowerCase().includes(nome);
+        const atendeCriador =
+          !criadoPor || filtro.criadoPor.toLowerCase().includes(criadoPor);
+        return atendeNome && atendeCriador;
+      })
+      .sort((a, b) => b.id - a.id);
+  }, [filtrosGerenciador.nome, filtrosGerenciador.criadoPor, filtrosSalvos]);
+
+  const totalPaginasGerenciadorFiltro = Math.max(
+    1,
+    Math.ceil(filtrosSalvosElegiveis.length / linhasGerenciadorFiltro),
+  );
+  const paginaGerenciadorFiltroAtual = Math.min(
+    paginaGerenciadorFiltro,
+    totalPaginasGerenciadorFiltro,
+  );
+  const filtrosSalvosPaginados = filtrosSalvosElegiveis.slice(
+    (paginaGerenciadorFiltroAtual - 1) * linhasGerenciadorFiltro,
+    paginaGerenciadorFiltroAtual * linhasGerenciadorFiltro,
+  );
 
   const registrosFiltrados = useMemo(() => {
     const matricula = filtrosGerados.matricula?.trim().toLowerCase() ?? "";
@@ -18865,14 +19024,19 @@ export function PrototiposFolhaConformidadePage() {
           actions={
             <BotaoSeplag
               type="button"
-              label="Carregar filtro"
-              icon="pi pi-filter"
+              label="Gerenciar Filtros"
+              icon="pi pi-cog"
               outlined
               className="prototype-dynamic-report-load-filter"
               onClick={abrirModalCarregarFiltro}
             />
           }
         >
+          {feedbackFiltro ? (
+            <div className="col-12">
+              <div className="prototype-validation-panel">{feedbackFiltro}</div>
+            </div>
+          ) : null}
           <form
             className="prototype-dynamic-report"
             onSubmit={handleSubmit(handleGerarRelatorio)}
@@ -19284,6 +19448,7 @@ export function PrototiposFolhaConformidadePage() {
                 icon="pi pi-cog"
                 type="button"
                 outlined
+                onClick={abrirModalCarregarFiltro}
               />
               <BotaoSalvarSeplag
                 label="Gerar relatório"
@@ -19310,60 +19475,161 @@ export function PrototiposFolhaConformidadePage() {
 
         <ModalSeplag
           visible={modalFiltrosAberto}
-          titulo={
-            modalFiltrosModo === "carregar"
-              ? "Carregar filtro"
-              : "Salvar filtro"
-          }
+          titulo="Gerenciador de Filtros"
           fechar={() => setModalFiltrosAberto(false)}
-          labelFechar="Cancelar"
+          labelFechar={modalFiltrosModo === "carregar" ? "Voltar" : "Cancelar"}
           labelAcao="Salvar filtro"
           iconAcao="pi pi-save"
-          tamanho="760px"
+          tamanho="980px"
           funcAcao={handleSubmitSalvarFiltro(handleSalvarFiltro)}
-          hideFooter={modalFiltrosModo === "carregar"}
+          customFooter={
+            modalFiltrosModo === "carregar" ? (
+              <div className="prototype-dynamic-report-filter-footer">
+                <BotaoVoltarSeplag
+                  type="button"
+                  label="Voltar"
+                  icon="pi pi-times"
+                  onClick={() => setModalFiltrosAberto(false)}
+                />
+              </div>
+            ) : undefined
+          }
         >
           <div className="col-12 prototype-dynamic-report-filter-modal">
+            {feedbackFiltro ? (
+              <div className="prototype-validation-panel">{feedbackFiltro}</div>
+            ) : null}
+
+            <div className="prototype-dynamic-report-filter-form">
+              <strong>Filtro - Gerenciador de Filtros</strong>
+              <div className="prototype-dynamic-report-manager-filters">
+                <TextFieldSeplag
+                  label="Nome"
+                  name="nome"
+                  control={gerenciadorFiltroControl}
+                  cols="12"
+                  maxLength={150}
+                  placeholder="Nome do filtro"
+                />
+                <TextFieldSeplag
+                  label="Criado por"
+                  name="criadoPor"
+                  control={gerenciadorFiltroControl}
+                  cols="12"
+                  maxLength={150}
+                  placeholder="Nome do criador"
+                />
+                <div className="prototype-dynamic-report-manager-clear">
+                  <BotaoLimparFiltroSeplag
+                    type="button"
+                    label="Limpar Filtro"
+                    onClick={handleLimparGerenciadorFiltro}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="prototype-dynamic-report-filter-list">
-              <strong>Filtros salvos públicos e privados</strong>
+              <strong>Grid - Gerenciador de Filtros</strong>
               <div className="prototype-table-wrapper">
                 <table className="prototype-simple-table">
                   <thead>
                     <tr>
                       <th>Nome</th>
                       <th>Visibilidade</th>
-                      <th>Atualizado em</th>
+                      <th>Data da Criação</th>
+                      <th>Data da Última Alteração</th>
                       <th>Criado por</th>
-                      {modalFiltrosModo === "carregar" ? <th>Ação</th> : null}
+                      <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrosSalvos.map((filtro) => (
+                    {filtrosSalvosPaginados.map((filtro) => (
                       <tr key={filtro.id}>
                         <td>{filtro.nome}</td>
                         <td>{filtro.visibilidade}</td>
+                        <td>{filtro.criadoEm}</td>
                         <td>{filtro.atualizadoEm}</td>
                         <td>{filtro.criadoPor}</td>
-                        {modalFiltrosModo === "carregar" ? (
-                          <td>
+                        <td>
+                          <div className="prototype-dynamic-report-filter-actions-cell">
                             <BotaoIconSeplag
                               type="button"
-                              icon="pi pi-check"
-                              tooltip="Carregar filtro"
-                              onClick={() => handleCarregarFiltro(filtro)}
+                              icon="pi pi-pencil"
+                              tooltip="Editar"
+                              onClick={() => handleEditarFiltro(filtro)}
                             />
-                          </td>
-                        ) : null}
+                            {podeExcluirFiltroSalvo(filtro) ? (
+                              <BotaoIconSeplag
+                                type="button"
+                                severity="danger"
+                                icon="pi pi-trash"
+                                tooltip="Excluir"
+                                onClick={() => setFiltroParaExcluir(filtro)}
+                              />
+                            ) : null}
+                          </div>
+                        </td>
                       </tr>
                     ))}
+                    {filtrosSalvosPaginados.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="prototype-empty-table-cell">
+                          Nenhum filtro encontrado.
+                        </td>
+                      </tr>
+                    ) : null}
                   </tbody>
                 </table>
+              </div>
+              <div className="prototype-dynamic-report-manager-pagination">
+                <span>
+                  Página {paginaGerenciadorFiltroAtual} de{" "}
+                  {totalPaginasGerenciadorFiltro}
+                </span>
+                <select
+                  value={linhasGerenciadorFiltro}
+                  onChange={(event) => {
+                    setLinhasGerenciadorFiltro(Number(event.target.value));
+                    setPaginaGerenciadorFiltro(1);
+                  }}
+                >
+                  {[5, 10, 25, 50].map((total) => (
+                    <option key={total} value={total}>
+                      {total} registros
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaginaGerenciadorFiltro((pagina) =>
+                      Math.max(1, pagina - 1),
+                    )
+                  }
+                  disabled={paginaGerenciadorFiltroAtual === 1}
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaginaGerenciadorFiltro((pagina) =>
+                      Math.min(totalPaginasGerenciadorFiltro, pagina + 1),
+                    )
+                  }
+                  disabled={
+                    paginaGerenciadorFiltroAtual === totalPaginasGerenciadorFiltro
+                  }
+                >
+                  Próxima
+                </button>
               </div>
             </div>
 
             {modalFiltrosModo === "salvar" ? (
               <div className="prototype-dynamic-report-filter-form">
-                <strong>Novo filtro</strong>
+                <strong>{filtroEmEdicaoId ? "Editar filtro" : "Novo filtro"}</strong>
                 <TextFieldSeplag
                   label="Nome do filtro"
                   name="nomeFiltro"
@@ -19383,6 +19649,21 @@ export function PrototiposFolhaConformidadePage() {
                 />
               </div>
             ) : null}
+          </div>
+        </ModalSeplag>
+
+        <ModalSeplag
+          visible={Boolean(filtroParaExcluir)}
+          titulo="Excluir filtro"
+          fechar={() => setFiltroParaExcluir(null)}
+          labelFechar="Cancelar"
+          labelAcao="Excluir"
+          iconAcao="pi pi-trash"
+          tamanho="460px"
+          funcAcao={confirmarExcluirFiltro}
+        >
+          <div className="col-12">
+            Deseja realmente excluir o registro selecionado?
           </div>
         </ModalSeplag>
       </div>

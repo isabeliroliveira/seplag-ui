@@ -8922,6 +8922,64 @@
   width: 100%;
 }
 
+.prototype-dynamic-report-manager-filters {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+
+.prototype-dynamic-report-manager-filters > [class*="col-"] {
+  max-width: none !important;
+  padding: 0 !important;
+  width: 100%;
+}
+
+.prototype-dynamic-report-manager-clear {
+  align-items: end;
+  display: flex;
+}
+
+.prototype-dynamic-report-filter-actions-cell {
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.prototype-dynamic-report-manager-pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.prototype-dynamic-report-manager-pagination select,
+.prototype-dynamic-report-manager-pagination button {
+  border: 1px solid #c8d6e5;
+  border-radius: 4px;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.prototype-dynamic-report-manager-pagination button {
+  background: #ffffff;
+  color: #005494;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.prototype-dynamic-report-manager-pagination button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.prototype-dynamic-report-filter-footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 .prototype-dynamic-report-filter-modal .prototype-simple-table th,
 .prototype-dynamic-report-filter-modal .prototype-simple-table td {
   padding: 10px 12px;
@@ -8992,5 +9050,9 @@
 
   .prototype-dynamic-report-actions .p-button {
     width: 100%;
+  }
+
+  .prototype-dynamic-report-manager-filters {
+    grid-template-columns: 1fr;
   }
 }
