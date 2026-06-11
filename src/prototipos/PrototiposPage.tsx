@@ -2943,12 +2943,12 @@ interface FolhaConformidadeRow {
 
 interface FolhaConformidadeHistoricoRow {
   id: number;
-  dataHora: string;
+  dataHoraEmissao: string;
+  numeroFolha: string;
+  nomeFolha: string;
   competencia: string;
-  folha: string;
   tipoRelatorio: string;
-  geradoPor: string;
-  situacao: "Prévia" | "Oficial" | "Regerado";
+  solicitante: string;
 }
 
 interface FolhaConformidadeFiltroSalvoRow {
@@ -3601,30 +3601,30 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
 const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
   {
     id: 1,
-    dataHora: "22/05/2026 17:40",
+    dataHoraEmissao: "22/05/2026 17:40",
+    numeroFolha: "01",
+    nomeFolha: "Folha Normal",
     competencia: "05/2026",
-    folha: "01 - Folha Normal",
     tipoRelatorio: "Sintético",
-    geradoPor: "ROBERTO JUNIOR",
-    situacao: "Oficial",
+    solicitante: "ROBERTO JUNIOR",
   },
   {
     id: 2,
-    dataHora: "22/05/2026 10:18",
+    dataHoraEmissao: "22/05/2026 10:18",
+    numeroFolha: "01",
+    nomeFolha: "Folha Normal",
     competencia: "05/2026",
-    folha: "01 - Folha Normal",
     tipoRelatorio: "Comparativo mensal",
-    geradoPor: "EQUIPE GCFP",
-    situacao: "Prévia",
+    solicitante: "EQUIPE GCFP",
   },
   {
     id: 3,
-    dataHora: "21/05/2026 16:05",
+    dataHoraEmissao: "21/05/2026 16:05",
+    numeroFolha: "02",
+    nomeFolha: "Folha com descontos",
     competencia: "05/2026",
-    folha: "02 - Folha com descontos",
     tipoRelatorio: "Retenções",
-    geradoPor: "EQUIPE GCFP",
-    situacao: "Regerado",
+    solicitante: "EQUIPE GCFP",
   },
 ];
 
@@ -10164,31 +10164,17 @@ export function PrototiposFolhaPage() {
     useState(false);
   const [modalNovoCronogramaAberto, setModalNovoCronogramaAberto] =
     useState(false);
-  const [modalEditarEventoAberto, setModalEditarEventoAberto] = useState(false);
   const [informativoEdicaoId, setInformativoEdicaoId] = useState<number | null>(
     null,
   );
-  const [eventoEdicao, setEventoEdicao] = useState<{
+  const [eventoArrastado, setEventoArrastado] = useState<{
     cronogramaId: number;
     eventoIndex: number;
   } | null>(null);
   const [novoInformativo, setNovoInformativo] = useState({
     titulo: "",
+    tipo: "Informação",
     texto: "",
-  });
-  const [novoCronograma, setNovoCronograma] = useState({
-    titulo: "",
-    dataInicio: "",
-    dataFim: "",
-    horario: "",
-    descricao: "",
-    observacao: "",
-  });
-  const [eventoForm, setEventoForm] = useState({
-    dataInicio: "",
-    dataFim: "",
-    horario: "",
-    descricao: "",
   });
   const [homeFormError, setHomeFormError] = useState("");
   const [informativosFolha, setInformativosFolha] = useState([
@@ -10220,6 +10206,16 @@ export function PrototiposFolhaPage() {
       destaque: "is-pin",
     },
   ]);
+
+  const informativoTipoMeta: Record<
+    string,
+    { icon: string; destaque: string }
+  > = {
+    Alerta: { icon: "pi pi-exclamation-triangle", destaque: "is-warning" },
+    Informação: { icon: "pi pi-info-circle", destaque: "is-info" },
+    Aviso: { icon: "pi pi-thumbtack", destaque: "is-pin" },
+    Importante: { icon: "pi pi-star", destaque: "is-warning" },
+  };
 
   const [cronogramasFolha, setCronogramasFolha] = useState([
     {
@@ -10306,6 +10302,7 @@ export function PrototiposFolhaPage() {
     setInformativoEdicaoId(null);
     setNovoInformativo({
       titulo: "",
+      tipo: "Informação",
       texto: "",
     });
     setHomeFormError("");
@@ -10313,17 +10310,16 @@ export function PrototiposFolhaPage() {
   };
 
   const abrirNovoCronograma = () => {
-    setNovoCronograma({
-      titulo: "",
-      dataInicio: "",
-      dataFim: "",
-      horario: "",
-      descricao: "",
-      observacao: "",
-    });
     setHomeFormError("");
     setModalNovoCronogramaAberto(true);
   };
+
+  const getTipoInformativo = (
+    informativo: (typeof informativosFolha)[number],
+  ) =>
+    Object.entries(informativoTipoMeta).find(
+      ([, meta]) => meta.icon === informativo.icon,
+    )?.[0] ?? "Informação";
 
   const abrirEditarInformativo = (
     informativo: (typeof informativosFolha)[number],
@@ -10331,6 +10327,7 @@ export function PrototiposFolhaPage() {
     setInformativoEdicaoId(informativo.id);
     setNovoInformativo({
       titulo: informativo.titulo,
+      tipo: getTipoInformativo(informativo),
       texto: informativo.texto,
     });
     setHomeFormError("");
@@ -10338,34 +10335,129 @@ export function PrototiposFolhaPage() {
   };
 
   const removerInformativo = (informativoId: number) => {
+    if (!window.confirm("Confirmar exclusão do informativo?")) return;
+
     setInformativosFolha((current) =>
       current.filter((informativo) => informativo.id !== informativoId),
     );
+    setHomeFormError("Informativo removido com sucesso.");
+  };
+
+  const salvarInformativo = () => {
+    if (!novoInformativo.titulo.trim() || !novoInformativo.texto.trim()) {
+      setHomeFormError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const meta = informativoTipoMeta[novoInformativo.tipo];
+
+    if (informativoEdicaoId) {
+      setInformativosFolha((current) =>
+        current.map((informativo) =>
+          informativo.id === informativoEdicaoId
+            ? {
+                ...informativo,
+                icon: meta.icon,
+                titulo: novoInformativo.titulo.trim(),
+                texto: novoInformativo.texto.trim(),
+                destaque: meta.destaque,
+              }
+            : informativo,
+        ),
+      );
+      setModalNovoInformativoAberto(false);
+      setInformativoEdicaoId(null);
+      setHomeFormError("Informativo atualizado com sucesso.");
+      return;
+    }
+
+    setInformativosFolha((current) => [
+      {
+        id: Math.max(...current.map((item) => item.id), 0) + 1,
+        icon: meta.icon,
+        titulo: novoInformativo.titulo.trim(),
+        dataPostagem: new Intl.DateTimeFormat("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(new Date()),
+        texto: novoInformativo.texto.trim(),
+        destaque: meta.destaque,
+      },
+      ...current,
+    ]);
+    setModalNovoInformativoAberto(false);
+    setHomeFormError("Informativo cadastrado com sucesso.");
   };
 
   const parsePeriodoEvento = (periodo: string) => {
-    const [dataInicio = "", dataFim = "", horario = ""] = periodo
+    const partes = periodo
       .split(" - ")
       .map((item) => item.trim());
+
+    if (partes.length >= 3) {
+      const [dataInicio = "", dataFim = "", horario = ""] = partes;
+      return { dataInicio, dataFim, horario };
+    }
+
+    const [dataInicio = "", dataFim = ""] = partes;
+    const horario = dataFim.match(/\b\d{2}:\d{2}\b/)?.[0] ?? "";
 
     return { dataInicio, dataFim, horario };
   };
 
-  const abrirEditarEvento = (
-    cronogramaId: number,
-    eventoIndex: number,
-    evento: { periodo: string; descricao: string },
-  ) => {
-    setEventoEdicao({ cronogramaId, eventoIndex });
-    setEventoForm({
-      ...parsePeriodoEvento(evento.periodo),
-      descricao: evento.descricao,
-    });
-    setHomeFormError("");
-    setModalEditarEventoAberto(true);
+  const getEventoPeriodoCampos = (periodo: string) => {
+    const { dataInicio, dataFim, horario } = parsePeriodoEvento(periodo);
+    const normalizarDataHora = (value: string) => {
+      if (!value) return "";
+      if (/\d{4}/.test(value)) return value;
+
+      return `${value}/2026${horario ? ` ${horario}` : ""}`.trim();
+    };
+
+    return {
+      dataInicio: normalizarDataHora(dataInicio),
+      dataFim: normalizarDataHora(dataFim),
+    };
+  };
+
+  const formatPeriodoCronogramaDisplay = (periodo: string) => {
+    const { dataInicio, dataFim } = getEventoPeriodoCampos(periodo);
+    const dataInicioCurta = dataInicio.match(/\d{2}\/\d{2}/)?.[0] ?? "";
+    const dataFimCurta = dataFim.match(/\d{2}\/\d{2}/)?.[0] ?? "";
+    const horario = dataFim.match(/\b\d{2}:\d{2}\b/)?.[0]
+      ?? dataInicio.match(/\b\d{2}:\d{2}\b/)?.[0]
+      ?? "";
+
+    return [dataInicioCurta, dataFimCurta, horario]
+      .filter(Boolean)
+      .join(" - ");
+  };
+
+  const adicionarEventoCronograma = (cronogramaId: number) => {
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? {
+              ...cronograma,
+              eventos: [
+                ...cronograma.eventos,
+                {
+                  periodo: "",
+                  descricao: "",
+                  status: "Agendado",
+                },
+              ],
+            }
+          : cronograma,
+      ),
+    );
+    setHomeFormError("Novo evento adicionado. Preencha os campos na lista.");
   };
 
   const removerEvento = (cronogramaId: number, eventoIndex: number) => {
+    if (!window.confirm("Confirmar exclusão do evento?")) return;
+
     setCronogramasFolha((current) =>
       current
         .map((cronograma) =>
@@ -10375,145 +10467,170 @@ export function PrototiposFolhaPage() {
                 eventos: cronograma.eventos.filter((_, index) => index !== eventoIndex),
               }
             : cronograma,
-        )
-        .filter((cronograma) => cronograma.eventos.length),
-    );
-  };
-
-  const salvarNovoInformativo = () => {
-    if (
-      !novoInformativo.titulo.trim() ||
-      !novoInformativo.texto.trim()
-    ) {
-      setHomeFormError("Preencha todos os campos obrigatórios.");
-      return;
-    }
-
-    if (informativoEdicaoId) {
-      setInformativosFolha((current) =>
-        current.map((informativo) =>
-          informativo.id === informativoEdicaoId
-            ? {
-                ...informativo,
-                titulo: novoInformativo.titulo.trim(),
-                texto: novoInformativo.texto.trim(),
-              }
-            : informativo,
         ),
-      );
-      setModalNovoInformativoAberto(false);
-      setInformativoEdicaoId(null);
-      setHomeFormError("");
-      return;
-    }
-
-    setInformativosFolha((current) => [
-      {
-        id: Math.max(...current.map((item) => item.id), 0) + 1,
-        icon: "pi pi-info-circle",
-        titulo: novoInformativo.titulo.trim(),
-        dataPostagem: new Intl.DateTimeFormat("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }).format(new Date()),
-        texto: novoInformativo.texto.trim(),
-        destaque: "is-info",
-      },
-      ...current,
-    ]);
-    setModalNovoInformativoAberto(false);
-    setHomeFormError("");
+    );
+    setHomeFormError("Evento removido com sucesso.");
   };
 
-  const salvarEventoEditado = () => {
-    if (
-      !eventoForm.dataInicio.trim() ||
-      !eventoForm.dataFim.trim() ||
-      !eventoForm.horario.trim() ||
-      !eventoForm.descricao.trim() ||
-      !eventoEdicao
-    ) {
-      setHomeFormError("Preencha todos os campos obrigatórios.");
-      return;
-    }
-
+  const atualizarEventoCronograma = (
+    cronogramaId: number,
+    eventoIndex: number,
+    changes: Partial<{ periodo: string; descricao: string }>,
+  ) => {
     setCronogramasFolha((current) =>
       current.map((cronograma) =>
-        cronograma.id === eventoEdicao.cronogramaId
+        cronograma.id === cronogramaId
           ? {
               ...cronograma,
               eventos: cronograma.eventos.map((evento, index) =>
-                index === eventoEdicao.eventoIndex
-                  ? {
-                      ...evento,
-                      periodo: `${eventoForm.dataInicio.trim()} - ${eventoForm.dataFim.trim()} - ${eventoForm.horario.trim()}`,
-                      descricao: eventoForm.descricao.trim(),
-                      status: calcularStatusCronograma(
-                        eventoForm.dataInicio,
-                        eventoForm.dataFim,
-                      ),
-                    }
-                  : evento,
+                index === eventoIndex ? { ...evento, ...changes } : evento,
               ),
             }
           : cronograma,
       ),
     );
-    setModalEditarEventoAberto(false);
-    setEventoEdicao(null);
-    setHomeFormError("");
   };
 
-  const salvarNovoCronograma = () => {
-    if (
-      !novoCronograma.titulo.trim() ||
-      !novoCronograma.dataInicio.trim() ||
-      !novoCronograma.dataFim.trim() ||
-      !novoCronograma.horario.trim() ||
-      !novoCronograma.descricao.trim()
-    ) {
-      setHomeFormError("Preencha todos os campos obrigatórios.");
-      return;
-    }
+  const atualizarPeriodoEventoCronograma = (
+    cronogramaId: number,
+    eventoIndex: number,
+    field: "dataInicio" | "dataFim",
+    value: string,
+    periodo: string,
+  ) => {
+    const periodoAtual = getEventoPeriodoCampos(periodo);
+    const proximoPeriodo = {
+      ...periodoAtual,
+      [field]: value,
+    };
+
+    atualizarEventoCronograma(cronogramaId, eventoIndex, {
+      periodo: `${proximoPeriodo.dataInicio} - ${proximoPeriodo.dataFim}`,
+    });
+  };
+
+  const atualizarSessaoCronograma = (
+    cronogramaId: number,
+    changes: Partial<{ titulo: string }>,
+  ) => {
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? { ...cronograma, ...changes }
+          : cronograma,
+      ),
+    );
+  };
+
+  const moverEventoCronograma = (
+    cronogramaId: number,
+    origemIndex: number,
+    destinoIndex: number,
+  ) => {
+    if (origemIndex === destinoIndex) return;
+
+    setCronogramasFolha((current) =>
+      current.map((cronograma) => {
+        if (cronograma.id !== cronogramaId) return cronograma;
+
+        const eventos = [...cronograma.eventos];
+        const [evento] = eventos.splice(origemIndex, 1);
+        eventos.splice(destinoIndex, 0, evento);
+
+        return { ...cronograma, eventos };
+      }),
+    );
+  };
+
+  const adicionarSessaoCronograma = () => {
+    const cores = ["is-main", "is-rescission"];
+    const corAleatoria = cores[Math.floor(Math.random() * cores.length)];
 
     setCronogramasFolha((current) => [
       {
         id: Math.max(...current.map((item) => item.id), 0) + 1,
-        titulo: novoCronograma.titulo.trim(),
-        marcador: "is-main",
-        observacao: novoCronograma.observacao.trim(),
-        eventos: [
-          {
-            periodo: `${novoCronograma.dataInicio.trim()} - ${novoCronograma.dataFim.trim()} - ${novoCronograma.horario.trim()}`,
-            descricao: novoCronograma.descricao.trim(),
-            status: calcularStatusCronograma(
-              novoCronograma.dataInicio,
-              novoCronograma.dataFim,
-            ),
-          },
-        ],
+        titulo: `Nova sessão ${current.length + 1}`,
+        marcador: corAleatoria,
+        observacao: "",
+        eventos: [],
       },
       ...current,
     ]);
-    setModalNovoCronogramaAberto(false);
-    setHomeFormError("");
+    setHomeFormError("Nova sessão adicionada.");
   };
 
-  const calcularStatusCronograma = (dataInicio: string, dataFim: string) => {
+  const removerCronograma = (cronogramaId: number) => {
+    if (!window.confirm("Confirmar exclusão da sessão e seus eventos?")) return;
+
+    setCronogramasFolha((current) =>
+      current.filter((cronograma) => cronograma.id !== cronogramaId),
+    );
+    setHomeFormError("Sessão removida com sucesso.");
+  };
+
+  const parseDataCronograma = (data: string, horario = "00:00") => {
     const parseDiaMes = (value: string) => {
-      const [dia, mes] = value.split("/").map(Number);
+      const [datePart = "", timePart = ""] = value.trim().split(/\s+/);
+      const [dia, mes, ano = 2026] = datePart.split("/").map(Number);
+      const horarioBase = timePart || horario;
+      const [hora = 0, minuto = 0] = horarioBase.split(":").map(Number);
       if (!dia || !mes) return null;
-      return new Date(2026, mes - 1, dia).getTime();
+      return { dia, mes, ano, hora, minuto };
     };
-    const hojeMock = new Date(2026, 5, 16).getTime();
-    const inicio = parseDiaMes(dataInicio.trim());
-    const fim = parseDiaMes(dataFim.trim());
+    const parsedData = parseDiaMes(data.trim());
+
+    if (!parsedData) return null;
+    return new Date(
+      parsedData.ano,
+      parsedData.mes - 1,
+      parsedData.dia,
+      parsedData.hora,
+      parsedData.minuto,
+    );
+  };
+
+  const isPeriodoCronogramaValido = (dataInicio: string, dataFim: string) => {
+    const inicio = parseDataCronograma(dataInicio);
+    const fim = parseDataCronograma(dataFim);
+
+    if (!inicio || !fim) return true;
+    return fim.getTime() >= inicio.getTime();
+  };
+
+  const calcularStatusCronograma = (
+    dataInicio: string,
+    dataFim: string,
+    horario = "23:59",
+  ) => {
+    const agora = new Date().getTime();
+    const inicio = parseDataCronograma(dataInicio, "00:00")?.getTime();
+    const fim = parseDataCronograma(dataFim, horario)?.getTime();
 
     if (!inicio || !fim) return "Agendado";
-    if (hojeMock < inicio) return "Agendado";
-    if (hojeMock > fim) return "Concluído";
+    if (agora < inicio) return "Agendado";
+    if (agora > fim) return "Concluído";
     return "Em Andamento";
+  };
+
+  const getStatusEventoCronograma = (periodo: string) => {
+    const { dataInicio, dataFim, horario } = parsePeriodoEvento(periodo);
+    return calcularStatusCronograma(dataInicio, dataFim, horario);
+  };
+
+  const renderEventoStatusTag = (periodo: string) => {
+    const status = getStatusEventoCronograma(periodo);
+
+    return (
+      <strong
+        className={`prototype-folha-home-event-tag is-${status
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, "-")
+          .toLowerCase()}`}
+      >
+        {status}
+      </strong>
+    );
   };
 
   return (
@@ -10538,6 +10655,7 @@ export function PrototiposFolhaPage() {
                   <BotaoSeplag
                     type="button"
                     label="+ Novo Informativo"
+                    icon="pi pi-plus"
                     className="prototype-folha-home-full-action"
                     onClick={abrirNovoInformativo}
                   />
@@ -10560,29 +10678,19 @@ export function PrototiposFolhaPage() {
                     <time>{informativo.dataPostagem}</time>
                     <p>{informativo.texto}</p>
                     {modoEdicaoHomeFolha ? (
-                      <div className="prototype-folha-home-icon-actions">
-                        <BotaoIconSeplag
+                      <div className="prototype-folha-home-inline-actions">
+                        <button
                           type="button"
-                          tooltip="Editar"
-                          icon="pi pi-pencil"
-                          style={{
-                            backgroundColor: "#fbc02d",
-                            borderColor: "#fbc02d",
-                            color: "#102a43",
-                          }}
                           onClick={() => abrirEditarInformativo(informativo)}
-                        />
-                        <BotaoIconSeplag
+                        >
+                          Editar
+                        </button>
+                        <button
                           type="button"
-                          tooltip="Remover"
-                          icon="pi pi-trash"
-                          style={{
-                            backgroundColor: "#d32f2f",
-                            borderColor: "#d32f2f",
-                            color: "#ffffff",
-                          }}
                           onClick={() => removerInformativo(informativo.id)}
-                        />
+                        >
+                          Remover
+                        </button>
                       </div>
                     ) : null}
                   </article>
@@ -10620,7 +10728,8 @@ export function PrototiposFolhaPage() {
                 <div className="prototype-folha-home-panel-toolbar">
                   <BotaoSeplag
                     type="button"
-                    label="+ Novo Cronograma"
+                    label="Configurar Cronograma"
+                    icon="pi pi-cog"
                     className="prototype-folha-home-full-action"
                     onClick={abrirNovoCronograma}
                   />
@@ -10650,47 +10759,9 @@ export function PrototiposFolhaPage() {
                           key={`${cronograma.id}-${evento.periodo}-${evento.descricao}`}
                           className="prototype-folha-home-schedule-event"
                         >
-                          <time>{evento.periodo}</time>
+                          <time>{formatPeriodoCronogramaDisplay(evento.periodo)}</time>
                           <span>{evento.descricao}</span>
-                          <strong
-                            className={`prototype-folha-home-event-tag is-${evento.status
-                              .normalize("NFD")
-                              .replace(/[\u0300-\u036f]/g, "")
-                              .replace(/\s+/g, "-")
-                              .toLowerCase()}`}
-                          >
-                            {evento.status}
-                          </strong>
-                          {modoEdicaoHomeFolha ? (
-                            <div className="prototype-folha-home-icon-actions">
-                              <BotaoIconSeplag
-                                type="button"
-                                tooltip="Editar"
-                                icon="pi pi-pencil"
-                                style={{
-                                  backgroundColor: "#fbc02d",
-                                  borderColor: "#fbc02d",
-                                  color: "#102a43",
-                                }}
-                                onClick={() =>
-                                  abrirEditarEvento(cronograma.id, eventoIndex, evento)
-                                }
-                              />
-                              <BotaoIconSeplag
-                                type="button"
-                                tooltip="Remover"
-                                icon="pi pi-trash"
-                                style={{
-                                  backgroundColor: "#d32f2f",
-                                  borderColor: "#d32f2f",
-                                  color: "#ffffff",
-                                }}
-                                onClick={() =>
-                                  removerEvento(cronograma.id, eventoIndex)
-                                }
-                              />
-                            </div>
-                          ) : null}
+                          {renderEventoStatusTag(evento.periodo)}
                         </div>
                       ))}
                     </div>
@@ -10733,6 +10804,28 @@ export function PrototiposFolhaPage() {
                 }
               />
             </label>
+            <div className="prototype-folha-home-icon-picker">
+              <span>Ícone</span>
+              <div>
+                {Object.entries(informativoTipoMeta).map(([tipo, meta]) => (
+                  <button
+                    key={tipo}
+                    type="button"
+                    className={novoInformativo.tipo === tipo ? "is-selected" : ""}
+                    title={tipo}
+                    onClick={() =>
+                      setNovoInformativo((current) => ({
+                        ...current,
+                        tipo,
+                      }))
+                    }
+                  >
+                    <i className={meta.icon} aria-hidden="true" />
+                    <small>{tipo}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
             <label>
               Texto
               <textarea
@@ -10759,7 +10852,7 @@ export function PrototiposFolhaPage() {
                 type="button"
                 label={informativoEdicaoId ? "Salvar" : "Adicionar"}
                 icon="pi pi-check"
-                onClick={salvarNovoInformativo}
+                onClick={salvarInformativo}
               />
             </div>
           </div>
@@ -10767,200 +10860,184 @@ export function PrototiposFolhaPage() {
 
         <ModalSeplag
           visible={modalNovoCronogramaAberto}
-          titulo="Novo Cronograma"
+          titulo="Configurar Cronograma"
           fechar={() => setModalNovoCronogramaAberto(false)}
-          tamanho="760px"
+          tamanho="1180px"
           hideFooter
         >
-          <div className="col-12 prototype-folha-home-modal-form">
+          <div className="col-12 prototype-folha-home-modal-form prototype-folha-home-schedule-config">
             {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
-            <label>
-              Nome do ciclo
-              <input
-                type="text"
-                placeholder="Folha complementar"
-                value={novoCronograma.titulo}
-                onChange={(event) =>
-                  setNovoCronograma((current) => ({
-                    ...current,
-                    titulo: event.target.value,
-                  }))
-                }
+            <div className="prototype-folha-home-config-toolbar">
+              <BotaoSeplag
+                type="button"
+                label="Nova sessão"
+                icon="pi pi-plus"
+                onClick={adicionarSessaoCronograma}
               />
-            </label>
-            <div className="prototype-folha-home-modal-grid">
-              <label>
-                Data início
-                <input
-                  type="text"
-                  placeholder="14/06"
-                  value={novoCronograma.dataInicio}
-                  onChange={(event) =>
-                    setNovoCronograma((current) => ({
-                      ...current,
-                      dataInicio: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Data fim
-                <input
-                  type="text"
-                  placeholder="16/06"
-                  value={novoCronograma.dataFim}
-                  onChange={(event) =>
-                    setNovoCronograma((current) => ({
-                      ...current,
-                      dataFim: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Horário
-                <input
-                  type="text"
-                  placeholder="18:00"
-                  value={novoCronograma.horario}
-                  onChange={(event) =>
-                    setNovoCronograma((current) => ({
-                      ...current,
-                      horario: event.target.value,
-                    }))
-                  }
-                />
-              </label>
             </div>
-            <label>
-              Descrição do primeiro evento
-              <input
-                type="text"
-                value={novoCronograma.descricao}
-                onChange={(event) =>
-                  setNovoCronograma((current) => ({
-                    ...current,
-                    descricao: event.target.value,
-                  }))
-                }
-              />
-            </label>
-            <label>
-              Observação
-              <textarea
-                rows={3}
-                value={novoCronograma.observacao}
-                onChange={(event) =>
-                  setNovoCronograma((current) => ({
-                    ...current,
-                    observacao: event.target.value,
-                  }))
-                }
-              />
-            </label>
+            <div className="prototype-folha-home-config-list">
+              {cronogramasFolha.map((cronograma) => (
+                <div
+                  key={cronograma.id}
+                  className="prototype-folha-home-config-section"
+                >
+                  <div className="prototype-folha-home-config-section-head">
+                    <label className="prototype-folha-home-config-title-field">
+                      Título
+                      <input
+                        type="text"
+                        aria-label="Título da sessão"
+                        value={cronograma.titulo}
+                        className="prototype-folha-home-session-input"
+                        onChange={(event) =>
+                          atualizarSessaoCronograma(cronograma.id, {
+                            titulo: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <div className="prototype-folha-home-icon-actions">
+                      <BotaoIconSeplag
+                        type="button"
+                        tooltip="Novo evento"
+                        icon="pi pi-plus"
+                        onClick={() => adicionarEventoCronograma(cronograma.id)}
+                      />
+                      <BotaoIconSeplag
+                        type="button"
+                        tooltip="Remover sessão"
+                        icon="pi pi-trash"
+                        style={{
+                          backgroundColor: "#d32f2f",
+                          borderColor: "#d32f2f",
+                          color: "#ffffff",
+                        }}
+                        onClick={() => removerCronograma(cronograma.id)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="prototype-folha-home-config-events">
+                    {cronograma.eventos.map((evento, eventoIndex) => (
+                      (() => {
+                        const periodoCampos = getEventoPeriodoCampos(evento.periodo);
+
+                        return (
+                      <div
+                        key={`${cronograma.id}-${eventoIndex}-${evento.periodo}-${evento.descricao}`}
+                        className="prototype-folha-home-config-event"
+                        draggable
+                        onDragStart={() =>
+                          setEventoArrastado({
+                            cronogramaId: cronograma.id,
+                            eventoIndex,
+                          })
+                        }
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          if (
+                            eventoArrastado?.cronogramaId === cronograma.id
+                          ) {
+                            moverEventoCronograma(
+                              cronograma.id,
+                              eventoArrastado.eventoIndex,
+                              eventoIndex,
+                            );
+                          }
+                          setEventoArrastado(null);
+                        }}
+                        onDragEnd={() => setEventoArrastado(null)}
+                      >
+                        <i
+                          className="pi pi-bars prototype-folha-home-drag-handle"
+                          aria-hidden="true"
+                        />
+                        <label>
+                          <span className="prototype-folha-home-required-label">
+                            Data Início<em>*</em>
+                          </span>
+                          <input
+                            type="text"
+                            aria-label="Data início do evento"
+                            placeholder="dd/mm/aaaa 17:00"
+                            value={periodoCampos.dataInicio}
+                            onChange={(event) =>
+                              atualizarPeriodoEventoCronograma(
+                                cronograma.id,
+                                eventoIndex,
+                                "dataInicio",
+                                event.target.value,
+                                evento.periodo,
+                              )
+                            }
+                          />
+                        </label>
+                        <label>
+                          Data Fim
+                          <input
+                            type="text"
+                            aria-label="Data fim do evento"
+                            placeholder="dd/mm/aaaa 18:00"
+                            value={periodoCampos.dataFim}
+                            onChange={(event) =>
+                              atualizarPeriodoEventoCronograma(
+                                cronograma.id,
+                                eventoIndex,
+                                "dataFim",
+                                event.target.value,
+                                evento.periodo,
+                              )
+                            }
+                          />
+                        </label>
+                        <label>
+                          Descrição
+                          <input
+                            type="text"
+                            aria-label="Descrição do evento"
+                            value={evento.descricao}
+                            onChange={(event) =>
+                              atualizarEventoCronograma(
+                                cronograma.id,
+                                eventoIndex,
+                                { descricao: event.target.value },
+                              )
+                            }
+                          />
+                        </label>
+                        <button
+                            type="button"
+                            className="prototype-folha-home-config-remove"
+                            aria-label="Remover evento"
+                            title="Remover evento"
+                            onClick={() => removerEvento(cronograma.id, eventoIndex)}
+                          >
+                            <i className="pi pi-times" aria-hidden="true" />
+                          </button>
+                      </div>
+                        );
+                      })()
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
             <div className="prototype-folha-home-modal-actions">
               <BotaoVoltarSeplag
                 type="button"
-                label="Cancelar"
+                label="Voltar"
                 onClick={() => setModalNovoCronogramaAberto(false)}
               />
               <BotaoSalvarSeplag
                 type="button"
-                label="Adicionar"
-                icon="pi pi-check"
-                onClick={salvarNovoCronograma}
+                label="Salvar"
+                icon="pi pi-save"
+                onClick={() => setModalNovoCronogramaAberto(false)}
               />
             </div>
           </div>
         </ModalSeplag>
 
-        <ModalSeplag
-          visible={modalEditarEventoAberto}
-          titulo="Editar Evento"
-          fechar={() => {
-            setModalEditarEventoAberto(false);
-            setEventoEdicao(null);
-          }}
-          tamanho="720px"
-          hideFooter
-        >
-          <div className="col-12 prototype-folha-home-modal-form">
-            {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
-            <div className="prototype-folha-home-modal-grid">
-              <label>
-                Data início
-                <input
-                  type="text"
-                  placeholder="14/06"
-                  value={eventoForm.dataInicio}
-                  onChange={(event) =>
-                    setEventoForm((current) => ({
-                      ...current,
-                      dataInicio: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Data fim
-                <input
-                  type="text"
-                  placeholder="16/06"
-                  value={eventoForm.dataFim}
-                  onChange={(event) =>
-                    setEventoForm((current) => ({
-                      ...current,
-                      dataFim: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Hora fim
-                <input
-                  type="text"
-                  placeholder="18:00"
-                  value={eventoForm.horario}
-                  onChange={(event) =>
-                    setEventoForm((current) => ({
-                      ...current,
-                      horario: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-            </div>
-            <label>
-              Descrição
-              <input
-                type="text"
-                value={eventoForm.descricao}
-                onChange={(event) =>
-                  setEventoForm((current) => ({
-                    ...current,
-                    descricao: event.target.value,
-                  }))
-                }
-              />
-            </label>
-            <div className="prototype-folha-home-modal-actions">
-              <BotaoVoltarSeplag
-                type="button"
-                label="Cancelar"
-                onClick={() => {
-                  setModalEditarEventoAberto(false);
-                  setEventoEdicao(null);
-                }}
-              />
-              <BotaoSalvarSeplag
-                type="button"
-                label="Salvar"
-                icon="pi pi-check"
-                onClick={salvarEventoEditado}
-              />
-            </div>
-          </div>
-        </ModalSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -18677,9 +18754,9 @@ export function PrototiposFolhaConformidadePage() {
   const [filtrosGerados, setFiltrosGerados] =
     useState<FolhaConformidadeFiltroForm>(defaultFilters);
   const [modalFiltrosAberto, setModalFiltrosAberto] = useState(false);
-  const [modalFiltrosModo, setModalFiltrosModo] = useState<"carregar" | "salvar">(
-    "carregar",
-  );
+  const [modalFiltrosModo, setModalFiltrosModo] = useState<
+    "aplicar" | "carregar" | "salvar"
+  >("carregar");
   const [filtrosSalvos, setFiltrosSalvos] = useState<
     FolhaConformidadeFiltroSalvoRow[]
   >(folhaConformidadeFiltrosSalvosMock);
@@ -18773,6 +18850,12 @@ export function PrototiposFolhaConformidadePage() {
     setModalFiltrosAberto(true);
   };
 
+  const abrirModalAplicarFiltro = () => {
+    setModalFiltrosModo("aplicar");
+    setPaginaGerenciadorFiltro(1);
+    setModalFiltrosAberto(true);
+  };
+
   const abrirModalSalvarFiltro = () => {
     setModalFiltrosModo("salvar");
     const filtroEmEdicao = filtrosSalvos.find(
@@ -18833,6 +18916,13 @@ export function PrototiposFolhaConformidadePage() {
     setFiltrosGerados(filtro.filtros);
     setColunasSelecionadas(filtro.colunas);
     setFiltroEmEdicaoId(filtro.id);
+    setModalFiltrosAberto(false);
+  };
+
+  const handleAplicarFiltroSalvo = (filtro: FolhaConformidadeFiltroSalvoRow) => {
+    reset(filtro.filtros);
+    setFiltrosGerados(filtro.filtros);
+    setColunasSelecionadas(filtro.colunas);
     setModalFiltrosAberto(false);
   };
 
@@ -18992,11 +19082,12 @@ export function PrototiposFolhaConformidadePage() {
   ];
 
   const historicoColumns: ColumnMetaSeplag<FolhaConformidadeHistoricoRow>[] = [
-    { header: "Data/Hora", field: "dataHora" },
+    { header: "Data/Hora da emissão", field: "dataHoraEmissao" },
+    { header: "Número da Folha", field: "numeroFolha" },
+    { header: "Nome da Folha", field: "nomeFolha" },
     { header: "Competência", field: "competencia" },
-    { header: "Folha", field: "folha" },
-    { header: "Tipo", field: "tipoRelatorio" },
-    { header: "Gerado por", field: "geradoPor" },
+    { header: "Tipo do Relatório", field: "tipoRelatorio" },
+    { header: "Solicitante", field: "solicitante" },
     {
       header: "Download",
       body: (row) => (
@@ -19024,11 +19115,11 @@ export function PrototiposFolhaConformidadePage() {
           actions={
             <BotaoSeplag
               type="button"
-              label="Gerenciar Filtros"
-              icon="pi pi-cog"
+              label="Aplicar filtro"
+              icon="pi pi-filter"
               outlined
               className="prototype-dynamic-report-load-filter"
-              onClick={abrirModalCarregarFiltro}
+              onClick={abrirModalAplicarFiltro}
             />
           }
         >
@@ -19475,15 +19566,21 @@ export function PrototiposFolhaConformidadePage() {
 
         <ModalSeplag
           visible={modalFiltrosAberto}
-          titulo="Gerenciador de Filtros"
+          titulo={
+            modalFiltrosModo === "salvar"
+              ? "Salvar Filtro"
+              : modalFiltrosModo === "aplicar"
+                ? "Aplicar filtro"
+                : "Gerenciador de Filtros"
+          }
           fechar={() => setModalFiltrosAberto(false)}
-          labelFechar={modalFiltrosModo === "carregar" ? "Voltar" : "Cancelar"}
+          labelFechar={modalFiltrosModo === "salvar" ? "Cancelar" : "Voltar"}
           labelAcao="Salvar filtro"
           iconAcao="pi pi-save"
           tamanho="980px"
           funcAcao={handleSubmitSalvarFiltro(handleSalvarFiltro)}
           customFooter={
-            modalFiltrosModo === "carregar" ? (
+            modalFiltrosModo !== "salvar" ? (
               <div className="prototype-dynamic-report-filter-footer">
                 <BotaoVoltarSeplag
                   type="button"
@@ -19500,132 +19597,157 @@ export function PrototiposFolhaConformidadePage() {
               <div className="prototype-validation-panel">{feedbackFiltro}</div>
             ) : null}
 
-            <div className="prototype-dynamic-report-filter-form">
-              <strong>Filtro - Gerenciador de Filtros</strong>
-              <div className="prototype-dynamic-report-manager-filters">
-                <TextFieldSeplag
-                  label="Nome"
-                  name="nome"
-                  control={gerenciadorFiltroControl}
-                  cols="12"
-                  maxLength={150}
-                  placeholder="Nome do filtro"
-                />
-                <TextFieldSeplag
-                  label="Criado por"
-                  name="criadoPor"
-                  control={gerenciadorFiltroControl}
-                  cols="12"
-                  maxLength={150}
-                  placeholder="Nome do criador"
-                />
-                <div className="prototype-dynamic-report-manager-clear">
-                  <BotaoLimparFiltroSeplag
-                    type="button"
-                    label="Limpar Filtro"
-                    onClick={handleLimparGerenciadorFiltro}
-                  />
+            {modalFiltrosModo !== "salvar" ? (
+              <>
+                <div className="prototype-dynamic-report-filter-form">
+                  <strong>
+                    Filtro -{" "}
+                    {modalFiltrosModo === "aplicar"
+                      ? "Aplicar filtro"
+                      : "Gerenciador de Filtros"}
+                  </strong>
+                  <div className="prototype-dynamic-report-manager-filters">
+                    <TextFieldSeplag
+                      label="Nome"
+                      name="nome"
+                      control={gerenciadorFiltroControl}
+                      cols="12"
+                      maxLength={150}
+                      placeholder="Nome do filtro"
+                    />
+                    <TextFieldSeplag
+                      label="Criado por"
+                      name="criadoPor"
+                      control={gerenciadorFiltroControl}
+                      cols="12"
+                      maxLength={150}
+                      placeholder="Nome do criador"
+                    />
+                    <div className="prototype-dynamic-report-manager-clear">
+                      <BotaoLimparFiltroSeplag
+                        type="button"
+                        label="Limpar Filtro"
+                        onClick={handleLimparGerenciadorFiltro}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="prototype-dynamic-report-filter-list">
-              <strong>Grid - Gerenciador de Filtros</strong>
-              <div className="prototype-table-wrapper">
-                <table className="prototype-simple-table">
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Visibilidade</th>
-                      <th>Data da Criação</th>
-                      <th>Data da Última Alteração</th>
-                      <th>Criado por</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtrosSalvosPaginados.map((filtro) => (
-                      <tr key={filtro.id}>
-                        <td>{filtro.nome}</td>
-                        <td>{filtro.visibilidade}</td>
-                        <td>{filtro.criadoEm}</td>
-                        <td>{filtro.atualizadoEm}</td>
-                        <td>{filtro.criadoPor}</td>
-                        <td>
-                          <div className="prototype-dynamic-report-filter-actions-cell">
-                            <BotaoIconSeplag
-                              type="button"
-                              icon="pi pi-pencil"
-                              tooltip="Editar"
-                              onClick={() => handleEditarFiltro(filtro)}
-                            />
-                            {podeExcluirFiltroSalvo(filtro) ? (
-                              <BotaoIconSeplag
-                                type="button"
-                                severity="danger"
-                                icon="pi pi-trash"
-                                tooltip="Excluir"
-                                onClick={() => setFiltroParaExcluir(filtro)}
-                              />
-                            ) : null}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filtrosSalvosPaginados.length === 0 ? (
+                <div className="prototype-dynamic-report-filter-list">
+                  <strong>
+                    Grid -{" "}
+                    {modalFiltrosModo === "aplicar"
+                      ? "Aplicar filtro"
+                      : "Gerenciador de Filtros"}
+                  </strong>
+                  <div className="prototype-table-wrapper">
+                    <table className="prototype-simple-table">
+                      <thead>
                       <tr>
-                        <td colSpan={6} className="prototype-empty-table-cell">
-                          Nenhum filtro encontrado.
-                        </td>
+                        <th>Nome</th>
+                        <th>Visibilidade</th>
+                        <th>Data da Criação</th>
+                        <th>Data da Última Alteração</th>
+                        <th>Criado por</th>
+                        <th>Ações</th>
                       </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
-              <div className="prototype-dynamic-report-manager-pagination">
-                <span>
-                  Página {paginaGerenciadorFiltroAtual} de{" "}
-                  {totalPaginasGerenciadorFiltro}
-                </span>
-                <select
-                  value={linhasGerenciadorFiltro}
-                  onChange={(event) => {
-                    setLinhasGerenciadorFiltro(Number(event.target.value));
-                    setPaginaGerenciadorFiltro(1);
-                  }}
-                >
-                  {[5, 10, 25, 50].map((total) => (
-                    <option key={total} value={total}>
-                      {total} registros
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPaginaGerenciadorFiltro((pagina) =>
-                      Math.max(1, pagina - 1),
-                    )
-                  }
-                  disabled={paginaGerenciadorFiltroAtual === 1}
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPaginaGerenciadorFiltro((pagina) =>
-                      Math.min(totalPaginasGerenciadorFiltro, pagina + 1),
-                    )
-                  }
-                  disabled={
-                    paginaGerenciadorFiltroAtual === totalPaginasGerenciadorFiltro
-                  }
-                >
-                  Próxima
-                </button>
-              </div>
-            </div>
+                      </thead>
+                      <tbody>
+                        {filtrosSalvosPaginados.map((filtro) => (
+                          <tr key={filtro.id}>
+                            <td>{filtro.nome}</td>
+                            <td>{filtro.visibilidade}</td>
+                            <td>{filtro.criadoEm}</td>
+                            <td>{filtro.atualizadoEm}</td>
+                            <td>{filtro.criadoPor}</td>
+                            <td>
+                              <div className="prototype-dynamic-report-filter-actions-cell">
+                                {modalFiltrosModo === "aplicar" ? (
+                                  <BotaoIconSeplag
+                                    type="button"
+                                    icon="pi pi-check"
+                                    tooltip="Aplicar filtro"
+                                    onClick={() => handleAplicarFiltroSalvo(filtro)}
+                                  />
+                                ) : (
+                                  <>
+                                    <BotaoIconSeplag
+                                      type="button"
+                                      icon="pi pi-pencil"
+                                      tooltip="Editar"
+                                      onClick={() => handleEditarFiltro(filtro)}
+                                    />
+                                    {podeExcluirFiltroSalvo(filtro) ? (
+                                      <BotaoIconSeplag
+                                        type="button"
+                                        severity="danger"
+                                        icon="pi pi-trash"
+                                        tooltip="Excluir"
+                                        onClick={() => setFiltroParaExcluir(filtro)}
+                                      />
+                                    ) : null}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filtrosSalvosPaginados.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="prototype-empty-table-cell">
+                              Nenhum filtro encontrado.
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="prototype-dynamic-report-manager-pagination">
+                    <span>
+                      Página {paginaGerenciadorFiltroAtual} de{" "}
+                      {totalPaginasGerenciadorFiltro}
+                    </span>
+                    <select
+                      value={linhasGerenciadorFiltro}
+                      onChange={(event) => {
+                        setLinhasGerenciadorFiltro(Number(event.target.value));
+                        setPaginaGerenciadorFiltro(1);
+                      }}
+                    >
+                      {[5, 10, 25, 50].map((total) => (
+                        <option key={total} value={total}>
+                          {total} registros
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPaginaGerenciadorFiltro((pagina) =>
+                          Math.max(1, pagina - 1),
+                        )
+                      }
+                      disabled={paginaGerenciadorFiltroAtual === 1}
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPaginaGerenciadorFiltro((pagina) =>
+                          Math.min(totalPaginasGerenciadorFiltro, pagina + 1),
+                        )
+                      }
+                      disabled={
+                        paginaGerenciadorFiltroAtual === totalPaginasGerenciadorFiltro
+                      }
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : null}
 
             {modalFiltrosModo === "salvar" ? (
               <div className="prototype-dynamic-report-filter-form">
