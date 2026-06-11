@@ -113,8 +113,11 @@ export interface FolhaPagamentoFiltroForm {
   orgaos?: string[];
   mesAnoReferencia?: string;
   competencia?: string;
+  dataProcessamento?: string;
+  numeroExecucao?: string;
   tipoProcessamento?: "" | "TOTAL" | "PARCIAL";
   situacao?: FolhaPagamentoSituacao | FolhaPagamentoExecucaoSituacao | "";
+  responsavel?: string;
 }
 
 export interface SolicitacaoAjusteFolhaFiltroForm {

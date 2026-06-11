@@ -1739,6 +1739,48 @@
   line-height: 1;
 }
 
+.prototype-processamento-folha-filters {
+  display: grid !important;
+  grid-template-columns:
+    minmax(210px, 1.35fr)
+    minmax(110px, 0.72fr)
+    minmax(145px, 0.82fr)
+    minmax(210px, 1.35fr)
+    minmax(130px, 0.9fr)
+    minmax(180px, 1.1fr)
+    96px;
+  align-items: end;
+  gap: 12px 14px;
+}
+
+.prototype-processamento-folha-filters > * {
+  width: 100% !important;
+  max-width: none !important;
+  flex: none !important;
+  padding: 0 !important;
+}
+
+.prototype-processamento-folha-filters .prototype-category-clear {
+  align-self: end;
+}
+
+.prototype-processamento-folha-filters .prototype-category-clear .p-button {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1360px) {
+  .prototype-processamento-folha-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .prototype-processamento-folha-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
 .prototype-processamento-folha-modal {
   position: relative;
   padding-top: 8px !important;
@@ -3064,6 +3106,179 @@
   .p-datatable-tbody
   > tr
   > td:nth-child(10)
+  .p-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-table {
+  min-width: 1320px !important;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(1),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(1) {
+  width: 86px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(2),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(2) {
+  width: 72px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(3),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(3) {
+  width: 190px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(4),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(4) {
+  width: 116px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(5),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(5) {
+  width: 64px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(6),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(6),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(7),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(7) {
+  width: 98px;
+  text-align: center;
+  padding-left: 8px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(8),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(8) {
+  width: 72px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(9),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(9) {
+  width: 136px;
+  text-align: left;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(10),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(10) {
+  width: 56px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(11),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(11) {
+  width: 136px;
+  text-align: center;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(11)
+  .prototype-processamento-status-badge {
+  min-width: 112px;
+  max-width: 122px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-thead
+  > tr
+  > th:nth-child(12),
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(12) {
+  width: 104px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(12)
+  > div {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.prototype-folha-pagamento-table.prototype-processamento-table
+  .p-datatable-tbody
+  > tr
+  > td:nth-child(12)
   .p-button {
   width: 34px;
   min-width: 34px;

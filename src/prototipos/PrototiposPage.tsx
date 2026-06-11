@@ -13553,8 +13553,11 @@ export function PrototiposFolhaPagamentoPage({
       orgaos: [],
       mesAnoReferencia: "",
       competencia: "",
+      dataProcessamento: "",
+      numeroExecucao: "",
       tipoProcessamento: "",
       situacao: "",
+      responsavel: "",
     },
   });
   const {
@@ -13650,6 +13653,7 @@ export function PrototiposFolhaPagamentoPage({
     control: relatorioTecnicoControl,
     reset: resetRelatorioTecnico,
     handleSubmit: handleSubmitRelatorioTecnico,
+    formState: { errors: relatorioTecnicoFormErrors },
   } = useForm<RelatorioTecnicoProcessamentoForm>({
     defaultValues: {
       tipoFiltro: "",
@@ -13830,6 +13834,9 @@ export function PrototiposFolhaPagamentoPage({
       })),
   ];
   const competenciaProcessamentoFiltro = normalizeMesAno(filtros.competencia);
+  const dataProcessamentoFiltro = filtros.dataProcessamento?.trim() ?? "";
+  const numeroExecucaoFiltro = filtros.numeroExecucao?.trim().toLowerCase() ?? "";
+  const responsavelFiltro = filtros.responsavel?.trim().toLowerCase() ?? "";
   const processamentosFiltrados = processamentosBase.filter((processamento) => {
     const atendeTermo =
       !termoBusca ||
@@ -13843,8 +13850,25 @@ export function PrototiposFolhaPagamentoPage({
     const atendeTipo =
       !filtros.tipoProcessamento ||
       processamento.tipoProcessamento.toUpperCase() === filtros.tipoProcessamento;
+    const atendeDataProcessamento =
+      !dataProcessamentoFiltro ||
+      processamento.dataHoraInicio.includes(dataProcessamentoFiltro);
+    const atendeNumeroExecucao =
+      !numeroExecucaoFiltro ||
+      processamento.numeroExecucao.toLowerCase().includes(numeroExecucaoFiltro);
+    const atendeResponsavel =
+      !responsavelFiltro ||
+      processamento.responsavel.toLowerCase().includes(responsavelFiltro);
 
-    return atendeTermo && atendeSituacao && atendeCompetencia && atendeTipo;
+    return (
+      atendeTermo &&
+      atendeSituacao &&
+      atendeCompetencia &&
+      atendeTipo &&
+      atendeDataProcessamento &&
+      atendeNumeroExecucao &&
+      atendeResponsavel
+    );
   });
   const processamentoResults = {
     ...createResults(processamentosFiltrados),
@@ -14356,15 +14380,23 @@ export function PrototiposFolhaPagamentoPage({
     { header: "Competência", body: (row) => formatMesAno(row.competencia) },
     { field: "tipoProcessamento", header: "Tipo" },
     {
-      header: "Situação",
-      body: (row) => renderProcessamentoSituacaoBadge(row.situacao),
+      header: "Início",
+      body: (row) => renderDataHoraProcessamento(row.dataHoraInicio),
     },
     {
-      header: "Solicitado em",
-      body: (row) => renderDataHoraProcessamento(row.solicitadoEm),
+      header: "Término",
+      body: (row) => renderDataHoraProcessamento(row.dataHoraFim),
+    },
+    {
+      header: "Tempo",
+      body: (row) => getTempoExecucaoFolha(row),
     },
     { field: "responsavel", header: "Responsável" },
     { field: "erros", header: "Erros" },
+    {
+      header: "Situação",
+      body: (row) => renderProcessamentoSituacaoBadge(row.situacao),
+    },
   ];
 
   const execucoesFolha = folhaSelecionada
@@ -14658,7 +14690,9 @@ export function PrototiposFolhaPagamentoPage({
   const getRelatorioTecnicoErrorMessage = (
     name: keyof RelatorioTecnicoProcessamentoForm,
   ) => {
-    const message = relatorioTecnicoErrors[name];
+    const message =
+      relatorioTecnicoErrors[name] ??
+      relatorioTecnicoFormErrors[name]?.message;
     return message ? <small className="p-error">{message}</small> : null;
   };
 
@@ -14786,50 +14820,84 @@ export function PrototiposFolhaPagamentoPage({
             <div className="prototype-validation-panel">{feedback}</div>
           ) : null}
 
-          <div className="col-12 prototype-category-filters prototype-folha-pagamento-filters">
-            <TextFieldSeplag
-              name="termo"
-              control={control}
-              label="Pesquisar por número ou nome da folha"
-              cols="12 12 4"
-              getFormErrorMessage={() => null}
-            />
-            <DropdownFieldSeplag
-              name="situacao"
-              control={control}
-              label={isTelaProcessamentoFolha ? "Situação da Execução" : "Situação"}
-              cols="12 6 3"
-              options={
-                isTelaProcessamentoFolha
-                  ? processamentoFolhaSituacaoOptions
-                  : folhaPagamentoSituacaoOptions
-              }
-              optionLabel="label"
-              optionValue="value"
-              getFormErrorMessage={() => null}
-            />
+          <div
+            className={`col-12 prototype-category-filters prototype-folha-pagamento-filters${
+              isTelaProcessamentoFolha
+                ? " prototype-processamento-folha-filters"
+                : ""
+            }`}
+          >
             {isTelaProcessamentoFolha ? (
               <>
+                <TextFieldSeplag
+                  name="termo"
+                  control={control}
+                  label="Número ou nome da folha"
+                  cols="12 6 2"
+                  getFormErrorMessage={() => null}
+                />
                 <TextFieldSeplag
                   name="competencia"
                   control={control}
                   label="Competência"
                   placeholder="MM/AAAA"
+                  cols="12 6 1"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="dataProcessamento"
+                  control={control}
+                  label="Data do processamento"
+                  placeholder="DD/MM/AAAA"
+                  cols="12 6 1"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="numeroExecucao"
+                  control={control}
+                  label="Número da execução do processamento"
                   cols="12 6 2"
                   getFormErrorMessage={() => null}
                 />
                 <DropdownFieldSeplag
-                  name="tipoProcessamento"
+                  name="situacao"
                   control={control}
-                  label="Tipo de Processamento"
+                  label="Situação"
                   cols="12 6 2"
-                  options={processamentoFolhaTipoOptions}
+                  options={processamentoFolhaSituacaoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="responsavel"
+                  control={control}
+                  label="Responsável"
+                  cols="12 6 2"
+                  getFormErrorMessage={() => null}
+                />
+              </>
+            ) : (
+              <>
+                <TextFieldSeplag
+                  name="termo"
+                  control={control}
+                  label="Número ou nome da folha"
+                  cols="12 12 5"
+                  getFormErrorMessage={() => null}
+                />
+                <DropdownFieldSeplag
+                  name="situacao"
+                  control={control}
+                  label="Situação"
+                  cols="12 6 3"
+                  options={folhaPagamentoSituacaoOptions}
                   optionLabel="label"
                   optionValue="value"
                   getFormErrorMessage={() => null}
                 />
               </>
-            ) : null}
+            )}
             <div className="prototype-category-clear col-12 md:col-6 lg:col-1">
               <BotaoLimparFiltroSeplag
                 type="button"
@@ -14839,8 +14907,11 @@ export function PrototiposFolhaPagamentoPage({
                   reset({
                     termo: "",
                     competencia: "",
+                    dataProcessamento: "",
+                    numeroExecucao: "",
                     tipoProcessamento: "",
                     situacao: "",
+                    responsavel: "",
                   })
                 }
               />
@@ -15394,6 +15465,7 @@ export function PrototiposFolhaPagamentoPage({
               control={relatorioTecnicoControl}
               label="Tipo do Filtro"
               cols="12"
+              rules={{ required: "Campo obrigatório" }}
               options={relatorioTecnicoTipoFiltroOptions}
               optionLabel="label"
               optionValue="value"
@@ -15406,6 +15478,7 @@ export function PrototiposFolhaPagamentoPage({
               control={relatorioTecnicoControl}
               label="Formato do Arquivo"
               cols="12"
+              rules={{ required: "Campo obrigatório" }}
               options={relatorioTecnicoFormatoOptions}
               optionLabel="label"
               optionValue="value"
@@ -15417,7 +15490,7 @@ export function PrototiposFolhaPagamentoPage({
             <div className="prototype-modal-actions">
               <BotaoVoltarSeplag
                 type="button"
-                label="Voltar"
+                label="Cancelar"
                 onClick={() => setModalEmitirRelatorioTecnicoAberto(false)}
               />
               <BotaoSeplag
@@ -18556,13 +18629,13 @@ export function PrototiposFolhaConformidadePage() {
   const [relatorioAccordions, setRelatorioAccordions] = useState({
     colunas: true,
     filtros: true,
-    funcionais: true,
-    folha: true,
-    rubrica: true,
-    financeiros: true,
-    frequencia: true,
-    previdenciarios: true,
-    outros: true,
+    funcionais: false,
+    folha: false,
+    rubrica: false,
+    financeiros: false,
+    frequencia: false,
+    previdenciarios: false,
+    outros: false,
   });
   const getEmptyFieldError = () => null;
 
@@ -19207,8 +19280,8 @@ export function PrototiposFolhaConformidadePage() {
                 onClick={abrirModalSalvarFiltro}
               />
               <BotaoSeplag
-                label="Pré-visualizar"
-                icon="pi pi-eye"
+                label="Gerenciar Filtros"
+                icon="pi pi-cog"
                 type="button"
                 outlined
               />
