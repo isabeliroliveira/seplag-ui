@@ -12741,11 +12741,6 @@ export function PrototiposFolhaPagamentoFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formFeedback, setFormFeedback] = useState("");
-  const [accordionAberto, setAccordionAberto] = useState({
-    dados: true,
-    abrangencia: true,
-    observacao: true,
-  });
   const competenciasFolha = folhaPagamentoService.listarCompetencias();
   const folhaEdicaoId = id ? Number(id) : undefined;
   const folhaEdicao = useMemo(
@@ -12850,40 +12845,6 @@ export function PrototiposFolhaPagamentoFormPage() {
       totalMesesRetroagir: folhaEdicao.totalMesesRetroagir,
     });
   }, [folhaEdicao, reset]);
-
-  const toggleAccordionFolha = (key: keyof typeof accordionAberto) => {
-    setAccordionAberto((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
-  };
-
-  const renderAccordionFolha = (
-    key: keyof typeof accordionAberto,
-    title: string,
-    children: ReactNode,
-  ) => (
-    <section className="prototype-folha-form-accordion-item">
-      <button
-        type="button"
-        className="prototype-folha-form-accordion-header"
-        onClick={() => toggleAccordionFolha(key)}
-      >
-        <span>{title}</span>
-        <i
-          className={`pi pi-chevron-down prototype-folha-form-accordion-chevron ${
-            accordionAberto[key]
-              ? "prototype-folha-form-accordion-chevron--open"
-              : ""
-          }`}
-          aria-hidden="true"
-        />
-      </button>
-      {accordionAberto[key] ? (
-        <div className="prototype-folha-form-accordion-content">{children}</div>
-      ) : null}
-    </section>
-  );
 
   const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
     const message = errors[name]?.message;
@@ -13058,8 +13019,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                 </div>
               ) : null}
 
-              <div className="prototype-folha-form-accordion">
-                {renderAccordionFolha("dados", "Dados da Folha", (
+              <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
+                <h3>Dados da Folha</h3>
                   <div className="grid prototype-category-form-fields">
                   <TextFieldSeplag
                     name="numero"
@@ -13078,9 +13039,10 @@ export function PrototiposFolhaPagamentoFormPage() {
                     getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
                   </div>
-                ))}
+              </section>
 
-                {renderAccordionFolha("abrangencia", "Abrangência", (
+              <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
+                <h3>Abrangência</h3>
                   <div className="grid prototype-category-form-fields">
                   <MultiSelectFieldSeplag
                     name="orgaos"
@@ -13140,9 +13102,10 @@ export function PrototiposFolhaPagamentoFormPage() {
                     }
                   />
                   </div>
-                ))}
+              </section>
 
-                {renderAccordionFolha("observacao", "Observação", (
+              <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
+                <h3>Observação</h3>
                   <div className="grid prototype-category-form-fields">
                   <TextAreaFieldSeplag
                     name="observacao"
@@ -13156,8 +13119,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     }
                   />
                   </div>
-                ))}
-              </div>
+              </section>
 
               <div className="prototype-category-form-footer">
                 <BotaoVoltarSeplag
