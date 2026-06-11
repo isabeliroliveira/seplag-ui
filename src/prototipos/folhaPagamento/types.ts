@@ -172,6 +172,11 @@ export interface FolhaPagamentoForm {
   competencia?: string;
   observacao?: string;
   orgaos?: string[];
+  abrangenciaRegimeJuridico?: string[];
+  abrangenciaTipoVinculo?: string[];
+  abrangenciaInstituicao?: string[];
+  abrangenciaSetores?: string[];
+  abrangenciaSubcategorias?: string[];
   regimeJuridico?: string;
   categoria?: string;
   cargo?: string;

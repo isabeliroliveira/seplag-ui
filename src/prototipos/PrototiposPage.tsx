@@ -12777,6 +12777,11 @@ export function PrototiposFolhaPagamentoFormPage() {
       competencia: "",
       observacao: "",
       orgaos: [],
+      abrangenciaRegimeJuridico: [],
+      abrangenciaTipoVinculo: [],
+      abrangenciaInstituicao: [],
+      abrangenciaSetores: [],
+      abrangenciaSubcategorias: [],
       regimeJuridico: "",
       categoria: "",
       cargo: "",
@@ -12837,6 +12842,11 @@ export function PrototiposFolhaPagamentoFormPage() {
       competencia: folhaEdicao.competencia,
       observacao: folhaEdicao.observacao,
       orgaos: folhaEdicao.orgaos,
+      abrangenciaRegimeJuridico: folhaEdicao.abrangenciaRegimeJuridico,
+      abrangenciaTipoVinculo: folhaEdicao.abrangenciaTipoVinculo,
+      abrangenciaInstituicao: folhaEdicao.abrangenciaInstituicao,
+      abrangenciaSetores: folhaEdicao.abrangenciaSetores,
+      abrangenciaSubcategorias: folhaEdicao.abrangenciaSubcategorias,
       regimeJuridico: folhaEdicao.regimeJuridico,
       categoria: folhaEdicao.categoria,
       cargo: folhaEdicao.cargo,
@@ -13045,26 +13055,66 @@ export function PrototiposFolhaPagamentoFormPage() {
                 <h3>Abrangência</h3>
                   <div className="grid prototype-category-form-fields">
                   <MultiSelectFieldSeplag
+                    name="abrangenciaRegimeJuridico"
+                    control={control}
+                    label="Regime Jurídico"
+                    cols="12 12 3"
+                    options={grupoCalculoRegimeJuridicoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} regimes selecionados"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaRegimeJuridico")
+                    }
+                  />
+                  <MultiSelectFieldSeplag
+                    name="abrangenciaTipoVinculo"
+                    control={control}
+                    label="Tipo de Vínculo"
+                    cols="12 12 3"
+                    options={grupoCalculoTipoVinculoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} vínculos selecionados"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaTipoVinculo")
+                    }
+                  />
+                  <MultiSelectFieldSeplag
+                    name="abrangenciaInstituicao"
+                    control={control}
+                    label="Instituição"
+                    cols="12 12 3"
+                    options={grupoCalculoInstituicaoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} instituições selecionadas"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaInstituicao")
+                    }
+                  />
+                  <MultiSelectFieldSeplag
                     name="orgaos"
                     control={control}
                     label="Órgãos"
-                    cols="12 12 6"
+                    cols="12 12 3"
                     options={folhaPagamentoOrgaoOptions}
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} órgãos selecionados"
                     getFormErrorMessage={() => getFormErrorMessage("orgaos")}
                   />
-                  <DropdownFieldSeplag
-                    name="regimeJuridico"
+                  <MultiSelectFieldSeplag
+                    name="abrangenciaSetores"
                     control={control}
-                    label="Regime jurídico"
-                    cols="12 12 6"
-                    options={folhaPagamentoRegimeOptions}
+                    label="Setor"
+                    cols="12 12 3"
+                    options={grupoCalculoSetorOptions}
                     optionLabel="label"
                     optionValue="value"
+                    selectedItemsLabel="{0} setores selecionados"
                     getFormErrorMessage={() =>
-                      getFormErrorMessage("regimeJuridico")
+                      getFormErrorMessage("abrangenciaSetores")
                     }
                   />
                   <DropdownFieldSeplag
@@ -13077,6 +13127,19 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionValue="value"
                     getFormErrorMessage={() =>
                       getFormErrorMessage("categoria")
+                    }
+                  />
+                  <MultiSelectFieldSeplag
+                    name="abrangenciaSubcategorias"
+                    control={control}
+                    label="Subcategoria"
+                    cols="12 12 4"
+                    options={grupoCalculoSubcategoriaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} subcategorias selecionadas"
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaSubcategorias")
                     }
                   />
                   <DropdownFieldSeplag
@@ -13994,6 +14057,11 @@ export function PrototiposFolhaPagamentoPage({
   const temAbrangenciaFolha = (data: FolhaPagamentoForm) =>
     Boolean(
       data.orgaos?.length ||
+        data.abrangenciaRegimeJuridico?.length ||
+        data.abrangenciaTipoVinculo?.length ||
+        data.abrangenciaInstituicao?.length ||
+        data.abrangenciaSetores?.length ||
+        data.abrangenciaSubcategorias?.length ||
         data.regimeJuridico ||
         data.categoria ||
         data.cargo ||
