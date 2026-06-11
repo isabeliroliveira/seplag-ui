@@ -5370,7 +5370,7 @@ export function PrototiposControleVagasConfiguracaoPage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtros"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -5526,7 +5526,7 @@ export function PrototiposControleVagasQuadroAutorizadoPage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtros"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -6524,7 +6524,7 @@ export function PrototiposControleVagasConsultaSaldoPage() {
               <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
                 <BotaoLimparFiltroSeplag
                   type="button"
-                  label="Limpar Filtros"
+                  label="Limpar"
                   icon="pi pi-refresh"
                   onClick={handleLimparFiltros}
                 />
@@ -7115,7 +7115,7 @@ export function PrototiposCategoriaPage({
             <div className="prototype-category-clear col-12 md:col-6 lg:col-3">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -7273,7 +7273,7 @@ export function PrototiposCargoPage({
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -7972,7 +7972,7 @@ export function PrototiposSigepRegimeJuridicoPage({
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtros"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -8215,7 +8215,7 @@ export function PrototiposCategoriaTestePage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-3">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -8557,7 +8557,7 @@ export function PrototiposCargoTestePage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -9004,7 +9004,7 @@ export function PrototiposSigepRegimeJuridicoTestePage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtros"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -9312,7 +9312,7 @@ export function PrototiposTipoVinculoTestePage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -9780,7 +9780,7 @@ export function PrototiposMatrizValidacaoTestePage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -11110,7 +11110,7 @@ export function PrototiposFolhaTabelasReferenciaPage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() => reset({ tabela: "" })}
               />
@@ -11215,7 +11215,7 @@ export function PrototiposFolhaTabelasReferenciaPage() {
                           </label>
                           <BotaoLimparFiltroSeplag
                             type="button"
-                            label="Limpar Filtro"
+                            label="Limpar"
                             icon="pi pi-refresh"
                             onClick={() =>
                               setFiltrosVigencia((current) => ({
@@ -18586,7 +18586,7 @@ export function PrototiposFolhaCatalogoRubricasPage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() => reset({ termo: "", status: "" })}
               />
@@ -19539,20 +19539,9 @@ export function PrototiposFolhaConformidadePage() {
           labelFechar={modalFiltrosModo === "salvar" ? "Cancelar" : "Voltar"}
           labelAcao="Salvar filtro"
           iconAcao="pi pi-save"
-          tamanho="980px"
+          tamanho="1176px"
           funcAcao={handleSubmitSalvarFiltro(handleSalvarFiltro)}
-          customFooter={
-            modalFiltrosModo !== "salvar" ? (
-              <div className="prototype-dynamic-report-filter-footer">
-                <BotaoVoltarSeplag
-                  type="button"
-                  label="Voltar"
-                  icon="pi pi-times"
-                  onClick={() => setModalFiltrosAberto(false)}
-                />
-              </div>
-            ) : undefined
-          }
+          hideFooter={modalFiltrosModo !== "salvar"}
         >
           <div className="col-12 prototype-dynamic-report-filter-modal">
             {feedbackFiltro ? (
@@ -19562,12 +19551,6 @@ export function PrototiposFolhaConformidadePage() {
             {modalFiltrosModo !== "salvar" ? (
               <>
                 <div className="prototype-dynamic-report-filter-form">
-                  <strong>
-                    Filtro -{" "}
-                    {modalFiltrosModo === "aplicar"
-                      ? "Aplicar filtro"
-                      : "Gerenciador de Filtros"}
-                  </strong>
                   <div className="prototype-dynamic-report-manager-filters">
                     <TextFieldSeplag
                       label="Nome"
@@ -19588,7 +19571,7 @@ export function PrototiposFolhaConformidadePage() {
                     <div className="prototype-dynamic-report-manager-clear">
                       <BotaoLimparFiltroSeplag
                         type="button"
-                        label="Limpar Filtro"
+                        label="Limpar"
                         onClick={handleLimparGerenciadorFiltro}
                       />
                     </div>
@@ -19596,12 +19579,6 @@ export function PrototiposFolhaConformidadePage() {
                 </div>
 
                 <div className="prototype-dynamic-report-filter-list">
-                  <strong>
-                    Grid -{" "}
-                    {modalFiltrosModo === "aplicar"
-                      ? "Aplicar filtro"
-                      : "Gerenciador de Filtros"}
-                  </strong>
                   <div className="prototype-table-wrapper">
                     <table className="prototype-simple-table">
                       <thead>
@@ -19611,7 +19588,7 @@ export function PrototiposFolhaConformidadePage() {
                         <th>Data da Criação</th>
                         <th>Data da Última Alteração</th>
                         <th>Criado por</th>
-                        <th>Ações</th>
+                        <th className="prototype-dynamic-report-actions-column">Ações</th>
                       </tr>
                       </thead>
                       <tbody>
@@ -19622,7 +19599,7 @@ export function PrototiposFolhaConformidadePage() {
                             <td>{filtro.criadoEm}</td>
                             <td>{filtro.atualizadoEm}</td>
                             <td>{filtro.criadoPor}</td>
-                            <td>
+                            <td className="prototype-dynamic-report-actions-column">
                               <div className="prototype-dynamic-report-filter-actions-cell">
                                 {modalFiltrosModo === "aplicar" ? (
                                   <BotaoIconSeplag
@@ -19665,25 +19642,17 @@ export function PrototiposFolhaConformidadePage() {
                     </table>
                   </div>
                   <div className="prototype-dynamic-report-manager-pagination">
-                    <span>
-                      Página {paginaGerenciadorFiltroAtual} de{" "}
-                      {totalPaginasGerenciadorFiltro}
-                    </span>
-                    <select
-                      value={linhasGerenciadorFiltro}
-                      onChange={(event) => {
-                        setLinhasGerenciadorFiltro(Number(event.target.value));
-                        setPaginaGerenciadorFiltro(1);
-                      }}
-                    >
-                      {[5, 10, 25, 50].map((total) => (
-                        <option key={total} value={total}>
-                          {total} registros
-                        </option>
-                      ))}
-                    </select>
                     <button
                       type="button"
+                      aria-label="Primeira página"
+                      onClick={() => setPaginaGerenciadorFiltro(1)}
+                      disabled={paginaGerenciadorFiltroAtual === 1}
+                    >
+                      <i className="pi pi-angle-double-left" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Página anterior"
                       onClick={() =>
                         setPaginaGerenciadorFiltro((pagina) =>
                           Math.max(1, pagina - 1),
@@ -19691,10 +19660,14 @@ export function PrototiposFolhaConformidadePage() {
                       }
                       disabled={paginaGerenciadorFiltroAtual === 1}
                     >
-                      Anterior
+                      <i className="pi pi-angle-left" aria-hidden="true" />
                     </button>
+                    <span className="prototype-dynamic-report-page-current">
+                      {paginaGerenciadorFiltroAtual}
+                    </span>
                     <button
                       type="button"
+                      aria-label="Próxima página"
                       onClick={() =>
                         setPaginaGerenciadorFiltro((pagina) =>
                           Math.min(totalPaginasGerenciadorFiltro, pagina + 1),
@@ -19704,8 +19677,34 @@ export function PrototiposFolhaConformidadePage() {
                         paginaGerenciadorFiltroAtual === totalPaginasGerenciadorFiltro
                       }
                     >
-                      Próxima
+                      <i className="pi pi-angle-right" aria-hidden="true" />
                     </button>
+                    <button
+                      type="button"
+                      aria-label="Última página"
+                      onClick={() =>
+                        setPaginaGerenciadorFiltro(totalPaginasGerenciadorFiltro)
+                      }
+                      disabled={
+                        paginaGerenciadorFiltroAtual === totalPaginasGerenciadorFiltro
+                      }
+                    >
+                      <i className="pi pi-angle-double-right" aria-hidden="true" />
+                    </button>
+                    <select
+                      aria-label="Registros por página"
+                      value={linhasGerenciadorFiltro}
+                      onChange={(event) => {
+                        setLinhasGerenciadorFiltro(Number(event.target.value));
+                        setPaginaGerenciadorFiltro(1);
+                      }}
+                    >
+                      {[5, 10, 25, 50].map((total) => (
+                        <option key={total} value={total}>
+                          {total}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </>
@@ -19713,7 +19712,6 @@ export function PrototiposFolhaConformidadePage() {
 
             {modalFiltrosModo === "salvar" ? (
               <div className="prototype-dynamic-report-filter-form">
-                <strong>{filtroEmEdicaoId ? "Editar filtro" : "Novo filtro"}</strong>
                 <TextFieldSeplag
                   label="Nome do filtro"
                   name="nomeFiltro"
@@ -19830,7 +19828,7 @@ export function PrototiposFolhaGrupoEleitosPage() {
             <div className="prototype-category-clear col-12 md:col-6 lg:col-2">
               <BotaoLimparFiltroSeplag
                 type="button"
-                label="Limpar Filtro"
+                label="Limpar"
                 icon="pi pi-refresh"
                 onClick={() =>
                   reset({
@@ -20081,7 +20079,7 @@ export function PrototiposFolhaGrupoEleitoFormPage() {
                         />
                         <BotaoLimparFiltroSeplag
                           type="button"
-                          label="Limpar Filtro"
+                          label="Limpar"
                           icon="pi pi-refresh"
                           style={{ height: 30, marginBottom: 0 }}
                           onClick={handleClearParticipanteFilters}

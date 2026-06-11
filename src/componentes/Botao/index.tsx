@@ -211,7 +211,9 @@ export function BotaoLimparFiltroSeplag(props: BotaoSeplagProps) {
   return (
     <ButtonSeplag
       variant="clear"
-      label={props.label ?? "Limpar Filtro"}
+      label={props.label ?? "Limpar"}
+      icon={props.icon ?? "pi pi-undo"}
+      iconPos={props.iconPos ?? "left"}
       {...props}
     />
   );
