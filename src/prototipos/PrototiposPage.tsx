@@ -2921,6 +2921,7 @@ interface FolhaConformidadeFiltroForm {
   dataAposentadoriaFim?: string;
   numeroExecucaoProcessamento?: string;
   dataProcessamento?: string;
+  exibirUltimoProcessamento?: string;
   tipoAfastamento?: string;
   quantidadeDiasAfastado?: number;
   situacaoAnalise?: string;
@@ -3005,6 +3006,7 @@ const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
   dataAposentadoriaFim: "",
   numeroExecucaoProcessamento: "",
   dataProcessamento: "",
+  exibirUltimoProcessamento: "N",
   tipoAfastamento: "",
   quantidadeDiasAfastado: undefined,
   situacaoAnalise: "",
@@ -19405,6 +19407,23 @@ export function PrototiposFolhaConformidadePage() {
                       getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
+                  <div className={getFiltroFieldClassName("Data do processamento")}>
+                    <DateFieldSeplag
+                      label="Data do processamento"
+                      name="dataProcessamento"
+                      control={control}
+                      cols="12"
+                      getFormErrorMessage={getEmptyFieldError}
+                    />
+                    <div className="prototype-dynamic-report-inline-checkbox">
+                      <CheckboxFieldSeplag<FolhaConformidadeFiltroForm>
+                        name="exibirUltimoProcessamento"
+                        control={control}
+                        cols="12"
+                        checkboxLabel="Exibir último processamento"
+                      />
+                    </div>
+                  </div>
                   <div className={getFiltroFieldClassName("Número da execução do processamento")}>
                     <DropdownFieldSeplag
                       label="Número da execução do processamento"
@@ -19414,15 +19433,6 @@ export function PrototiposFolhaConformidadePage() {
                       options={folhaConformidadeExecucaoOptions}
                       optionLabel="label"
                       optionValue="value"
-                      getFormErrorMessage={getEmptyFieldError}
-                    />
-                  </div>
-                  <div className={getFiltroFieldClassName("Data do processamento")}>
-                    <DateFieldSeplag
-                      label="Data do processamento"
-                      name="dataProcessamento"
-                      control={control}
-                      cols="12"
                       getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
