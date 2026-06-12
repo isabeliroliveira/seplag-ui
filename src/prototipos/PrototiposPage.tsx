@@ -14547,9 +14547,15 @@ export function PrototiposFolhaPagamentoPage({
     { field: "nome", header: "Nome" },
     {
       header: "Ação",
-      body: (row) =>
-        folhaPodeEditar(row) ? (
-          <div className="acoes-table">
+      body: (row) => (
+        <div className="acoes-table">
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Visualizar"
+            icon="pi pi-eye"
+            onClick={() => abrirDetalheFolha(row)}
+          />
+          {folhaPodeEditar(row) ? (
             <BotaoIconSeplag
               type="button"
               tooltip="Editar folha"
@@ -14557,8 +14563,9 @@ export function PrototiposFolhaPagamentoPage({
               style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
               onClick={() => abrirEditarFolha(row)}
             />
-          </div>
-        ) : null,
+          ) : null}
+        </div>
+      ),
     },
   ];
 
