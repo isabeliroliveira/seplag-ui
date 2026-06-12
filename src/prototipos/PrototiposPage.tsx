@@ -12576,6 +12576,16 @@ export function PrototiposFolhaCompetenciasPage() {
     setCompetenciaParaFechar(competencia);
   };
 
+  const excluirPrimeiraCompetencia = (competencia: FolhaCompetenciaRow) => {
+    setCompetencias((current) =>
+      current.filter((item) => item.id !== competencia.id),
+    );
+    setCompetenciaParaFechar(null);
+    setDataFimCompetenciaAtual("");
+    setDataInicioProximaCompetencia("");
+    setFeedback("");
+  };
+
   const renderAcoesCompetencia = (row: FolhaCompetenciaRow) => (
     <div className="prototype-row-actions">
       {row.situacao === "ATIVA" ? (
@@ -12584,6 +12594,15 @@ export function PrototiposFolhaCompetenciasPage() {
           icon="pi pi-lock"
           tooltip="Encerrar competência"
           onClick={() => abrirModalFecharCompetencia(row)}
+        />
+      ) : null}
+      {competencias.length === 1 ? (
+        <BotaoIconSeplag
+          type="button"
+          icon="pi pi-trash"
+          tooltip="Excluir competência"
+          severity="danger"
+          onClick={() => excluirPrimeiraCompetencia(row)}
         />
       ) : null}
     </div>
@@ -17300,12 +17319,7 @@ export function PrototiposFolhaFichaFinanceiraPage() {
           title="Ficha Financeira por Competência"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
-        >
-          <div className="prototype-ficha-financeira-title-row">
-            <i className="pi pi-wallet" aria-hidden="true" />
-            <span>Ficha Financeira por Competência</span>
-          </div>
-        </CardSeplag>
+        />
 
         <CardSeplag cols="12" cardHeaderClassNames="prototype-regime-card">
           <div className="col-12 prototype-category-filters prototype-ficha-financeira-filters">
@@ -17337,7 +17351,6 @@ export function PrototiposFolhaFichaFinanceiraPage() {
               <BotaoLimparFiltroSeplag
                 type="button"
                 label="Limpar"
-                icon="pi pi-refresh"
                 onClick={() =>
                   reset({
                     competencia: "",
@@ -17405,6 +17418,7 @@ export function PrototiposFolhaFichaFinanceiraPage() {
               type="button"
               label="Holerite"
               icon="pi pi-file-pdf"
+              className="prototype-ficha-financeira-holerite-button"
               onClick={() => undefined}
             />
           </div>
