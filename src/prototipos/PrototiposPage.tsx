@@ -13,6 +13,7 @@ import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
 import { ModalSeplag } from "@componentes/Modal";
+import { SeplagAutoComplete } from "@componentes/AutoComplete";
 import {
   DocumentosLegaisAssociadosSeplag,
   type DocumentoLegalAssociadoSeplag,
@@ -17231,6 +17232,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
 
 type FichaFinanceiraFiltroForm = {
   competencia: string;
+  numeroFolha: string;
   matriculaCpf: string;
   nomeServidor: string;
 };
@@ -17245,6 +17247,18 @@ type FichaFinanceiraRubricaRow = {
   percentual: string;
   desconto: number;
 };
+
+type FichaFinanceiraServidorOption = {
+  matriculaCpf: string;
+  nome: string;
+};
+
+const fichaFinanceiraServidorOptions: FichaFinanceiraServidorOption[] = [
+  { matriculaCpf: "102030/1", nome: "MARIA OLIVEIRA" },
+  { matriculaCpf: "887120/1", nome: "ANA SANTOS" },
+  { matriculaCpf: "451278/3", nome: "CARLOS ALMEIDA" },
+  { matriculaCpf: "540110/2", nome: "JOSE ROBERTO LIMA" },
+];
 
 const fichaFinanceiraRubricasMock: FichaFinanceiraRubricaRow[] = [
   {
@@ -17290,19 +17304,94 @@ const fichaFinanceiraRubricasMock: FichaFinanceiraRubricaRow[] = [
 ];
 
 export function PrototiposFolhaFichaFinanceiraPage() {
-  const { control, reset } = useForm<FichaFinanceiraFiltroForm>({
+  const { control, reset, setValue } = useForm<FichaFinanceiraFiltroForm>({
     defaultValues: {
       competencia: "05/2026",
+      numeroFolha: "1",
       matriculaCpf: "102030/1",
       nomeServidor: "MARIA OLIVEIRA",
     },
   });
+  const [matriculaCpfSuggestions, setMatriculaCpfSuggestions] = useState<string[]>([]);
+  const [nomeServidorSuggestions, setNomeServidorSuggestions] = useState<string[]>([]);
+  const [resultadosFichaFinanceira, setResultadosFichaFinanceira] = useState<
+    FichaFinanceiraRubricaRow[]
+  >(fichaFinanceiraRubricasMock);
 
-  const totalVantagens = fichaFinanceiraRubricasMock.reduce(
+  const folhaNumeroOptions = folhaPagamentoService
+    .listarFolhas()
+    .map((folha) => ({
+      label: `${folha.numero} - ${folha.nome}`,
+      value: folha.numero,
+      competencia: folha.competencia,
+    }))
+    .filter(
+      (option, index, options) =>
+        options.findIndex(
+          (item) =>
+            item.value === option.value &&
+            item.label === option.label &&
+            item.competencia === option.competencia,
+        ) === index,
+    );
+
+  const filtrarServidoresFichaFinanceira = (query: string) => {
+    const termo = query.trim().toLowerCase();
+    return fichaFinanceiraServidorOptions.filter(
+      (servidor) =>
+        !termo ||
+        servidor.matriculaCpf.toLowerCase().includes(termo) ||
+        servidor.nome.toLowerCase().includes(termo),
+    );
+  };
+
+  const completarMatriculaCpf = (query: string) => {
+    setMatriculaCpfSuggestions(
+      filtrarServidoresFichaFinanceira(query).map((servidor) => servidor.matriculaCpf),
+    );
+  };
+
+  const completarNomeServidor = (query: string) => {
+    setNomeServidorSuggestions(
+      filtrarServidoresFichaFinanceira(query).map((servidor) => servidor.nome),
+    );
+  };
+
+  const preencherServidorPorMatriculaCpf = (matriculaCpf: string) => {
+    const servidor = fichaFinanceiraServidorOptions.find(
+      (item) => item.matriculaCpf === matriculaCpf,
+    );
+    if (servidor) {
+      setValue("nomeServidor", servidor.nome);
+    }
+  };
+
+  const preencherServidorPorNome = (nome: string) => {
+    const servidor = fichaFinanceiraServidorOptions.find((item) => item.nome === nome);
+    if (servidor) {
+      setValue("matriculaCpf", servidor.matriculaCpf);
+    }
+  };
+
+  const pesquisarFichaFinanceira = () => {
+    setResultadosFichaFinanceira(fichaFinanceiraRubricasMock);
+  };
+
+  const limparFichaFinanceira = () => {
+    reset({
+      competencia: "",
+      numeroFolha: "",
+      matriculaCpf: "",
+      nomeServidor: "",
+    });
+    setResultadosFichaFinanceira([]);
+  };
+
+  const totalVantagens = resultadosFichaFinanceira.reduce(
     (total, item) => total + item.vantagem,
     0,
   );
-  const totalDescontos = fichaFinanceiraRubricasMock.reduce(
+  const totalDescontos = resultadosFichaFinanceira.reduce(
     (total, item) => total + item.desconto,
     0,
   );
@@ -17327,37 +17416,83 @@ export function PrototiposFolhaFichaFinanceiraPage() {
               name="competencia"
               control={control}
               label="Mês/Ano Competência"
-              cols="12 md:col-3"
+              cols="12 md:col-2"
               placeholder="MM/AAAA"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="matriculaCpf"
+            <DropdownFieldSeplag
+              name="numeroFolha"
               control={control}
-              label="Matrícula/CPF"
-              cols="12 md:col-3"
-              placeholder="Matrícula ou CPF"
+              label="Número da Folha"
+              cols="12 md:col-2"
+              options={folhaNumeroOptions}
+              optionLabel="label"
+              optionValue="value"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="nomeServidor"
-              control={control}
-              label="Nome do Servidor"
-              cols="12 md:col-4"
-              placeholder="Nome do servidor"
-              getFormErrorMessage={() => null}
-            />
-            <div className="prototype-category-clear col-12 md:col-2">
+            <div className="prototype-ficha-financeira-autocomplete-field">
+              <label htmlFor="ficha-financeira-matricula-cpf">
+                Matrícula/CPF
+              </label>
+              <Controller
+                name="matriculaCpf"
+                control={control}
+                render={({ field }) => (
+                  <SeplagAutoComplete
+                    inputId="ficha-financeira-matricula-cpf"
+                    className="w-full"
+                    value={field.value}
+                    suggestions={matriculaCpfSuggestions}
+                    placeholder="Matrícula ou CPF"
+                    dropdown
+                    forceSelection={false}
+                    completeMethod={completarMatriculaCpf}
+                    onChange={(event) => {
+                      const value = String(event.value ?? "");
+                      field.onChange(value);
+                      preencherServidorPorMatriculaCpf(value);
+                    }}
+                  />
+                )}
+              />
+            </div>
+            <div className="prototype-ficha-financeira-autocomplete-field">
+              <label htmlFor="ficha-financeira-nome-servidor">
+                Nome do Servidor
+              </label>
+              <Controller
+                name="nomeServidor"
+                control={control}
+                render={({ field }) => (
+                  <SeplagAutoComplete
+                    inputId="ficha-financeira-nome-servidor"
+                    className="w-full"
+                    value={field.value}
+                    suggestions={nomeServidorSuggestions}
+                    placeholder="Nome do servidor"
+                    dropdown
+                    forceSelection={false}
+                    completeMethod={completarNomeServidor}
+                    onChange={(event) => {
+                      const value = String(event.value ?? "");
+                      field.onChange(value);
+                      preencherServidorPorNome(value);
+                    }}
+                  />
+                )}
+              />
+            </div>
+            <div className="prototype-ficha-financeira-filter-actions">
               <BotaoLimparFiltroSeplag
                 type="button"
                 label="Limpar"
-                onClick={() =>
-                  reset({
-                    competencia: "",
-                    matriculaCpf: "",
-                    nomeServidor: "",
-                  })
-                }
+                onClick={limparFichaFinanceira}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Pesquisar"
+                icon="pi pi-search"
+                onClick={pesquisarFichaFinanceira}
               />
             </div>
           </div>
@@ -17378,7 +17513,7 @@ export function PrototiposFolhaFichaFinanceiraPage() {
                 </tr>
               </thead>
               <tbody>
-                {fichaFinanceiraRubricasMock.map((item) => (
+                {resultadosFichaFinanceira.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.rubrica}</strong>
@@ -17395,6 +17530,13 @@ export function PrototiposFolhaFichaFinanceiraPage() {
                     </td>
                   </tr>
                 ))}
+                {!resultadosFichaFinanceira.length ? (
+                  <tr>
+                    <td colSpan={7} className="prototype-ficha-financeira-empty">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>

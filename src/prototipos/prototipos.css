@@ -1471,10 +1471,11 @@
 .prototype-ficha-financeira-filters {
   display: grid;
   grid-template-columns:
-    minmax(190px, 0.8fr)
-    minmax(220px, 1fr)
-    minmax(320px, 1.45fr)
-    minmax(150px, 0.65fr);
+    minmax(150px, 0.7fr)
+    minmax(210px, 1.05fr)
+    minmax(180px, 0.9fr)
+    minmax(280px, 1.35fr)
+    minmax(210px, auto);
   align-items: end;
   gap: 10px 14px;
   margin: 8px 0 14px;
@@ -1495,6 +1496,20 @@
   min-width: 0;
 }
 
+.prototype-ficha-financeira-autocomplete-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.prototype-ficha-financeira-autocomplete-field label {
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .prototype-ficha-financeira-filters [class*="content-rotulo"] {
   gap: 4px;
 }
@@ -1505,21 +1520,39 @@
   line-height: 1.2;
 }
 
-.prototype-ficha-financeira-filters .p-inputtext {
+.prototype-ficha-financeira-filters .p-inputtext,
+.prototype-ficha-financeira-filters .p-dropdown,
+.prototype-ficha-financeira-filters .p-autocomplete,
+.prototype-ficha-financeira-filters .p-autocomplete-input {
   height: 36px;
   min-height: 36px;
   font-size: 0.84rem;
 }
 
-.prototype-ficha-financeira-filters .prototype-category-clear {
+.prototype-ficha-financeira-filters .p-autocomplete {
+  width: 100%;
+}
+
+.prototype-ficha-financeira-filters .p-autocomplete-input {
+  width: 100%;
+}
+
+.prototype-ficha-financeira-filters .p-dropdown-label {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.prototype-ficha-financeira-filter-actions {
   display: flex;
   align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
   min-height: 58px;
 }
 
-.prototype-ficha-financeira-filters .prototype-category-clear .p-button {
-  width: 100% !important;
+.prototype-ficha-financeira-filter-actions .p-button {
   height: 36px;
+  min-width: 98px;
 }
 
 .prototype-ficha-financeira-table-wrapper {
@@ -1560,6 +1593,12 @@
 .prototype-ficha-financeira-table th:nth-child(7),
 .prototype-ficha-financeira-table td:nth-child(7) {
   text-align: right;
+}
+
+.prototype-ficha-financeira-empty {
+  padding: 28px 16px !important;
+  color: #64748b !important;
+  text-align: center !important;
 }
 
 .prototype-ficha-financeira-totalizador {
@@ -1607,6 +1646,10 @@
   .prototype-ficha-financeira-filters,
   .prototype-ficha-financeira-totalizador {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .prototype-ficha-financeira-filter-actions {
+    justify-content: flex-start;
   }
 }
 
