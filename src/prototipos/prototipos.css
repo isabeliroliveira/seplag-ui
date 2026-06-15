@@ -1763,7 +1763,9 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin: 4px 0 12px;
+  margin: 4px 0 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #d7e2ec;
 }
 
 .prototype-processamento-resumo > div {
@@ -1791,7 +1793,8 @@
 .prototype-processamento-folha-filters {
   display: grid !important;
   grid-template-columns:
-    minmax(210px, 1.35fr)
+    minmax(120px, 0.95fr)
+    minmax(190px, 1.25fr)
     minmax(110px, 0.72fr)
     minmax(145px, 0.82fr)
     minmax(210px, 1.35fr)
@@ -1833,6 +1836,12 @@
 .prototype-processamento-folha-modal {
   position: relative;
   padding-top: 8px !important;
+}
+
+.prototype-processamento-folha-page-form {
+  display: grid;
+  gap: 20px;
+  width: 100%;
 }
 
 .prototype-processamento-folha-header {
@@ -3722,6 +3731,34 @@
   display: grid;
   gap: 12px;
   width: 100%;
+}
+
+.prototype-relatorio-tecnico-situacao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.prototype-relatorio-tecnico-situacao--em-emissao {
+  background: #fff1c7;
+  color: #9a6500;
+}
+
+.prototype-relatorio-tecnico-situacao--emitido {
+  background: #d8f3dc;
+  color: #00843d;
+}
+
+.prototype-relatorio-tecnico-situacao--falha-na-emissao {
+  background: #fde2e2;
+  color: #d32f2f;
 }
 
 .prototype-relatorio-tecnico-form .prototype-modal-actions {
