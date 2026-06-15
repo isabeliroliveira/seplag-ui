@@ -2907,15 +2907,11 @@ interface FolhaConformidadeFiltroForm {
   tiposVinculo: string[];
   nivel?: string;
   classe?: string;
-  tipoRelatorio: string;
-  formatoSaida: string;
   matricula?: string;
   cpf?: string;
   sexo?: string;
   escolaridade?: string;
   idade?: string;
-  servidor?: string;
-  rubrica?: string;
   codigoRubrica?: string;
   tipoRubrica?: string;
   jornada?: string;
@@ -2928,7 +2924,6 @@ interface FolhaConformidadeFiltroForm {
   exibirUltimoProcessamento?: string;
   tipoAfastamento?: string;
   quantidadeDiasAfastado?: number;
-  situacaoAnalise?: string;
 }
 
 interface FolhaConformidadeRow {
@@ -2992,15 +2987,11 @@ const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
   tiposVinculo: [],
   nivel: "",
   classe: "",
-  tipoRelatorio: "Dinâmico",
-  formatoSaida: "Excel",
   matricula: "",
   cpf: "",
   sexo: "",
   escolaridade: "",
   idade: "",
-  servidor: "",
-  rubrica: "",
   codigoRubrica: "",
   tipoRubrica: "",
   jornada: "",
@@ -3013,7 +3004,6 @@ const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
   exibirUltimoProcessamento: "N",
   tipoAfastamento: "",
   quantidadeDiasAfastado: undefined,
-  situacaoAnalise: "",
 };
 
 interface FolhaTabelaReferenciaVigenciaRow {
@@ -19435,7 +19425,6 @@ export function PrototiposFolhaConformidadePage() {
     folhaConformidadeTodasColunas,
   );
   const [relatorioAccordions, setRelatorioAccordions] = useState({
-    colunas: true,
     filtros: true,
     funcionais: false,
     folha: false,
@@ -19447,21 +19436,7 @@ export function PrototiposFolhaConformidadePage() {
   });
   const getEmptyFieldError = () => null;
 
-  const toggleColunaRelatorio = (label: string) => {
-    setColunasSelecionadas((colunas) =>
-      colunas.includes(label)
-        ? colunas.filter((coluna) => coluna !== label)
-        : [...colunas, label],
-    );
-  };
-
-  const isColunaSelecionada = (label: string) =>
-    colunasSelecionadas.includes(label);
-
-  const getFiltroFieldClassName = (label: string) =>
-    `prototype-dynamic-report-field ${
-      isColunaSelecionada(label) ? "" : "prototype-dynamic-report-field--hidden"
-    }`;
+  const getFiltroFieldClassName = () => "prototype-dynamic-report-field";
 
   const toggleRelatorioAccordion = (key: keyof typeof relatorioAccordions) => {
     setRelatorioAccordions((state) => ({ ...state, [key]: !state[key] }));
@@ -19486,8 +19461,232 @@ export function PrototiposFolhaConformidadePage() {
     </button>
   );
 
+  const getRegistrosFiltrados = (filtros: FolhaConformidadeFiltroForm) => {
+    const matricula = filtros.matricula?.trim().toLowerCase() ?? "";
+    const codigoRubrica = filtros.codigoRubrica?.trim().toLowerCase() ?? "";
+
+    return folhaConformidadeRows.filter((row) => {
+      const atendeFolha =
+        !filtros.numeroFolha || row.folha === filtros.numeroFolha;
+      const atendeOrgao =
+        !filtros.orgaos.length || filtros.orgaos.includes(row.orgao);
+      const atendeMatricula =
+        !matricula || row.matricula.toLowerCase().includes(matricula);
+      const atendeRubrica =
+        !codigoRubrica || row.rubrica.toLowerCase().includes(codigoRubrica);
+
+      return atendeFolha && atendeOrgao && atendeMatricula && atendeRubrica;
+    });
+  };
+
+  const formatarValorFiltroExcel = (value?: string | string[] | number) => {
+    if (Array.isArray(value)) return value.length ? value.join(", ") : "";
+    if (typeof value === "number") return String(value);
+    return value?.trim() ?? "";
+  };
+
+  const escapeExcelCell = (value?: string | number) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const montarFiltrosExcel = (filtros: FolhaConformidadeFiltroForm) => {
+    const filtrosMapeados: Array<[string, string | string[] | number | undefined]> = [
+      ["Órgão", filtros.orgaos],
+      ["Setor", filtros.setores],
+      ["Tipo de vínculo", filtros.tiposVinculo],
+      ["Regime Jurídico", filtros.regimesJuridicos],
+      ["Categoria", filtros.categorias],
+      ["Cargo", filtros.cargos],
+      ["Matrícula", filtros.matricula],
+      ["CPF", filtros.cpf],
+      ["Sexo", filtros.sexo],
+      ["Escolaridade", filtros.escolaridade],
+      ["Idade", filtros.idade],
+      ["Nível", filtros.nivel],
+      ["Classe", filtros.classe],
+      ["Competência", filtros.competencia],
+      ["MM/AAAA da folha", filtros.folhaInicio],
+      ["Até", filtros.folhaFim],
+      ["Número da Folha", filtros.numeroFolha],
+      ["Nome da Folha", filtros.nomeFolha],
+      ["Data do processamento", filtros.dataProcessamento],
+      [
+        "Exibir último processamento",
+        filtros.exibirUltimoProcessamento === "S" ? "Sim" : "",
+      ],
+      ["Número da Execução do processamento", filtros.numeroExecucaoProcessamento],
+      ["Código da Rubrica", filtros.codigoRubrica],
+      ["Tipo da Rubrica", filtros.tipoRubrica],
+      ["Tipo de Afastamento", filtros.tipoAfastamento],
+      ["Quantidade de dias afastado", filtros.quantidadeDiasAfastado],
+      ["Data da Aposentadoria", filtros.dataAposentadoriaInicio],
+      ["Até aposentadoria", filtros.dataAposentadoriaFim],
+      ["Jornada", filtros.jornada],
+      ["Data de Exercício", filtros.dataExercicioInicio],
+      ["Até exercício", filtros.dataExercicioFim],
+    ];
+
+    return filtrosMapeados
+      .map(([label, value]) => [label, formatarValorFiltroExcel(value)] as const)
+      .filter(([, value]) => value);
+  };
+
+  const baixarRelatorioExcel = (
+    filtros: FolhaConformidadeFiltroForm,
+    registros: FolhaConformidadeRow[],
+  ) => {
+    const filtrosAplicados = montarFiltrosExcel(filtros);
+    const dataEmissao = new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Cuiaba",
+    }).format(new Date());
+
+    const linhasFiltro = filtrosAplicados.length
+      ? filtrosAplicados
+          .map(
+            ([label, value]) =>
+              `<tr><td>${escapeExcelCell(label)}</td><td>${escapeExcelCell(value)}</td></tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="2">Nenhum filtro preenchido.</td></tr>`;
+
+    const linhasRelatorio = registros
+      .map((row, index) => {
+        const [codigoRubrica, ...descricaoRubrica] = row.rubrica.split(" - ");
+        return `
+          <tr>
+            <td>${escapeExcelCell(row.orgao)}</td>
+            <td>${escapeExcelCell(filtros.setores[0] || "Setor Central")}</td>
+            <td>${escapeExcelCell(filtros.tiposVinculo[0] || "Efetivo")}</td>
+            <td>${escapeExcelCell(filtros.regimesJuridicos[0] || "Estatutário")}</td>
+            <td>${escapeExcelCell(filtros.categorias[0] || "Área Meio")}</td>
+            <td>${escapeExcelCell(filtros.cargos[0] || "Analista")}</td>
+            <td>${escapeExcelCell(row.matricula)}</td>
+            <td>${escapeExcelCell(filtros.cpf || `000.000.00${index + 1}-00`)}</td>
+            <td>${escapeExcelCell(filtros.sexo || (index % 2 ? "Masculino" : "Feminino"))}</td>
+            <td>${escapeExcelCell(filtros.escolaridade || "Superior completo")}</td>
+            <td>${escapeExcelCell(filtros.idade || String(34 + index * 7))}</td>
+            <td>${escapeExcelCell(filtros.nivel || `N${index + 1}`)}</td>
+            <td>${escapeExcelCell(filtros.classe || String.fromCharCode(65 + index))}</td>
+            <td>${escapeExcelCell(filtros.competencia || "05/2026")}</td>
+            <td>${escapeExcelCell(filtros.folhaInicio || "05/2026")}</td>
+            <td>${escapeExcelCell(filtros.folhaFim || "05/2026")}</td>
+            <td>${escapeExcelCell(row.folha)}</td>
+            <td>${escapeExcelCell(filtros.nomeFolha || "Folha Normal")}</td>
+            <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento || `EXEC-${index + 1}`)}</td>
+            <td>${escapeExcelCell(filtros.dataProcessamento || dataEmissao.split(" ")[0])}</td>
+            <td>${escapeExcelCell(filtros.exibirUltimoProcessamento === "S" ? "Sim" : "Não")}</td>
+            <td>${escapeExcelCell(filtros.codigoRubrica || codigoRubrica)}</td>
+            <td>${escapeExcelCell(filtros.tipoRubrica || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"))}</td>
+            <td>${escapeExcelCell(descricaoRubrica.join(" - ") || row.rubrica)}</td>
+            <td>${escapeExcelCell(filtros.tipoAfastamento || "-")}</td>
+            <td>${escapeExcelCell(filtros.quantidadeDiasAfastado ?? 0)}</td>
+            <td>${escapeExcelCell(filtros.dataAposentadoriaInicio || "-")}</td>
+            <td>${escapeExcelCell(filtros.dataAposentadoriaFim || "-")}</td>
+            <td>${escapeExcelCell(filtros.jornada || "40h")}</td>
+            <td>${escapeExcelCell(filtros.dataExercicioInicio || "-")}</td>
+            <td>${escapeExcelCell(filtros.dataExercicioFim || "-")}</td>
+            <td>${escapeExcelCell(row.servidor)}</td>
+            <td>${escapeExcelCell(row.vantagens)}</td>
+            <td>${escapeExcelCell(row.descontos)}</td>
+            <td>${escapeExcelCell(row.liquido)}</td>
+            <td>${escapeExcelCell(row.alerta)}</td>
+            <td>${escapeExcelCell(row.situacaoAnalise)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
+            th { background: #005494; color: #ffffff; font-weight: bold; }
+            th, td { border: 1px solid #9ca3af; padding: 6px; mso-number-format:"\\@"; }
+            .title { background: #dbeafe; color: #0f2742; font-size: 16px; font-weight: bold; }
+            .section { background: #e5e7eb; color: #111827; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr><td class="title" colspan="37">Relatório Dinâmico da Folha</td></tr>
+            <tr><td><strong>Data/Hora da emissão</strong></td><td colspan="36">${escapeExcelCell(dataEmissao)}</td></tr>
+            <tr><td><strong>Solicitante</strong></td><td colspan="36">${escapeExcelCell(USUARIO_FOLHA_LOGADO)}</td></tr>
+            <tr><td class="section" colspan="37">Filtros aplicados</td></tr>
+            ${linhasFiltro}
+            <tr><td class="section" colspan="37">Dados do relatório</td></tr>
+            <tr>
+              <th>Órgão</th>
+              <th>Setor</th>
+              <th>Tipo de vínculo</th>
+              <th>Regime Jurídico</th>
+              <th>Categoria</th>
+              <th>Cargo</th>
+              <th>Matrícula</th>
+              <th>CPF</th>
+              <th>Sexo</th>
+              <th>Escolaridade</th>
+              <th>Idade</th>
+              <th>Nível</th>
+              <th>Classe</th>
+              <th>Competência</th>
+              <th>MM/AAAA da folha</th>
+              <th>Até</th>
+              <th>Número da Folha</th>
+              <th>Nome da Folha</th>
+              <th>Número da Execução do processamento</th>
+              <th>Data do processamento</th>
+              <th>Exibir último processamento</th>
+              <th>Código da Rubrica</th>
+              <th>Tipo da Rubrica</th>
+              <th>Descrição da Rubrica</th>
+              <th>Tipo de Afastamento</th>
+              <th>Quantidade de dias afastado</th>
+              <th>Data da Aposentadoria</th>
+              <th>Até aposentadoria</th>
+              <th>Jornada</th>
+              <th>Data de Exercício</th>
+              <th>Até exercício</th>
+              <th>Servidor</th>
+              <th>Vantagens</th>
+              <th>Descontos</th>
+              <th>Líquido</th>
+              <th>Alerta</th>
+              <th>Análise</th>
+            </tr>
+            ${linhasRelatorio || `<tr><td colspan="37">Nenhum registro encontrado para os filtros informados.</td></tr>`}
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\ufeff", html], {
+      type: "application/vnd.ms-excel;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `relatorio-dinamico-folha-${Date.now()}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleGerarRelatorio = (data: FolhaConformidadeFiltroForm) => {
     setFiltrosGerados(data);
+    const registros = getRegistrosFiltrados(data);
+    baixarRelatorioExcel(data, registros);
+    setFeedbackFiltro("Relatório Excel gerado com sucesso!");
   };
 
   const registrarAuditoriaFiltro = (evento: string, filtro: string) => {
@@ -19643,37 +19842,10 @@ export function PrototiposFolhaConformidadePage() {
     paginaGerenciadorFiltroAtual * linhasGerenciadorFiltro,
   );
 
-  const registrosFiltrados = useMemo(() => {
-    const matricula = filtrosGerados.matricula?.trim().toLowerCase() ?? "";
-    const servidor = filtrosGerados.servidor?.trim().toLowerCase() ?? "";
-    const rubrica =
-      filtrosGerados.rubrica?.trim().toLowerCase() ||
-      filtrosGerados.codigoRubrica?.trim().toLowerCase() ||
-      "";
-    return folhaConformidadeRows.filter((row) => {
-      const atendeFolha =
-        !filtrosGerados.numeroFolha || row.folha === filtrosGerados.numeroFolha;
-      const atendeOrgao =
-        !filtrosGerados.orgaos.length || filtrosGerados.orgaos.includes(row.orgao);
-      const atendeMatricula =
-        !matricula || row.matricula.toLowerCase().includes(matricula);
-      const atendeServidor =
-        !servidor || row.servidor.toLowerCase().includes(servidor);
-      const atendeRubrica =
-        !rubrica || row.rubrica.toLowerCase().includes(rubrica);
-      const atendeSituacao =
-        !filtrosGerados.situacaoAnalise ||
-        row.situacaoAnalise === filtrosGerados.situacaoAnalise;
-      return (
-        atendeFolha &&
-        atendeOrgao &&
-        atendeMatricula &&
-        atendeServidor &&
-        atendeRubrica &&
-        atendeSituacao
-      );
-    });
-  }, [filtrosGerados]);
+  const registrosFiltrados = useMemo(
+    () => getRegistrosFiltrados(filtrosGerados),
+    [filtrosGerados],
+  );
 
   const resumo = {
     matriculas: registrosFiltrados.length,
@@ -19750,7 +19922,6 @@ export function PrototiposFolhaConformidadePage() {
     { header: "Número da Folha", field: "numeroFolha" },
     { header: "Nome da Folha", field: "nomeFolha" },
     { header: "Competência", field: "competencia" },
-    { header: "Tipo do Relatório", field: "tipoRelatorio" },
     { header: "Solicitante", field: "solicitante" },
     {
       header: "Download",
@@ -19776,16 +19947,6 @@ export function PrototiposFolhaConformidadePage() {
           title="Relatório Dinâmico da Folha"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
-          actions={
-            <BotaoSeplag
-              type="button"
-              label="Aplicar filtro"
-              icon="pi pi-filter"
-              outlined
-              className="prototype-dynamic-report-load-filter"
-              onClick={abrirModalAplicarFiltro}
-            />
-          }
         >
           {feedbackFiltro ? (
             <div className="col-12">
@@ -19797,34 +19958,6 @@ export function PrototiposFolhaConformidadePage() {
             onSubmit={handleSubmit(handleGerarRelatorio)}
           >
             <div className="prototype-dynamic-report-main-grid">
-            <section className="prototype-dynamic-report-section">
-              {renderRelatorioAccordionHeader("colunas", "Colunas do relatório")}
-              {relatorioAccordions.colunas ? (
-                <div className="prototype-dynamic-report-selected">
-                  {folhaConformidadeMapaColunas.map((grupo, index) => (
-                    <div key={grupo.titulo} className="prototype-dynamic-report-chip-row">
-                      {index > 0 ? <div className="prototype-dynamic-report-divider" /> : null}
-                      {renderRelatorioAccordionHeader(grupo.key, grupo.titulo)}
-                      {relatorioAccordions[grupo.key] ? (
-                        <div className="prototype-dynamic-report-chips">
-                          {grupo.colunas.map((coluna) => (
-                            <button
-                              key={coluna}
-                              type="button"
-                              className={colunasSelecionadas.includes(coluna) ? "is-active" : ""}
-                              onClick={() => toggleColunaRelatorio(coluna)}
-                            >
-                              {coluna}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
             <section className="prototype-dynamic-report-section">
               {renderRelatorioAccordionHeader("filtros", "Filtros")}
               {relatorioAccordions.filtros ? (
@@ -20199,20 +20332,6 @@ export function PrototiposFolhaConformidadePage() {
 
             <div className="prototype-dynamic-report-actions">
               <BotaoLimparFiltroSeplag onClick={handleLimpar} type="button" />
-              <BotaoSeplag
-                label="Salvar filtro"
-                icon="pi pi-save"
-                type="button"
-                outlined
-                onClick={abrirModalSalvarFiltro}
-              />
-              <BotaoSeplag
-                label="Gerenciar Filtros"
-                icon="pi pi-cog"
-                type="button"
-                outlined
-                onClick={abrirModalCarregarFiltro}
-              />
               <BotaoSalvarSeplag
                 label="Gerar relatório"
                 icon="pi pi-file-excel"
