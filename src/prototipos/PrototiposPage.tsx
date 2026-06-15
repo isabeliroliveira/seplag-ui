@@ -54,6 +54,7 @@ import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/men
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
 import type { ResultsSeplag } from "../interfaces/Results";
 import logoEstado from "../assets/img/Logo_Branco_Estado_MT.png";
+import logoSeplagMtExcel from "../assets/img/logo-seplag-mt-excel.png";
 import logoSeplag from "../assets/img/logo-seplag.png";
 import "../componentes/layout/layout/Layout.css";
 import "./prototipos.css";
@@ -2894,36 +2895,28 @@ interface FolhaTabelaReferenciaFiltroForm {
 
 interface FolhaConformidadeFiltroForm {
   competencia: string;
-  folhaInicio: string;
-  folhaFim: string;
-  numeroFolha: string;
-  nomeFolha: string;
-  tipoFolha: string;
+  competenciaAnterior: string;
+  numeroFolha: string[];
   orgaos: string[];
   setores: string[];
   regimesJuridicos: string[];
   categorias: string[];
   cargos: string[];
   tiposVinculo: string[];
-  nivel?: string;
-  classe?: string;
-  matricula?: string;
-  cpf?: string;
-  sexo?: string;
-  escolaridade?: string;
-  idade?: string;
-  codigoRubrica?: string;
-  tipoRubrica?: string;
-  jornada?: string;
+  matricula: string[];
+  cpf: string[];
+  sexo: string[];
+  idade?: number;
+  codigoRubrica: string[];
+  tipoRubrica: string[];
+  jornada: string[];
   dataExercicioInicio?: string;
   dataExercicioFim?: string;
   dataAposentadoriaInicio?: string;
   dataAposentadoriaFim?: string;
-  numeroExecucaoProcessamento?: string;
+  numeroExecucaoProcessamento: string[];
   dataProcessamento?: string;
   exibirUltimoProcessamento?: string;
-  tipoAfastamento?: string;
-  quantidadeDiasAfastado?: number;
 }
 
 interface FolhaConformidadeRow {
@@ -2949,6 +2942,7 @@ interface FolhaConformidadeHistoricoRow {
   competencia: string;
   tipoRelatorio: string;
   solicitante: string;
+  situacao: "Em Emissão" | "Emitido" | "Falha na Emissão";
 }
 
 interface FolhaConformidadeFiltroSalvoRow {
@@ -2973,37 +2967,29 @@ interface FolhaConformidadeGerenciadorFiltroForm {
 }
 
 const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
-  competencia: "",
-  folhaInicio: "",
-  folhaFim: "",
-  numeroFolha: "",
-  nomeFolha: "",
-  tipoFolha: "",
+  competencia: "N",
+  competenciaAnterior: "N",
+  numeroFolha: [],
   orgaos: [],
   setores: [],
   regimesJuridicos: [],
   categorias: [],
   cargos: [],
   tiposVinculo: [],
-  nivel: "",
-  classe: "",
-  matricula: "",
-  cpf: "",
-  sexo: "",
-  escolaridade: "",
-  idade: "",
-  codigoRubrica: "",
-  tipoRubrica: "",
-  jornada: "",
+  matricula: [],
+  cpf: [],
+  sexo: [],
+  idade: undefined,
+  codigoRubrica: [],
+  tipoRubrica: [],
+  jornada: [],
   dataExercicioInicio: "",
   dataExercicioFim: "",
   dataAposentadoriaInicio: "",
   dataAposentadoriaFim: "",
-  numeroExecucaoProcessamento: "",
+  numeroExecucaoProcessamento: [],
   dataProcessamento: "",
   exibirUltimoProcessamento: "N",
-  tipoAfastamento: "",
-  quantidadeDiasAfastado: undefined,
 };
 
 interface FolhaTabelaReferenciaVigenciaRow {
@@ -3374,6 +3360,32 @@ const folhaConformidadeTipoVinculoOptions = [
   { label: "Estagiário", value: "Estagiário" },
 ];
 
+const folhaConformidadeMatriculaOptions = [
+  { label: "102030/1", value: "102030/1" },
+  { label: "204411/2", value: "204411/2" },
+  { label: "887120/1", value: "887120/1" },
+  { label: "451278/3", value: "451278/3" },
+  { label: "874512/2", value: "874512/2" },
+  { label: "339870/1", value: "339870/1" },
+  { label: "540110/2", value: "540110/2" },
+  { label: "778899/1", value: "778899/1" },
+  { label: "665544/4", value: "665544/4" },
+  { label: "112233/1", value: "112233/1" },
+];
+
+const folhaConformidadeCpfOptions = [
+  { label: "001.234.567-89", value: "001.234.567-89" },
+  { label: "112.345.678-90", value: "112.345.678-90" },
+  { label: "223.456.789-01", value: "223.456.789-01" },
+  { label: "334.567.890-12", value: "334.567.890-12" },
+  { label: "445.678.901-23", value: "445.678.901-23" },
+  { label: "556.789.012-34", value: "556.789.012-34" },
+  { label: "667.890.123-45", value: "667.890.123-45" },
+  { label: "778.901.234-56", value: "778.901.234-56" },
+  { label: "889.012.345-67", value: "889.012.345-67" },
+  { label: "990.123.456-78", value: "990.123.456-78" },
+];
+
 const folhaConformidadeTipoRelatorioOptions = [
   { label: "Sintético", value: "Sintético" },
   { label: "Detalhado", value: "Detalhado" },
@@ -3592,6 +3604,90 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     alerta: "Lançamento manual exige processo",
     situacaoAnalise: "Justificado",
   },
+  {
+    id: 5,
+    matricula: "874512",
+    vinculo: "2",
+    servidor: "JOSÉ ROBERTO LIMA",
+    orgao: "MTI",
+    folha: "40",
+    rubrica: "1006 - Previdência RPPS",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 712,33",
+    liquido: "R$ 5.840,12",
+    alerta: "Retenção previdenciária conferida",
+    situacaoAnalise: "Conforme",
+  },
+  {
+    id: 6,
+    matricula: "339870",
+    vinculo: "1",
+    servidor: "PAULA FERNANDES",
+    orgao: "SEPLAG",
+    folha: "60",
+    rubrica: "1001 - Salário Básico",
+    vantagens: "R$ 7.200,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 6.420,45",
+    alerta: "Checklist da folha pendente",
+    situacaoAnalise: "Pendente",
+  },
+  {
+    id: 7,
+    matricula: "540110",
+    vinculo: "2",
+    servidor: "MARCOS VINÍCIUS",
+    orgao: "SESP",
+    folha: "61",
+    rubrica: "1002 - Adicional Noturno",
+    vantagens: "R$ 430,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 4.120,00",
+    alerta: "Jornada divergente",
+    situacaoAnalise: "Inconsistente",
+  },
+  {
+    id: 8,
+    matricula: "778899",
+    vinculo: "1",
+    servidor: "LÚCIA BARROS",
+    orgao: "SEFAZ",
+    folha: "01",
+    rubrica: "5250 - Desconto LSF",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 260,00",
+    liquido: "R$ 3.980,77",
+    alerta: "Afastamento validado",
+    situacaoAnalise: "Conforme",
+  },
+  {
+    id: 9,
+    matricula: "665544",
+    vinculo: "4",
+    servidor: "RENATO COSTA",
+    orgao: "SEDUC",
+    folha: "02",
+    rubrica: "8014 - Ordem Judicial",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 980,00",
+    liquido: "R$ 2.630,00",
+    alerta: "Processo judicial sem documento",
+    situacaoAnalise: "Justificado",
+  },
+  {
+    id: 10,
+    matricula: "112233",
+    vinculo: "1",
+    servidor: "BIANCA MORAES",
+    orgao: "SES",
+    folha: "40",
+    rubrica: "992 - Auxílio Alimentação",
+    vantagens: "R$ 850,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 5.150,90",
+    alerta: "Sem alerta",
+    situacaoAnalise: "Conforme",
+  },
 ];
 
 const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
@@ -3603,6 +3699,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Sintético",
     solicitante: "ROBERTO JUNIOR",
+    situacao: "Emitido",
   },
   {
     id: 2,
@@ -3612,6 +3709,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Comparativo mensal",
     solicitante: "EQUIPE GCFP",
+    situacao: "Em Emissão",
   },
   {
     id: 3,
@@ -3621,6 +3719,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Retenções",
     solicitante: "EQUIPE GCFP",
+    situacao: "Falha na Emissão",
   },
 ];
 
@@ -3635,9 +3734,8 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
     filtros: {
       ...folhaConformidadeDefaultFilters,
       orgaos: ["SEPLAG"],
-      competencia: "05/2026",
-      numeroFolha: "01",
-      nomeFolha: "Folha Normal Maio/2026",
+      competencia: "S",
+      numeroFolha: ["01"],
     },
     colunas: folhaConformidadeTodasColunas,
   },
@@ -3650,8 +3748,8 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
     criadoPor: "EQUIPE GCFP",
     filtros: {
       ...folhaConformidadeDefaultFilters,
-      codigoRubrica: "1006 - PREVIDÊNCIA RPPS",
-      tipoRubrica: "Desconto",
+      codigoRubrica: ["1006 - PREVIDÊNCIA RPPS"],
+      tipoRubrica: ["Desconto"],
     },
     colunas: [
       "Órgão",
@@ -19462,18 +19560,19 @@ export function PrototiposFolhaConformidadePage() {
   );
 
   const getRegistrosFiltrados = (filtros: FolhaConformidadeFiltroForm) => {
-    const matricula = filtros.matricula?.trim().toLowerCase() ?? "";
-    const codigoRubrica = filtros.codigoRubrica?.trim().toLowerCase() ?? "";
-
     return folhaConformidadeRows.filter((row) => {
       const atendeFolha =
-        !filtros.numeroFolha || row.folha === filtros.numeroFolha;
+        !filtros.numeroFolha.length || filtros.numeroFolha.includes(row.folha);
       const atendeOrgao =
         !filtros.orgaos.length || filtros.orgaos.includes(row.orgao);
       const atendeMatricula =
-        !matricula || row.matricula.toLowerCase().includes(matricula);
+        !filtros.matricula.length ||
+        filtros.matricula.includes(`${row.matricula}/${row.vinculo}`);
       const atendeRubrica =
-        !codigoRubrica || row.rubrica.toLowerCase().includes(codigoRubrica);
+        !filtros.codigoRubrica.length ||
+        filtros.codigoRubrica.some((codigo) =>
+          row.rubrica.includes(codigo.split(" - ")[0]),
+        );
 
       return atendeFolha && atendeOrgao && atendeMatricula && atendeRubrica;
     });
@@ -19492,6 +19591,22 @@ export function PrototiposFolhaConformidadePage() {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
+  const imageUrlToDataUri = async (src: string) => {
+    try {
+      const response = await fetch(src);
+      const blob = await response.blob();
+
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return src;
+    }
+  };
+
   const montarFiltrosExcel = (filtros: FolhaConformidadeFiltroForm) => {
     const filtrosMapeados: Array<[string, string | string[] | number | undefined]> = [
       ["Órgão", filtros.orgaos],
@@ -19503,25 +19618,18 @@ export function PrototiposFolhaConformidadePage() {
       ["Matrícula", filtros.matricula],
       ["CPF", filtros.cpf],
       ["Sexo", filtros.sexo],
-      ["Escolaridade", filtros.escolaridade],
       ["Idade", filtros.idade],
-      ["Nível", filtros.nivel],
-      ["Classe", filtros.classe],
-      ["Competência", filtros.competencia],
-      ["MM/AAAA da folha", filtros.folhaInicio],
-      ["Até", filtros.folhaFim],
+      ["Competência", filtros.competencia === "S" ? "Sim" : ""],
+      ["Competência Anterior", filtros.competenciaAnterior === "S" ? "Sim" : ""],
       ["Número da Folha", filtros.numeroFolha],
-      ["Nome da Folha", filtros.nomeFolha],
+      ["Número da Execução do processamento", filtros.numeroExecucaoProcessamento],
       ["Data do processamento", filtros.dataProcessamento],
       [
         "Exibir último processamento",
         filtros.exibirUltimoProcessamento === "S" ? "Sim" : "",
       ],
-      ["Número da Execução do processamento", filtros.numeroExecucaoProcessamento],
       ["Código da Rubrica", filtros.codigoRubrica],
       ["Tipo da Rubrica", filtros.tipoRubrica],
-      ["Tipo de Afastamento", filtros.tipoAfastamento],
-      ["Quantidade de dias afastado", filtros.quantidadeDiasAfastado],
       ["Data da Aposentadoria", filtros.dataAposentadoriaInicio],
       ["Até aposentadoria", filtros.dataAposentadoriaFim],
       ["Jornada", filtros.jornada],
@@ -19534,11 +19642,12 @@ export function PrototiposFolhaConformidadePage() {
       .filter(([, value]) => value);
   };
 
-  const baixarRelatorioExcel = (
+  const baixarRelatorioExcel = async (
     filtros: FolhaConformidadeFiltroForm,
     registros: FolhaConformidadeRow[],
   ) => {
     const filtrosAplicados = montarFiltrosExcel(filtros);
+    const logoExcelSrc = await imageUrlToDataUri(logoSeplagMtExcel);
     const dataEmissao = new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -19569,28 +19678,21 @@ export function PrototiposFolhaConformidadePage() {
             <td>${escapeExcelCell(filtros.categorias[0] || "Área Meio")}</td>
             <td>${escapeExcelCell(filtros.cargos[0] || "Analista")}</td>
             <td>${escapeExcelCell(row.matricula)}</td>
-            <td>${escapeExcelCell(filtros.cpf || `000.000.00${index + 1}-00`)}</td>
-            <td>${escapeExcelCell(filtros.sexo || (index % 2 ? "Masculino" : "Feminino"))}</td>
-            <td>${escapeExcelCell(filtros.escolaridade || "Superior completo")}</td>
+            <td>${escapeExcelCell(filtros.cpf[0] || `000.000.00${index + 1}-00`)}</td>
+            <td>${escapeExcelCell(filtros.sexo[0] || (index % 2 ? "Masculino" : "Feminino"))}</td>
             <td>${escapeExcelCell(filtros.idade || String(34 + index * 7))}</td>
-            <td>${escapeExcelCell(filtros.nivel || `N${index + 1}`)}</td>
-            <td>${escapeExcelCell(filtros.classe || String.fromCharCode(65 + index))}</td>
-            <td>${escapeExcelCell(filtros.competencia || "05/2026")}</td>
-            <td>${escapeExcelCell(filtros.folhaInicio || "05/2026")}</td>
-            <td>${escapeExcelCell(filtros.folhaFim || "05/2026")}</td>
+            <td>${escapeExcelCell(filtros.competencia === "S" ? "05/2026" : "-")}</td>
+            <td>${escapeExcelCell(filtros.competenciaAnterior === "S" ? "04/2026" : "-")}</td>
             <td>${escapeExcelCell(row.folha)}</td>
-            <td>${escapeExcelCell(filtros.nomeFolha || "Folha Normal")}</td>
-            <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento || `EXEC-${index + 1}`)}</td>
+            <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento[0] || `EXEC-${index + 1}`)}</td>
             <td>${escapeExcelCell(filtros.dataProcessamento || dataEmissao.split(" ")[0])}</td>
             <td>${escapeExcelCell(filtros.exibirUltimoProcessamento === "S" ? "Sim" : "Não")}</td>
-            <td>${escapeExcelCell(filtros.codigoRubrica || codigoRubrica)}</td>
-            <td>${escapeExcelCell(filtros.tipoRubrica || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"))}</td>
+            <td>${escapeExcelCell(filtros.codigoRubrica[0] || codigoRubrica)}</td>
+            <td>${escapeExcelCell(filtros.tipoRubrica[0] || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"))}</td>
             <td>${escapeExcelCell(descricaoRubrica.join(" - ") || row.rubrica)}</td>
-            <td>${escapeExcelCell(filtros.tipoAfastamento || "-")}</td>
-            <td>${escapeExcelCell(filtros.quantidadeDiasAfastado ?? 0)}</td>
             <td>${escapeExcelCell(filtros.dataAposentadoriaInicio || "-")}</td>
             <td>${escapeExcelCell(filtros.dataAposentadoriaFim || "-")}</td>
-            <td>${escapeExcelCell(filtros.jornada || "40h")}</td>
+            <td>${escapeExcelCell(filtros.jornada[0] || "40h")}</td>
             <td>${escapeExcelCell(filtros.dataExercicioInicio || "-")}</td>
             <td>${escapeExcelCell(filtros.dataExercicioFim || "-")}</td>
             <td>${escapeExcelCell(row.servidor)}</td>
@@ -19614,16 +19716,24 @@ export function PrototiposFolhaConformidadePage() {
             th, td { border: 1px solid #9ca3af; padding: 6px; mso-number-format:"\\@"; }
             .title { background: #dbeafe; color: #0f2742; font-size: 16px; font-weight: bold; }
             .section { background: #e5e7eb; color: #111827; font-weight: bold; }
+            .header-row td { border: 0; }
+            .logo-cell { text-align: right; vertical-align: top; }
+            .logo-cell img { max-height: 70px; max-width: 280px; }
           </style>
         </head>
         <body>
           <table>
-            <tr><td class="title" colspan="37">Relatório Dinâmico da Folha</td></tr>
-            <tr><td><strong>Data/Hora da emissão</strong></td><td colspan="36">${escapeExcelCell(dataEmissao)}</td></tr>
-            <tr><td><strong>Solicitante</strong></td><td colspan="36">${escapeExcelCell(USUARIO_FOLHA_LOGADO)}</td></tr>
-            <tr><td class="section" colspan="37">Filtros aplicados</td></tr>
+            <tr class="header-row">
+              <td class="title" colspan="20">Relatório Dinâmico da Folha</td>
+              <td class="logo-cell" colspan="10" rowspan="3">
+                <img src="${logoExcelSrc}" alt="SEPLAG Governo de Mato Grosso" />
+              </td>
+            </tr>
+            <tr><td><strong>Data/Hora da emissão</strong></td><td colspan="19">${escapeExcelCell(dataEmissao)}</td></tr>
+            <tr><td><strong>Solicitante</strong></td><td colspan="19">${escapeExcelCell(USUARIO_FOLHA_LOGADO)}</td></tr>
+            <tr><td class="section" colspan="30">Filtros aplicados</td></tr>
             ${linhasFiltro}
-            <tr><td class="section" colspan="37">Dados do relatório</td></tr>
+            <tr><td class="section" colspan="30">Dados do relatório</td></tr>
             <tr>
               <th>Órgão</th>
               <th>Setor</th>
@@ -19634,23 +19744,16 @@ export function PrototiposFolhaConformidadePage() {
               <th>Matrícula</th>
               <th>CPF</th>
               <th>Sexo</th>
-              <th>Escolaridade</th>
               <th>Idade</th>
-              <th>Nível</th>
-              <th>Classe</th>
               <th>Competência</th>
-              <th>MM/AAAA da folha</th>
-              <th>Até</th>
+              <th>Competência Anterior</th>
               <th>Número da Folha</th>
-              <th>Nome da Folha</th>
               <th>Número da Execução do processamento</th>
               <th>Data do processamento</th>
               <th>Exibir último processamento</th>
               <th>Código da Rubrica</th>
               <th>Tipo da Rubrica</th>
               <th>Descrição da Rubrica</th>
-              <th>Tipo de Afastamento</th>
-              <th>Quantidade de dias afastado</th>
               <th>Data da Aposentadoria</th>
               <th>Até aposentadoria</th>
               <th>Jornada</th>
@@ -19663,7 +19766,7 @@ export function PrototiposFolhaConformidadePage() {
               <th>Alerta</th>
               <th>Análise</th>
             </tr>
-            ${linhasRelatorio || `<tr><td colspan="37">Nenhum registro encontrado para os filtros informados.</td></tr>`}
+            ${linhasRelatorio || `<tr><td colspan="30">Nenhum registro encontrado para os filtros informados.</td></tr>`}
           </table>
         </body>
       </html>
@@ -19682,10 +19785,10 @@ export function PrototiposFolhaConformidadePage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleGerarRelatorio = (data: FolhaConformidadeFiltroForm) => {
+  const handleGerarRelatorio = async (data: FolhaConformidadeFiltroForm) => {
     setFiltrosGerados(data);
     const registros = getRegistrosFiltrados(data);
-    baixarRelatorioExcel(data, registros);
+    await baixarRelatorioExcel(data, registros);
     setFeedbackFiltro("Relatório Excel gerado com sucesso!");
   };
 
@@ -19923,6 +20026,7 @@ export function PrototiposFolhaConformidadePage() {
     { header: "Nome da Folha", field: "nomeFolha" },
     { header: "Competência", field: "competencia" },
     { header: "Solicitante", field: "solicitante" },
+    { header: "Situação", field: "situacao" },
     {
       header: "Download",
       body: (row) => (
@@ -19930,6 +20034,7 @@ export function PrototiposFolhaConformidadePage() {
           type="button"
           icon="pi pi-download"
           tooltip={`Baixar relatório ${row.tipoRelatorio}`}
+          disabled={row.situacao !== "Emitido"}
           onClick={() => {}}
         />
       ),
@@ -20039,25 +20144,31 @@ export function PrototiposFolhaConformidadePage() {
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Matrícula")}>
-                  <TextFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Matrícula"
                     name="matricula"
                     control={control}
                     cols="12"
-                    placeholder="Digite a matrícula"
+                    options={folhaConformidadeMatriculaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
                 <div className={getFiltroFieldClassName("CPF")}>
-                  <TextFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="CPF"
                     name="cpf"
                     control={control}
                     cols="12"
-                    placeholder="000.000.000-00"
+                    options={folhaConformidadeCpfOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Sexo")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Sexo"
                     name="sexo"
                     control={control}
@@ -20068,48 +20179,14 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className={getFiltroFieldClassName("Escolaridade")}>
-                  <DropdownFieldSeplag
-                    label="Escolaridade"
-                    name="escolaridade"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeEscolaridadeOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
                 <div className={getFiltroFieldClassName("Idade")}>
-                  <TextFieldSeplag
+                  <NumberFieldSeplag
                     label="Idade"
                     name="idade"
                     control={control}
                     cols="12"
-                    placeholder="Ex.: maior que 60"
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Nível")}>
-                  <DropdownFieldSeplag
-                    label="Nível"
-                    name="nivel"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeNivelOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Classe")}>
-                  <DropdownFieldSeplag
-                    label="Classe"
-                    name="classe"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeClasseOptions}
-                    optionLabel="label"
-                    optionValue="value"
+                    min={0}
+                    max={99}
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
@@ -20122,34 +20199,23 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.folha ? (
                       <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--folha">
                   <div className={getFiltroFieldClassName("Competência")}>
-                    <TextFieldSeplag
-                      label="Competência"
+                    <CheckboxFieldSeplag<FolhaConformidadeFiltroForm>
                       name="competencia"
                       control={control}
                       cols="12"
-                      placeholder="MM/AAAA"
+                      checkboxLabel="Competência"
                     />
                   </div>
-                  <div className={getFiltroFieldClassName("Mês/AAAA até")}>
-                    <div className="prototype-dynamic-report-range">
-                      <TextFieldSeplag
-                        label="Mês/AAAA"
-                        name="folhaInicio"
-                        control={control}
-                        cols="12"
-                        placeholder="MM/AAAA"
-                      />
-                      <TextFieldSeplag
-                        label="Até"
-                        name="folhaFim"
-                        control={control}
-                        cols="12"
-                        placeholder="MM/AAAA"
-                      />
-                    </div>
+                  <div className={getFiltroFieldClassName("Competência Anterior")}>
+                    <CheckboxFieldSeplag<FolhaConformidadeFiltroForm>
+                      name="competenciaAnterior"
+                      control={control}
+                      cols="12"
+                      checkboxLabel="Competência Anterior"
+                    />
                   </div>
                   <div className={getFiltroFieldClassName("Número da Folha")}>
-                    <DropdownFieldSeplag
+                    <MultiSelectFieldSeplag
                       label="Número da Folha"
                       name="numeroFolha"
                       control={control}
@@ -20160,13 +20226,13 @@ export function PrototiposFolhaConformidadePage() {
                       getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
-                  <div className={getFiltroFieldClassName("Nome da Folha")}>
-                    <DropdownFieldSeplag
-                      label="Nome da Folha"
-                      name="nomeFolha"
+                  <div className={getFiltroFieldClassName("Número da execução do processamento")}>
+                    <MultiSelectFieldSeplag
+                      label="Número da execução do processamento"
+                      name="numeroExecucaoProcessamento"
                       control={control}
                       cols="12"
-                      options={folhaConformidadeNomeFolhaOptions}
+                      options={folhaConformidadeExecucaoOptions}
                       optionLabel="label"
                       optionValue="value"
                       getFormErrorMessage={getEmptyFieldError}
@@ -20189,18 +20255,6 @@ export function PrototiposFolhaConformidadePage() {
                       />
                     </div>
                   </div>
-                  <div className={getFiltroFieldClassName("Número da execução do processamento")}>
-                    <DropdownFieldSeplag
-                      label="Número da execução do processamento"
-                      name="numeroExecucaoProcessamento"
-                      control={control}
-                      cols="12"
-                      options={folhaConformidadeExecucaoOptions}
-                      optionLabel="label"
-                      optionValue="value"
-                      getFormErrorMessage={getEmptyFieldError}
-                    />
-                  </div>
                       </div>
                     ) : null}
                   </section>
@@ -20210,7 +20264,7 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.rubrica ? (
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Código da Rubrica")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Código da rubrica"
                     name="codigoRubrica"
                     control={control}
@@ -20222,7 +20276,7 @@ export function PrototiposFolhaConformidadePage() {
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Tipo da Rubrica")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Tipo da rubrica"
                     name="tipoRubrica"
                     control={control}
@@ -20246,43 +20300,21 @@ export function PrototiposFolhaConformidadePage() {
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Data Aposentadoria")}>
                   <div className="prototype-dynamic-report-range">
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Data aposentadoria"
                       name="dataAposentadoriaInicio"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Até"
                       name="dataAposentadoriaFim"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
-                </div>
-                <div className={getFiltroFieldClassName("Tipo de Afastamento")}>
-                  <DropdownFieldSeplag
-                    label="Tipo de Afastamento"
-                    name="tipoAfastamento"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeTipoAfastamentoOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Quantidade de dias afastado")}>
-                  <NumberFieldSeplag
-                    label="Quantidade de dias afastado"
-                    name="quantidadeDiasAfastado"
-                    control={control}
-                    cols="12"
-                    min={0}
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
                 </div>
                     </div>
                     ) : null}
@@ -20293,7 +20325,7 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.outros ? (
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Jornada")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Jornada"
                     name="jornada"
                     control={control}
@@ -20306,19 +20338,19 @@ export function PrototiposFolhaConformidadePage() {
                 </div>
                 <div className={getFiltroFieldClassName("Data de Exercício")}>
                   <div className="prototype-dynamic-report-range">
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Data de exercício"
                       name="dataExercicioInicio"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Até"
                       name="dataExercicioFim"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
                 </div>
