@@ -14765,13 +14765,61 @@ export function PrototiposFolhaPagamentoPage({
     const [horas, minutos] = hora.split(":").map(Number);
     return new Date(ano, mes - 1, dia, horas, minutos).getTime();
   };
+  const criarRelatoriosTecnicosExemplo = (
+    processamento: ProcessamentoFolhaExecucaoRow,
+  ): RelatorioTecnicoProcessamentoRow[] => [
+    {
+      id: Number(`${processamento.id}01`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 09:40",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Todos",
+      quantidadeErros: processamento.erros,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".PDF",
+      situacao: "Em Emissão",
+    },
+    {
+      id: Number(`${processamento.id}02`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 08:35",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com Sucesso",
+      quantidadeErros: 0,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".DOCX",
+      situacao: "Emitido",
+    },
+    {
+      id: Number(`${processamento.id}03`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 08:10",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com erro",
+      quantidadeErros: processamento.erros,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".CSV",
+      situacao: "Falha na Emissão",
+    },
+  ];
   const relatoriosTecnicosDaExecucaoBase =
     processamentoRelatorioTecnicoSelecionado
-      ? relatoriosTecnicos
-          .filter(
+      ? [
+          ...relatoriosTecnicos.filter(
             (relatorio) =>
               relatorio.execucaoId === processamentoRelatorioTecnicoSelecionado.id,
-          )
+          ),
+          ...criarRelatoriosTecnicosExemplo(
+            processamentoRelatorioTecnicoSelecionado,
+          ).filter(
+            (relatorioExemplo) =>
+              !relatoriosTecnicos.some(
+                (relatorio) =>
+                  relatorio.execucaoId === relatorioExemplo.execucaoId &&
+                  relatorio.situacao === relatorioExemplo.situacao,
+              ),
+          ),
+        ]
           .sort(
             (a, b) =>
               parseDataHoraBrTimestamp(b.dataHoraEmissao) -
@@ -15700,6 +15748,7 @@ export function PrototiposFolhaPagamentoPage({
                       type="button"
                       tooltip="Download"
                       icon="pi pi-download"
+                      disabled={row.situacao !== "Emitido"}
                       onClick={() => baixarRelatorioTecnico(row)}
                     />
                   )}
