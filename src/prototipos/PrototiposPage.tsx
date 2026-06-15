@@ -2967,8 +2967,8 @@ interface FolhaConformidadeGerenciadorFiltroForm {
 }
 
 const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
-  competencia: "N",
-  competenciaAnterior: "N",
+  competencia: "",
+  competenciaAnterior: "",
   numeroFolha: [],
   orgaos: [],
   setores: [],
@@ -3734,7 +3734,7 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
     filtros: {
       ...folhaConformidadeDefaultFilters,
       orgaos: ["SEPLAG"],
-      competencia: "S",
+      competencia: "05/2026",
       numeroFolha: ["01"],
     },
     colunas: folhaConformidadeTodasColunas,
@@ -19619,8 +19619,8 @@ export function PrototiposFolhaConformidadePage() {
       ["CPF", filtros.cpf],
       ["Sexo", filtros.sexo],
       ["Idade", filtros.idade],
-      ["Competência", filtros.competencia === "S" ? "Sim" : ""],
-      ["Competência Anterior", filtros.competenciaAnterior === "S" ? "Sim" : ""],
+      ["Competência", filtros.competencia],
+      ["Competência Anterior", filtros.competenciaAnterior],
       ["Número da Folha", filtros.numeroFolha],
       ["Número da Execução do processamento", filtros.numeroExecucaoProcessamento],
       ["Data do processamento", filtros.dataProcessamento],
@@ -19681,8 +19681,8 @@ export function PrototiposFolhaConformidadePage() {
             <td>${escapeExcelCell(filtros.cpf[0] || `000.000.00${index + 1}-00`)}</td>
             <td>${escapeExcelCell(filtros.sexo[0] || (index % 2 ? "Masculino" : "Feminino"))}</td>
             <td>${escapeExcelCell(filtros.idade || String(34 + index * 7))}</td>
-            <td>${escapeExcelCell(filtros.competencia === "S" ? "05/2026" : "-")}</td>
-            <td>${escapeExcelCell(filtros.competenciaAnterior === "S" ? "04/2026" : "-")}</td>
+            <td>${escapeExcelCell(filtros.competencia || "05/2026")}</td>
+            <td>${escapeExcelCell(filtros.competenciaAnterior || "04/2026")}</td>
             <td>${escapeExcelCell(row.folha)}</td>
             <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento[0] || `EXEC-${index + 1}`)}</td>
             <td>${escapeExcelCell(filtros.dataProcessamento || dataEmissao.split(" ")[0])}</td>
@@ -20199,19 +20199,21 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.folha ? (
                       <div className="prototype-dynamic-report-grid prototype-dynamic-report-grid--folha">
                   <div className={getFiltroFieldClassName("Competência")}>
-                    <CheckboxFieldSeplag<FolhaConformidadeFiltroForm>
+                    <TextFieldSeplag
+                      label="Competência"
                       name="competencia"
                       control={control}
                       cols="12"
-                      checkboxLabel="Competência"
+                      placeholder="MM/AAAA"
                     />
                   </div>
                   <div className={getFiltroFieldClassName("Competência Anterior")}>
-                    <CheckboxFieldSeplag<FolhaConformidadeFiltroForm>
+                    <TextFieldSeplag
+                      label="Competência Anterior"
                       name="competenciaAnterior"
                       control={control}
                       cols="12"
-                      checkboxLabel="Competência Anterior"
+                      placeholder="MM/AAAA"
                     />
                   </div>
                   <div className={getFiltroFieldClassName("Número da Folha")}>
