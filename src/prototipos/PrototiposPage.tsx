@@ -13119,7 +13119,7 @@ export function PrototiposFolhaPagamentoFormPage() {
               ) : null}
               {folhaPermiteVersionamento ? (
                 <div className="prototype-validation-panel prototype-validation-panel--info">
-                  Esta folha já foi processada. Ao salvar, o sistema cria uma nova versão para preservar o histórico da versão anterior.
+                  Esta folha já foi processada. Ao salvar as alterações, elas serão refletidas nos filtros de processamento da folha.
                 </div>
               ) : null}
               {folhaBloqueadaParaAlteracao ? (
@@ -13895,10 +13895,8 @@ export function PrototiposFolhaPagamentoPage({
       !termoBusca ||
       folha.numero.toLowerCase().includes(termoBusca) ||
       folha.nome.toLowerCase().includes(termoBusca);
-    const atendeSituacao =
-      !filtros.situacao || folha.situacao === filtros.situacao;
 
-    return atendeTermo && atendeSituacao;
+    return atendeTermo;
   });
 
   const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
@@ -14570,8 +14568,26 @@ export function PrototiposFolhaPagamentoPage({
     { field: "numero", header: "Número" },
     { field: "nome", header: "Nome" },
     {
-      header: "Situação processamento",
-      body: (row) => renderFolhaSituacaoBadge(row.situacao),
+      header: "Ação",
+      body: (row) => (
+        <div className="acoes-table">
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Visualizar"
+            icon="pi pi-eye"
+            onClick={() => abrirDetalheFolha(row)}
+          />
+          {folhaPodeEditar(row) ? (
+            <BotaoIconSeplag
+              type="button"
+              tooltip="Editar folha"
+              icon="pi pi-pencil"
+              style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
+              onClick={() => abrirEditarFolha(row)}
+            />
+          ) : null}
+        </div>
+      ),
     },
   ];
 
@@ -15097,17 +15113,7 @@ export function PrototiposFolhaPagamentoPage({
                   name="termo"
                   control={control}
                   label="Número ou nome da folha"
-                  cols="12 12 5"
-                  getFormErrorMessage={() => null}
-                />
-                <DropdownFieldSeplag
-                  name="situacao"
-                  control={control}
-                  label="Situação"
-                  cols="12 6 3"
-                  options={folhaPagamentoSituacaoOptions}
-                  optionLabel="label"
-                  optionValue="value"
+                  cols="12 12 8"
                   getFormErrorMessage={() => null}
                 />
               </>
@@ -15176,11 +15182,11 @@ export function PrototiposFolhaPagamentoPage({
               lazy={false}
               selectionMode={null}
               columns={isTelaProcessamentoFolha ? processamentoColumns : folhaColumns}
-              hasEventoAcao
+              hasEventoAcao={isTelaProcessamentoFolha}
               renderBotoes={
                 isTelaProcessamentoFolha
                   ? renderAcoesProcessamento
-                  : renderAcoesFolha
+                  : undefined
               }
               handleOnPageChange={() => {}}
             />
