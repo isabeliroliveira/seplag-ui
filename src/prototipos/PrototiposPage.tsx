@@ -12853,14 +12853,11 @@ export function PrototiposFolhaPagamentoFormPage() {
     "PROCESSO_COM_SUCESSO",
     "PROCESSO_COM_ERRO",
   ];
-  const folhaPermiteEdicaoDireta =
-    folhaEdicao?.situacao === "RASCUNHO" || folhaEdicao?.situacao === "ABERTO";
   const folhaPermiteVersionamento = folhaEdicao
     ? situacoesComVersionamento.includes(folhaEdicao.situacao)
     : false;
-  const folhaBloqueadaParaAlteracao = Boolean(
-    isFolhaEdicao && !folhaPermiteEdicaoDireta && !folhaPermiteVersionamento,
-  );
+  const folhaPermiteEdicaoDireta =
+    isFolhaEdicao && !folhaPermiteVersionamento;
   const {
     control,
     handleSubmit,
@@ -13002,13 +12999,6 @@ export function PrototiposFolhaPagamentoFormPage() {
     data: FolhaPagamentoForm,
     situacao: FolhaPagamentoSituacao,
   ) => {
-    if (folhaBloqueadaParaAlteracao) {
-      setFormFeedback(
-        "Não é possível alterar ou versionar folha aguardando processamento, em processamento ou cancelada.",
-      );
-      return;
-    }
-
     const validacaoObrigatorios = validarObrigatoriosFolha(data);
 
     if (validacaoObrigatorios) {
@@ -13121,12 +13111,6 @@ export function PrototiposFolhaPagamentoFormPage() {
                   Esta folha já foi processada. Ao salvar as alterações, elas serão refletidas nos filtros de processamento da folha.
                 </div>
               ) : null}
-              {folhaBloqueadaParaAlteracao ? (
-                <div className="prototype-validation-panel">
-                  Esta folha não pode ser alterada nem versionada na situação atual.
-                </div>
-              ) : null}
-
               <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
                 <h3>Dados da Folha</h3>
                   <div className="grid prototype-category-form-fields">
@@ -13758,6 +13742,8 @@ export function PrototiposFolhaPagamentoPage({
   const { control, reset, watch } = useForm<FolhaPagamentoFiltroForm>({
     defaultValues: {
       termo: "",
+      numeroFolha: "",
+      nomeFolha: "",
       orgaos: [],
       mesAnoReferencia: "",
       competencia: "",
@@ -13889,13 +13875,21 @@ export function PrototiposFolhaPagamentoPage({
   const termoBuscaDigitado = filtros.termo?.trim().toLowerCase() ?? "";
   const termoBusca =
     termoBuscaDigitado.length >= 3 ? termoBuscaDigitado : "";
+  const numeroFolhaBuscaDigitado =
+    filtros.numeroFolha?.trim().toLowerCase() ?? "";
+  const numeroFolhaBusca = numeroFolhaBuscaDigitado;
+  const nomeFolhaBuscaDigitado =
+    filtros.nomeFolha?.trim().toLowerCase() ?? "";
+  const nomeFolhaBusca =
+    nomeFolhaBuscaDigitado.length >= 3 ? nomeFolhaBuscaDigitado : "";
   const folhasFiltradas = folhas.filter((folha) => {
-    const atendeTermo =
-      !termoBusca ||
-      folha.numero.toLowerCase().includes(termoBusca) ||
-      folha.nome.toLowerCase().includes(termoBusca);
+    const atendeNumero =
+      !numeroFolhaBusca ||
+      folha.numero.toLowerCase().includes(numeroFolhaBusca);
+    const atendeNome =
+      !nomeFolhaBusca || folha.nome.toLowerCase().includes(nomeFolhaBusca);
 
-    return atendeTermo;
+    return atendeNumero && atendeNome;
   });
 
   const getFolhaVersaoKey = (folha: FolhaPagamentoRow) =>
@@ -14164,15 +14158,6 @@ export function PrototiposFolhaPagamentoPage({
         data.grupoEleitos,
     );
 
-  const folhaPodeEditar = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" ||
-    folha.situacao === "ABERTO" ||
-    folha.situacao === "PROCESSO_COM_SUCESSO" ||
-    folha.situacao === "PROCESSO_COM_ERRO";
-
-  const folhaPodeExcluir = (folha: FolhaPagamentoRow) =>
-    folha.situacao === "RASCUNHO" || folha.situacao === "ABERTO";
-
   const folhaTemHistoricoProcessamento = (folha: FolhaPagamentoRow) =>
     folha.situacao !== "RASCUNHO" && folha.situacao !== "ABERTO";
 
@@ -14180,11 +14165,6 @@ export function PrototiposFolhaPagamentoPage({
     folha.situacao === "ABERTO" ||
     folha.situacao === "PROCESSO_COM_SUCESSO" ||
     folha.situacao === "PROCESSO_COM_ERRO";
-
-  const getMensagemBloqueioEdicao = (folha: FolhaPagamentoRow) =>
-    folhaPodeEditar(folha)
-      ? ""
-      : "Não é possível editar uma folha aguardando processamento, em processamento, processada ou cancelada.";
 
   const getMensagemBloqueioProcessamento = (folha: FolhaPagamentoRow) =>
     folhaPodeProcessar(folha)
@@ -14272,12 +14252,6 @@ export function PrototiposFolhaPagamentoPage({
   };
 
   const abrirEditarFolha = (folha: FolhaPagamentoRow) => {
-    const mensagemBloqueio = getMensagemBloqueioEdicao(folha);
-    if (mensagemBloqueio) {
-      setFeedback(mensagemBloqueio);
-      return;
-    }
-
     setFeedback("");
     navigate(`${FOLHA_PAGAMENTO_BASE_PATH}/${folha.id}/editar`);
   };
@@ -14557,8 +14531,6 @@ export function PrototiposFolhaPagamentoPage({
   };
 
   const excluirFolha = (folha: FolhaPagamentoRow) => {
-    if (!folhaPodeExcluir(folha)) return;
-
     setFolhas((current) => current.filter((item) => item.id !== folha.id));
     setFeedback("Folha excluída com sucesso.");
   };
@@ -14576,15 +14548,20 @@ export function PrototiposFolhaPagamentoPage({
             icon="pi pi-eye"
             onClick={() => abrirDetalheFolha(row)}
           />
-          {folhaPodeEditar(row) ? (
-            <BotaoIconSeplag
-              type="button"
-              tooltip="Editar folha"
-              icon="pi pi-pencil"
-              style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
-              onClick={() => abrirEditarFolha(row)}
-            />
-          ) : null}
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Editar folha"
+            icon="pi pi-pencil"
+            style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
+            onClick={() => abrirEditarFolha(row)}
+          />
+          <BotaoIconSeplag
+            type="button"
+            tooltip="Excluir"
+            icon="pi pi-trash"
+            severity="danger"
+            onClick={() => excluirFolha(row)}
+          />
         </div>
       ),
     },
@@ -14805,15 +14782,13 @@ export function PrototiposFolhaPagamentoPage({
         icon="pi pi-eye"
         onClick={() => abrirDetalheFolha(folha)}
       />
-      {folhaPodeEditar(folha) ? (
-        <BotaoIconSeplag
-          type="button"
-          tooltip="Editar folha"
-          icon="pi pi-pencil"
-          style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
-          onClick={() => abrirEditarFolha(folha)}
-        />
-      ) : null}
+      <BotaoIconSeplag
+        type="button"
+        tooltip="Editar folha"
+        icon="pi pi-pencil"
+        style={{ backgroundColor: "#fbc02d", color: "#ffffff" }}
+        onClick={() => abrirEditarFolha(folha)}
+      />
       <BotaoIconSeplag
         type="button"
         tooltip={
@@ -14836,15 +14811,13 @@ export function PrototiposFolhaPagamentoPage({
           onClick={() => abrirExecucoesFolha(folha)}
         />
       ) : null}
-      {folhaPodeExcluir(folha) ? (
-        <BotaoIconSeplag
-          type="button"
-          tooltip="Excluir"
-          icon="pi pi-trash"
-          style={{ backgroundColor: "#d32f2f", color: "#ffffff" }}
-          onClick={() => excluirFolha(folha)}
-        />
-      ) : null}
+      <BotaoIconSeplag
+        type="button"
+        tooltip="Excluir"
+        icon="pi pi-trash"
+        style={{ backgroundColor: "#d32f2f", color: "#ffffff" }}
+        onClick={() => excluirFolha(folha)}
+      />
     </>
   );
 
@@ -15109,10 +15082,17 @@ export function PrototiposFolhaPagamentoPage({
             ) : (
               <>
                 <TextFieldSeplag
-                  name="termo"
+                  name="numeroFolha"
                   control={control}
-                  label="Número ou nome da folha"
-                  cols="12 12 8"
+                  label="Número da folha"
+                  cols="12 12 4"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="nomeFolha"
+                  control={control}
+                  label="Nome da folha"
+                  cols="12 12 4"
                   getFormErrorMessage={() => null}
                 />
               </>
@@ -15125,6 +15105,8 @@ export function PrototiposFolhaPagamentoPage({
                 onClick={() =>
                   reset({
                     termo: "",
+                    numeroFolha: "",
+                    nomeFolha: "",
                     competencia: "",
                     dataProcessamento: "",
                     numeroExecucao: "",

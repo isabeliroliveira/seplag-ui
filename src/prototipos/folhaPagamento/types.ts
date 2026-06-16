@@ -110,6 +110,8 @@ export interface GrupoFolhaVersaoRow {
 
 export interface FolhaPagamentoFiltroForm {
   termo?: string;
+  numeroFolha?: string;
+  nomeFolha?: string;
   orgaos?: string[];
   mesAnoReferencia?: string;
   competencia?: string;
