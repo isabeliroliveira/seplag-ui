@@ -37,6 +37,7 @@ import {
   PrototiposFolhaGrupoCalculoFormPage,
   PrototiposFolhaGruposCalculoPage,
   PrototiposFolhaCompetenciasPage,
+  PrototiposFolhaCronogramaPage,
   PrototiposFolhaFichaFinanceiraPage,
   PrototiposFolhaPagamentoFormPage,
   PrototiposFolhaPagamentoLogPage,
@@ -416,6 +417,10 @@ function App() {
         element={<PrototiposMatrizValidacaoTesteFormPage />}
       />
       <Route path="/prototipos/folha" element={<PrototiposFolhaPage />} />
+      <Route
+        path="/prototipos/folha/cronograma"
+        element={<PrototiposFolhaCronogramaPage />}
+      />
       <Route
         path="/prototipos/folha/processamento/competencias"
         element={<PrototiposFolhaCompetenciasPage />}

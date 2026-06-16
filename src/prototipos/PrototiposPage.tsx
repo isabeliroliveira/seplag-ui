@@ -50,6 +50,7 @@ import {
 import { PickListSeplag } from "@componentes/PickList";
 import { TabsSeplag, type TabItemSeplag } from "@componentes/Tabs";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
+import ExcelJS from "exceljs";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
 import type { ResultsSeplag } from "../interfaces/Results";
@@ -2893,6 +2894,25 @@ interface FolhaTabelaReferenciaFiltroForm {
   tabela?: string;
 }
 
+interface FolhaCronogramaEvento {
+  periodo: string;
+  descricao: string;
+  status: string;
+}
+
+interface FolhaCronogramaSecao {
+  id: number;
+  titulo: string;
+  marcador: string;
+  observacao?: string;
+  eventos: FolhaCronogramaEvento[];
+}
+
+interface FolhaCronogramaState {
+  tituloCiclo: string;
+  secoes: FolhaCronogramaSecao[];
+}
+
 interface FolhaConformidadeFiltroForm {
   competencia: string;
   competenciaAnterior: string;
@@ -2923,13 +2943,24 @@ interface FolhaConformidadeRow {
   id: number;
   matricula: string;
   vinculo: string;
+  numeroDependentes?: number;
   servidor: string;
   orgao: string;
+  subcategoria: string;
   folha: string;
   rubrica: string;
+  dataInicioExercicio: string;
+  dataFimExercicio: string;
+  dataAposentadoria: string;
+  valorBaseInss: string;
+  inssPago: string;
+  inssSimulado: string;
   vantagens: string;
   descontos: string;
   liquido: string;
+  valorVanMesAnterior: string;
+  valorDesMesAnterior: string;
+  valorLiqMesAnterior: string;
   alerta: string;
   situacaoAnalise: "Pendente" | "Conforme" | "Inconsistente" | "Justificado";
 }
@@ -3554,11 +3585,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "1",
     servidor: "MARIA OLIVEIRA",
     orgao: "SEPLAG",
+    subcategoria: "Administrativa",
     folha: "01",
     rubrica: "992 - Auxílio Alimentação",
+    dataInicioExercicio: "15/02/2018",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 4.820,45",
+    inssPago: "R$ 530,25",
+    inssSimulado: "R$ 530,25",
     vantagens: "R$ 850,00",
     descontos: "R$ 0,00",
     liquido: "R$ 850,00",
+    valorVanMesAnterior: "R$ 850,00",
+    valorDesMesAnterior: "R$ 0,00",
+    valorLiqMesAnterior: "R$ 850,00",
     alerta: "Rubrica sensível em vínculo inativo",
     situacaoAnalise: "Inconsistente",
   },
@@ -3568,11 +3609,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "2",
     servidor: "JOÃO PEREIRA",
     orgao: "SEDUC",
+    subcategoria: "Magistério",
     folha: "01",
     rubrica: "8019 - Saldo ALN",
+    dataInicioExercicio: "03/08/2021",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 3.945,10",
+    inssPago: "R$ 434,00",
+    inssSimulado: "R$ 441,32",
     vantagens: "R$ 0,00",
     descontos: "R$ 1.245,90",
     liquido: "-R$ 312,10",
+    valorVanMesAnterior: "R$ 0,00",
+    valorDesMesAnterior: "R$ 1.180,45",
+    valorLiqMesAnterior: "R$ -280,10",
     alerta: "ALN pendente",
     situacaoAnalise: "Pendente",
   },
@@ -3582,11 +3633,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "1",
     servidor: "ANA SANTOS",
     orgao: "SES",
+    subcategoria: "Assistencial",
     folha: "02",
     rubrica: "5250 - Desconto LSF",
+    dataInicioExercicio: "22/11/2016",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 5.102,88",
+    inssPago: "R$ 561,31",
+    inssSimulado: "R$ 561,31",
     vantagens: "R$ 0,00",
     descontos: "R$ 486,34",
     liquido: "R$ 3.214,65",
+    valorVanMesAnterior: "R$ 0,00",
+    valorDesMesAnterior: "R$ 472,20",
+    valorLiqMesAnterior: "R$ 3.240,18",
     alerta: "Afastamento com desconto",
     situacaoAnalise: "Conforme",
   },
@@ -3596,11 +3657,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "3",
     servidor: "CARLOS ALMEIDA",
     orgao: "PGE",
+    subcategoria: "Jurídica",
     folha: "31",
     rubrica: "8014 - Ordem Judicial",
+    dataInicioExercicio: "10/01/2014",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 6.840,00",
+    inssPago: "R$ 751,12",
+    inssSimulado: "R$ 760,48",
     vantagens: "R$ 2.900,00",
     descontos: "R$ 0,00",
     liquido: "R$ 2.900,00",
+    valorVanMesAnterior: "R$ 2.900,00",
+    valorDesMesAnterior: "R$ 0,00",
+    valorLiqMesAnterior: "R$ 2.900,00",
     alerta: "Lançamento manual exige processo",
     situacaoAnalise: "Justificado",
   },
@@ -3610,11 +3681,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "2",
     servidor: "JOSÉ ROBERTO LIMA",
     orgao: "MTI",
+    subcategoria: "Tecnologia",
     folha: "40",
     rubrica: "1006 - Previdência RPPS",
+    dataInicioExercicio: "05/03/2019",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 5.995,30",
+    inssPago: "R$ 712,33",
+    inssSimulado: "R$ 712,33",
     vantagens: "R$ 0,00",
     descontos: "R$ 712,33",
     liquido: "R$ 5.840,12",
+    valorVanMesAnterior: "R$ 0,00",
+    valorDesMesAnterior: "R$ 705,10",
+    valorLiqMesAnterior: "R$ 5.798,44",
     alerta: "Retenção previdenciária conferida",
     situacaoAnalise: "Conforme",
   },
@@ -3624,11 +3705,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "1",
     servidor: "PAULA FERNANDES",
     orgao: "SEPLAG",
+    subcategoria: "Planejamento",
     folha: "60",
     rubrica: "1001 - Salário Básico",
+    dataInicioExercicio: "18/07/2017",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 7.200,00",
+    inssPago: "R$ 792,00",
+    inssSimulado: "R$ 792,00",
     vantagens: "R$ 7.200,00",
     descontos: "R$ 0,00",
     liquido: "R$ 6.420,45",
+    valorVanMesAnterior: "R$ 7.050,00",
+    valorDesMesAnterior: "R$ 0,00",
+    valorLiqMesAnterior: "R$ 6.300,15",
     alerta: "Checklist da folha pendente",
     situacaoAnalise: "Pendente",
   },
@@ -3638,11 +3729,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "2",
     servidor: "MARCOS VINÍCIUS",
     orgao: "SESP",
+    subcategoria: "Operacional",
     folha: "61",
     rubrica: "1002 - Adicional Noturno",
+    dataInicioExercicio: "12/09/2020",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 4.550,00",
+    inssPago: "R$ 500,50",
+    inssSimulado: "R$ 498,10",
     vantagens: "R$ 430,00",
     descontos: "R$ 0,00",
     liquido: "R$ 4.120,00",
+    valorVanMesAnterior: "R$ 395,00",
+    valorDesMesAnterior: "R$ 0,00",
+    valorLiqMesAnterior: "R$ 4.010,90",
     alerta: "Jornada divergente",
     situacaoAnalise: "Inconsistente",
   },
@@ -3652,11 +3753,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "1",
     servidor: "LÚCIA BARROS",
     orgao: "SEFAZ",
+    subcategoria: "Fiscal",
     folha: "01",
     rubrica: "5250 - Desconto LSF",
+    dataInicioExercicio: "28/04/2015",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 4.280,77",
+    inssPago: "R$ 470,88",
+    inssSimulado: "R$ 470,88",
     vantagens: "R$ 0,00",
     descontos: "R$ 260,00",
     liquido: "R$ 3.980,77",
+    valorVanMesAnterior: "R$ 0,00",
+    valorDesMesAnterior: "R$ 248,00",
+    valorLiqMesAnterior: "R$ 3.915,12",
     alerta: "Afastamento validado",
     situacaoAnalise: "Conforme",
   },
@@ -3666,11 +3777,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "4",
     servidor: "RENATO COSTA",
     orgao: "SEDUC",
+    subcategoria: "Apoio escolar",
     folha: "02",
     rubrica: "8014 - Ordem Judicial",
+    dataInicioExercicio: "09/12/2013",
+    dataFimExercicio: "14/05/2026",
+    dataAposentadoria: "15/05/2026",
+    valorBaseInss: "R$ 3.120,00",
+    inssPago: "R$ 343,20",
+    inssSimulado: "R$ 349,40",
     vantagens: "R$ 0,00",
     descontos: "R$ 980,00",
     liquido: "R$ 2.630,00",
+    valorVanMesAnterior: "R$ 0,00",
+    valorDesMesAnterior: "R$ 950,00",
+    valorLiqMesAnterior: "R$ 2.700,00",
     alerta: "Processo judicial sem documento",
     situacaoAnalise: "Justificado",
   },
@@ -3680,11 +3801,21 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     vinculo: "1",
     servidor: "BIANCA MORAES",
     orgao: "SES",
+    subcategoria: "Enfermagem",
     folha: "40",
     rubrica: "992 - Auxílio Alimentação",
+    dataInicioExercicio: "17/06/2022",
+    dataFimExercicio: "",
+    dataAposentadoria: "",
+    valorBaseInss: "R$ 5.360,00",
+    inssPago: "R$ 589,60",
+    inssSimulado: "R$ 589,60",
     vantagens: "R$ 850,00",
     descontos: "R$ 0,00",
     liquido: "R$ 5.150,90",
+    valorVanMesAnterior: "R$ 820,00",
+    valorDesMesAnterior: "R$ 0,00",
+    valorLiqMesAnterior: "R$ 5.030,45",
     alerta: "Sem alerta",
     situacaoAnalise: "Conforme",
   },
@@ -10252,7 +10383,132 @@ export function PrototiposMatrizValidacaoTesteFormPage() {
   );
 }
 
+const FOLHA_CRONOGRAMA_STORAGE_KEY = "prototipos.folha.cronograma";
+
+const folhaCronogramaDefaultState: FolhaCronogramaState = {
+  tituloCiclo: "Ciclo de folha de pagamento — Junho/2026",
+  secoes: [
+    {
+      id: 1,
+      titulo: "Folha principal",
+      marcador: "is-main",
+      eventos: [
+        {
+          periodo: "14/06 - 16/06 - 18:00",
+          descricao:
+            "Limite para envio de documentos pelas setoriais à SAGPP/SEPLAG",
+          status: "Agendado",
+        },
+        {
+          periodo: "14/06 - 14/06 - 18:00",
+          descricao: "Carga dos consignados na folha",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "15/06 - 15/06 - 17:00",
+          descricao: "Limite para execução do último operador PAEP",
+          status: "Agendado",
+        },
+        {
+          periodo: "15/06 - 15/06 - 17:00",
+          descricao: "Limite para lançamento de férias do mês subsequente no SEAP",
+          status: "Agendado",
+        },
+        {
+          periodo: "17/06 - 17/06 - 18:00",
+          descricao:
+            "Último processamento total - Último dia para registros na folha principal",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "18/06 - 22/06 - 17:00",
+          descricao: "Período exclusivo de conformidade - bloqueio do SEAP",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "20/06 - 20/06 - 11:00",
+          descricao: "Limite para solicitação de cancelamento de pagamento (SEPLAG)",
+          status: "Agendado",
+        },
+        {
+          periodo: "22/06 - 22/06 - 17:00",
+          descricao: "Consolidação",
+          status: "Concluído",
+        },
+        {
+          periodo: "03/06 - 03/06 - 18:00",
+          descricao: "Limite para solicitação de retransmissão de pagamento",
+          status: "Agendado",
+        },
+      ],
+    },
+    {
+      id: 2,
+      titulo: "Rescisão - Folha 31",
+      marcador: "is-rescission",
+      observacao:
+        "Os desligamentos ocorridos após o dia 14/06/2026 serão processados na Folha Rescisória 32 de junho/2026.",
+      eventos: [
+        {
+          periodo: "14/06 - 14/06 - 18:00",
+          descricao: "Processamento da folha - desligamentos até 14/05",
+          status: "Em Andamento",
+        },
+        {
+          periodo: "15/06 - 15/06 - 11:00",
+          descricao: "Limite para solicitação de cancelamento de pagamento",
+          status: "Agendado",
+        },
+        {
+          periodo: "18/06 - 18/06 - 17:00",
+          descricao: "Consolidação",
+          status: "Concluído",
+        },
+      ],
+    },
+  ],
+};
+
+const cloneFolhaCronogramaState = (state: FolhaCronogramaState) => ({
+  ...state,
+  secoes: state.secoes.map((secao) => ({
+    ...secao,
+    eventos: secao.eventos.map((evento) => ({ ...evento })),
+  })),
+});
+
+const loadFolhaCronogramaState = (): FolhaCronogramaState => {
+  if (typeof window === "undefined") {
+    return cloneFolhaCronogramaState(folhaCronogramaDefaultState);
+  }
+
+  try {
+    const stored = window.localStorage.getItem(FOLHA_CRONOGRAMA_STORAGE_KEY);
+    if (!stored) return cloneFolhaCronogramaState(folhaCronogramaDefaultState);
+
+    const parsed = JSON.parse(stored) as Partial<FolhaCronogramaState>;
+    return {
+      tituloCiclo:
+        typeof parsed.tituloCiclo === "string" && parsed.tituloCiclo.trim()
+          ? parsed.tituloCiclo
+          : folhaCronogramaDefaultState.tituloCiclo,
+      secoes:
+        Array.isArray(parsed.secoes) && parsed.secoes.length
+          ? (parsed.secoes as FolhaCronogramaSecao[])
+          : cloneFolhaCronogramaState(folhaCronogramaDefaultState).secoes,
+    };
+  } catch {
+    return cloneFolhaCronogramaState(folhaCronogramaDefaultState);
+  }
+};
+
+const saveFolhaCronogramaState = (state: FolhaCronogramaState) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(FOLHA_CRONOGRAMA_STORAGE_KEY, JSON.stringify(state));
+};
+
 export function PrototiposFolhaPage() {
+  const navigate = useNavigate();
   const [modoEdicaoHomeFolha, setModoEdicaoHomeFolha] = useState(true);
   const [modalNovoInformativoAberto, setModalNovoInformativoAberto] =
     useState(false);
@@ -10271,6 +10527,9 @@ export function PrototiposFolhaPage() {
     texto: "",
   });
   const [homeFormError, setHomeFormError] = useState("");
+  const [tituloCicloFolha, setTituloCicloFolha] = useState(
+    () => loadFolhaCronogramaState().tituloCiclo,
+  );
   const [informativosFolha, setInformativosFolha] = useState([
     {
       id: 1,
@@ -10392,6 +10651,12 @@ export function PrototiposFolhaPage() {
     },
   ]);
 
+  useEffect(() => {
+    const cronograma = loadFolhaCronogramaState();
+    setTituloCicloFolha(cronograma.tituloCiclo);
+    setCronogramasFolha(cronograma.secoes);
+  }, []);
+
   const abrirNovoInformativo = () => {
     setInformativoEdicaoId(null);
     setNovoInformativo({
@@ -10405,7 +10670,7 @@ export function PrototiposFolhaPage() {
 
   const abrirNovoCronograma = () => {
     setHomeFormError("");
-    setModalNovoCronogramaAberto(true);
+    navigate("/prototipos/folha/cronograma");
   };
 
   const getTipoInformativo = (
@@ -10797,7 +11062,7 @@ export function PrototiposFolhaPage() {
             <header className="prototype-folha-home-panel-header">
               <div className="prototype-folha-home-panel-heading">
                 <i className="pi pi-calendar" aria-hidden="true" />
-                <h2>Ciclo de Folha de Pagamento - Junho/2026</h2>
+                <h2>{tituloCicloFolha}</h2>
               </div>
               <button
                 type="button"
@@ -10952,32 +11217,260 @@ export function PrototiposFolhaPage() {
           </div>
         </ModalSeplag>
 
-        <ModalSeplag
-          visible={modalNovoCronogramaAberto}
-          titulo="Configurar Cronograma"
-          fechar={() => setModalNovoCronogramaAberto(false)}
-          tamanho="1180px"
-          hideFooter
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaCronogramaPage() {
+  const navigate = useNavigate();
+  const cronogramaInicial = loadFolhaCronogramaState();
+  const [tituloCiclo, setTituloCiclo] = useState(cronogramaInicial.tituloCiclo);
+  const [homeFormError, setHomeFormError] = useState("");
+  const [eventoArrastado, setEventoArrastado] = useState<{
+    cronogramaId: number;
+    eventoIndex: number;
+  } | null>(null);
+  const [secaoArrastadaId, setSecaoArrastadaId] = useState<number | null>(null);
+  const [cronogramasFolha, setCronogramasFolha] =
+    useState<FolhaCronogramaSecao[]>(cronogramaInicial.secoes);
+
+  useEffect(() => {
+    saveFolhaCronogramaState({
+      tituloCiclo,
+      secoes: cronogramasFolha,
+    });
+  }, [tituloCiclo, cronogramasFolha]);
+
+  const parsePeriodoEvento = (periodo: string) => {
+    const partes = periodo.split(" - ").map((item) => item.trim());
+
+    if (partes.length >= 3) {
+      const [dataInicio = "", dataFim = "", horario = ""] = partes;
+      return { dataInicio, dataFim, horario };
+    }
+
+    const [dataInicio = "", dataFim = ""] = partes;
+    const horario = dataFim.match(/\b\d{2}:\d{2}\b/)?.[0] ?? "";
+
+    return { dataInicio, dataFim, horario };
+  };
+
+  const getEventoPeriodoCampos = (periodo: string) => {
+    const { dataInicio, dataFim, horario } = parsePeriodoEvento(periodo);
+    const normalizarDataHora = (value: string) => {
+      if (!value) return "";
+      if (/\d{4}/.test(value)) return value;
+
+      return `${value}/2026${horario ? ` ${horario}` : ""}`.trim();
+    };
+
+    return {
+      dataInicio: normalizarDataHora(dataInicio),
+      dataFim: normalizarDataHora(dataFim),
+    };
+  };
+
+  const adicionarEventoCronograma = (cronogramaId: number) => {
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? {
+              ...cronograma,
+              eventos: [
+                ...cronograma.eventos,
+                {
+                  periodo: "",
+                  descricao: "",
+                  status: "Agendado",
+                },
+              ],
+            }
+          : cronograma,
+      ),
+    );
+    setHomeFormError("Novo evento adicionado. Preencha os campos na lista.");
+  };
+
+  const removerEvento = (cronogramaId: number, eventoIndex: number) => {
+    if (!window.confirm("Confirmar exclusão do evento?")) return;
+
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? {
+              ...cronograma,
+              eventos: cronograma.eventos.filter((_, index) => index !== eventoIndex),
+            }
+          : cronograma,
+      ),
+    );
+    setHomeFormError("Evento removido com sucesso.");
+  };
+
+  const atualizarEventoCronograma = (
+    cronogramaId: number,
+    eventoIndex: number,
+    changes: Partial<{ periodo: string; descricao: string }>,
+  ) => {
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? {
+              ...cronograma,
+              eventos: cronograma.eventos.map((evento, index) =>
+                index === eventoIndex ? { ...evento, ...changes } : evento,
+              ),
+            }
+          : cronograma,
+      ),
+    );
+  };
+
+  const atualizarPeriodoEventoCronograma = (
+    cronogramaId: number,
+    eventoIndex: number,
+    field: "dataInicio" | "dataFim",
+    value: string,
+    periodo: string,
+  ) => {
+    const periodoAtual = getEventoPeriodoCampos(periodo);
+    const proximoPeriodo = {
+      ...periodoAtual,
+      [field]: value,
+    };
+
+    atualizarEventoCronograma(cronogramaId, eventoIndex, {
+      periodo: `${proximoPeriodo.dataInicio} - ${proximoPeriodo.dataFim}`,
+    });
+  };
+
+  const atualizarSessaoCronograma = (
+    cronogramaId: number,
+    changes: Partial<{ titulo: string }>,
+  ) => {
+    setCronogramasFolha((current) =>
+      current.map((cronograma) =>
+        cronograma.id === cronogramaId
+          ? { ...cronograma, ...changes }
+          : cronograma,
+      ),
+    );
+  };
+
+  const moverEventoCronograma = (
+    cronogramaId: number,
+    origemIndex: number,
+    destinoIndex: number,
+  ) => {
+    if (origemIndex === destinoIndex) return;
+
+    setCronogramasFolha((current) =>
+      current.map((cronograma) => {
+        if (cronograma.id !== cronogramaId) return cronograma;
+
+        const eventos = [...cronograma.eventos];
+        const [evento] = eventos.splice(origemIndex, 1);
+        eventos.splice(destinoIndex, 0, evento);
+
+        return { ...cronograma, eventos };
+      }),
+    );
+  };
+
+  const moverSecaoCronograma = (origemId: number, destinoId: number) => {
+    if (origemId === destinoId) return;
+
+    setCronogramasFolha((current) => {
+      const origemIndex = current.findIndex((secao) => secao.id === origemId);
+      const destinoIndex = current.findIndex((secao) => secao.id === destinoId);
+      if (origemIndex < 0 || destinoIndex < 0) return current;
+
+      const secoes = [...current];
+      const [secao] = secoes.splice(origemIndex, 1);
+      secoes.splice(destinoIndex, 0, secao);
+      return secoes;
+    });
+  };
+
+  const adicionarSessaoCronograma = () => {
+    const cores = ["is-main", "is-rescission"];
+    const corAleatoria = cores[Math.floor(Math.random() * cores.length)];
+
+    setCronogramasFolha((current) => [
+      ...current,
+      {
+        id: Math.max(...current.map((item) => item.id), 0) + 1,
+        titulo: `Nova seção ${current.length + 1}`,
+        marcador: corAleatoria,
+        eventos: [],
+      },
+    ]);
+    setHomeFormError("Nova seção adicionada.");
+  };
+
+  const removerCronograma = (cronogramaId: number) => {
+    if (!window.confirm("Confirmar exclusão da seção e seus eventos?")) return;
+
+    setCronogramasFolha((current) =>
+      current.filter((cronograma) => cronograma.id !== cronogramaId),
+    );
+    setHomeFormError("Seção removida com sucesso.");
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-cronograma-page">
+        <CardSeplag
+          title="Configurar cronograma"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
         >
-          <div className="col-12 prototype-folha-home-modal-form prototype-folha-home-schedule-config">
-            {homeFormError ? <div className="prototype-form-feedback">{homeFormError}</div> : null}
-            <div className="prototype-folha-home-config-toolbar">
-              <BotaoSeplag
-                type="button"
-                label="Nova sessão"
-                icon="pi pi-plus"
-                onClick={adicionarSessaoCronograma}
+          <div className="prototype-folha-home-schedule-config prototype-folha-home-schedule-config--page">
+            <label className="prototype-folha-cronograma-title-field">
+              Título do ciclo
+              <input
+                type="text"
+                value={tituloCiclo}
+                onChange={(event) => setTituloCiclo(event.target.value)}
               />
-            </div>
+            </label>
+            {homeFormError ? (
+              <div className="prototype-form-feedback">{homeFormError}</div>
+            ) : null}
             <div className="prototype-folha-home-config-list">
               {cronogramasFolha.map((cronograma) => (
                 <div
                   key={cronograma.id}
-                  className="prototype-folha-home-config-section"
+                  className={`prototype-folha-home-config-section ${
+                    secaoArrastadaId === cronograma.id ? "is-dragging" : ""
+                  }`}
+                  onDragOver={(event) => {
+                    if (secaoArrastadaId) event.preventDefault();
+                  }}
+                  onDrop={() => {
+                    if (secaoArrastadaId) {
+                      moverSecaoCronograma(secaoArrastadaId, cronograma.id);
+                      setSecaoArrastadaId(null);
+                    }
+                  }}
                 >
                   <div className="prototype-folha-home-config-section-head">
+                    <i
+                      className="pi pi-bars prototype-folha-home-drag-handle"
+                      aria-hidden="true"
+                      draggable
+                      onDragStart={() => setSecaoArrastadaId(cronograma.id)}
+                      onDragEnd={() => setSecaoArrastadaId(null)}
+                    />
                     <label className="prototype-folha-home-config-title-field">
-                      Título
+                      <span className="prototype-folha-home-visually-hidden">
+                        Título da seção
+                      </span>
                       <input
                         type="text"
                         aria-label="Título da sessão"
@@ -10991,9 +11484,9 @@ export function PrototiposFolhaPage() {
                       />
                     </label>
                     <div className="prototype-folha-home-icon-actions">
-                      <BotaoIconSeplag
+                      <BotaoSeplag
                         type="button"
-                        tooltip="Novo evento"
+                        label="Adicionar evento"
                         icon="pi pi-plus"
                         onClick={() => adicionarEventoCronograma(cronograma.id)}
                       />
@@ -11011,95 +11504,94 @@ export function PrototiposFolhaPage() {
                     </div>
                   </div>
 
+                  <div className="prototype-folha-home-config-event-header">
+                    <span />
+                    <span>Data início</span>
+                    <span>Data fim</span>
+                    <span>Descrição</span>
+                    <span />
+                  </div>
                   <div className="prototype-folha-home-config-events">
-                    {cronograma.eventos.map((evento, eventoIndex) => (
-                      (() => {
-                        const periodoCampos = getEventoPeriodoCampos(evento.periodo);
+                    {cronograma.eventos.map((evento, eventoIndex) => {
+                      const periodoCampos = getEventoPeriodoCampos(evento.periodo);
 
-                        return (
-                      <div
-                        key={`${cronograma.id}-${eventoIndex}-${evento.periodo}-${evento.descricao}`}
-                        className="prototype-folha-home-config-event"
-                        draggable
-                        onDragStart={() =>
-                          setEventoArrastado({
-                            cronogramaId: cronograma.id,
-                            eventoIndex,
-                          })
-                        }
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={() => {
-                          if (
-                            eventoArrastado?.cronogramaId === cronograma.id
-                          ) {
-                            moverEventoCronograma(
-                              cronograma.id,
-                              eventoArrastado.eventoIndex,
+                      return (
+                        <div
+                          key={`${cronograma.id}-${eventoIndex}-${evento.periodo}-${evento.descricao}`}
+                          className="prototype-folha-home-config-event"
+                          draggable
+                          onDragStart={() =>
+                            setEventoArrastado({
+                              cronogramaId: cronograma.id,
                               eventoIndex,
-                            );
+                            })
                           }
-                          setEventoArrastado(null);
-                        }}
-                        onDragEnd={() => setEventoArrastado(null)}
-                      >
-                        <i
-                          className="pi pi-bars prototype-folha-home-drag-handle"
-                          aria-hidden="true"
-                        />
-                        <label>
-                          <span className="prototype-folha-home-required-label">
-                            Data Início<em>*</em>
-                          </span>
-                          <input
-                            type="text"
-                            aria-label="Data início do evento"
-                            placeholder="dd/mm/aaaa 17:00"
-                            value={periodoCampos.dataInicio}
-                            onChange={(event) =>
-                              atualizarPeriodoEventoCronograma(
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => {
+                            if (eventoArrastado?.cronogramaId === cronograma.id) {
+                              moverEventoCronograma(
                                 cronograma.id,
+                                eventoArrastado.eventoIndex,
                                 eventoIndex,
-                                "dataInicio",
-                                event.target.value,
-                                evento.periodo,
-                              )
+                              );
                             }
+                            setEventoArrastado(null);
+                          }}
+                          onDragEnd={() => setEventoArrastado(null)}
+                        >
+                          <i
+                            className="pi pi-bars prototype-folha-home-drag-handle"
+                            aria-hidden="true"
                           />
-                        </label>
-                        <label>
-                          Data Fim
-                          <input
-                            type="text"
-                            aria-label="Data fim do evento"
-                            placeholder="dd/mm/aaaa 18:00"
-                            value={periodoCampos.dataFim}
-                            onChange={(event) =>
-                              atualizarPeriodoEventoCronograma(
-                                cronograma.id,
-                                eventoIndex,
-                                "dataFim",
-                                event.target.value,
-                                evento.periodo,
-                              )
-                            }
-                          />
-                        </label>
-                        <label>
-                          Descrição
-                          <input
-                            type="text"
-                            aria-label="Descrição do evento"
-                            value={evento.descricao}
-                            onChange={(event) =>
-                              atualizarEventoCronograma(
-                                cronograma.id,
-                                eventoIndex,
-                                { descricao: event.target.value },
-                              )
-                            }
-                          />
-                        </label>
-                        <button
+                          <label>
+                            <input
+                              type="text"
+                              aria-label="Data início do evento"
+                              placeholder="dd/mm/aaaa 17:00"
+                              value={periodoCampos.dataInicio}
+                              onChange={(event) =>
+                                atualizarPeriodoEventoCronograma(
+                                  cronograma.id,
+                                  eventoIndex,
+                                  "dataInicio",
+                                  event.target.value,
+                                  evento.periodo,
+                                )
+                              }
+                            />
+                          </label>
+                          <label>
+                            <input
+                              type="text"
+                              aria-label="Data fim do evento"
+                              placeholder="dd/mm/aaaa 18:00"
+                              value={periodoCampos.dataFim}
+                              onChange={(event) =>
+                                atualizarPeriodoEventoCronograma(
+                                  cronograma.id,
+                                  eventoIndex,
+                                  "dataFim",
+                                  event.target.value,
+                                  evento.periodo,
+                                )
+                              }
+                            />
+                          </label>
+                          <label>
+                            <input
+                              type="text"
+                              aria-label="Descrição do evento"
+                              value={evento.descricao}
+                              onChange={(event) =>
+                                atualizarEventoCronograma(
+                                  cronograma.id,
+                                  eventoIndex,
+                                  { descricao: event.target.value },
+                                )
+                              }
+                            />
+                          </label>
+                          <button
                             type="button"
                             className="prototype-folha-home-config-remove"
                             aria-label="Remover evento"
@@ -11108,30 +11600,42 @@ export function PrototiposFolhaPage() {
                           >
                             <i className="pi pi-times" aria-hidden="true" />
                           </button>
-                      </div>
-                        );
-                      })()
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              className="prototype-folha-home-config-add-section"
+              onClick={adicionarSessaoCronograma}
+            >
+              <i className="pi pi-plus" aria-hidden="true" />
+              Nova seção
+            </button>
             <div className="prototype-folha-home-modal-actions">
               <BotaoVoltarSeplag
                 type="button"
                 label="Voltar"
-                onClick={() => setModalNovoCronogramaAberto(false)}
+                onClick={() => navigate("/prototipos/folha")}
               />
               <BotaoSalvarSeplag
                 type="button"
                 label="Salvar"
                 icon="pi pi-save"
-                onClick={() => setModalNovoCronogramaAberto(false)}
+                onClick={() => {
+                  saveFolhaCronogramaState({
+                    tituloCiclo,
+                    secoes: cronogramasFolha,
+                  });
+                  navigate("/prototipos/folha");
+                }}
               />
             </div>
           </div>
-        </ModalSeplag>
-
+        </CardSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -19656,129 +20160,262 @@ export function PrototiposFolhaConformidadePage() {
       minute: "2-digit",
       timeZone: "America/Cuiaba",
     }).format(new Date());
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Relatório Dinâmico");
+    const totalColumns = 38;
+    const border = {
+      top: { style: "thin" as const, color: { argb: "FF9CA3AF" } },
+      left: { style: "thin" as const, color: { argb: "FF9CA3AF" } },
+      bottom: { style: "thin" as const, color: { argb: "FF9CA3AF" } },
+      right: { style: "thin" as const, color: { argb: "FF9CA3AF" } },
+    };
+    const headers = [
+      "Matrícula",
+      "CPF",
+      "Nome",
+      "Nº de Dependentes",
+      "Idade",
+      "Sexo",
+      "Órgão",
+      "Setor",
+      "Tipo de vínculo",
+      "Categoria",
+      "Subcategoria",
+      "Cargo",
+      "Data de Exercício",
+      "Até exercício",
+      "Jornada",
+      "Data da Aposentadoria",
+      "Até aposentadoria",
+      "Número da Folha",
+      "Data do processamento",
+      "Número da Execução do processamento",
+      "Competência",
+      "Código da Rubrica",
+      "Tipo da Rubrica",
+      "Vantagens",
+      "Descontos",
+      "Líquido",
+      "Competência Anterior",
+      "Valor Vantagens Mês Anterior",
+      "Valor Descontos Mês Anterior",
+      "Valor Líquido Mês Anterior",
+      "Vínculo",
+      "Regime Jurídico",
+      "Exibir último processamento",
+      "Descrição da Rubrica",
+      "Valor Base INSS",
+      "INSS Pago",
+      "INSS Simulado",
+    ];
 
-    const linhasFiltro = filtrosAplicados.length
-      ? filtrosAplicados
-          .map(
-            ([label, value]) =>
-              `<tr><td>${escapeExcelCell(label)}</td><td>${escapeExcelCell(value)}</td></tr>`,
-          )
-          .join("")
-      : `<tr><td colspan="2">Nenhum filtro preenchido.</td></tr>`;
+    worksheet.views = [{ state: "frozen", ySplit: 0 }];
+    worksheet.getRow(1).height = 28;
+    worksheet.getRow(2).height = 22;
+    worksheet.getRow(3).height = 24;
 
-    const linhasRelatorio = registros
-      .map((row, index) => {
-        const [codigoRubrica, ...descricaoRubrica] = row.rubrica.split(" - ");
-        return `
-          <tr>
-            <td>${escapeExcelCell(row.orgao)}</td>
-            <td>${escapeExcelCell(filtros.setores[0] || "Setor Central")}</td>
-            <td>${escapeExcelCell(filtros.tiposVinculo[0] || "Efetivo")}</td>
-            <td>${escapeExcelCell(filtros.regimesJuridicos[0] || "Estatutário")}</td>
-            <td>${escapeExcelCell(filtros.categorias[0] || "Área Meio")}</td>
-            <td>${escapeExcelCell(filtros.cargos[0] || "Analista")}</td>
-            <td>${escapeExcelCell(row.matricula)}</td>
-            <td>${escapeExcelCell(filtros.cpf[0] || `000.000.00${index + 1}-00`)}</td>
-            <td>${escapeExcelCell(filtros.sexo[0] || (index % 2 ? "Masculino" : "Feminino"))}</td>
-            <td>${escapeExcelCell(filtros.idade || String(34 + index * 7))}</td>
-            <td>${escapeExcelCell(filtros.competencia || "05/2026")}</td>
-            <td>${escapeExcelCell(filtros.competenciaAnterior || "04/2026")}</td>
-            <td>${escapeExcelCell(row.folha)}</td>
-            <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento[0] || `EXEC-${index + 1}`)}</td>
-            <td>${escapeExcelCell(filtros.dataProcessamento || dataEmissao.split(" ")[0])}</td>
-            <td>${escapeExcelCell(filtros.exibirUltimoProcessamento === "S" ? "Sim" : "Não")}</td>
-            <td>${escapeExcelCell(filtros.codigoRubrica[0] || codigoRubrica)}</td>
-            <td>${escapeExcelCell(filtros.tipoRubrica[0] || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"))}</td>
-            <td>${escapeExcelCell(descricaoRubrica.join(" - ") || row.rubrica)}</td>
-            <td>${escapeExcelCell(filtros.dataAposentadoriaInicio || "-")}</td>
-            <td>${escapeExcelCell(filtros.dataAposentadoriaFim || "-")}</td>
-            <td>${escapeExcelCell(filtros.jornada[0] || "40h")}</td>
-            <td>${escapeExcelCell(filtros.dataExercicioInicio || "-")}</td>
-            <td>${escapeExcelCell(filtros.dataExercicioFim || "-")}</td>
-            <td>${escapeExcelCell(row.servidor)}</td>
-            <td>${escapeExcelCell(row.vantagens)}</td>
-            <td>${escapeExcelCell(row.descontos)}</td>
-            <td>${escapeExcelCell(row.liquido)}</td>
-            <td>${escapeExcelCell(row.alerta)}</td>
-            <td>${escapeExcelCell(row.situacaoAnalise)}</td>
-          </tr>
-        `;
-      })
-      .join("");
+    worksheet.mergeCells(1, 1, 3, 4);
+    for (let row = 1; row <= 3; row += 1) {
+      for (let col = 1; col <= 4; col += 1) {
+        const cell = worksheet.getCell(row, col);
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF8FAFC" },
+        };
+        cell.border = border;
+      }
+    }
 
-    const html = `
-      <html>
-        <head>
-          <meta charset="UTF-8" />
-          <style>
-            table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
-            th { background: #005494; color: #ffffff; font-weight: bold; }
-            th, td { border: 1px solid #9ca3af; padding: 6px; mso-number-format:"\\@"; }
-            .title { background: #dbeafe; color: #0f2742; font-size: 16px; font-weight: bold; }
-            .section { background: #e5e7eb; color: #111827; font-weight: bold; }
-            .header-row td { border: 0; }
-            .logo-cell { text-align: right; vertical-align: top; }
-            .logo-cell img { max-height: 70px; max-width: 280px; }
-          </style>
-        </head>
-        <body>
-          <table>
-            <tr class="header-row">
-              <td class="title" colspan="20">Relatório Dinâmico da Folha</td>
-              <td class="logo-cell" colspan="10" rowspan="3">
-                <img src="${logoExcelSrc}" alt="SEPLAG Governo de Mato Grosso" />
-              </td>
-            </tr>
-            <tr><td><strong>Data/Hora da emissão</strong></td><td colspan="19">${escapeExcelCell(dataEmissao)}</td></tr>
-            <tr><td><strong>Solicitante</strong></td><td colspan="19">${escapeExcelCell(USUARIO_FOLHA_LOGADO)}</td></tr>
-            <tr><td class="section" colspan="30">Filtros aplicados</td></tr>
-            ${linhasFiltro}
-            <tr><td class="section" colspan="30">Dados do relatório</td></tr>
-            <tr>
-              <th>Órgão</th>
-              <th>Setor</th>
-              <th>Tipo de vínculo</th>
-              <th>Regime Jurídico</th>
-              <th>Categoria</th>
-              <th>Cargo</th>
-              <th>Matrícula</th>
-              <th>CPF</th>
-              <th>Sexo</th>
-              <th>Idade</th>
-              <th>Competência</th>
-              <th>Competência Anterior</th>
-              <th>Número da Folha</th>
-              <th>Número da Execução do processamento</th>
-              <th>Data do processamento</th>
-              <th>Exibir último processamento</th>
-              <th>Código da Rubrica</th>
-              <th>Tipo da Rubrica</th>
-              <th>Descrição da Rubrica</th>
-              <th>Data da Aposentadoria</th>
-              <th>Até aposentadoria</th>
-              <th>Jornada</th>
-              <th>Data de Exercício</th>
-              <th>Até exercício</th>
-              <th>Servidor</th>
-              <th>Vantagens</th>
-              <th>Descontos</th>
-              <th>Líquido</th>
-              <th>Alerta</th>
-              <th>Análise</th>
-            </tr>
-            ${linhasRelatorio || `<tr><td colspan="30">Nenhum registro encontrado para os filtros informados.</td></tr>`}
-          </table>
-        </body>
-      </html>
-    `;
+    worksheet.mergeCells(1, 6, 1, totalColumns);
+    worksheet.getCell(1, 6).value = "Relatório Dinâmico da Folha";
+    worksheet.getCell(1, 6).font = { bold: true, size: 16, color: { argb: "FF0F2742" } };
+    worksheet.getCell(1, 6).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFDBEAFE" },
+    };
+    worksheet.getCell(1, 6).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(1, 6).border = border;
 
-    const blob = new Blob(["\ufeff", html], {
-      type: "application/vnd.ms-excel;charset=utf-8",
+    worksheet.mergeCells(2, 6, 2, totalColumns);
+    worksheet.getCell(2, 6).value = "Módulo Folha • Exportação dinâmica";
+    worksheet.getCell(2, 6).font = { italic: true, color: { argb: "FF475569" } };
+    worksheet.getCell(2, 6).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFF8FAFC" },
+    };
+    worksheet.getCell(2, 6).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(2, 6).border = border;
+
+    worksheet.mergeCells(3, 6, 3, 20);
+    worksheet.getCell(3, 6).value = `Data/Hora da emissão: ${dataEmissao}`;
+    worksheet.getCell(3, 6).font = { bold: true, color: { argb: "FF334155" } };
+    worksheet.getCell(3, 6).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFF8FAFC" },
+    };
+    worksheet.getCell(3, 6).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(3, 6).border = border;
+
+    worksheet.mergeCells(3, 21, 3, totalColumns);
+    worksheet.getCell(3, 21).value = `Solicitante: ${USUARIO_FOLHA_LOGADO}`;
+    worksheet.getCell(3, 21).font = { bold: true, color: { argb: "FF334155" } };
+    worksheet.getCell(3, 21).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFF8FAFC" },
+    };
+    worksheet.getCell(3, 21).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(3, 21).border = border;
+
+    const logoImageId = workbook.addImage({
+      base64: logoExcelSrc,
+      extension: "png",
+    });
+    worksheet.addImage(logoImageId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 210, height: 60 },
+    });
+
+    worksheet.mergeCells(5, 1, 5, totalColumns);
+    worksheet.getCell(5, 1).value = "Filtros aplicados";
+    worksheet.getCell(5, 1).font = { bold: true, color: { argb: "FF111827" } };
+    worksheet.getCell(5, 1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE5E7EB" },
+    };
+    worksheet.getCell(5, 1).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(5, 1).border = border;
+
+    let currentRow = 6;
+    if (filtrosAplicados.length) {
+      filtrosAplicados.forEach(([label, value]) => {
+        worksheet.mergeCells(currentRow, 1, currentRow, 6);
+        worksheet.getCell(currentRow, 1).value = label;
+        worksheet.getCell(currentRow, 1).font = { bold: true, color: { argb: "FF334155" } };
+        worksheet.getCell(currentRow, 1).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF8FAFC" },
+        };
+        worksheet.getCell(currentRow, 1).border = border;
+        worksheet.mergeCells(currentRow, 7, currentRow, totalColumns);
+        worksheet.getCell(currentRow, 7).value = value;
+        worksheet.getCell(currentRow, 7).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+        worksheet.getCell(currentRow, 7).border = border;
+        currentRow += 1;
+      });
+    } else {
+      worksheet.mergeCells(currentRow, 1, currentRow, totalColumns);
+      worksheet.getCell(currentRow, 1).value = "Nenhum filtro preenchido.";
+      worksheet.getCell(currentRow, 1).border = border;
+      currentRow += 1;
+    }
+
+    currentRow += 1;
+    worksheet.mergeCells(currentRow, 1, currentRow, totalColumns);
+    worksheet.getCell(currentRow, 1).value = "Dados do relatório";
+    worksheet.getCell(currentRow, 1).font = { bold: true, color: { argb: "FF111827" } };
+    worksheet.getCell(currentRow, 1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE5E7EB" },
+    };
+    worksheet.getCell(currentRow, 1).alignment = { vertical: "middle", horizontal: "left" };
+    worksheet.getCell(currentRow, 1).border = border;
+    currentRow += 1;
+
+    const headerRow = worksheet.getRow(currentRow);
+    headerRow.values = headers;
+    headerRow.height = 34;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF005494" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+      cell.border = border;
+    });
+    currentRow += 1;
+
+    const dataRows = registros.length
+      ? registros.map((row, index) => {
+          const [codigoRubrica, ...descricaoRubrica] = row.rubrica.split(" - ");
+          const competenciaAtual = filtros.competencia || "05/2026";
+          const competenciaAnterior = filtros.competenciaAnterior || "04/2026";
+
+          return [
+            row.matricula,
+            filtros.cpf[0] || `000.000.00${index + 1}-00`,
+            row.servidor,
+            row.numeroDependentes ?? ((index + 1) % 4),
+            filtros.idade || String(34 + index * 7),
+            filtros.sexo[0] || (index % 2 ? "Masculino" : "Feminino"),
+            row.orgao,
+            filtros.setores[0] || "Setor Central",
+            filtros.tiposVinculo[0] || "Efetivo",
+            filtros.categorias[0] || "Área Meio",
+            row.subcategoria,
+            filtros.cargos[0] || "Analista",
+            filtros.dataExercicioInicio || row.dataInicioExercicio,
+            filtros.dataExercicioFim || row.dataFimExercicio || "-",
+            filtros.jornada[0] || "40h",
+            filtros.dataAposentadoriaInicio || row.dataAposentadoria || "-",
+            filtros.dataAposentadoriaFim || "-",
+            row.folha,
+            filtros.dataProcessamento || dataEmissao.split(" ")[0],
+            filtros.numeroExecucaoProcessamento[0] || `EXEC-${index + 1}`,
+            competenciaAtual,
+            filtros.codigoRubrica[0] || codigoRubrica,
+            filtros.tipoRubrica[0] || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"),
+            row.vantagens,
+            row.descontos,
+            row.liquido,
+            competenciaAnterior,
+            row.valorVanMesAnterior,
+            row.valorDesMesAnterior,
+            row.valorLiqMesAnterior,
+            row.vinculo,
+            filtros.regimesJuridicos[0] || "Estatutário",
+            filtros.exibirUltimoProcessamento === "S" ? "Sim" : "Não",
+            descricaoRubrica.join(" - ") || row.rubrica,
+            row.valorBaseInss,
+            row.inssPago,
+            row.inssSimulado,
+          ];
+        })
+      : [["Nenhum registro encontrado para os filtros informados."]];
+
+    dataRows.forEach((rowValues) => {
+      const row = worksheet.addRow(rowValues);
+      if (rowValues.length === 1) {
+        worksheet.mergeCells(row.number, 1, row.number, totalColumns);
+      }
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+        cell.border = border;
+      });
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: currentRow }];
+    worksheet.columns = headers.map((header) => ({
+      width: Math.max(16, Math.min(28, header.length + 4)),
+    }));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `relatorio-dinamico-folha-${Date.now()}.xls`;
+    link.download = `relatorio-dinamico-folha-${Date.now()}.xlsx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
