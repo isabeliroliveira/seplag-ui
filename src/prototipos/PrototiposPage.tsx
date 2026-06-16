@@ -13,6 +13,7 @@ import type { ArquivoAnexadoSeplag } from "@componentes/AnexarDocumento";
 import { BadgeSeplag } from "@componentes/Badge";
 import { CardSeplag } from "@componentes/Card";
 import { ModalSeplag } from "@componentes/Modal";
+import { SeplagAutoComplete } from "@componentes/AutoComplete";
 import {
   DocumentosLegaisAssociadosSeplag,
   type DocumentoLegalAssociadoSeplag,
@@ -53,6 +54,7 @@ import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/men
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
 import type { ResultsSeplag } from "../interfaces/Results";
 import logoEstado from "../assets/img/Logo_Branco_Estado_MT.png";
+import logoSeplagMtExcel from "../assets/img/logo-seplag-mt-excel.png";
 import logoSeplag from "../assets/img/logo-seplag.png";
 import "../componentes/layout/layout/Layout.css";
 import "./prototipos.css";
@@ -1083,8 +1085,11 @@ interface ProcessamentoFolhaForm {
   competencia?: string;
   tipoExecucao?: "PARCIAL" | "TOTAL";
   orgaos?: string[];
+  setores?: string[];
   regimesJuridicos?: string[];
+  tiposVinculo?: string[];
   categorias?: string[];
+  subcategorias?: string[];
   cargos?: string[];
   grupoEleitos?: string;
 }
@@ -2890,41 +2895,28 @@ interface FolhaTabelaReferenciaFiltroForm {
 
 interface FolhaConformidadeFiltroForm {
   competencia: string;
-  folhaInicio: string;
-  folhaFim: string;
-  numeroFolha: string;
-  nomeFolha: string;
-  tipoFolha: string;
+  competenciaAnterior: string;
+  numeroFolha: string[];
   orgaos: string[];
   setores: string[];
   regimesJuridicos: string[];
   categorias: string[];
   cargos: string[];
   tiposVinculo: string[];
-  nivel?: string;
-  classe?: string;
-  tipoRelatorio: string;
-  formatoSaida: string;
-  matricula?: string;
-  cpf?: string;
-  sexo?: string;
-  escolaridade?: string;
-  idade?: string;
-  servidor?: string;
-  rubrica?: string;
-  codigoRubrica?: string;
-  tipoRubrica?: string;
-  jornada?: string;
+  matricula: string[];
+  cpf: string[];
+  sexo: string[];
+  idade?: number;
+  codigoRubrica: string[];
+  tipoRubrica: string[];
+  jornada: string[];
   dataExercicioInicio?: string;
   dataExercicioFim?: string;
   dataAposentadoriaInicio?: string;
   dataAposentadoriaFim?: string;
-  numeroExecucaoProcessamento?: string;
+  numeroExecucaoProcessamento: string[];
   dataProcessamento?: string;
   exibirUltimoProcessamento?: string;
-  tipoAfastamento?: string;
-  quantidadeDiasAfastado?: number;
-  situacaoAnalise?: string;
 }
 
 interface FolhaConformidadeRow {
@@ -2950,6 +2942,7 @@ interface FolhaConformidadeHistoricoRow {
   competencia: string;
   tipoRelatorio: string;
   solicitante: string;
+  situacao: "Em Emissão" | "Emitido" | "Falha na Emissão";
 }
 
 interface FolhaConformidadeFiltroSalvoRow {
@@ -2975,41 +2968,28 @@ interface FolhaConformidadeGerenciadorFiltroForm {
 
 const folhaConformidadeDefaultFilters: FolhaConformidadeFiltroForm = {
   competencia: "",
-  folhaInicio: "",
-  folhaFim: "",
-  numeroFolha: "",
-  nomeFolha: "",
-  tipoFolha: "",
+  competenciaAnterior: "",
+  numeroFolha: [],
   orgaos: [],
   setores: [],
   regimesJuridicos: [],
   categorias: [],
   cargos: [],
   tiposVinculo: [],
-  nivel: "",
-  classe: "",
-  tipoRelatorio: "Dinâmico",
-  formatoSaida: "Excel",
-  matricula: "",
-  cpf: "",
-  sexo: "",
-  escolaridade: "",
-  idade: "",
-  servidor: "",
-  rubrica: "",
-  codigoRubrica: "",
-  tipoRubrica: "",
-  jornada: "",
+  matricula: [],
+  cpf: [],
+  sexo: [],
+  idade: undefined,
+  codigoRubrica: [],
+  tipoRubrica: [],
+  jornada: [],
   dataExercicioInicio: "",
   dataExercicioFim: "",
   dataAposentadoriaInicio: "",
   dataAposentadoriaFim: "",
-  numeroExecucaoProcessamento: "",
+  numeroExecucaoProcessamento: [],
   dataProcessamento: "",
   exibirUltimoProcessamento: "N",
-  tipoAfastamento: "",
-  quantidadeDiasAfastado: undefined,
-  situacaoAnalise: "",
 };
 
 interface FolhaTabelaReferenciaVigenciaRow {
@@ -3380,6 +3360,32 @@ const folhaConformidadeTipoVinculoOptions = [
   { label: "Estagiário", value: "Estagiário" },
 ];
 
+const folhaConformidadeMatriculaOptions = [
+  { label: "102030/1", value: "102030/1" },
+  { label: "204411/2", value: "204411/2" },
+  { label: "887120/1", value: "887120/1" },
+  { label: "451278/3", value: "451278/3" },
+  { label: "874512/2", value: "874512/2" },
+  { label: "339870/1", value: "339870/1" },
+  { label: "540110/2", value: "540110/2" },
+  { label: "778899/1", value: "778899/1" },
+  { label: "665544/4", value: "665544/4" },
+  { label: "112233/1", value: "112233/1" },
+];
+
+const folhaConformidadeCpfOptions = [
+  { label: "001.234.567-89", value: "001.234.567-89" },
+  { label: "112.345.678-90", value: "112.345.678-90" },
+  { label: "223.456.789-01", value: "223.456.789-01" },
+  { label: "334.567.890-12", value: "334.567.890-12" },
+  { label: "445.678.901-23", value: "445.678.901-23" },
+  { label: "556.789.012-34", value: "556.789.012-34" },
+  { label: "667.890.123-45", value: "667.890.123-45" },
+  { label: "778.901.234-56", value: "778.901.234-56" },
+  { label: "889.012.345-67", value: "889.012.345-67" },
+  { label: "990.123.456-78", value: "990.123.456-78" },
+];
+
 const folhaConformidadeTipoRelatorioOptions = [
   { label: "Sintético", value: "Sintético" },
   { label: "Detalhado", value: "Detalhado" },
@@ -3598,6 +3604,90 @@ const folhaConformidadeRows: FolhaConformidadeRow[] = [
     alerta: "Lançamento manual exige processo",
     situacaoAnalise: "Justificado",
   },
+  {
+    id: 5,
+    matricula: "874512",
+    vinculo: "2",
+    servidor: "JOSÉ ROBERTO LIMA",
+    orgao: "MTI",
+    folha: "40",
+    rubrica: "1006 - Previdência RPPS",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 712,33",
+    liquido: "R$ 5.840,12",
+    alerta: "Retenção previdenciária conferida",
+    situacaoAnalise: "Conforme",
+  },
+  {
+    id: 6,
+    matricula: "339870",
+    vinculo: "1",
+    servidor: "PAULA FERNANDES",
+    orgao: "SEPLAG",
+    folha: "60",
+    rubrica: "1001 - Salário Básico",
+    vantagens: "R$ 7.200,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 6.420,45",
+    alerta: "Checklist da folha pendente",
+    situacaoAnalise: "Pendente",
+  },
+  {
+    id: 7,
+    matricula: "540110",
+    vinculo: "2",
+    servidor: "MARCOS VINÍCIUS",
+    orgao: "SESP",
+    folha: "61",
+    rubrica: "1002 - Adicional Noturno",
+    vantagens: "R$ 430,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 4.120,00",
+    alerta: "Jornada divergente",
+    situacaoAnalise: "Inconsistente",
+  },
+  {
+    id: 8,
+    matricula: "778899",
+    vinculo: "1",
+    servidor: "LÚCIA BARROS",
+    orgao: "SEFAZ",
+    folha: "01",
+    rubrica: "5250 - Desconto LSF",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 260,00",
+    liquido: "R$ 3.980,77",
+    alerta: "Afastamento validado",
+    situacaoAnalise: "Conforme",
+  },
+  {
+    id: 9,
+    matricula: "665544",
+    vinculo: "4",
+    servidor: "RENATO COSTA",
+    orgao: "SEDUC",
+    folha: "02",
+    rubrica: "8014 - Ordem Judicial",
+    vantagens: "R$ 0,00",
+    descontos: "R$ 980,00",
+    liquido: "R$ 2.630,00",
+    alerta: "Processo judicial sem documento",
+    situacaoAnalise: "Justificado",
+  },
+  {
+    id: 10,
+    matricula: "112233",
+    vinculo: "1",
+    servidor: "BIANCA MORAES",
+    orgao: "SES",
+    folha: "40",
+    rubrica: "992 - Auxílio Alimentação",
+    vantagens: "R$ 850,00",
+    descontos: "R$ 0,00",
+    liquido: "R$ 5.150,90",
+    alerta: "Sem alerta",
+    situacaoAnalise: "Conforme",
+  },
 ];
 
 const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
@@ -3609,6 +3699,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Sintético",
     solicitante: "ROBERTO JUNIOR",
+    situacao: "Emitido",
   },
   {
     id: 2,
@@ -3618,6 +3709,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Comparativo mensal",
     solicitante: "EQUIPE GCFP",
+    situacao: "Em Emissão",
   },
   {
     id: 3,
@@ -3627,6 +3719,7 @@ const folhaConformidadeHistoricoRows: FolhaConformidadeHistoricoRow[] = [
     competencia: "05/2026",
     tipoRelatorio: "Retenções",
     solicitante: "EQUIPE GCFP",
+    situacao: "Falha na Emissão",
   },
 ];
 
@@ -3642,8 +3735,7 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
       ...folhaConformidadeDefaultFilters,
       orgaos: ["SEPLAG"],
       competencia: "05/2026",
-      numeroFolha: "01",
-      nomeFolha: "Folha Normal Maio/2026",
+      numeroFolha: ["01"],
     },
     colunas: folhaConformidadeTodasColunas,
   },
@@ -3656,8 +3748,8 @@ const folhaConformidadeFiltrosSalvosMock: FolhaConformidadeFiltroSalvoRow[] = [
     criadoPor: "EQUIPE GCFP",
     filtros: {
       ...folhaConformidadeDefaultFilters,
-      codigoRubrica: "1006 - PREVIDÊNCIA RPPS",
-      tipoRubrica: "Desconto",
+      codigoRubrica: ["1006 - PREVIDÊNCIA RPPS"],
+      tipoRubrica: ["Desconto"],
     },
     colunas: [
       "Órgão",
@@ -13641,6 +13733,11 @@ type RelatorioTecnicoTipoFiltro =
 
 type RelatorioTecnicoFormatoArquivo = ".PDF" | ".DOCX" | ".CSV";
 
+type RelatorioTecnicoSituacao =
+  | "Em Emissão"
+  | "Emitido"
+  | "Falha na Emissão";
+
 interface RelatorioTecnicoProcessamentoRow {
   id: number;
   execucaoId: number;
@@ -13650,6 +13747,7 @@ interface RelatorioTecnicoProcessamentoRow {
   quantidadeErros: number;
   quantidadeRegistros: number;
   formato: RelatorioTecnicoFormatoArquivo;
+  situacao: RelatorioTecnicoSituacao;
 }
 
 interface RelatorioTecnicoProcessamentoForm {
@@ -13709,6 +13807,7 @@ export function PrototiposFolhaPagamentoPage({
       quantidadeErros: 12,
       quantidadeRegistros: 842,
       formato: ".PDF",
+      situacao: "Emitido",
     },
     {
       id: 2,
@@ -13719,6 +13818,7 @@ export function PrototiposFolhaPagamentoPage({
       quantidadeErros: 12,
       quantidadeRegistros: 842,
       formato: ".CSV",
+      situacao: "Falha na Emissão",
     },
     {
       id: 3,
@@ -13729,6 +13829,7 @@ export function PrototiposFolhaPagamentoPage({
       quantidadeErros: 0,
       quantidadeRegistros: 842,
       formato: ".DOCX",
+      situacao: "Em Emissão",
     },
   ]);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -13837,8 +13938,11 @@ export function PrototiposFolhaPagamentoPage({
       competencia: "",
       tipoExecucao: "TOTAL",
       orgaos: [],
+      setores: [],
       regimesJuridicos: [],
+      tiposVinculo: [],
       categorias: [],
+      subcategorias: [],
       cargos: [],
       grupoEleitos: "",
     },
@@ -14035,13 +14139,17 @@ export function PrototiposFolhaPagamentoPage({
   ];
   const competenciaProcessamentoFiltro = normalizeMesAno(filtros.competencia);
   const dataProcessamentoFiltro = filtros.dataProcessamento?.trim() ?? "";
+  const numeroFolhaFiltro = filtros.numeroFolha?.trim().toLowerCase() ?? "";
+  const nomeFolhaFiltro = filtros.nomeFolha?.trim().toLowerCase() ?? "";
   const numeroExecucaoFiltro = filtros.numeroExecucao?.trim().toLowerCase() ?? "";
   const responsavelFiltro = filtros.responsavel?.trim().toLowerCase() ?? "";
   const processamentosFiltrados = processamentosBase.filter((processamento) => {
-    const atendeTermo =
-      !termoBusca ||
-      processamento.numeroFolha.toLowerCase().includes(termoBusca) ||
-      processamento.nomeFolha.toLowerCase().includes(termoBusca);
+    const atendeNumeroFolha =
+      !numeroFolhaFiltro ||
+      processamento.numeroFolha.toLowerCase().includes(numeroFolhaFiltro);
+    const atendeNomeFolha =
+      !nomeFolhaFiltro ||
+      processamento.nomeFolha.toLowerCase().includes(nomeFolhaFiltro);
     const atendeSituacao =
       !filtros.situacao || processamento.situacao === filtros.situacao;
     const atendeCompetencia =
@@ -14061,7 +14169,8 @@ export function PrototiposFolhaPagamentoPage({
       processamento.responsavel.toLowerCase().includes(responsavelFiltro);
 
     return (
-      atendeTermo &&
+      atendeNumeroFolha &&
+      atendeNomeFolha &&
       atendeSituacao &&
       atendeCompetencia &&
       atendeTipo &&
@@ -14316,8 +14425,11 @@ export function PrototiposFolhaPagamentoPage({
     if (data.tipoExecucao === "PARCIAL") {
       const possuiFiltro =
         Boolean(data.orgaos?.length) ||
+        Boolean(data.setores?.length) ||
         Boolean(data.regimesJuridicos?.length) ||
+        Boolean(data.tiposVinculo?.length) ||
         Boolean(data.categorias?.length) ||
+        Boolean(data.subcategorias?.length) ||
         Boolean(data.cargos?.length) ||
         Boolean(data.grupoEleitos);
 
@@ -14716,13 +14828,61 @@ export function PrototiposFolhaPagamentoPage({
     const [horas, minutos] = hora.split(":").map(Number);
     return new Date(ano, mes - 1, dia, horas, minutos).getTime();
   };
+  const criarRelatoriosTecnicosExemplo = (
+    processamento: ProcessamentoFolhaExecucaoRow,
+  ): RelatorioTecnicoProcessamentoRow[] => [
+    {
+      id: Number(`${processamento.id}01`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 09:40",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Todos",
+      quantidadeErros: processamento.erros,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".PDF",
+      situacao: "Em Emissão",
+    },
+    {
+      id: Number(`${processamento.id}02`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 08:35",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com Sucesso",
+      quantidadeErros: 0,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".DOCX",
+      situacao: "Emitido",
+    },
+    {
+      id: Number(`${processamento.id}03`),
+      execucaoId: processamento.id,
+      dataHoraEmissao: "24/05/2026 08:10",
+      responsavel: "ROBERTO JUNIOR",
+      tipoFiltro: "Processado com erro",
+      quantidadeErros: processamento.erros,
+      quantidadeRegistros: processamento.totalPessoas,
+      formato: ".CSV",
+      situacao: "Falha na Emissão",
+    },
+  ];
   const relatoriosTecnicosDaExecucaoBase =
     processamentoRelatorioTecnicoSelecionado
-      ? relatoriosTecnicos
-          .filter(
+      ? [
+          ...relatoriosTecnicos.filter(
             (relatorio) =>
               relatorio.execucaoId === processamentoRelatorioTecnicoSelecionado.id,
-          )
+          ),
+          ...criarRelatoriosTecnicosExemplo(
+            processamentoRelatorioTecnicoSelecionado,
+          ).filter(
+            (relatorioExemplo) =>
+              !relatoriosTecnicos.some(
+                (relatorio) =>
+                  relatorio.execucaoId === relatorioExemplo.execucaoId &&
+                  relatorio.situacao === relatorioExemplo.situacao,
+              ),
+          ),
+        ]
           .sort(
             (a, b) =>
               parseDataHoraBrTimestamp(b.dataHoraEmissao) -
@@ -14761,6 +14921,20 @@ export function PrototiposFolhaPagamentoPage({
     { field: "quantidadeErros", header: "Quantidade de Erros" },
     { field: "quantidadeRegistros", header: "Quantidade de Registros" },
     { field: "formato", header: "Formato" },
+    {
+      header: "Situação",
+      body: (row) => (
+        <span
+          className={`prototype-relatorio-tecnico-situacao prototype-relatorio-tecnico-situacao--${row.situacao
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, "-")}`}
+        >
+          {row.situacao}
+        </span>
+      ),
+    },
   ];
   const rubricaLogColumns: ColumnMetaSeplag<FolhaPagamentoRubricaLogRow>[] = [
     { field: "codigoRubrica", header: "Código" },
@@ -14822,13 +14996,7 @@ export function PrototiposFolhaPagamentoPage({
   );
 
   const abrirNovoProcessamento = () => {
-    const folhaParaProcessar = folhas.find(folhaPodeProcessar);
-    if (!folhaParaProcessar) {
-      setFeedback("Não há folha disponível para iniciar novo processamento.");
-      return;
-    }
-
-    abrirModalProcessamentoFolha(folhaParaProcessar);
+    navigate(`${FOLHA_PROCESSAMENTO_BASE_PATH}/novo`);
   };
 
   const abrirVisualizarProcessamento = (
@@ -14935,6 +15103,7 @@ export function PrototiposFolhaPagamentoPage({
       quantidadeErros,
       quantidadeRegistros,
       formato: data.formatoArquivo,
+      situacao: "Emitido",
     };
 
     setRelatoriosTecnicos((current) => [novoRelatorio, ...current]);
@@ -15022,6 +15191,27 @@ export function PrototiposFolhaPagamentoPage({
             <div className="prototype-validation-panel">{feedback}</div>
           ) : null}
 
+          {isTelaProcessamentoFolha ? (
+            <div className="col-12 prototype-processamento-resumo">
+              <div>
+                <span>Em Fila</span>
+                <strong>{processamentoResumo.emFila}</strong>
+              </div>
+              <div>
+                <span>Em Processamento</span>
+                <strong>{processamentoResumo.emProcessamento}</strong>
+              </div>
+              <div>
+                <span>Processado com Erro</span>
+                <strong>{processamentoResumo.processadoErro}</strong>
+              </div>
+              <div>
+                <span>Processado com Sucesso</span>
+                <strong>{processamentoResumo.processadoSucesso}</strong>
+              </div>
+            </div>
+          ) : null}
+
           <div
             className={`col-12 prototype-category-filters prototype-folha-pagamento-filters${
               isTelaProcessamentoFolha
@@ -15032,9 +15222,16 @@ export function PrototiposFolhaPagamentoPage({
             {isTelaProcessamentoFolha ? (
               <>
                 <TextFieldSeplag
-                  name="termo"
+                  name="numeroFolha"
                   control={control}
-                  label="Número ou nome da folha"
+                  label="Número da folha"
+                  cols="12 6 2"
+                  getFormErrorMessage={() => null}
+                />
+                <TextFieldSeplag
+                  name="nomeFolha"
+                  control={control}
+                  label="Nome da folha"
                   cols="12 6 2"
                   getFormErrorMessage={() => null}
                 />
@@ -15127,27 +15324,6 @@ export function PrototiposFolhaPagamentoPage({
               onClick={isTelaProcessamentoFolha ? abrirNovoProcessamento : abrirNovaFolha}
             />
           </div>
-
-          {isTelaProcessamentoFolha ? (
-            <div className="col-12 prototype-processamento-resumo">
-              <div>
-                <span>Em Fila</span>
-                <strong>{processamentoResumo.emFila}</strong>
-              </div>
-              <div>
-                <span>Em Processamento</span>
-                <strong>{processamentoResumo.emProcessamento}</strong>
-              </div>
-              <div>
-                <span>Processado com Erro</span>
-                <strong>{processamentoResumo.processadoErro}</strong>
-              </div>
-              <div>
-                <span>Processado com Sucesso</span>
-                <strong>{processamentoResumo.processadoSucesso}</strong>
-              </div>
-            </div>
-          ) : null}
 
           <div
             className={`col-12 prototype-folha-pagamento-table${
@@ -15638,6 +15814,7 @@ export function PrototiposFolhaPagamentoPage({
                       type="button"
                       tooltip="Download"
                       icon="pi pi-download"
+                      disabled={row.situacao !== "Emitido"}
                       onClick={() => baixarRelatorioTecnico(row)}
                     />
                   )}
@@ -15887,6 +16064,384 @@ export function PrototiposFolhaPagamentoPage({
             </div>
           ) : null}
         </ModalSeplag>
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposFolhaProcessamentoFormPage() {
+  const navigate = useNavigate();
+  const folhas = folhaPagamentoService.listarFolhas();
+  const competenciaVigente = folhaPagamentoService
+    .listarCompetencias()
+    .find((competencia) => competencia.situacao === "ATIVA");
+  const [feedback, setFeedback] = useState("");
+  const [processamentoErrors, setProcessamentoErrors] =
+    useState<Partial<Record<keyof ProcessamentoFolhaForm, string>>>({});
+
+  const folhaDisponivel =
+    folhas.find((folha) =>
+      ["ABERTO", "PROCESSO_COM_SUCESSO", "PROCESSO_COM_ERRO"].includes(
+        folha.situacao,
+      ),
+    ) ?? folhas[0];
+
+  const usuarioLogadoProcessamentoMock = {
+    orgaos: ["SEPLAG", "MTI"],
+    setores: ["administracao-central"],
+    regimesJuridicos: ["Estatutário Civil"],
+    tiposVinculo: ["efetivo"],
+    categorias: ["Área Meio"],
+    subcategorias: ["administracao-direta"],
+    cargos: ["Analista Administrativo"],
+    grupoEleitos: "",
+  };
+
+  const toUpperOptions = <T extends { label: string; value: unknown }>(
+    options: T[],
+  ) =>
+    options.map((option) => ({
+      ...option,
+      label: option.label.toUpperCase(),
+    }));
+
+  const formatMesAno = (value: string) => {
+    if (!value) return "";
+    const [ano, mes] = value.split("-");
+    return mes && ano ? `${mes}/${ano}` : value;
+  };
+  const normalizeMesAno = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const matchMesAno = cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (matchMesAno) return `${matchMesAno[2]}-${matchMesAno[1]}`;
+    return cleanValue;
+  };
+  const isMesAnoValido = (value?: string) => {
+    const cleanValue = value?.trim() ?? "";
+    const match =
+      cleanValue.match(/^(\d{4})-(\d{2})$/) ??
+      cleanValue.match(/^(\d{2})\/(\d{4})$/);
+    if (!match) return false;
+
+    const mes = cleanValue.includes("-") ? Number(match[2]) : Number(match[1]);
+    return mes >= 1 && mes <= 12;
+  };
+
+  const {
+    control,
+    reset,
+    setValue,
+    watch,
+    handleSubmit,
+  } = useForm<ProcessamentoFolhaForm>({
+    defaultValues: {
+      numeroFolha: folhaDisponivel?.numero ?? "",
+      nomeFolha: folhaDisponivel?.nome ?? "",
+      competencia: formatMesAno(
+        folhaDisponivel?.competencia ?? competenciaVigente?.competencia ?? "",
+      ),
+      tipoExecucao: "TOTAL",
+      orgaos: folhaDisponivel?.orgaos?.length
+        ? folhaDisponivel.orgaos
+        : usuarioLogadoProcessamentoMock.orgaos,
+      setores: usuarioLogadoProcessamentoMock.setores,
+      regimesJuridicos: folhaDisponivel?.regimeJuridico
+        ? [folhaDisponivel.regimeJuridico]
+        : usuarioLogadoProcessamentoMock.regimesJuridicos,
+      tiposVinculo: usuarioLogadoProcessamentoMock.tiposVinculo,
+      categorias: folhaDisponivel?.categoria
+        ? [folhaDisponivel.categoria]
+        : usuarioLogadoProcessamentoMock.categorias,
+      subcategorias: usuarioLogadoProcessamentoMock.subcategorias,
+      cargos: folhaDisponivel?.cargo
+        ? [folhaDisponivel.cargo]
+        : usuarioLogadoProcessamentoMock.cargos,
+      grupoEleitos:
+        folhaDisponivel?.grupoEleitos ||
+        usuarioLogadoProcessamentoMock.grupoEleitos,
+    },
+  });
+
+  const tipoExecucao = watch("tipoExecucao");
+  const processamentoTotal = tipoExecucao === "TOTAL";
+  const numeroFolhaSelecionado = watch("numeroFolha");
+  const nomeFolhaSelecionado = watch("nomeFolha");
+  const numeroFolhaOptions = Array.from(
+    new Map(
+      folhas.map((folha) => [
+        folha.numero,
+        {
+          label: folha.numero.toUpperCase(),
+          value: folha.numero,
+        },
+      ]),
+    ).values(),
+  );
+  const nomeFolhaOptions = folhas
+    .filter((folha) => !numeroFolhaSelecionado || folha.numero === numeroFolhaSelecionado)
+    .map((folha) => ({
+      label: folha.nome.toUpperCase(),
+      value: folha.nome,
+    }));
+  const orgaoOptions = toUpperOptions(folhaPagamentoOrgaoOptions);
+  const setorOptions = toUpperOptions(grupoCalculoSetorOptions);
+  const regimeOptions = toUpperOptions(
+    folhaPagamentoRegimeOptions.filter((option) => option.value),
+  );
+  const tipoVinculoOptions = toUpperOptions(grupoCalculoTipoVinculoOptions);
+  const categoriaOptions = toUpperOptions(
+    folhaPagamentoCategoriaOptions.filter((option) => option.value),
+  );
+  const subcategoriaOptions = toUpperOptions(grupoCalculoSubcategoriaOptions);
+  const cargoOptions = toUpperOptions(
+    folhaPagamentoCargoOptions.filter((option) => option.value),
+  );
+  const grupoEleitosOptions = toUpperOptions(folhaPagamentoGrupoEleitosOptions);
+
+  useEffect(() => {
+    if (!numeroFolhaSelecionado) return;
+
+    const folhaSelecionada = folhas.find(
+      (folha) => folha.numero === numeroFolhaSelecionado,
+    );
+    if (folhaSelecionada && nomeFolhaSelecionado !== folhaSelecionada.nome) {
+      setValue("nomeFolha", folhaSelecionada.nome);
+      setValue("competencia", formatMesAno(folhaSelecionada.competencia));
+    }
+  }, [folhas, nomeFolhaSelecionado, numeroFolhaSelecionado, setValue]);
+
+  const getProcessamentoErrorMessage = (name: keyof ProcessamentoFolhaForm) => {
+    const message = processamentoErrors[name];
+    return message ? <small className="p-error">{message}</small> : null;
+  };
+
+  const validarFormulario = (data: ProcessamentoFolhaForm) => {
+    const errors: Partial<Record<keyof ProcessamentoFolhaForm, string>> = {};
+
+    if (!data.numeroFolha) errors.numeroFolha = "Campo obrigatório";
+    if (!data.nomeFolha) errors.nomeFolha = "Campo obrigatório";
+    if (!data.competencia?.trim()) {
+      errors.competencia = "Campo obrigatório";
+    } else if (!isMesAnoValido(data.competencia)) {
+      errors.competencia = "Formato inválido";
+    }
+    if (!data.tipoExecucao) errors.tipoExecucao = "Campo obrigatório";
+
+    if (data.tipoExecucao === "PARCIAL") {
+      const possuiFiltro =
+        Boolean(data.orgaos?.length) ||
+        Boolean(data.setores?.length) ||
+        Boolean(data.regimesJuridicos?.length) ||
+        Boolean(data.tiposVinculo?.length) ||
+        Boolean(data.categorias?.length) ||
+        Boolean(data.subcategorias?.length) ||
+        Boolean(data.cargos?.length) ||
+        Boolean(data.grupoEleitos);
+
+      if (!possuiFiltro) {
+        errors.orgaos = "Campo obrigatório";
+      }
+    }
+
+    setProcessamentoErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const cancelar = () => navigate(FOLHA_PROCESSAMENTO_BASE_PATH);
+
+  const executarProcessamento = (data: ProcessamentoFolhaForm) => {
+    if (!validarFormulario(data)) return;
+
+    setFeedback("Registro cadastrado com sucesso!");
+    reset({
+      ...data,
+      competencia: formatMesAno(normalizeMesAno(data.competencia)),
+    });
+    window.setTimeout(() => navigate(FOLHA_PROCESSAMENTO_BASE_PATH), 650);
+  };
+
+  return (
+    <PrototypeSystemPage
+      nomeSistema="FOLHA"
+      ambienteSistema="Teste"
+      menuItems={menuFolha}
+    >
+      <div className="prototype-page-content prototype-page-content--white prototype-folha-pagamento-page">
+        <CardSeplag
+          title="Processamento da Folha"
+          cols="12"
+          cardHeaderClassNames="prototype-regime-card"
+          actions={
+            <div className="prototype-competencia-vigente">
+              Competência vigente:{" "}
+              <strong>{formatMesAno(competenciaVigente?.competencia ?? "")}</strong>
+            </div>
+          }
+        >
+          {feedback ? (
+            <div className="prototype-validation-panel">{feedback}</div>
+          ) : null}
+
+          <div className="col-12 prototype-processamento-folha-page-form">
+            <div className="grid prototype-category-form-fields">
+              <DropdownFieldSeplag
+                name="numeroFolha"
+                control={control}
+                label="Número da Folha"
+                cols="12 12 6"
+                required
+                options={numeroFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => getProcessamentoErrorMessage("numeroFolha")}
+              />
+              <DropdownFieldSeplag
+                name="nomeFolha"
+                control={control}
+                label="Nome da Folha"
+                cols="12 12 6"
+                required
+                options={nomeFolhaOptions}
+                optionLabel="label"
+                optionValue="value"
+                getFormErrorMessage={() => getProcessamentoErrorMessage("nomeFolha")}
+              />
+              <TextFieldSeplag
+                name="competencia"
+                control={control}
+                label="Competência"
+                placeholder="MM/AAAA"
+                cols="12 12 6"
+                required
+                maxLength={7}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("competencia")}
+              />
+              <RadioButtonFieldSeplag
+                name="tipoExecucao"
+                control={control}
+                label="Tipo de execução"
+                cols="12 12 6"
+                required
+                options={[
+                  { label: "Parcial", value: "PARCIAL" },
+                  { label: "Total", value: "TOTAL" },
+                ]}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("tipoExecucao")}
+              />
+              <MultiSelectFieldSeplag
+                name="orgaos"
+                control={control}
+                label="Órgãos"
+                cols="12 12 4"
+                options={orgaoOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} órgãos selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("orgaos")}
+              />
+              <MultiSelectFieldSeplag
+                name="setores"
+                control={control}
+                label="Setor"
+                cols="12 12 4"
+                options={setorOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} setores selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("setores")}
+              />
+              <MultiSelectFieldSeplag
+                name="regimesJuridicos"
+                control={control}
+                label="Regime jurídico"
+                cols="12 12 4"
+                options={regimeOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} regimes selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("regimesJuridicos")}
+              />
+              <MultiSelectFieldSeplag
+                name="tiposVinculo"
+                control={control}
+                label="Tipo de vínculo"
+                cols="12 12 4"
+                options={tipoVinculoOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} tipos selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("tiposVinculo")}
+              />
+              <MultiSelectFieldSeplag
+                name="categorias"
+                control={control}
+                label="Categoria"
+                cols="12 12 4"
+                options={categoriaOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} categorias selecionadas"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("categorias")}
+              />
+              <MultiSelectFieldSeplag
+                name="subcategorias"
+                control={control}
+                label="Subcategoria"
+                cols="12 12 4"
+                options={subcategoriaOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} subcategorias selecionadas"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("subcategorias")}
+              />
+              <MultiSelectFieldSeplag
+                name="cargos"
+                control={control}
+                label="Cargo"
+                cols="12 12 4"
+                options={cargoOptions}
+                optionLabel="label"
+                optionValue="value"
+                selectedItemsLabel="{0} cargos selecionados"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("cargos")}
+              />
+              <DropdownFieldSeplag
+                name="grupoEleitos"
+                control={control}
+                label="Grupo de eleitos"
+                cols="12 12 4"
+                options={grupoEleitosOptions}
+                optionLabel="label"
+                optionValue="value"
+                disabled={processamentoTotal}
+                getFormErrorMessage={() => getProcessamentoErrorMessage("grupoEleitos")}
+              />
+            </div>
+
+            <div className="prototype-processamento-folha-footer">
+              <BotaoVoltarSeplag
+                type="button"
+                label="Cancelar"
+                icon="pi pi-times"
+                onClick={cancelar}
+              />
+              <BotaoSeplag
+                type="button"
+                variant="save"
+                label="Executar Processamento"
+                icon="pi pi-play"
+                onClick={handleSubmit(executarProcessamento)}
+              />
+            </div>
+          </div>
+        </CardSeplag>
       </div>
     </PrototypeSystemPage>
   );
@@ -17219,6 +17774,7 @@ export function PrototiposFolhaSolicitacoesAjustesPage() {
 
 type FichaFinanceiraFiltroForm = {
   competencia: string;
+  numeroFolha: string;
   matriculaCpf: string;
   nomeServidor: string;
 };
@@ -17233,6 +17789,18 @@ type FichaFinanceiraRubricaRow = {
   percentual: string;
   desconto: number;
 };
+
+type FichaFinanceiraServidorOption = {
+  matriculaCpf: string;
+  nome: string;
+};
+
+const fichaFinanceiraServidorOptions: FichaFinanceiraServidorOption[] = [
+  { matriculaCpf: "102030/1", nome: "MARIA OLIVEIRA" },
+  { matriculaCpf: "887120/1", nome: "ANA SANTOS" },
+  { matriculaCpf: "451278/3", nome: "CARLOS ALMEIDA" },
+  { matriculaCpf: "540110/2", nome: "JOSE ROBERTO LIMA" },
+];
 
 const fichaFinanceiraRubricasMock: FichaFinanceiraRubricaRow[] = [
   {
@@ -17278,19 +17846,94 @@ const fichaFinanceiraRubricasMock: FichaFinanceiraRubricaRow[] = [
 ];
 
 export function PrototiposFolhaFichaFinanceiraPage() {
-  const { control, reset } = useForm<FichaFinanceiraFiltroForm>({
+  const { control, reset, setValue } = useForm<FichaFinanceiraFiltroForm>({
     defaultValues: {
       competencia: "05/2026",
+      numeroFolha: "1",
       matriculaCpf: "102030/1",
       nomeServidor: "MARIA OLIVEIRA",
     },
   });
+  const [matriculaCpfSuggestions, setMatriculaCpfSuggestions] = useState<string[]>([]);
+  const [nomeServidorSuggestions, setNomeServidorSuggestions] = useState<string[]>([]);
+  const [resultadosFichaFinanceira, setResultadosFichaFinanceira] = useState<
+    FichaFinanceiraRubricaRow[]
+  >(fichaFinanceiraRubricasMock);
 
-  const totalVantagens = fichaFinanceiraRubricasMock.reduce(
+  const folhaNumeroOptions = folhaPagamentoService
+    .listarFolhas()
+    .map((folha) => ({
+      label: `${folha.numero} - ${folha.nome}`,
+      value: folha.numero,
+      competencia: folha.competencia,
+    }))
+    .filter(
+      (option, index, options) =>
+        options.findIndex(
+          (item) =>
+            item.value === option.value &&
+            item.label === option.label &&
+            item.competencia === option.competencia,
+        ) === index,
+    );
+
+  const filtrarServidoresFichaFinanceira = (query: string) => {
+    const termo = query.trim().toLowerCase();
+    return fichaFinanceiraServidorOptions.filter(
+      (servidor) =>
+        !termo ||
+        servidor.matriculaCpf.toLowerCase().includes(termo) ||
+        servidor.nome.toLowerCase().includes(termo),
+    );
+  };
+
+  const completarMatriculaCpf = (query: string) => {
+    setMatriculaCpfSuggestions(
+      filtrarServidoresFichaFinanceira(query).map((servidor) => servidor.matriculaCpf),
+    );
+  };
+
+  const completarNomeServidor = (query: string) => {
+    setNomeServidorSuggestions(
+      filtrarServidoresFichaFinanceira(query).map((servidor) => servidor.nome),
+    );
+  };
+
+  const preencherServidorPorMatriculaCpf = (matriculaCpf: string) => {
+    const servidor = fichaFinanceiraServidorOptions.find(
+      (item) => item.matriculaCpf === matriculaCpf,
+    );
+    if (servidor) {
+      setValue("nomeServidor", servidor.nome);
+    }
+  };
+
+  const preencherServidorPorNome = (nome: string) => {
+    const servidor = fichaFinanceiraServidorOptions.find((item) => item.nome === nome);
+    if (servidor) {
+      setValue("matriculaCpf", servidor.matriculaCpf);
+    }
+  };
+
+  const pesquisarFichaFinanceira = () => {
+    setResultadosFichaFinanceira(fichaFinanceiraRubricasMock);
+  };
+
+  const limparFichaFinanceira = () => {
+    reset({
+      competencia: "",
+      numeroFolha: "",
+      matriculaCpf: "",
+      nomeServidor: "",
+    });
+    setResultadosFichaFinanceira([]);
+  };
+
+  const totalVantagens = resultadosFichaFinanceira.reduce(
     (total, item) => total + item.vantagem,
     0,
   );
-  const totalDescontos = fichaFinanceiraRubricasMock.reduce(
+  const totalDescontos = resultadosFichaFinanceira.reduce(
     (total, item) => total + item.desconto,
     0,
   );
@@ -17315,37 +17958,83 @@ export function PrototiposFolhaFichaFinanceiraPage() {
               name="competencia"
               control={control}
               label="Mês/Ano Competência"
-              cols="12 md:col-3"
+              cols="12 md:col-2"
               placeholder="MM/AAAA"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="matriculaCpf"
+            <DropdownFieldSeplag
+              name="numeroFolha"
               control={control}
-              label="Matrícula/CPF"
-              cols="12 md:col-3"
-              placeholder="Matrícula ou CPF"
+              label="Número da Folha"
+              cols="12 md:col-2"
+              options={folhaNumeroOptions}
+              optionLabel="label"
+              optionValue="value"
               getFormErrorMessage={() => null}
             />
-            <TextFieldSeplag
-              name="nomeServidor"
-              control={control}
-              label="Nome do Servidor"
-              cols="12 md:col-4"
-              placeholder="Nome do servidor"
-              getFormErrorMessage={() => null}
-            />
-            <div className="prototype-category-clear col-12 md:col-2">
+            <div className="prototype-ficha-financeira-autocomplete-field">
+              <label htmlFor="ficha-financeira-matricula-cpf">
+                Matrícula/CPF
+              </label>
+              <Controller
+                name="matriculaCpf"
+                control={control}
+                render={({ field }) => (
+                  <SeplagAutoComplete
+                    inputId="ficha-financeira-matricula-cpf"
+                    className="w-full"
+                    value={field.value}
+                    suggestions={matriculaCpfSuggestions}
+                    placeholder="Matrícula ou CPF"
+                    dropdown
+                    forceSelection={false}
+                    completeMethod={completarMatriculaCpf}
+                    onChange={(event) => {
+                      const value = String(event.value ?? "");
+                      field.onChange(value);
+                      preencherServidorPorMatriculaCpf(value);
+                    }}
+                  />
+                )}
+              />
+            </div>
+            <div className="prototype-ficha-financeira-autocomplete-field">
+              <label htmlFor="ficha-financeira-nome-servidor">
+                Nome do Servidor
+              </label>
+              <Controller
+                name="nomeServidor"
+                control={control}
+                render={({ field }) => (
+                  <SeplagAutoComplete
+                    inputId="ficha-financeira-nome-servidor"
+                    className="w-full"
+                    value={field.value}
+                    suggestions={nomeServidorSuggestions}
+                    placeholder="Nome do servidor"
+                    dropdown
+                    forceSelection={false}
+                    completeMethod={completarNomeServidor}
+                    onChange={(event) => {
+                      const value = String(event.value ?? "");
+                      field.onChange(value);
+                      preencherServidorPorNome(value);
+                    }}
+                  />
+                )}
+              />
+            </div>
+            <div className="prototype-ficha-financeira-filter-actions">
               <BotaoLimparFiltroSeplag
                 type="button"
                 label="Limpar"
-                onClick={() =>
-                  reset({
-                    competencia: "",
-                    matriculaCpf: "",
-                    nomeServidor: "",
-                  })
-                }
+                onClick={limparFichaFinanceira}
+              />
+              <BotaoSeplag
+                type="button"
+                label="Pesquisar"
+                icon="pi pi-search"
+                onClick={pesquisarFichaFinanceira}
               />
             </div>
           </div>
@@ -17366,7 +18055,7 @@ export function PrototiposFolhaFichaFinanceiraPage() {
                 </tr>
               </thead>
               <tbody>
-                {fichaFinanceiraRubricasMock.map((item) => (
+                {resultadosFichaFinanceira.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.rubrica}</strong>
@@ -17383,6 +18072,13 @@ export function PrototiposFolhaFichaFinanceiraPage() {
                     </td>
                   </tr>
                 ))}
+                {!resultadosFichaFinanceira.length ? (
+                  <tr>
+                    <td colSpan={7} className="prototype-ficha-financeira-empty">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -18805,7 +19501,6 @@ export function PrototiposFolhaConformidadePage() {
     folhaConformidadeTodasColunas,
   );
   const [relatorioAccordions, setRelatorioAccordions] = useState({
-    colunas: true,
     filtros: true,
     funcionais: false,
     folha: false,
@@ -18817,21 +19512,7 @@ export function PrototiposFolhaConformidadePage() {
   });
   const getEmptyFieldError = () => null;
 
-  const toggleColunaRelatorio = (label: string) => {
-    setColunasSelecionadas((colunas) =>
-      colunas.includes(label)
-        ? colunas.filter((coluna) => coluna !== label)
-        : [...colunas, label],
-    );
-  };
-
-  const isColunaSelecionada = (label: string) =>
-    colunasSelecionadas.includes(label);
-
-  const getFiltroFieldClassName = (label: string) =>
-    `prototype-dynamic-report-field ${
-      isColunaSelecionada(label) ? "" : "prototype-dynamic-report-field--hidden"
-    }`;
+  const getFiltroFieldClassName = () => "prototype-dynamic-report-field";
 
   const toggleRelatorioAccordion = (key: keyof typeof relatorioAccordions) => {
     setRelatorioAccordions((state) => ({ ...state, [key]: !state[key] }));
@@ -18856,8 +19537,237 @@ export function PrototiposFolhaConformidadePage() {
     </button>
   );
 
-  const handleGerarRelatorio = (data: FolhaConformidadeFiltroForm) => {
+  const getRegistrosFiltrados = (filtros: FolhaConformidadeFiltroForm) => {
+    return folhaConformidadeRows.filter((row) => {
+      const atendeFolha =
+        !filtros.numeroFolha.length || filtros.numeroFolha.includes(row.folha);
+      const atendeOrgao =
+        !filtros.orgaos.length || filtros.orgaos.includes(row.orgao);
+      const atendeMatricula =
+        !filtros.matricula.length ||
+        filtros.matricula.includes(`${row.matricula}/${row.vinculo}`);
+      const atendeRubrica =
+        !filtros.codigoRubrica.length ||
+        filtros.codigoRubrica.some((codigo) =>
+          row.rubrica.includes(codigo.split(" - ")[0]),
+        );
+
+      return atendeFolha && atendeOrgao && atendeMatricula && atendeRubrica;
+    });
+  };
+
+  const formatarValorFiltroExcel = (value?: string | string[] | number) => {
+    if (Array.isArray(value)) return value.length ? value.join(", ") : "";
+    if (typeof value === "number") return String(value);
+    return value?.trim() ?? "";
+  };
+
+  const escapeExcelCell = (value?: string | number) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const imageUrlToDataUri = async (src: string) => {
+    try {
+      const response = await fetch(src);
+      const blob = await response.blob();
+
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return src;
+    }
+  };
+
+  const montarFiltrosExcel = (filtros: FolhaConformidadeFiltroForm) => {
+    const filtrosMapeados: Array<[string, string | string[] | number | undefined]> = [
+      ["Órgão", filtros.orgaos],
+      ["Setor", filtros.setores],
+      ["Tipo de vínculo", filtros.tiposVinculo],
+      ["Regime Jurídico", filtros.regimesJuridicos],
+      ["Categoria", filtros.categorias],
+      ["Cargo", filtros.cargos],
+      ["Matrícula", filtros.matricula],
+      ["CPF", filtros.cpf],
+      ["Sexo", filtros.sexo],
+      ["Idade", filtros.idade],
+      ["Competência", filtros.competencia],
+      ["Competência Anterior", filtros.competenciaAnterior],
+      ["Número da Folha", filtros.numeroFolha],
+      ["Número da Execução do processamento", filtros.numeroExecucaoProcessamento],
+      ["Data do processamento", filtros.dataProcessamento],
+      [
+        "Exibir último processamento",
+        filtros.exibirUltimoProcessamento === "S" ? "Sim" : "",
+      ],
+      ["Código da Rubrica", filtros.codigoRubrica],
+      ["Tipo da Rubrica", filtros.tipoRubrica],
+      ["Data da Aposentadoria", filtros.dataAposentadoriaInicio],
+      ["Até aposentadoria", filtros.dataAposentadoriaFim],
+      ["Jornada", filtros.jornada],
+      ["Data de Exercício", filtros.dataExercicioInicio],
+      ["Até exercício", filtros.dataExercicioFim],
+    ];
+
+    return filtrosMapeados
+      .map(([label, value]) => [label, formatarValorFiltroExcel(value)] as const)
+      .filter(([, value]) => value);
+  };
+
+  const baixarRelatorioExcel = async (
+    filtros: FolhaConformidadeFiltroForm,
+    registros: FolhaConformidadeRow[],
+  ) => {
+    const filtrosAplicados = montarFiltrosExcel(filtros);
+    const logoExcelSrc = await imageUrlToDataUri(logoSeplagMtExcel);
+    const dataEmissao = new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Cuiaba",
+    }).format(new Date());
+
+    const linhasFiltro = filtrosAplicados.length
+      ? filtrosAplicados
+          .map(
+            ([label, value]) =>
+              `<tr><td>${escapeExcelCell(label)}</td><td>${escapeExcelCell(value)}</td></tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="2">Nenhum filtro preenchido.</td></tr>`;
+
+    const linhasRelatorio = registros
+      .map((row, index) => {
+        const [codigoRubrica, ...descricaoRubrica] = row.rubrica.split(" - ");
+        return `
+          <tr>
+            <td>${escapeExcelCell(row.orgao)}</td>
+            <td>${escapeExcelCell(filtros.setores[0] || "Setor Central")}</td>
+            <td>${escapeExcelCell(filtros.tiposVinculo[0] || "Efetivo")}</td>
+            <td>${escapeExcelCell(filtros.regimesJuridicos[0] || "Estatutário")}</td>
+            <td>${escapeExcelCell(filtros.categorias[0] || "Área Meio")}</td>
+            <td>${escapeExcelCell(filtros.cargos[0] || "Analista")}</td>
+            <td>${escapeExcelCell(row.matricula)}</td>
+            <td>${escapeExcelCell(filtros.cpf[0] || `000.000.00${index + 1}-00`)}</td>
+            <td>${escapeExcelCell(filtros.sexo[0] || (index % 2 ? "Masculino" : "Feminino"))}</td>
+            <td>${escapeExcelCell(filtros.idade || String(34 + index * 7))}</td>
+            <td>${escapeExcelCell(filtros.competencia || "05/2026")}</td>
+            <td>${escapeExcelCell(filtros.competenciaAnterior || "04/2026")}</td>
+            <td>${escapeExcelCell(row.folha)}</td>
+            <td>${escapeExcelCell(filtros.numeroExecucaoProcessamento[0] || `EXEC-${index + 1}`)}</td>
+            <td>${escapeExcelCell(filtros.dataProcessamento || dataEmissao.split(" ")[0])}</td>
+            <td>${escapeExcelCell(filtros.exibirUltimoProcessamento === "S" ? "Sim" : "Não")}</td>
+            <td>${escapeExcelCell(filtros.codigoRubrica[0] || codigoRubrica)}</td>
+            <td>${escapeExcelCell(filtros.tipoRubrica[0] || (row.descontos !== "R$ 0,00" ? "Desconto" : "Vantagem"))}</td>
+            <td>${escapeExcelCell(descricaoRubrica.join(" - ") || row.rubrica)}</td>
+            <td>${escapeExcelCell(filtros.dataAposentadoriaInicio || "-")}</td>
+            <td>${escapeExcelCell(filtros.dataAposentadoriaFim || "-")}</td>
+            <td>${escapeExcelCell(filtros.jornada[0] || "40h")}</td>
+            <td>${escapeExcelCell(filtros.dataExercicioInicio || "-")}</td>
+            <td>${escapeExcelCell(filtros.dataExercicioFim || "-")}</td>
+            <td>${escapeExcelCell(row.servidor)}</td>
+            <td>${escapeExcelCell(row.vantagens)}</td>
+            <td>${escapeExcelCell(row.descontos)}</td>
+            <td>${escapeExcelCell(row.liquido)}</td>
+            <td>${escapeExcelCell(row.alerta)}</td>
+            <td>${escapeExcelCell(row.situacaoAnalise)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
+            th { background: #005494; color: #ffffff; font-weight: bold; }
+            th, td { border: 1px solid #9ca3af; padding: 6px; mso-number-format:"\\@"; }
+            .title { background: #dbeafe; color: #0f2742; font-size: 16px; font-weight: bold; }
+            .section { background: #e5e7eb; color: #111827; font-weight: bold; }
+            .header-row td { border: 0; }
+            .logo-cell { text-align: right; vertical-align: top; }
+            .logo-cell img { max-height: 70px; max-width: 280px; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr class="header-row">
+              <td class="title" colspan="20">Relatório Dinâmico da Folha</td>
+              <td class="logo-cell" colspan="10" rowspan="3">
+                <img src="${logoExcelSrc}" alt="SEPLAG Governo de Mato Grosso" />
+              </td>
+            </tr>
+            <tr><td><strong>Data/Hora da emissão</strong></td><td colspan="19">${escapeExcelCell(dataEmissao)}</td></tr>
+            <tr><td><strong>Solicitante</strong></td><td colspan="19">${escapeExcelCell(USUARIO_FOLHA_LOGADO)}</td></tr>
+            <tr><td class="section" colspan="30">Filtros aplicados</td></tr>
+            ${linhasFiltro}
+            <tr><td class="section" colspan="30">Dados do relatório</td></tr>
+            <tr>
+              <th>Órgão</th>
+              <th>Setor</th>
+              <th>Tipo de vínculo</th>
+              <th>Regime Jurídico</th>
+              <th>Categoria</th>
+              <th>Cargo</th>
+              <th>Matrícula</th>
+              <th>CPF</th>
+              <th>Sexo</th>
+              <th>Idade</th>
+              <th>Competência</th>
+              <th>Competência Anterior</th>
+              <th>Número da Folha</th>
+              <th>Número da Execução do processamento</th>
+              <th>Data do processamento</th>
+              <th>Exibir último processamento</th>
+              <th>Código da Rubrica</th>
+              <th>Tipo da Rubrica</th>
+              <th>Descrição da Rubrica</th>
+              <th>Data da Aposentadoria</th>
+              <th>Até aposentadoria</th>
+              <th>Jornada</th>
+              <th>Data de Exercício</th>
+              <th>Até exercício</th>
+              <th>Servidor</th>
+              <th>Vantagens</th>
+              <th>Descontos</th>
+              <th>Líquido</th>
+              <th>Alerta</th>
+              <th>Análise</th>
+            </tr>
+            ${linhasRelatorio || `<tr><td colspan="30">Nenhum registro encontrado para os filtros informados.</td></tr>`}
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\ufeff", html], {
+      type: "application/vnd.ms-excel;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `relatorio-dinamico-folha-${Date.now()}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleGerarRelatorio = async (data: FolhaConformidadeFiltroForm) => {
     setFiltrosGerados(data);
+    const registros = getRegistrosFiltrados(data);
+    await baixarRelatorioExcel(data, registros);
+    setFeedbackFiltro("Relatório Excel gerado com sucesso!");
   };
 
   const registrarAuditoriaFiltro = (evento: string, filtro: string) => {
@@ -19013,37 +19923,10 @@ export function PrototiposFolhaConformidadePage() {
     paginaGerenciadorFiltroAtual * linhasGerenciadorFiltro,
   );
 
-  const registrosFiltrados = useMemo(() => {
-    const matricula = filtrosGerados.matricula?.trim().toLowerCase() ?? "";
-    const servidor = filtrosGerados.servidor?.trim().toLowerCase() ?? "";
-    const rubrica =
-      filtrosGerados.rubrica?.trim().toLowerCase() ||
-      filtrosGerados.codigoRubrica?.trim().toLowerCase() ||
-      "";
-    return folhaConformidadeRows.filter((row) => {
-      const atendeFolha =
-        !filtrosGerados.numeroFolha || row.folha === filtrosGerados.numeroFolha;
-      const atendeOrgao =
-        !filtrosGerados.orgaos.length || filtrosGerados.orgaos.includes(row.orgao);
-      const atendeMatricula =
-        !matricula || row.matricula.toLowerCase().includes(matricula);
-      const atendeServidor =
-        !servidor || row.servidor.toLowerCase().includes(servidor);
-      const atendeRubrica =
-        !rubrica || row.rubrica.toLowerCase().includes(rubrica);
-      const atendeSituacao =
-        !filtrosGerados.situacaoAnalise ||
-        row.situacaoAnalise === filtrosGerados.situacaoAnalise;
-      return (
-        atendeFolha &&
-        atendeOrgao &&
-        atendeMatricula &&
-        atendeServidor &&
-        atendeRubrica &&
-        atendeSituacao
-      );
-    });
-  }, [filtrosGerados]);
+  const registrosFiltrados = useMemo(
+    () => getRegistrosFiltrados(filtrosGerados),
+    [filtrosGerados],
+  );
 
   const resumo = {
     matriculas: registrosFiltrados.length,
@@ -19120,8 +20003,8 @@ export function PrototiposFolhaConformidadePage() {
     { header: "Número da Folha", field: "numeroFolha" },
     { header: "Nome da Folha", field: "nomeFolha" },
     { header: "Competência", field: "competencia" },
-    { header: "Tipo do Relatório", field: "tipoRelatorio" },
     { header: "Solicitante", field: "solicitante" },
+    { header: "Situação", field: "situacao" },
     {
       header: "Download",
       body: (row) => (
@@ -19129,6 +20012,7 @@ export function PrototiposFolhaConformidadePage() {
           type="button"
           icon="pi pi-download"
           tooltip={`Baixar relatório ${row.tipoRelatorio}`}
+          disabled={row.situacao !== "Emitido"}
           onClick={() => {}}
         />
       ),
@@ -19146,16 +20030,6 @@ export function PrototiposFolhaConformidadePage() {
           title="Relatório Dinâmico da Folha"
           cols="12"
           cardHeaderClassNames="prototype-regime-card"
-          actions={
-            <BotaoSeplag
-              type="button"
-              label="Aplicar filtro"
-              icon="pi pi-filter"
-              outlined
-              className="prototype-dynamic-report-load-filter"
-              onClick={abrirModalAplicarFiltro}
-            />
-          }
         >
           {feedbackFiltro ? (
             <div className="col-12">
@@ -19167,34 +20041,6 @@ export function PrototiposFolhaConformidadePage() {
             onSubmit={handleSubmit(handleGerarRelatorio)}
           >
             <div className="prototype-dynamic-report-main-grid">
-            <section className="prototype-dynamic-report-section">
-              {renderRelatorioAccordionHeader("colunas", "Colunas do relatório")}
-              {relatorioAccordions.colunas ? (
-                <div className="prototype-dynamic-report-selected">
-                  {folhaConformidadeMapaColunas.map((grupo, index) => (
-                    <div key={grupo.titulo} className="prototype-dynamic-report-chip-row">
-                      {index > 0 ? <div className="prototype-dynamic-report-divider" /> : null}
-                      {renderRelatorioAccordionHeader(grupo.key, grupo.titulo)}
-                      {relatorioAccordions[grupo.key] ? (
-                        <div className="prototype-dynamic-report-chips">
-                          {grupo.colunas.map((coluna) => (
-                            <button
-                              key={coluna}
-                              type="button"
-                              className={colunasSelecionadas.includes(coluna) ? "is-active" : ""}
-                              onClick={() => toggleColunaRelatorio(coluna)}
-                            >
-                              {coluna}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
             <section className="prototype-dynamic-report-section">
               {renderRelatorioAccordionHeader("filtros", "Filtros")}
               {relatorioAccordions.filtros ? (
@@ -19276,25 +20122,31 @@ export function PrototiposFolhaConformidadePage() {
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Matrícula")}>
-                  <TextFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Matrícula"
                     name="matricula"
                     control={control}
                     cols="12"
-                    placeholder="Digite a matrícula"
+                    options={folhaConformidadeMatriculaOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
                 <div className={getFiltroFieldClassName("CPF")}>
-                  <TextFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="CPF"
                     name="cpf"
                     control={control}
                     cols="12"
-                    placeholder="000.000.000-00"
+                    options={folhaConformidadeCpfOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Sexo")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Sexo"
                     name="sexo"
                     control={control}
@@ -19305,48 +20157,14 @@ export function PrototiposFolhaConformidadePage() {
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
-                <div className={getFiltroFieldClassName("Escolaridade")}>
-                  <DropdownFieldSeplag
-                    label="Escolaridade"
-                    name="escolaridade"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeEscolaridadeOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
                 <div className={getFiltroFieldClassName("Idade")}>
-                  <TextFieldSeplag
+                  <NumberFieldSeplag
                     label="Idade"
                     name="idade"
                     control={control}
                     cols="12"
-                    placeholder="Ex.: maior que 60"
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Nível")}>
-                  <DropdownFieldSeplag
-                    label="Nível"
-                    name="nivel"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeNivelOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Classe")}>
-                  <DropdownFieldSeplag
-                    label="Classe"
-                    name="classe"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeClasseOptions}
-                    optionLabel="label"
-                    optionValue="value"
+                    min={0}
+                    max={99}
                     getFormErrorMessage={getEmptyFieldError}
                   />
                 </div>
@@ -19367,26 +20185,17 @@ export function PrototiposFolhaConformidadePage() {
                       placeholder="MM/AAAA"
                     />
                   </div>
-                  <div className={getFiltroFieldClassName("Mês/AAAA até")}>
-                    <div className="prototype-dynamic-report-range">
-                      <TextFieldSeplag
-                        label="Mês/AAAA"
-                        name="folhaInicio"
-                        control={control}
-                        cols="12"
-                        placeholder="MM/AAAA"
-                      />
-                      <TextFieldSeplag
-                        label="Até"
-                        name="folhaFim"
-                        control={control}
-                        cols="12"
-                        placeholder="MM/AAAA"
-                      />
-                    </div>
+                  <div className={getFiltroFieldClassName("Competência Anterior")}>
+                    <TextFieldSeplag
+                      label="Competência Anterior"
+                      name="competenciaAnterior"
+                      control={control}
+                      cols="12"
+                      placeholder="MM/AAAA"
+                    />
                   </div>
                   <div className={getFiltroFieldClassName("Número da Folha")}>
-                    <DropdownFieldSeplag
+                    <MultiSelectFieldSeplag
                       label="Número da Folha"
                       name="numeroFolha"
                       control={control}
@@ -19397,13 +20206,13 @@ export function PrototiposFolhaConformidadePage() {
                       getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
-                  <div className={getFiltroFieldClassName("Nome da Folha")}>
-                    <DropdownFieldSeplag
-                      label="Nome da Folha"
-                      name="nomeFolha"
+                  <div className={getFiltroFieldClassName("Número da execução do processamento")}>
+                    <MultiSelectFieldSeplag
+                      label="Número da execução do processamento"
+                      name="numeroExecucaoProcessamento"
                       control={control}
                       cols="12"
-                      options={folhaConformidadeNomeFolhaOptions}
+                      options={folhaConformidadeExecucaoOptions}
                       optionLabel="label"
                       optionValue="value"
                       getFormErrorMessage={getEmptyFieldError}
@@ -19426,18 +20235,6 @@ export function PrototiposFolhaConformidadePage() {
                       />
                     </div>
                   </div>
-                  <div className={getFiltroFieldClassName("Número da execução do processamento")}>
-                    <DropdownFieldSeplag
-                      label="Número da execução do processamento"
-                      name="numeroExecucaoProcessamento"
-                      control={control}
-                      cols="12"
-                      options={folhaConformidadeExecucaoOptions}
-                      optionLabel="label"
-                      optionValue="value"
-                      getFormErrorMessage={getEmptyFieldError}
-                    />
-                  </div>
                       </div>
                     ) : null}
                   </section>
@@ -19447,7 +20244,7 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.rubrica ? (
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Código da Rubrica")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Código da rubrica"
                     name="codigoRubrica"
                     control={control}
@@ -19459,7 +20256,7 @@ export function PrototiposFolhaConformidadePage() {
                   />
                 </div>
                 <div className={getFiltroFieldClassName("Tipo da Rubrica")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Tipo da rubrica"
                     name="tipoRubrica"
                     control={control}
@@ -19483,43 +20280,21 @@ export function PrototiposFolhaConformidadePage() {
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Data Aposentadoria")}>
                   <div className="prototype-dynamic-report-range">
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Data aposentadoria"
                       name="dataAposentadoriaInicio"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Até"
                       name="dataAposentadoriaFim"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
-                </div>
-                <div className={getFiltroFieldClassName("Tipo de Afastamento")}>
-                  <DropdownFieldSeplag
-                    label="Tipo de Afastamento"
-                    name="tipoAfastamento"
-                    control={control}
-                    cols="12"
-                    options={folhaConformidadeTipoAfastamentoOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
-                </div>
-                <div className={getFiltroFieldClassName("Quantidade de dias afastado")}>
-                  <NumberFieldSeplag
-                    label="Quantidade de dias afastado"
-                    name="quantidadeDiasAfastado"
-                    control={control}
-                    cols="12"
-                    min={0}
-                    getFormErrorMessage={getEmptyFieldError}
-                  />
                 </div>
                     </div>
                     ) : null}
@@ -19530,7 +20305,7 @@ export function PrototiposFolhaConformidadePage() {
                     {relatorioAccordions.outros ? (
                     <div className="prototype-dynamic-report-grid">
                 <div className={getFiltroFieldClassName("Jornada")}>
-                  <DropdownFieldSeplag
+                  <MultiSelectFieldSeplag
                     label="Jornada"
                     name="jornada"
                     control={control}
@@ -19543,19 +20318,19 @@ export function PrototiposFolhaConformidadePage() {
                 </div>
                 <div className={getFiltroFieldClassName("Data de Exercício")}>
                   <div className="prototype-dynamic-report-range">
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Data de exercício"
                       name="dataExercicioInicio"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
-                    <TextFieldSeplag
+                    <DateFieldSeplag
                       label="Até"
                       name="dataExercicioFim"
                       control={control}
                       cols="12"
-                      placeholder="dd/mm/aaaa"
+                      getFormErrorMessage={getEmptyFieldError}
                     />
                   </div>
                 </div>
@@ -19569,20 +20344,6 @@ export function PrototiposFolhaConformidadePage() {
 
             <div className="prototype-dynamic-report-actions">
               <BotaoLimparFiltroSeplag onClick={handleLimpar} type="button" />
-              <BotaoSeplag
-                label="Salvar filtro"
-                icon="pi pi-save"
-                type="button"
-                outlined
-                onClick={abrirModalSalvarFiltro}
-              />
-              <BotaoSeplag
-                label="Gerenciar Filtros"
-                icon="pi pi-cog"
-                type="button"
-                outlined
-                onClick={abrirModalCarregarFiltro}
-              />
               <BotaoSalvarSeplag
                 label="Gerar relatório"
                 icon="pi pi-file-excel"
