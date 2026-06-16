@@ -4472,7 +4472,7 @@ const grupoCalculoSimNaoOptions = [
 ];
 
 const grupoCalculoSituacaoOptions = [
-  { label: "Rascunho", value: "RASCUNHO" },
+  { label: "Aguardando Aprovação", value: "RASCUNHO" },
   { label: "Ativo", value: "ATIVO" },
   { label: "Encerrado", value: "ENCERRADO" },
 ];
@@ -4482,7 +4482,7 @@ const grupoCalculoSituacaoMeta: Record<
   { label: string; color: string; bg: string; border: string }
 > = {
   RASCUNHO: {
-    label: "Rascunho",
+    label: "Aguardando Aprovação",
     color: "#9a6500",
     bg: "#fff1c7",
     border: "#fff1c7",
@@ -4528,12 +4528,15 @@ function normalizeGrupoCalculoSituacao(
 function renderGrupoCalculoStatusBadge(
   status: GrupoCalculoSituacao | StatusOperacionalVigenciaSeplag,
 ) {
-  const badge = grupoCalculoSituacaoMeta[normalizeGrupoCalculoSituacao(status)];
+  const situacao = normalizeGrupoCalculoSituacao(status);
+  const badge = grupoCalculoSituacaoMeta[situacao];
 
   return (
     <span className="prototype-grupo-calculo-status-badge-wrap">
       <span
-        className="prototype-sistema-status-badge"
+        className={`prototype-sistema-status-badge ${
+          situacao === "RASCUNHO" ? "prototype-sistema-status-badge--long" : ""
+        }`}
         style={{
           color: badge.color,
           backgroundColor: badge.bg,
@@ -18765,7 +18768,8 @@ export function PrototiposFolhaGruposCalculoPage() {
         >
           <i className="pi pi-plus" aria-hidden="true" />
         </button>
-      ) : (
+      ) : null}
+      {normalizeGrupoCalculoSituacao(row.situacao) === "RASCUNHO" ? (
         <button
           type="button"
           className="prototype-grupos-calculo-action prototype-grupos-calculo-action--edit"
@@ -18775,7 +18779,7 @@ export function PrototiposFolhaGruposCalculoPage() {
         >
           <i className="pi pi-pencil" aria-hidden="true" />
         </button>
-      )}
+      ) : null}
       <button
         type="button"
         className="prototype-grupos-calculo-action prototype-grupos-calculo-action--history"
@@ -18788,6 +18792,12 @@ export function PrototiposFolhaGruposCalculoPage() {
         type="button"
         className="prototype-grupos-calculo-action prototype-grupos-calculo-action--delete"
         aria-label={`Excluir ${row.grupo}`}
+        disabled={normalizeGrupoCalculoSituacao(row.situacao) !== "RASCUNHO"}
+        title={
+          normalizeGrupoCalculoSituacao(row.situacao) === "RASCUNHO"
+            ? "Excluir"
+            : "Exclusão disponível apenas para Aguardando Aprovação"
+        }
       >
         <i className="pi pi-trash" aria-hidden="true" />
       </button>

@@ -1218,6 +1218,22 @@
   text-align: left;
 }
 
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:nth-child(5),
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:nth-child(5) {
+  min-width: 190px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-flat-table .prototype-sistema-status-badge--long {
+  width: auto;
+  min-width: 168px;
+  max-width: 180px;
+  min-height: 32px;
+  padding: 5px 12px;
+  line-height: 1.1;
+  white-space: normal;
+}
+
 .prototype-grupos-calculo-flat-table .prototype-grupos-calculo-group-row td strong {
   font-weight: 700;
   text-transform: uppercase;
@@ -1244,6 +1260,18 @@
 .prototype-grupos-calculo-action:hover {
   filter: brightness(0.95);
   transform: translateY(-1px);
+}
+
+.prototype-grupos-calculo-action:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+  opacity: 0.45;
+  transform: none;
+}
+
+.prototype-grupos-calculo-action:disabled:hover {
+  filter: grayscale(0.25);
+  transform: none;
 }
 
 .prototype-grupos-calculo-action--view {
