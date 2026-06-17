@@ -19128,6 +19128,18 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
     setRubricasSelecionadasParaAdicionar([]);
   };
 
+  const handleLimparAbrangencia = () => {
+    setValue("abrangenciaInstituicao", []);
+    setValue("abrangenciaOrgao", []);
+    setValue("abrangenciaTipoVinculo", []);
+    setValue("abrangenciaSetores", []);
+    setValue("abrangenciaRegimeJuridico", []);
+    setValue("abrangenciaCategorias", []);
+    setValue("abrangenciaSubcategorias", []);
+    setValue("abrangenciaCargos", []);
+    setValue("abrangenciaHerdarDe", "nenhum");
+  };
+
   const handleAbrirModalPublicacao = () => {
     setCredenciaisPublicacao({ usuario: "", senha: "" });
     setDataInicioPublicacao(dataInicioV2);
@@ -19239,36 +19251,19 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
           <div className="col-12 prototype-grupo-calculo-rubricas-section">
             <div className="prototype-grupo-calculo-abrangencia">
               <div className="prototype-grupo-calculo-section-heading">
-                <strong>Abrangência</strong>
-                <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
+                <div>
+                  <strong>Abrangência</strong>
+                  <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
+                </div>
+                <BotaoLimparFiltroSeplag
+                  type="button"
+                  label="Limpar Filtro"
+                  icon="pi pi-refresh"
+                  onClick={handleLimparAbrangencia}
+                  disabled={formularioBloqueado}
+                />
               </div>
               <div className="grid prototype-category-form-fields">
-                <MultiSelectFieldSeplag
-                  name="abrangenciaRegimeJuridico"
-                  control={control}
-                  label="Regime Jurídico"
-                  cols="12 12 6"
-                  required
-                  disabled={formularioBloqueado}
-                  options={grupoCalculoRegimeJuridicoOptions}
-                  optionLabel="label"
-                  optionValue="value"
-                  selectedItemsLabel="{0} regimes selecionados"
-                  getFormErrorMessage={() => null}
-                />
-                <MultiSelectFieldSeplag
-                  name="abrangenciaTipoVinculo"
-                  control={control}
-                  label="Tipo de Vínculo"
-                  cols="12 12 6"
-                  required
-                  disabled={formularioBloqueado}
-                  options={grupoCalculoTipoVinculoOptions}
-                  optionLabel="label"
-                  optionValue="value"
-                  selectedItemsLabel="{0} vínculos selecionados"
-                  getFormErrorMessage={() => null}
-                />
                 <MultiSelectFieldSeplag
                   name="abrangenciaInstituicao"
                   control={control}
@@ -19294,6 +19289,18 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   getFormErrorMessage={() => null}
                 />
                 <MultiSelectFieldSeplag
+                  name="abrangenciaTipoVinculo"
+                  control={control}
+                  label="Tipo de Vínculo"
+                  cols="12 12 6"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoTipoVinculoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} vínculos selecionados"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
                   name="abrangenciaSetores"
                   control={control}
                   label="Setor"
@@ -19303,6 +19310,18 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   optionLabel="label"
                   optionValue="value"
                   selectedItemsLabel="{0} setores selecionados"
+                  getFormErrorMessage={() => null}
+                />
+                <MultiSelectFieldSeplag
+                  name="abrangenciaRegimeJuridico"
+                  control={control}
+                  label="Regime Jurídico"
+                  cols="12 12 6"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoRegimeJuridicoOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  selectedItemsLabel="{0} regimes selecionados"
                   getFormErrorMessage={() => null}
                 />
                 <MultiSelectFieldSeplag

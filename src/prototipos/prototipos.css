@@ -5060,7 +5060,11 @@
 }
 
 .prototype-grupo-calculo-section-heading {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
 .prototype-grupo-calculo-section-heading strong {
@@ -5075,6 +5079,26 @@
   margin: 4px 0 0;
   color: #64748b;
   font-size: 0.78rem;
+}
+
+.prototype-grupo-calculo-section-heading .p-button {
+  color: #ffffff;
+  height: 34px;
+  min-width: 118px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.prototype-grupo-calculo-section-heading .p-button .p-button-icon {
+  color: #ffffff;
+  font-size: 0.82rem;
+  margin-right: 5px;
+}
+
+.prototype-grupo-calculo-section-heading .p-button .p-button-label {
+  color: #ffffff;
+  white-space: nowrap;
 }
 
 .prototype-grupo-calculo-abrangencia .prototype-category-form-fields {
