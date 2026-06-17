@@ -1,4 +1,10 @@
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import {
@@ -110,6 +116,8 @@ const FOLHA_FICHA_FINANCEIRA_BASE_PATH =
   "/prototipos/folha/lancamento-financeiro/ficha-financeira";
 const GRUPOS_FOLHA_BASE_PATH = "/prototipos/folha/grupos-folha";
 const FOLHA_PAGAMENTO_NOVA_PATH = `${FOLHA_PAGAMENTO_BASE_PATH}/novo`;
+const getFolhaPagamentoVisualizarPath = (id: number) =>
+  `${FOLHA_PAGAMENTO_BASE_PATH}/${id}/visualizar`;
 const getFolhaPagamentoLogPath = (execucaoId: number) =>
   `${FOLHA_PAGAMENTO_BASE_PATH}/execucoes/${execucaoId}/log`;
 const getFolhaTabelaReferenciaNovaVigenciaPath = (tabelaId: number) =>
@@ -13436,6 +13444,7 @@ export function PrototiposFolhaCompetenciasPage() {
 
 export function PrototiposFolhaPagamentoFormPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [formFeedback, setFormFeedback] = useState("");
   const competenciasFolha = folhaPagamentoService.listarCompetencias();
@@ -13448,6 +13457,7 @@ export function PrototiposFolhaPagamentoFormPage() {
     [folhaEdicaoId],
   );
   const isFolhaEdicao = Boolean(id && folhaEdicao);
+  const isSomenteLeitura = isFolhaEdicao && location.pathname.endsWith("/visualizar");
   const situacoesComVersionamento: FolhaPagamentoSituacao[] = [
     "PROCESSO_COM_SUCESSO",
     "PROCESSO_COM_ERRO",
@@ -13521,7 +13531,9 @@ export function PrototiposFolhaPagamentoFormPage() {
     (competencia) => competencia.situacao === "ATIVA",
   );
   const formTitle = isFolhaEdicao
-    ? "Alterar - Folha de Pagamento"
+    ? isSomenteLeitura
+      ? "Visualizar - Folha de Pagamento"
+      : "Alterar - Folha de Pagamento"
     : "Cadastrar - Folha de Pagamento";
 
   useEffect(() => {
@@ -13598,6 +13610,8 @@ export function PrototiposFolhaPagamentoFormPage() {
     data: FolhaPagamentoForm,
     situacao: FolhaPagamentoSituacao,
   ) => {
+    if (isSomenteLeitura) return;
+
     const validacaoObrigatorios = validarObrigatoriosFolha(data);
 
     if (validacaoObrigatorios) {
@@ -13710,6 +13724,11 @@ export function PrototiposFolhaPagamentoFormPage() {
                   Esta folha já foi processada. Ao salvar as alterações, elas serão refletidas nos filtros de processamento da folha.
                 </div>
               ) : null}
+              {isSomenteLeitura ? (
+                <div className="prototype-validation-panel prototype-validation-panel--info">
+                  Visualização somente leitura.
+                </div>
+              ) : null}
               <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
                 <h3>Dados da Folha</h3>
                   <div className="grid prototype-category-form-fields">
@@ -13719,6 +13738,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     label="Número da folha"
                     cols="12 12 3"
                     required
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() => getFormErrorMessage("numero")}
                   />
                   <TextFieldSeplag
@@ -13727,6 +13747,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     label="Nome da folha"
                     cols="12 12 9"
                     required
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() => getFormErrorMessage("nome")}
                   />
                   </div>
@@ -13744,6 +13765,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} regimes selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("abrangenciaRegimeJuridico")
                     }
@@ -13757,6 +13780,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} vínculos selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("abrangenciaTipoVinculo")
                     }
@@ -13770,6 +13795,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} instituições selecionadas"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("abrangenciaInstituicao")
                     }
@@ -13783,6 +13810,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} órgãos selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() => getFormErrorMessage("orgaos")}
                   />
                   <MultiSelectFieldSeplag
@@ -13794,6 +13823,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} setores selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("abrangenciaSetores")
                     }
@@ -13806,6 +13837,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     options={folhaPagamentoCategoriaOptions}
                     optionLabel="label"
                     optionValue="value"
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("categoria")
                     }
@@ -13819,6 +13851,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                     optionLabel="label"
                     optionValue="value"
                     selectedItemsLabel="{0} subcategorias selecionadas"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("abrangenciaSubcategorias")
                     }
@@ -13831,6 +13865,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     options={folhaPagamentoCargoOptions}
                     optionLabel="label"
                     optionValue="value"
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() => getFormErrorMessage("cargo")}
                   />
                   <DropdownFieldSeplag
@@ -13841,6 +13876,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     options={folhaPagamentoGrupoEleitosOptions}
                     optionLabel="label"
                     optionValue="value"
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("grupoEleitos")
                     }
@@ -13858,6 +13894,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     cols="12"
                     rows={4}
                     maxLength={500}
+                    disabled={isSomenteLeitura}
                     getFormErrorMessage={() =>
                       getFormErrorMessage("observacao")
                     }
@@ -13870,13 +13907,15 @@ export function PrototiposFolhaPagamentoFormPage() {
                   type="button"
                   onClick={() => navigate(FOLHA_PAGAMENTO_BASE_PATH)}
                 />
-                <BotaoSalvarSeplag
-                  type="button"
-                  onClick={handleSubmit(
-                    (data) => salvarFolha(data, "ABERTO"),
-                    handleFolhaFormInvalido,
-                  )}
-                />
+                {!isSomenteLeitura ? (
+                  <BotaoSalvarSeplag
+                    type="button"
+                    onClick={handleSubmit(
+                      (data) => salvarFolha(data, "ABERTO"),
+                      handleFolhaFormInvalido,
+                    )}
+                  />
+                ) : null}
               </div>
             </div>
           </CardSeplag>
@@ -14872,8 +14911,8 @@ export function PrototiposFolhaPagamentoPage({
   };
 
   const abrirDetalheFolha = (folha: FolhaPagamentoRow) => {
-    setFolhaSelecionada(folha);
-    setModalDetalheAberto(true);
+    setFeedback("");
+    navigate(getFolhaPagamentoVisualizarPath(folha.id));
   };
 
   const abrirModalProcessamentoFolha = (folha: FolhaPagamentoRow) => {
@@ -15458,7 +15497,7 @@ export function PrototiposFolhaPagamentoPage({
     <>
       <BotaoIconSeplag
         type="button"
-        tooltip="Detalhar"
+        tooltip="Visualizar"
         icon="pi pi-eye"
         onClick={() => abrirDetalheFolha(folha)}
       />
