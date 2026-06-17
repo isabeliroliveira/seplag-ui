@@ -13471,6 +13471,7 @@ export function PrototiposFolhaPagamentoFormPage() {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FolhaPagamentoForm>({
     defaultValues: {
@@ -13565,6 +13566,17 @@ export function PrototiposFolhaPagamentoFormPage() {
   const getFormErrorMessage = (name: keyof FolhaPagamentoForm) => {
     const message = errors[name]?.message;
     return message ? <small className="p-error">{String(message)}</small> : null;
+  };
+
+  const handleLimparAbrangenciaFolha = () => {
+    setValue("abrangenciaInstituicao", []);
+    setValue("orgaos", []);
+    setValue("abrangenciaTipoVinculo", []);
+    setValue("abrangenciaSetores", []);
+    setValue("abrangenciaRegimeJuridico", []);
+    setValue("categoria", "");
+    setValue("abrangenciaSubcategorias", []);
+    setValue("cargo", "");
   };
 
   const validarObrigatoriosFolha = (data: FolhaPagamentoForm) => {
@@ -13753,44 +13765,26 @@ export function PrototiposFolhaPagamentoFormPage() {
                   </div>
               </section>
 
-              <section className="prototype-folha-form-section prototype-folha-form-section--boxed">
-                <h3>Abrangência</h3>
-                  <div className="grid prototype-category-form-fields">
-                  <MultiSelectFieldSeplag
-                    name="abrangenciaRegimeJuridico"
-                    control={control}
-                    label="Regime Jurídico"
-                    cols="12 12 3"
-                    options={grupoCalculoRegimeJuridicoOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    selectedItemsLabel="{0} regimes selecionados"
+              <section className="prototype-folha-form-section prototype-folha-form-section--boxed prototype-folha-form-section--abrangencia">
+                <div className="prototype-grupo-calculo-section-heading">
+                  <div>
+                    <strong>Abrangência</strong>
+                    <p>Defina o público do grupo e adicione as rubricas manualmente.</p>
+                  </div>
+                  <BotaoLimparFiltroSeplag
+                    type="button"
+                    label="Limpar Filtro"
+                    icon="pi pi-refresh"
+                    onClick={handleLimparAbrangenciaFolha}
                     disabled={isSomenteLeitura}
-                    readOnly={isSomenteLeitura}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("abrangenciaRegimeJuridico")
-                    }
                   />
-                  <MultiSelectFieldSeplag
-                    name="abrangenciaTipoVinculo"
-                    control={control}
-                    label="Tipo de Vínculo"
-                    cols="12 12 3"
-                    options={grupoCalculoTipoVinculoOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    selectedItemsLabel="{0} vínculos selecionados"
-                    disabled={isSomenteLeitura}
-                    readOnly={isSomenteLeitura}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("abrangenciaTipoVinculo")
-                    }
-                  />
+                </div>
+                <div className="grid prototype-category-form-fields">
                   <MultiSelectFieldSeplag
                     name="abrangenciaInstituicao"
                     control={control}
                     label="Instituição"
-                    cols="12 12 3"
+                    cols="12 12 6"
                     options={grupoCalculoInstituicaoOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -13804,8 +13798,8 @@ export function PrototiposFolhaPagamentoFormPage() {
                   <MultiSelectFieldSeplag
                     name="orgaos"
                     control={control}
-                    label="Órgãos"
-                    cols="12 12 3"
+                    label="Órgão"
+                    cols="12 12 6"
                     options={folhaPagamentoOrgaoOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -13815,10 +13809,25 @@ export function PrototiposFolhaPagamentoFormPage() {
                     getFormErrorMessage={() => getFormErrorMessage("orgaos")}
                   />
                   <MultiSelectFieldSeplag
+                    name="abrangenciaTipoVinculo"
+                    control={control}
+                    label="Tipo de Vínculo"
+                    cols="12 12 6"
+                    options={grupoCalculoTipoVinculoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} vínculos selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaTipoVinculo")
+                    }
+                  />
+                  <MultiSelectFieldSeplag
                     name="abrangenciaSetores"
                     control={control}
                     label="Setor"
-                    cols="12 12 3"
+                    cols="12 12 6"
                     options={grupoCalculoSetorOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -13829,11 +13838,26 @@ export function PrototiposFolhaPagamentoFormPage() {
                       getFormErrorMessage("abrangenciaSetores")
                     }
                   />
+                  <MultiSelectFieldSeplag
+                    name="abrangenciaRegimeJuridico"
+                    control={control}
+                    label="Regime Jurídico"
+                    cols="12 12 6"
+                    options={grupoCalculoRegimeJuridicoOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    selectedItemsLabel="{0} regimes selecionados"
+                    disabled={isSomenteLeitura}
+                    readOnly={isSomenteLeitura}
+                    getFormErrorMessage={() =>
+                      getFormErrorMessage("abrangenciaRegimeJuridico")
+                    }
+                  />
                   <DropdownFieldSeplag
                     name="categoria"
                     control={control}
                     label="Categoria"
-                    cols="12 12 4"
+                    cols="12 12 6"
                     options={folhaPagamentoCategoriaOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -13846,7 +13870,7 @@ export function PrototiposFolhaPagamentoFormPage() {
                     name="abrangenciaSubcategorias"
                     control={control}
                     label="Subcategoria"
-                    cols="12 12 4"
+                    cols="12 12 6"
                     options={grupoCalculoSubcategoriaOptions}
                     optionLabel="label"
                     optionValue="value"
@@ -13861,27 +13885,14 @@ export function PrototiposFolhaPagamentoFormPage() {
                     name="cargo"
                     control={control}
                     label="Cargo"
-                    cols="12 12 4"
+                    cols="12 12 6"
                     options={folhaPagamentoCargoOptions}
                     optionLabel="label"
                     optionValue="value"
                     disabled={isSomenteLeitura}
                     getFormErrorMessage={() => getFormErrorMessage("cargo")}
                   />
-                  <DropdownFieldSeplag
-                    name="grupoEleitos"
-                    control={control}
-                    label="Grupo de eleitos"
-                    cols="12 12 4"
-                    options={folhaPagamentoGrupoEleitosOptions}
-                    optionLabel="label"
-                    optionValue="value"
-                    disabled={isSomenteLeitura}
-                    getFormErrorMessage={() =>
-                      getFormErrorMessage("grupoEleitos")
-                    }
-                  />
-                  </div>
+                </div>
               </section>
 
               <section className="prototype-folha-form-section prototype-folha-form-section--boxed">

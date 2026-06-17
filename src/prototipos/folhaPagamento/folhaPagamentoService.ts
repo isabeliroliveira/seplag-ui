@@ -1108,6 +1108,11 @@ export const folhaPagamentoMockRepository = {
       competencia: request.competencia ?? "",
       observacao: request.observacao ?? "",
       orgaos: request.orgaos ?? [],
+      abrangenciaRegimeJuridico: request.abrangenciaRegimeJuridico ?? [],
+      abrangenciaTipoVinculo: request.abrangenciaTipoVinculo ?? [],
+      abrangenciaInstituicao: request.abrangenciaInstituicao ?? [],
+      abrangenciaSetores: request.abrangenciaSetores ?? [],
+      abrangenciaSubcategorias: request.abrangenciaSubcategorias ?? [],
       regimeJuridico: request.regimeJuridico ?? "",
       categoria: request.categoria ?? "",
       cargo: request.cargo ?? "",
@@ -1152,6 +1157,20 @@ export const folhaPagamentoMockRepository = {
       situacao: request.situacao ?? folhasPagamentoMock[index].situacao,
       observacao: request.observacao ?? "",
       orgaos: request.orgaos ?? folhasPagamentoMock[index].orgaos,
+      abrangenciaRegimeJuridico:
+        request.abrangenciaRegimeJuridico ??
+        folhasPagamentoMock[index].abrangenciaRegimeJuridico,
+      abrangenciaTipoVinculo:
+        request.abrangenciaTipoVinculo ??
+        folhasPagamentoMock[index].abrangenciaTipoVinculo,
+      abrangenciaInstituicao:
+        request.abrangenciaInstituicao ??
+        folhasPagamentoMock[index].abrangenciaInstituicao,
+      abrangenciaSetores:
+        request.abrangenciaSetores ?? folhasPagamentoMock[index].abrangenciaSetores,
+      abrangenciaSubcategorias:
+        request.abrangenciaSubcategorias ??
+        folhasPagamentoMock[index].abrangenciaSubcategorias,
       regimeJuridico: request.regimeJuridico ?? "",
       categoria: request.categoria ?? "",
       cargo: request.cargo ?? "",
