@@ -450,6 +450,10 @@ function App() {
         element={<PrototiposFolhaPagamentoFormPage />}
       />
       <Route
+        path="/prototipos/folha/processamento/folha-pagamento/:id/visualizar"
+        element={<PrototiposFolhaPagamentoFormPage />}
+      />
+      <Route
         path="/prototipos/folha/processamento/folha-pagamento/execucoes/:execucaoId/log"
         element={<PrototiposFolhaPagamentoLogPage />}
       />
