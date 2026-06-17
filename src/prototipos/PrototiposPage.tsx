@@ -19247,7 +19247,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaRegimeJuridico"
                   control={control}
                   label="Regime Jurídico"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   required
                   disabled={formularioBloqueado}
                   options={grupoCalculoRegimeJuridicoOptions}
@@ -19260,7 +19260,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaTipoVinculo"
                   control={control}
                   label="Tipo de Vínculo"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   required
                   disabled={formularioBloqueado}
                   options={grupoCalculoTipoVinculoOptions}
@@ -19273,7 +19273,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaInstituicao"
                   control={control}
                   label="Instituição"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoInstituicaoOptions}
                   optionLabel="label"
@@ -19285,7 +19285,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaOrgao"
                   control={control}
                   label="Órgão"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoOrgaoOptions}
                   optionLabel="label"
@@ -19297,7 +19297,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaSetores"
                   control={control}
                   label="Setor"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoSetorOptions}
                   optionLabel="label"
@@ -19309,7 +19309,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaCategorias"
                   control={control}
                   label="Categoria"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoCategoriaOptions}
                   optionLabel="label"
@@ -19321,7 +19321,7 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaSubcategorias"
                   control={control}
                   label="Subcategoria"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoSubcategoriaOptions}
                   optionLabel="label"
@@ -19333,23 +19333,12 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                   name="abrangenciaCargos"
                   control={control}
                   label="Cargo"
-                  cols="12 12 3"
+                  cols="12 12 6"
                   disabled={formularioBloqueado}
                   options={grupoCalculoCargoOptions}
                   optionLabel="label"
                   optionValue="value"
                   selectedItemsLabel="{0} cargos selecionados"
-                  getFormErrorMessage={() => null}
-                />
-                <DropdownFieldSeplag
-                  name="abrangenciaHerdarDe"
-                  control={control}
-                  label="Herdar De"
-                  cols="12 12 3"
-                  disabled={formularioBloqueado}
-                  options={grupoCalculoSuperiorOptions}
-                  optionLabel="label"
-                  optionValue="value"
                   getFormErrorMessage={() => null}
                 />
               </div>
@@ -19364,6 +19353,19 @@ export function PrototiposFolhaGrupoCalculoFormPage() {
                     Rubricas herdadas não podem ser excluídas; apenas as adicionadas manualmente.
                   </span>
                 </div>
+              </div>
+              <div className="prototype-grupo-calculo-rubricas-controls">
+                <DropdownFieldSeplag
+                  name="abrangenciaHerdarDe"
+                  control={control}
+                  label="Herdar De"
+                  cols="12"
+                  disabled={formularioBloqueado}
+                  options={grupoCalculoSuperiorOptions}
+                  optionLabel="label"
+                  optionValue="value"
+                  getFormErrorMessage={() => null}
+                />
                 <BotaoSeplag
                   type="button"
                   label="Adicionar Rubrica"

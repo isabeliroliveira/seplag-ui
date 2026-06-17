@@ -5106,7 +5106,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .prototype-grupo-calculo-rubricas-header strong {
@@ -5123,19 +5123,67 @@
   font-size: 0.9rem;
 }
 
-.prototype-grupo-calculo-rubricas-header .p-button {
-  min-width: 164px;
+.prototype-grupo-calculo-rubricas-controls {
+  display: grid;
+  grid-template-columns: minmax(240px, 30%) 1fr auto;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn.p-button {
+.prototype-grupo-calculo-rubricas-controls::before {
+  content: "";
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.prototype-grupo-calculo-rubricas-controls > [class*="col-"] {
+  width: auto !important;
+  max-width: none !important;
+  padding: 0 !important;
+}
+
+.prototype-grupo-calculo-rubricas-controls [class*="content-rotulo"] {
+  gap: 4px;
+}
+
+.prototype-grupo-calculo-rubricas-controls [class*="label-rotulo"] {
+  color: #0f2742;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.prototype-grupo-calculo-rubricas-controls .p-dropdown,
+.prototype-grupo-calculo-rubricas-controls .p-inputtext {
+  width: 100%;
+  height: 38px;
+}
+
+.prototype-grupo-calculo-rubricas-controls .p-button {
+  grid-column: 3;
+  min-width: 164px;
+  height: 38px;
+}
+
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn.p-button {
   color: #ffffff;
   background: #2f80ed;
   border: 1px solid #2f80ed;
 }
 
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-label,
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-icon {
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn .p-button-label,
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn .p-button-icon {
   color: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .prototype-grupo-calculo-rubricas-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .prototype-grupo-calculo-rubricas-controls .p-button {
+    width: 100%;
+  }
 }
 
 .prototype-grupo-calculo-version-alert {
