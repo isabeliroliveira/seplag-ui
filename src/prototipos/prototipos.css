@@ -1218,6 +1218,22 @@
   text-align: left;
 }
 
+.prototype-grupos-calculo-flat-table > table > thead > tr > th:nth-child(5),
+.prototype-grupos-calculo-flat-table > table > tbody > tr > td:nth-child(5) {
+  min-width: 190px;
+  text-align: center;
+}
+
+.prototype-grupos-calculo-flat-table .prototype-sistema-status-badge--long {
+  width: auto;
+  min-width: 168px;
+  max-width: 180px;
+  min-height: 32px;
+  padding: 5px 12px;
+  line-height: 1.1;
+  white-space: normal;
+}
+
 .prototype-grupos-calculo-flat-table .prototype-grupos-calculo-group-row td strong {
   font-weight: 700;
   text-transform: uppercase;
@@ -1244,6 +1260,18 @@
 .prototype-grupos-calculo-action:hover {
   filter: brightness(0.95);
   transform: translateY(-1px);
+}
+
+.prototype-grupos-calculo-action:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+  opacity: 0.45;
+  transform: none;
+}
+
+.prototype-grupos-calculo-action:disabled:hover {
+  filter: grayscale(0.25);
+  transform: none;
 }
 
 .prototype-grupos-calculo-action--view {
@@ -5078,7 +5106,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .prototype-grupo-calculo-rubricas-header strong {
@@ -5095,19 +5123,67 @@
   font-size: 0.9rem;
 }
 
-.prototype-grupo-calculo-rubricas-header .p-button {
-  min-width: 164px;
+.prototype-grupo-calculo-rubricas-controls {
+  display: grid;
+  grid-template-columns: minmax(240px, 30%) 1fr auto;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn.p-button {
+.prototype-grupo-calculo-rubricas-controls::before {
+  content: "";
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.prototype-grupo-calculo-rubricas-controls > [class*="col-"] {
+  width: auto !important;
+  max-width: none !important;
+  padding: 0 !important;
+}
+
+.prototype-grupo-calculo-rubricas-controls [class*="content-rotulo"] {
+  gap: 4px;
+}
+
+.prototype-grupo-calculo-rubricas-controls [class*="label-rotulo"] {
+  color: #0f2742;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.prototype-grupo-calculo-rubricas-controls .p-dropdown,
+.prototype-grupo-calculo-rubricas-controls .p-inputtext {
+  width: 100%;
+  height: 38px;
+}
+
+.prototype-grupo-calculo-rubricas-controls .p-button {
+  grid-column: 3;
+  min-width: 164px;
+  height: 38px;
+}
+
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn.p-button {
   color: #ffffff;
   background: #2f80ed;
   border: 1px solid #2f80ed;
 }
 
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-label,
-.prototype-grupo-calculo-rubricas-header .prototype-grupo-calculo-add-rubrica-btn .p-button-icon {
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn .p-button-label,
+.prototype-grupo-calculo-rubricas-controls .prototype-grupo-calculo-add-rubrica-btn .p-button-icon {
   color: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .prototype-grupo-calculo-rubricas-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .prototype-grupo-calculo-rubricas-controls .p-button {
+    width: 100%;
+  }
 }
 
 .prototype-grupo-calculo-version-alert {
@@ -8219,6 +8295,279 @@
   border-top: 1px solid #dfe7ef;
   color: #001f3f;
   font-weight: 800;
+}
+
+.prototype-folha-home-schedule-modal-subtitle {
+  margin-top: -4px;
+  color: #52616b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.prototype-folha-home-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.prototype-folha-home-schedule-config {
+  display: grid;
+  gap: 12px;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-list {
+  gap: 12px;
+  max-height: min(56vh, 520px);
+  justify-items: stretch;
+  padding-right: 2px;
+}
+
+.prototype-folha-home-schedule-config--page .prototype-folha-home-config-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.prototype-folha-cronograma-page {
+  gap: 16px;
+  min-height: 100%;
+}
+
+.prototype-folha-cronograma-page > .p-card,
+.prototype-folha-cronograma-page > .p-card .p-card-body,
+.prototype-folha-cronograma-page > .p-card .p-card-content {
+  width: 100%;
+}
+
+.prototype-folha-cronograma-page > .p-card {
+  min-height: calc(100vh - 148px);
+}
+
+.prototype-folha-home-schedule-config--page {
+  width: 100%;
+}
+
+.prototype-folha-cronograma-title-field {
+  display: grid;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.prototype-folha-cronograma-title-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #001f3f;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.prototype-folha-cronograma-title-field input:focus {
+  border-color: #005ca9;
+  box-shadow: 0 0 0 2px rgba(0, 92, 169, 0.12);
+  outline: 0;
+}
+
+.prototype-folha-home-schedule-config--page .prototype-folha-home-config-section.is-dragging {
+  border-color: #005494;
+  opacity: 0.78;
+}
+
+.prototype-folha-home-schedule-config--page .prototype-folha-home-config-section-head > .prototype-folha-home-drag-handle {
+  cursor: grab;
+}
+
+.prototype-folha-home-schedule-config--page .prototype-folha-home-config-section-head > .prototype-folha-home-drag-handle:active {
+  cursor: grabbing;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-section {
+  width: 100%;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border-color: #d6e0ea;
+  border-radius: 8px;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-section-head {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #dfe7ef;
+  background: #f8fafc;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-title-field {
+  min-width: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-session-input {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #001f3f;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-session-input:focus {
+  border-color: #005ca9;
+  box-shadow: 0 0 0 2px rgba(0, 92, 169, 0.12);
+  outline: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-session-input:hover {
+  border-color: #8fb3d1;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-icon-actions {
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-icon-actions .p-button:first-child {
+  width: auto;
+  min-width: 132px;
+  height: 32px;
+  padding: 0 12px;
+}
+
+.prototype-folha-home-config-event-header,
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event {
+  display: grid;
+  grid-template-columns: 18px 152px 152px minmax(240px, 1fr) 28px;
+  column-gap: 10px;
+  align-items: center;
+}
+
+.prototype-folha-home-config-event-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid #dfe7ef;
+  background: #f8fafc;
+  color: #4b5563;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-events {
+  gap: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event {
+  min-height: 46px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #e6edf4;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event:last-child {
+  border-bottom: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event label {
+  display: block;
+  min-width: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event input {
+  width: auto;
+  min-height: 32px;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event label:nth-of-type(1) input,
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event label:nth-of-type(2) input {
+  width: 152px;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-event label:nth-of-type(3) input {
+  width: 100%;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-drag-handle {
+  justify-self: center;
+  color: #64748b;
+  cursor: grab;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-config-remove {
+  width: 28px;
+  height: 32px;
+  color: #52616b;
+}
+
+.prototype-folha-home-config-add-section {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 38px;
+  border: 1px dashed #b8c4d2;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #005494;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prototype-folha-home-config-add-section:hover,
+.prototype-folha-home-config-add-section:focus-visible {
+  border-color: #005494;
+  background: #eef6ff;
+  outline: 0;
+}
+
+.prototype-folha-home-schedule-config .prototype-folha-home-modal-actions {
+  justify-content: flex-end;
+  margin-top: 2px;
+  border-top: 1px solid #dfe7ef;
+  padding-top: 12px;
+}
+
+@media (max-width: 760px) {
+  .prototype-folha-home-schedule-config .prototype-folha-home-config-section-head {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+
+  .prototype-folha-home-schedule-config .prototype-folha-home-icon-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-left: 28px;
+  }
+
+  .prototype-folha-home-config-event-header {
+    display: none;
+  }
+
+  .prototype-folha-home-schedule-config .prototype-folha-home-config-event {
+    grid-template-columns: 18px minmax(0, 1fr) 28px;
+    row-gap: 8px;
+  }
+
+  .prototype-folha-home-schedule-config .prototype-folha-home-config-event label {
+    grid-column: 2;
+  }
+
+  .prototype-folha-home-schedule-config .prototype-folha-home-config-remove {
+    grid-column: 3;
+    grid-row: 1;
+  }
 }
 
 .prototype-folha-home-event-tag.is-agendado {
