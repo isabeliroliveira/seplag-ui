@@ -14238,7 +14238,7 @@ type RelatorioTecnicoTipoFiltro =
   | "Processado com erro"
   | "Processado com Sucesso";
 
-type RelatorioTecnicoFormatoArquivo = ".PDF" | ".DOCX" | ".XLSX";
+type RelatorioTecnicoFormatoArquivo = ".PDF" | ".XLSX";
 
 type RelatorioTecnicoSituacao =
   | "Em Emissão"
@@ -14335,7 +14335,7 @@ export function PrototiposFolhaPagamentoPage({
       tipoFiltro: "Processado com Sucesso",
       quantidadeErros: 0,
       quantidadeRegistros: 842,
-      formato: ".DOCX",
+      formato: ".PDF",
       situacao: "Em Emissão",
     },
   ]);
@@ -14712,7 +14712,6 @@ export function PrototiposFolhaPagamentoPage({
   ];
   const relatorioTecnicoFormatoOptions = [
     { label: ".PDF", value: ".PDF" },
-    { label: ".DOCX", value: ".DOCX" },
     { label: ".XLSX", value: ".XLSX" },
   ];
   const processamentoTipoExecucao = watchProcessamento("tipoExecucao");
@@ -15357,7 +15356,7 @@ export function PrototiposFolhaPagamentoPage({
       tipoFiltro: "Processado com Sucesso",
       quantidadeErros: 0,
       quantidadeRegistros: processamento.totalPessoas,
-      formato: ".DOCX",
+      formato: ".PDF",
       situacao: "Emitido",
     },
     {
