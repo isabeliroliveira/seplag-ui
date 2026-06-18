@@ -147,8 +147,10 @@ export function LayoutSeplag({
           ambienteSistema={ambienteSistema}
           systemas={sistemas}
         />
-        <div className="layout-content">{children ?? <Outlet />}</div>
-        <AppFooterSeplag text={footerText}>{footerChildren}</AppFooterSeplag>
+        <div className="layout-scroll">
+          <div className="layout-content">{children ?? <Outlet />}</div>
+          <AppFooterSeplag text={footerText}>{footerChildren}</AppFooterSeplag>
+        </div>
       </div>
     </div>
   );

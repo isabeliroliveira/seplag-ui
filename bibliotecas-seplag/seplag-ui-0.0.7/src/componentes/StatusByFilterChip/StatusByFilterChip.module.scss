@@ -1,0 +1,30 @@
+.chip-fixed-width {
+    min-width: 90px;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.chip-ATIVO {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+}
+
+.chip-ENCERRADO {
+    background-color: #fff4e5;
+    color: #d97706;
+}
+
+.chip-AGENDADO {
+    background-color: #e7f3ff;
+    color: #0b74d7;
+}
+
+.chip-EXTINTO {
+    background-color: #f1f3f5;
+    color: #495057;
+}
+
+.chip-PENDENTE {
+    background-color: #fff3cd;
+    color: #856404;
+}

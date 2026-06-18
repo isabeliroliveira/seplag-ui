@@ -1,0 +1,33 @@
+
+stages:
+  - build
+  - deploy
+
+
+build:
+  image: node:latest
+  stage: build
+  script:
+    - npm i
+    - npm run build
+  artifacts:
+    paths: 
+      - dist
+
+  only:
+    - DESENVOLVIMENTO
+
+  tags:
+    - Maven
+
+deploy:
+  image: node:latest
+  stage: deploy
+  script:
+    - npm publish
+  
+  only:
+    - DESENVOLVIMENTO
+
+  tags:
+    - Maven

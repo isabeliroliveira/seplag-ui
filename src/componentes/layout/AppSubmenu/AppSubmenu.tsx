@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import type { IMenuSeplag } from "../Config/menu";
@@ -12,6 +12,7 @@ interface AppSubmenuSeplagProps {
 }
 export function AppSubmenuSeplag(props: AppSubmenuSeplagProps) {
   const [activeMenu, setActiveMenu] = useState<IMenuSeplag | null>(null);
+  const [collapsedMenus, setCollapsedMenus] = useState<string[]>([]);
   const location = useLocation();
   const visibleItems = props.items?.filter(
     (item) => item.visibleOnMenu !== false && item.label !== null,
@@ -74,6 +75,10 @@ export function AppSubmenuSeplag(props: AppSubmenuSeplagProps) {
     return item.items?.some((child) => hasActiveRoute(child)) ?? false;
   };
 
+  useEffect(() => {
+    setCollapsedMenus([]);
+  }, [location.pathname]);
+
   const onMenuItemClick = (
     event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
     item: IMenuSeplag,
@@ -83,15 +88,25 @@ export function AppSubmenuSeplag(props: AppSubmenuSeplagProps) {
       return true;
     }
 
-    if (activeMenu?.label === item.label) {
+    const key = item.label ?? "";
+    const isActive = activeMenu?.label === item.label || hasActiveRoute(item);
+
+    if (isActive) {
       setActiveMenu(null);
+      setCollapsedMenus((current) =>
+        current.includes(key) ? current : [...current, key],
+      );
     } else {
       setActiveMenu(item);
+      setCollapsedMenus((current) => current.filter((label) => label !== key));
     }
   };
 
   const items = visibleItems?.map((item, i) => {
-    const active = activeMenu?.label === item.label || hasActiveRoute(item);
+    const key = item.label ?? "";
+    const active =
+      !collapsedMenus.includes(key) &&
+      (activeMenu?.label === item.label || hasActiveRoute(item));
     const styleClass = [
       item.badgeStyleClass,
       active && !item.to ? "active-menuitem" : "",

@@ -1,17 +1,18 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
+  Controller,
   useWatch,
   type Control,
   type FieldValues,
   type Path,
   type UseFormSetValue,
 } from "react-hook-form";
-import { BadgeSeplag } from "../Badge";
 import {
   DateFieldSeplag,
-  RadioButtonFieldSeplag,
   TextAreaFieldSeplag,
 } from "../Fields";
+import { RadioButton } from "primereact/radiobutton";
+import RotuloSeplag from "../Rotulo";
 import {
   isDateAfterSeplag,
   isDateBeforeSeplag,
@@ -25,6 +26,8 @@ export const SITUACAO_VIGENCIA = {
 
 export const STATUS_OPERACIONAL_VIGENCIA = {
   AGENDADO: "AGENDADO",
+  AGENDADO_ENCERRAMENTO: "AGENDADO_ENCERRAMENTO",
+  AGENDADO_EXTINCAO: "AGENDADO_EXTINCAO",
   ATIVO: "ATIVO",
   ENCERRADO: "ENCERRADO",
   EXTINTO: "EXTINTO",
@@ -71,6 +74,9 @@ export interface SituacaoVigenciaSeplagProps<T extends FieldValues = any> {
   };
   possuiVinculosOuDependencias?: boolean;
   permitirExtincaoDireta?: boolean;
+  ocultarRotuloSituacao?: boolean;
+  rotuloDataAtivacao?: string;
+  dataAtivacaoMinDate?: Date;
   getFormErrorMessage: (name: string) => ReactNode;
 }
 
@@ -90,31 +96,43 @@ const DEFAULT_NAMES = {
 
 const STATUS_META: Record<
   StatusOperacionalVigenciaSeplag,
-  { label: string; color: string; bg: string; icon: string }
+  { label: string; color: string; bg: string; border: string }
 > = {
   AGENDADO: {
     label: "Agendado",
     color: "#8a5a00",
     bg: "#fff4d6",
-    icon: "pi pi-clock",
+    border: "#fff4d6",
+  },
+  AGENDADO_ENCERRAMENTO: {
+    label: "Agendado para Encerramento",
+    color: "#6b7280",
+    bg: "#f1f5f9",
+    border: "#f1f5f9",
+  },
+  AGENDADO_EXTINCAO: {
+    label: "Agendado para Extinção",
+    color: "#b42318",
+    bg: "#fee4e2",
+    border: "#fee4e2",
   },
   ATIVO: {
     label: "Ativo",
-    color: "#1f7a3f",
-    bg: "#e7f6ed",
-    icon: "pi pi-check-circle",
+    color: "#00843d",
+    bg: "#dff3e8",
+    border: "#dff3e8",
   },
   ENCERRADO: {
     label: "Encerrado",
     color: "#6b7280",
     bg: "#f1f5f9",
-    icon: "pi pi-lock",
+    border: "#f1f5f9",
   },
   EXTINTO: {
     label: "Extinto",
     color: "#b42318",
     bg: "#fee4e2",
-    icon: "pi pi-times-circle",
+    border: "#fee4e2",
   },
 };
 
@@ -143,10 +161,24 @@ export function calcularStatusOperacionalVigenciaSeplag(
   }
 
   if (value.situacao === SITUACAO_VIGENCIA.ENCERRADO) {
+    if (
+      value.dataEncerramento &&
+      isDateAfterSeplag(value.dataEncerramento, dataReferencia)
+    ) {
+      return STATUS_OPERACIONAL_VIGENCIA.AGENDADO_ENCERRAMENTO;
+    }
+
     return STATUS_OPERACIONAL_VIGENCIA.ENCERRADO;
   }
 
   if (value.situacao === SITUACAO_VIGENCIA.EXTINTO) {
+    if (
+      value.dataExtincao &&
+      isDateAfterSeplag(value.dataExtincao, dataReferencia)
+    ) {
+      return STATUS_OPERACIONAL_VIGENCIA.AGENDADO_EXTINCAO;
+    }
+
     return STATUS_OPERACIONAL_VIGENCIA.EXTINTO;
   }
 
@@ -225,7 +257,10 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
   readOnly = false,
   cols,
   possuiVinculosOuDependencias = false,
-  permitirExtincaoDireta = false,
+  permitirExtincaoDireta = true,
+  ocultarRotuloSituacao = false,
+  rotuloDataAtivacao = "Data de Ativação",
+  dataAtivacaoMinDate,
   getFormErrorMessage,
 }: Readonly<SituacaoVigenciaSeplagProps<T>>) {
   const resolvedNames = resolveNames(names);
@@ -235,9 +270,23 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     control,
     name: resolvedNames.dataEncerramento,
   });
+  const motivoEncerramento = useWatch({
+    control,
+    name: resolvedNames.motivoEncerramento,
+  });
   const dataExtincao = useWatch({ control, name: resolvedNames.dataExtincao });
+  const motivoExtincao = useWatch({
+    control,
+    name: resolvedNames.motivoExtincao,
+  });
+  const ultimoEncerramentoReplicado = useRef<{
+    data?: unknown;
+    motivo?: unknown;
+  }>({});
   const isDisabled = disabled || readOnly;
-  const mostrarEncerramento = situacao === SITUACAO_VIGENCIA.ENCERRADO;
+  const mostrarEncerramento =
+    situacao === SITUACAO_VIGENCIA.ENCERRADO ||
+    situacao === SITUACAO_VIGENCIA.EXTINTO;
   const mostrarExtincao = situacao === SITUACAO_VIGENCIA.EXTINTO;
   const statusOperacional = calcularStatusOperacionalVigenciaSeplag({
     situacao,
@@ -246,6 +295,11 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     dataExtincao,
   });
   const statusMeta = STATUS_META[statusOperacional];
+  const desabilitarSituacaoPorAgendamento =
+    statusOperacional === STATUS_OPERACIONAL_VIGENCIA.AGENDADO;
+  const podeExtinguir =
+    permitirExtincaoDireta ||
+    Boolean(dataEncerramento && String(motivoEncerramento ?? "").trim());
 
   useEffect(() => {
     if (
@@ -270,101 +324,212 @@ export function SituacaoVigenciaSeplag<T extends FieldValues = any>({
     setValue(resolvedNames.motivoExtincao, undefined as any);
   }, [resolvedNames.dataExtincao, resolvedNames.motivoExtincao, setValue, situacao]);
 
-  return (
-    <div className="grid">
-      <RadioButtonFieldSeplag
-        name={resolvedNames.situacao}
-        control={control}
-        label="Situação"
-        cols={cols?.situacao ?? "12 12 5"}
-        required
-        disabled={isDisabled}
-        options={[
-          { label: "Ativo", value: SITUACAO_VIGENCIA.ATIVO },
-          { label: "Encerrado", value: SITUACAO_VIGENCIA.ENCERRADO },
-          { label: "Extinto", value: SITUACAO_VIGENCIA.EXTINTO },
-        ]}
-        getFormErrorMessage={getFormErrorMessage}
-      />
+  useEffect(() => {
+    if (
+      !setValue ||
+      !permitirExtincaoDireta ||
+      situacao !== SITUACAO_VIGENCIA.EXTINTO
+    ) {
+      return;
+    }
 
-      <div className={cols?.statusOperacional ?? "col-12 md:col-4 lg:col-3"}>
-        <label className="font-bold block mb-2">Status Operacional</label>
-        <div style={{ minHeight: 40, display: "flex", alignItems: "center" }}>
-          <BadgeSeplag
-            label={statusMeta.label}
-            color={statusMeta.color}
-            bg={statusMeta.bg}
-            icon={statusMeta.icon}
-            size="md"
+    const encerramentoSemData =
+      !dataEncerramento ||
+      dataEncerramento === ultimoEncerramentoReplicado.current.data;
+    const encerramentoSemMotivo =
+      !String(motivoEncerramento ?? "").trim() ||
+      motivoEncerramento === ultimoEncerramentoReplicado.current.motivo;
+
+    if (
+      dataExtincao &&
+      encerramentoSemData &&
+      dataEncerramento !== dataExtincao
+    ) {
+      setValue(resolvedNames.dataEncerramento, dataExtincao as any);
+      ultimoEncerramentoReplicado.current.data = dataExtincao;
+    }
+
+    if (
+      motivoExtincao &&
+      encerramentoSemMotivo &&
+      motivoEncerramento !== motivoExtincao
+    ) {
+      setValue(resolvedNames.motivoEncerramento, motivoExtincao as any);
+      ultimoEncerramentoReplicado.current.motivo = motivoExtincao;
+    }
+  }, [
+    dataEncerramento,
+    dataExtincao,
+    motivoEncerramento,
+    motivoExtincao,
+    permitirExtincaoDireta,
+    resolvedNames.dataEncerramento,
+    resolvedNames.motivoEncerramento,
+    setValue,
+    situacao,
+  ]);
+
+  return (
+    <div className="grid situacao-vigencia-seplag">
+      <div className="col-12">
+        <div className="grid situacao-vigencia-row situacao-vigencia-row-principal">
+          <RotuloSeplag
+            nome={
+              ocultarRotuloSituacao ? (
+                ""
+              ) : (
+                <span className="situacao-vigencia-label-com-status">
+                  <span>
+                    Situação<span className="obrigatorio">*</span>
+                  </span>
+                  <span
+                    className="situacao-vigencia-status-badge situacao-vigencia-status-badge--inline"
+                    style={{
+                      color: statusMeta.color,
+                      backgroundColor: statusMeta.bg,
+                      borderColor: statusMeta.border,
+                    }}
+                  >
+                    {statusMeta.label}
+                  </span>
+                </span>
+              )
+            }
+            cols={cols?.situacao ?? "12 12 3"}
+          >
+            <Controller
+              name={resolvedNames.situacao}
+              control={control}
+              rules={
+                ocultarRotuloSituacao
+                  ? undefined
+                  : { required: "Situação é obrigatória" }
+              }
+              render={({ field }) => (
+                <div className="flex flex-column">
+                  <div className="flex justify-content-start situacao-vigencia-radio-row">
+                    <div className="flex align-items-center">
+                      {[
+                        { label: "Ativo", value: SITUACAO_VIGENCIA.ATIVO },
+                        {
+                          label: "Encerrado",
+                          value: SITUACAO_VIGENCIA.ENCERRADO,
+                        },
+                        {
+                          label: "Extinto",
+                          value: SITUACAO_VIGENCIA.EXTINTO,
+                          disabled: !podeExtinguir,
+                        },
+                      ].map((option, index) => (
+                        <span
+                          className="situacao-vigencia-radio-option"
+                          key={option.value}
+                        >
+                          <RadioButton
+                            inputId={`${field.name}_${index}`}
+                            {...field}
+                            inputRef={field.ref}
+                            value={option.value}
+                            checked={field.value === option.value}
+                            disabled={
+                              isDisabled ||
+                              desabilitarSituacaoPorAgendamento ||
+                              option.disabled
+                            }
+                          />
+                          <label htmlFor={`${field.name}_${index}`}>
+                            {option.label}
+                          </label>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {getFormErrorMessage(field.name)}
+                </div>
+              )}
+            />
+          </RotuloSeplag>
+
+          <DateFieldSeplag
+            name={resolvedNames.dataAtivacao}
+            control={control}
+            label={rotuloDataAtivacao}
+            cols={cols?.dataAtivacao ?? "12 12 3"}
+            required
+            disabled={isDisabled}
+            minDate={dataAtivacaoMinDate}
+            getFormErrorMessage={getFormErrorMessage}
           />
+
+          {mostrarEncerramento && (
+            <DateFieldSeplag
+              name={resolvedNames.dataEncerramento}
+              control={control}
+              label="Data de Encerramento"
+              cols={cols?.dataEncerramento ?? "12 12 3"}
+              required={mostrarEncerramento}
+              disabled={isDisabled}
+              validateAfterDate={dataAtivacao}
+              validateAfterMessage="A Data de Encerramento não pode ser anterior à Data de Ativação."
+              getFormErrorMessage={getFormErrorMessage}
+            />
+          )}
+
+          {mostrarExtincao && (
+            <DateFieldSeplag
+              name={resolvedNames.dataExtincao}
+              control={control}
+              label="Data de Extinção"
+              cols={cols?.dataExtincao ?? "12 12 3"}
+              required={mostrarExtincao}
+              disabled={isDisabled}
+              validateAfterDate={dataEncerramento || dataAtivacao}
+              validateAfterMessage={
+                dataEncerramento
+                  ? "A Data de Extinção não pode ser anterior à Data de Encerramento."
+                  : "A Data de Extinção não pode ser anterior à Data de Ativação."
+              }
+              getFormErrorMessage={getFormErrorMessage}
+            />
+          )}
         </div>
       </div>
 
-      <DateFieldSeplag
-        name={resolvedNames.dataAtivacao}
-        control={control}
-        label="Data de Ativação"
-        cols={cols?.dataAtivacao ?? "12 12 4"}
-        required
-        disabled={isDisabled}
-        getFormErrorMessage={getFormErrorMessage}
-      />
+      {mostrarEncerramento && (
+        <div className="col-12">
+          <div className="grid situacao-vigencia-row situacao-vigencia-row-secundaria">
+            <TextAreaFieldSeplag
+              name={resolvedNames.motivoEncerramento}
+              control={control}
+              label="Motivo do Encerramento"
+              cols={cols?.motivoEncerramento ?? "12"}
+              required={mostrarEncerramento}
+              disabled={isDisabled}
+              maxLength={500}
+              rows={1}
+              getFormErrorMessage={getFormErrorMessage}
+            />
+          </div>
+        </div>
+      )}
 
-      <DateFieldSeplag
-        name={resolvedNames.dataEncerramento}
-        control={control}
-        label="Data de Encerramento"
-        cols={cols?.dataEncerramento ?? "12 12 4"}
-        required={mostrarEncerramento}
-        visible={mostrarEncerramento}
-        disabled={isDisabled}
-        validateAfterDate={dataAtivacao}
-        validateAfterMessage="A Data de Encerramento não pode ser anterior à Data de Ativação."
-        getFormErrorMessage={getFormErrorMessage}
-      />
-
-      <TextAreaFieldSeplag
-        name={resolvedNames.motivoEncerramento}
-        control={control}
-        label="Motivo do Encerramento"
-        cols={cols?.motivoEncerramento ?? "12"}
-        required={mostrarEncerramento}
-        visible={mostrarEncerramento}
-        disabled={isDisabled}
-        maxLength={500}
-        rows={3}
-        getFormErrorMessage={getFormErrorMessage}
-      />
-
-      <DateFieldSeplag
-        name={resolvedNames.dataExtincao}
-        control={control}
-        label="Data de Extinção"
-        cols={cols?.dataExtincao ?? "12 12 4"}
-        required={mostrarExtincao}
-        visible={mostrarExtincao}
-        disabled={isDisabled}
-        validateAfterDate={dataEncerramento || dataAtivacao}
-        validateAfterMessage={
-          dataEncerramento
-            ? "A Data de Extinção não pode ser anterior à Data de Encerramento."
-            : "A Data de Extinção não pode ser anterior à Data de Ativação."
-        }
-        getFormErrorMessage={getFormErrorMessage}
-      />
-
-      <TextAreaFieldSeplag
-        name={resolvedNames.motivoExtincao}
-        control={control}
-        label="Motivo da Extinção"
-        cols={cols?.motivoExtincao ?? "12"}
-        required={mostrarExtincao}
-        visible={mostrarExtincao}
-        disabled={isDisabled}
-        maxLength={500}
-        rows={3}
-        getFormErrorMessage={getFormErrorMessage}
-      />
+      {mostrarExtincao && (
+        <div className="col-12">
+          <div className="grid situacao-vigencia-row situacao-vigencia-row-extincao">
+            <TextAreaFieldSeplag
+              name={resolvedNames.motivoExtincao}
+              control={control}
+              label="Motivo da Extinção"
+              cols={cols?.motivoExtincao ?? "12"}
+              required={mostrarExtincao}
+              disabled={isDisabled}
+              maxLength={500}
+              rows={1}
+              getFormErrorMessage={getFormErrorMessage}
+            />
+          </div>
+        </div>
+      )}
 
       {mostrarExtincao && possuiVinculosOuDependencias && (
         <div className="col-12">

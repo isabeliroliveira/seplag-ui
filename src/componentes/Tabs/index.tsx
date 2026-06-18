@@ -52,6 +52,7 @@ export interface TabsSeplagProps<T = any> {
   isCreate?: boolean;
   firstAbaLiberada?: T; // aba permitida quando isCreate = true (compatibilidade MenuAbasSeplag)
   maxWidth?: string; // Para compatibilidade com MenuAbasSeplag (default: '1050px')
+  equalWidth?: boolean; // distribui todas as abas com a mesma largura
   // legendPosition is intentionally omitted (not used)
 }
 
@@ -68,6 +69,7 @@ export function TabsSeplag<T = any>({
   isCreate = false,
   firstAbaLiberada,
   maxWidth,
+  equalWidth = false,
 }: Readonly<TabsSeplagProps<T>>) {
   const isTabActive = (item: TabItemSeplag<T>, index: number) => {
     // Suporte para activeValue (compatibilidade MenuAbasSeplag)
@@ -123,8 +125,27 @@ export function TabsSeplag<T = any>({
       style={style}
     >
       {/* Wrapper com largura máxima (compatibilidade MenuAbasSeplag) */}
-      <div className="w-full" style={maxWidth ? { maxWidth } : undefined}>
-        <div className="grid" style={{ margin: 0 }}>
+      <div
+        className="w-full"
+        style={{
+          ...(maxWidth ? { maxWidth } : {}),
+          ...(equalWidth ? { width: "100%" } : {}),
+        }}
+      >
+        <div
+          className={equalWidth ? "tabs-seplag-equal-grid" : "grid"}
+          style={{
+            margin: 0,
+            ...(equalWidth
+              ? {
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+                  gap: "3px",
+                  width: "100%",
+                }
+              : {}),
+          }}
+        >
           {items.map((item, index) => {
             const itemKey = getTabItemKey(item, index);
             const colClass = item.col || DEFAULT_COL_CLASS;
@@ -133,9 +154,12 @@ export function TabsSeplag<T = any>({
 
             return (
               <div
-                className={`col-12 md:col-6 ${colClass}`}
+                className={equalWidth ? "" : `col-12 md:col-6 ${colClass}`}
                 key={itemKey}
-                style={{ padding: "1px" }}
+                style={{
+                  padding: "1px",
+                  ...(equalWidth ? { minWidth: 0, width: "100%" } : {}),
+                }}
               >
                 <BotaoSeplag
                   label={item.label}

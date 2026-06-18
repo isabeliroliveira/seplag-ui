@@ -1,0 +1,153 @@
+.container {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  border: 1px solid #d6dde5;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.level + .level {
+  border-top: 1px solid #d6dde5;
+}
+
+.levelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.levelHeader i {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.picklist {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+.panel {
+  display: flex;
+  min-height: 360px;
+  border: 1px solid #d6dde5;
+  border-radius: 6px;
+  background: #ffffff;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.panelHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e3e8ef;
+  color: #0f2744;
+  font-weight: 700;
+}
+
+.panelFilter {
+  padding: 12px;
+}
+
+.panelFilter input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #102a43;
+  font: inherit;
+}
+
+.panelFilter input:focus {
+  border-color: #2f80ed;
+  box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.16);
+  outline: 0;
+}
+
+.list {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 0;
+  max-height: 300px;
+  padding: 0 8px 12px;
+  overflow-y: auto;
+}
+
+.item {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #0f2744;
+  font: inherit;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: #f1f5f9;
+}
+
+.itemMarked {
+  background: #eef2f7;
+}
+
+.actions {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.actionButton {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+  border: 0;
+  border-radius: 5px;
+  background: #0096e0;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  background: #007fc2;
+}
+
+.empty {
+  padding: 24px 12px;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .picklist {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    grid-template-columns: repeat(4, auto);
+    justify-content: center;
+  }
+}

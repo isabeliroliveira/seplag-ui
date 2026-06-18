@@ -162,7 +162,7 @@ Observação: a chamada visual "Acessar" dentro do card foi implementada como te
 /#/prototipos/sigep  Protótipo do módulo Gestão de Pessoas
 ```
 
-Rotas antigas de outros protótipos ainda existem no código e continuam acessíveis pelo switcher do canto superior direito. A seleção principal em `/prototipos` mostra apenas SIGEP neste momento.
+Rotas antigas de outros protótipos ainda existem no código e continuam acessíveis pelo switcher do canto superior direito. A seleção principal em `/prototipos` mostra SIGEP e Folha de Pagamento neste momento.
 
 ## Mudança Implementada em Folha de Pagamento
 
@@ -184,6 +184,48 @@ Primeira implementação:
 - Adicionada a funcionalidade `Penhora Judicial`.
 - Criada a rota vazia `/prototipos/folha/penhora-judicial`.
 - A tela inicial da funcionalidade foi criada sem conteúdo visível por enquanto, apenas para validar navegação e posicionamento no menu.
+
+## Status Atual do Módulo Folha de Pagamento
+
+Em 08/06/2026 foi consolidado o status de implementação do módulo **Folha de Pagamento** em um documento próprio:
+
+```text
+docs/folha-pagamento-status-implementacao.md
+```
+
+Esse documento deve ser usado como referência principal para continuar o trabalho no módulo Folha.
+
+Principais entregas já documentadas:
+
+- Tela **Solicitações de Ajustes da Folha de Pagamento**.
+- Fluxo completo do botão **Nova Solicitação**.
+- Tela de cadastro, edição e visualização da solicitação de ajuste.
+- Regras de perfil Conformidade e Folha de Pagamento.
+- Ações de iniciar, reiniciar, finalizar, devolver e concluir solicitação.
+- Histórico da solicitação com linha do tempo.
+- Upload/anexo de documentos usando `AnexarDocumentoSeplag`.
+- Tela **Configuração de Competência**.
+- Fluxo de abertura e fechamento de competência.
+- Tela **Tabelas de Referência** com protótipo da tabela INSS.
+- Ajustes no componente `AnexarDocumentoSeplag`.
+- Publicação em GitHub Pages.
+
+Rotas principais do módulo Folha:
+
+```text
+/#/prototipos/folha
+/#/prototipos/folha/processamento/solicitacoes-ajustes
+/#/prototipos/folha/processamento/competencias
+/#/prototipos/folha/processamento/folha-pagamento
+/#/prototipos/folha/cadastro/tabelas-referencia
+/#/prototipos/folha/cadastro/grupo-eleitos
+```
+
+URL publicada:
+
+```text
+https://taylor-SEPLAG.github.io/seplag-ui/
+```
 
 ## Componente de Situação e Vigência
 

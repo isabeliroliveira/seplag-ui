@@ -29,6 +29,7 @@
   - [UnsavedChanges](#unsavedchanges)
 - [OAuth2](#oauth2)
 - [Tokens de design](#tokens-de-design)
+- [Documentação de protótipos](#documentação-de-protótipos)
 - [Desenvolvimento](#desenvolvimento)
 
 ---
@@ -528,6 +529,18 @@ const estiloCustom = {
 
 ---
 
+## Documentação de protótipos
+
+O repositório também mantém documentos de contexto e status para continuidade dos protótipos:
+
+| Documento | Conteúdo |
+| --------- | -------- |
+| `docs/CONTEXTO_PROJETO.md` | Visão geral do projeto, decisões já tomadas, rotas e orientações para continuar o trabalho. |
+| `docs/folha-pagamento-status-implementacao.md` | Status do módulo Folha de Pagamento, incluindo Solicitações de Ajustes da Folha, Competência e Tabelas de Referência. |
+| `docs/controle-vagas-status-implementacao.md` | Status do protótipo de Controle de Vagas em Gestão de Pessoas. |
+
+---
+
 ## Desenvolvimento
 
 ### Pré-requisitos
@@ -540,6 +553,9 @@ const estiloCustom = {
 ```bash
 # Iniciar ambiente de desenvolvimento
 npm run dev
+
+# Para executar o build é necessário ter instalado o rimraf para isso instalar com o seguinte comando
+npm install -g rimraf
 
 # Build da biblioteca
 npm run build

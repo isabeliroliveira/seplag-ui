@@ -1,0 +1,29 @@
+.p-datatable-emptymessage > td {
+  text-align: center !important;
+  font-size: 1.4rem;
+}
+
+/* Estilos para ícones de ordenação */
+.p-datatable-thead > tr > th.p-sortable-column {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.p-datatable-thead > tr > th.p-sortable-column .p-sortable-column-icon {
+  display: inline-block !important;
+  margin-left: 0.5rem;
+  opacity: 0.6;
+  font-size: 0.875rem;
+  vertical-align: middle;
+  color: #6c757d;
+}
+
+.p-datatable-thead > tr > th.p-sortable-column:hover .p-sortable-column-icon {
+  opacity: 1;
+}
+
+.p-datatable-thead > tr > th.p-sortable-column.p-highlight .p-sortable-column-icon {
+  opacity: 1;
+  color: #007ad9;
+}
