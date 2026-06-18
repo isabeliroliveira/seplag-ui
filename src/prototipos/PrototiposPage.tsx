@@ -1,7 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, type ReactNode } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
-import { BotaoSalvarSeplag, BotaoSeplag } from "@componentes/Botao";
+import {
+  BotaoSalvarSeplag,
+  BotaoSeplag,
+  BotaoAdicionarSeplag,
+  BotaoLimparFiltroSeplag,
+} from "@componentes/Botao";
 import { CardSeplag } from "@componentes/Card";
 import {
   SITUACAO_VIGENCIA,
@@ -9,6 +14,7 @@ import {
   validarSituacaoVigenciaSeplag,
   type SituacaoVigenciaValueSeplag,
 } from "@componentes/SituacaoVigencia";
+import { TextFieldSeplag, DropdownFieldSeplag } from "@componentes/Fields";
 import { LayoutSeplag } from "@componentes/layout/layout/Layout";
 import type { IMenuSeplag, IVinculoSeplag } from "@componentes/layout/Config/menu";
 import type { AppSystemItemSeplag } from "@componentes/layout/AppSwitcher";
@@ -482,13 +488,240 @@ export function PrototiposSigepPage() {
 }
 
 export function PrototiposSigepRegimeJuridicoPage() {
+  const navigate = useNavigate();
+  const { control, reset, watch } = useForm<{
+    nome: string;
+    instituicao: string | null;
+    situacao: string | null;
+  }>({
+    defaultValues: {
+      nome: "",
+      instituicao: null,
+      situacao: null,
+    },
+  });
+
+  const [showInstituicoes, setShowInstituicoes] = useState(false);
+  const [selectedInstituicoes, setSelectedInstituicoes] = useState<string[]>([]);
+
+  const instituicaoOptions = [
+    { label: "CEPROTEC", value: "CEPROTEC" },
+    { label: "SEPLAG-MT", value: "SEPLAG-MT" },
+    { label: "STI", value: "STI" },
+  ];
+
+  const situacaoOptions = [
+    { label: "Ativo", value: "ativo" },
+    { label: "Agendado", value: "agendado" },
+    { label: "Encerrado", value: "encerrado" },
+    { label: "Extinto", value: "extinto" },
+  ];
+
+  const regimeJuridicoItems = [
+    {
+      id: "1",
+      nome: "Regime Estatutário",
+      instituicoes: ["CEPROTEC"],
+      situacao: "ativo",
+    },
+    {
+      id: "2",
+      nome: "Regime Trabalhista",
+      instituicoes: ["SEPLAG-MT", "STI"],
+      situacao: "agendado",
+    },
+    {
+      id: "3",
+      nome: "Regime Comissionado",
+      instituicoes: ["CEPROTEC", "SEPLAG-MT"],
+      situacao: "encerrado",
+    },
+    {
+      id: "4",
+      nome: "Regime Autônomo",
+      instituicoes: ["STI"],
+      situacao: "extinto",
+    },
+  ];
+
+  const filters = watch();
+  const filteredRegimes = regimeJuridicoItems.filter((item) => {
+    const matchesNome = item.nome
+      .toLowerCase()
+      .includes(filters.nome.trim().toLowerCase());
+    const matchesInstituicao =
+      !filters.instituicao ||
+      item.instituicoes.includes(filters.instituicao);
+    const matchesSituacao =
+      !filters.situacao || item.situacao === filters.situacao;
+    return matchesNome && matchesInstituicao && matchesSituacao;
+  });
+
+  const handleOpenInstituicoes = (instituicoes: string[]) => {
+    setSelectedInstituicoes(instituicoes);
+    setShowInstituicoes(true);
+  };
+
+  const handleCloseInstituicoes = () => {
+    setSelectedInstituicoes([]);
+    setShowInstituicoes(false);
+  };
+
   return (
     <PrototypeSystemPage
       nomeSistema="GESTÃO DE PESSOAS"
       ambienteSistema="Teste"
       menuItems={menuGestaoPessoas}
     >
-      <div className="prototype-empty-content" aria-label="Regime Jurídico" />
+      <div className="prototype-page-content prototype-regime-juridico-page">
+        <div className="prototype-page-header">
+          <h1>Regime Jurídico</h1>
+          <p>Filtre e visualize os regimes jurídicos cadastrados no SIGEP.</p>
+        </div>
+
+        <CardSeplag title="Filtros" cols="12">
+          <div className="prototype-regime-filters">
+            <TextFieldSeplag
+              name="nome"
+              control={control}
+              label="Nome"
+              placeholder="Digite o nome do regime jurídico"
+              cols="12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="instituicao"
+              control={control}
+              label="Instituição"
+              options={instituicaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              cols="12 4"
+              getFormErrorMessage={() => null}
+            />
+            <DropdownFieldSeplag
+              name="situacao"
+              control={control}
+              label="Situação"
+              options={situacaoOptions}
+              optionLabel="label"
+              optionValue="value"
+              cols="12 4"
+              getFormErrorMessage={() => null}
+            />
+          </div>
+          <div className="prototype-regime-filter-actions">
+            <BotaoLimparFiltroSeplag
+              label="Limpar filtro"
+              icon="pi pi-refresh"
+              onClick={() =>
+                reset({ nome: "", instituicao: null, situacao: null })
+              }
+            />
+            <BotaoAdicionarSeplag
+              label="Adicionar"
+              onClick={() => navigate("/prototipos/sigep/regime-juridico/novo")}
+            />
+          </div>
+        </CardSeplag>
+
+        <CardSeplag title="Lista de regimes jurídicos" cols="12">
+          <div className="prototype-regime-table-wrapper">
+            <table className="prototype-regime-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Instituições vinculadas</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRegimes.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.nome}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="prototype-link-button"
+                        onClick={() => handleOpenInstituicoes(item.instituicoes)}
+                      >
+                        {item.instituicoes.length} Instituição
+                        {item.instituicoes.length > 1 ? "ões" : ""}
+                      </button>
+                    </td>
+                    <td>
+                      <span
+                        className={`prototype-status-badge prototype-status-${item.situacao}`}
+                      >
+                        {item.situacao[0].toUpperCase() + item.situacao.slice(1)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredRegimes.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="prototype-regime-empty">
+                      Nenhum regime jurídico encontrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardSeplag>
+
+        {showInstituicoes && (
+          <div className="prototype-modal-backdrop" role="dialog" aria-modal="true">
+            <div className="prototype-modal-content">
+              <div className="prototype-modal-header">
+                <h2>Instituições vinculadas</h2>
+                <button
+                  type="button"
+                  className="prototype-modal-close"
+                  onClick={handleCloseInstituicoes}
+                  aria-label="Fechar"
+                >
+                  <i className="pi pi-times" />
+                </button>
+              </div>
+              <div className="prototype-modal-body">
+                <ol className="prototype-instituicoes-list">
+                  {selectedInstituicoes.map((inst) => (
+                    <li key={inst}>{inst}</li>
+                  ))}
+                </ol>
+              </div>
+              <div className="prototype-modal-footer">
+                <BotaoSeplag label="Fechar" onClick={handleCloseInstituicoes} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </PrototypeSystemPage>
+  );
+}
+
+export function PrototiposSigepRegimeJuridicoNovoPage() {
+  return (
+    <PrototypeSystemPage
+      nomeSistema="GESTÃO DE PESSOAS"
+      ambienteSistema="Teste"
+      menuItems={menuGestaoPessoas}
+    >
+      <div className="prototype-page-content prototype-regime-juridico-page">
+        <div className="prototype-page-header">
+          <h1>Novo Regime Jurídico</h1>
+          <p>Fluxo de cadastro de regime jurídico do SIGEP.</p>
+        </div>
+
+        <CardSeplag title="Cadastro de novo regime jurídico" cols="12">
+          <p>
+            Aqui será exibido o formulário de cadastro do regime jurídico.
+            Use este espaço para adicionar os campos necessários.
+          </p>
+        </CardSeplag>
+      </div>
     </PrototypeSystemPage>
   );
 }
